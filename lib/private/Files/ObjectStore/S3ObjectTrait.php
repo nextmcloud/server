@@ -81,6 +81,7 @@ trait S3ObjectTrait {
 	}
 
 	/**
+<<<<<<< HEAD
 	 * Single object put helper
 	 *
 	 * @param string $urn the unified resource name used to identify the object
@@ -98,6 +99,19 @@ trait S3ObjectTrait {
 		]);
 	}
 
+=======
+	 * @param string $urn the unified resource name used to identify the object
+	 * @param resource $stream stream with the data to write
+	 * @param string|null $mimetype the mimetype to set for the remove object @since 22.0.0
+	 * @throws \Exception when something goes wrong, message will be logged
+	 * @since 7.0.0
+	 */
+	public function writeObject($urn, $stream, string $mimetype = null)
+		$count = 0;
+		$countStream = CallbackWrapper::wrap($stream, function ($read) use (&$count) {
+			$count += $read;
+		});
+>>>>>>> Keep miemtype handling for writeObject
 
 	/**
 	 * Multipart upload helper that tries to avoid orphaned fragments in S3
@@ -114,8 +128,14 @@ trait S3ObjectTrait {
 			'part_size' => $this->uploadPartSize,
 			'params' => [
 				'ContentType' => $mimetype
+<<<<<<< HEAD
 			],
 		]);
+=======
+			] + $this->getSseKmsPutParameters(),
+		];
+		$uploader = new MultipartUploader($this->getConnection(), $countStream, $s3params);
+>>>>>>> Keep miemtype handling for writeObject
 
 		try {
 			$uploader->upload();
@@ -171,7 +191,14 @@ trait S3ObjectTrait {
 	public function objectExists($urn) {
 		return $this->getConnection()->doesObjectExist($this->bucket, $urn);
 	}
+<<<<<<< HEAD
 
+=======
+	
+	/**
+	 * S3 copy command with SSE KMS key handling.
+	 */
+>>>>>>> Keep miemtype handling for writeObject
 	public function copyObject($from, $to) {
 		$this->getConnection()->copy($this->getBucket(), $from, $this->getBucket(), $to);
 	}
