@@ -69,10 +69,14 @@ class S3Test extends ObjectStoreTest {
 	protected function getInstance() {
 		$config = \OC::$server->getConfig()->getSystemValue('objectstore');
 <<<<<<< HEAD
+<<<<<<< HEAD
 		if (!is_array($config) || $config['class'] !== S3::class) {
 =======
 		if (!is_array($config) || $config['class'] !== '\\OC\\Files\\ObjectStore\\S3') {
 >>>>>>> Use correct class reference in config
+=======
+		if (!is_array($config) || $config['class'] !== '\\OC\\Files\\ObjectStore\\S3') {
+>>>>>>> 10d98379a3d6d493aa9186a32681b80afcfe5768
 			$this->markTestSkipped('objectstore not configured for s3');
 		}
 
@@ -81,10 +85,13 @@ class S3Test extends ObjectStoreTest {
 
 	public function testUploadNonSeekable() {
 <<<<<<< HEAD
+<<<<<<< HEAD
 		$this->cleanupAfter('multiparttest');
 
 =======
 >>>>>>> Use correct class reference in config
+=======
+>>>>>>> 10d98379a3d6d493aa9186a32681b80afcfe5768
 		$s3 = $this->getInstance();
 
 		$s3->writeObject('multiparttest', NonSeekableStream::wrap(fopen(__FILE__, 'r')));
