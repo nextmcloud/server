@@ -90,8 +90,127 @@ trait S3ConnectionTrait {
 		return $this->bucket;
 	}
 
+<<<<<<< HEAD
 	public function getProxy() {
 		return $this->proxy;
+=======
+	/**
+	 * Add the SSE KMS parameterdepending on the
+	 * KMS encryption strategy (bucket, individual or
+	 * no encryption) for object creations.
+	 *
+	 * @return array with encryption parameters
+	 */
+	public function getSseKmsPutParameters(): array {
+		if (!empty($this->sseKmsBucketKeyId)) {
+			return [
+				'ServerSideEncryption' => 'aws:kms',
+			];
+		} elseif (!empty($this->sseKmsKeyId)) {
+			return [
+				'ServerSideEncryption' => 'aws:kms',
+				'SSEKMSKeyId' => $this->sseKmsKeyId,
+			];
+		} else {
+			return [];
+		}
+	}
+
+	/**
+	 * Add the SSE KMS parameter depending on the
+	 * KMS encryption strategy (bucket, individual or
+	 * no encryption) for object read.
+	 *
+	 * @return array with encryption parameters
+	 */
+	public function getSseKmsGetParameters(): array {
+		if (!empty($this->sseKmsBucketKeyId)) {
+			return [
+				'ServerSideEncryption' => 'aws:kms',
+				'SSEKMSKeyId' => $this->sseKmsBucketKeyId,
+			];
+		} elseif !(empty($this->sseKmsKeyId)) {
+			return [
+				'ServerSideEncryption' => 'aws:kms',
+				'SSEKMSKeyId' => $this->sseKmsKeyId,
+			];
+		} else {
+			return [];
+		}
+	}
+
+
+	/**
+	 * Create the required bucket
+	 *
+	 * @throws \Exception if bucket creation fails
+	 */
+	protected function createNewBucket() {
+		$logger = \OC::$server->getLogger();
+		try {
+			$logger->info('Bucket "'.$this->bucket.'" does not exist - creating it.', ['app' => 'objectstore']);
+			if (!$this->connection::isBucketDnsCompatible($this->bucket)) {
+				throw new \Exception('The bucket will not be created because the name is not dns compatible, please correct it: '.$this->bucket);
+			}
+			$this->connection->createBucket(['Bucket' => $this->bucket]);
+			$this->testTimeout();
+		} catch (S3Exception $e) {
+			$logger->logException($e, [
+				'message' => 'Invalid remote storage.',
+				'level' => ILogger::DEBUG,
+				'app' => 'objectstore',
+			]);
+			throw new \Exception('Creation of bucket "'.$this->bucket.'" failed. '.$e->getMessage());
+		}
+	}
+
+	/**
+	 * Check bucket key consistency or put bucket key if missing
+	 * This operation only works for bucket owner or with
+	 * s3:GetEncryptionConfiguration/s3:PutEncryptionConfiguration permission
+	 *
+	 * We recommend to use autocreate only on initial setup and
+	 * use an S3:user only with object operation permission and no bucket operation permissions
+	 * later with autocreate=false
+	 *
+	 * @throws \Exception if bucket key config is inconsistent or if putting the key fails
+	 */
+	protected function checkOrPutBucketKey() {
+		$logger = \OC::$server->getLogger();
+
+		try {
+			$encrypt_state = $this->connection->getBucketEncryption([
+				'Bucket' => $this->bucket,
+			]);
+			return;
+		} catch (S3Exception $e) {
+			try {
+				$logger->info('Bucket key for "'.$this->bucket.'" is not set - adding it.', ['app' => 'objectstore']);
+				$this->connection->putBucketEncryption([
+					'Bucket' => $this->bucket ,
+					'ServerSideEncryptionConfiguration' => [
+						'Rules' => [
+							[
+								'ApplyServerSideEncryptionByDefault' => [
+									'KMSMasterKeyID' => $this->sseKmsBucketKeyId,
+									'SSEAlgorithm' => 'aws:kms',
+								],
+								'BucketKeyEnabled' => true,
+							],
+						],
+					],
+				]);
+				$this->testTimeout();
+			} catch (S3Exception $e) {
+				$logger->logException($e, [
+					'message' => 'Bucket key problem.',
+					'level' => ILogger::DEBUG,
+					'app' => 'objectstore',
+				]);
+				throw new \Exception('Putting configured bucket key to "'.$this->bucket.'" failed. '.$e->getMessage());
+			}
+		}
+>>>>>>> Fix decision tree for sending KMS key ref
 	}
 
 	/**
