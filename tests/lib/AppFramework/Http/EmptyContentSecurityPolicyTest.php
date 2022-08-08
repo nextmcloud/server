@@ -427,7 +427,7 @@ class EmptyContentSecurityPolicyTest extends \Test\TestCase {
 	}
 
 	public function testGetPolicyWithJsNonceAndScriptDomains() {
-		$expectedPolicy = "default-src 'none';base-uri 'none';manifest-src 'self';script-src 'nonce-TXlKc05vbmNl' www.nextcloud.com www.nextcloud.org;frame-ancestors 'none'";
+		$expectedPolicy = "default-src 'none';base-uri 'none';manifest-src 'self';script-src 'strict-dynamic' 'nonce-TXlKc05vbmNl' www.nextcloud.com www.nextcloud.org;frame-ancestors 'none'";
 
 		$this->contentSecurityPolicy->addAllowedScriptDomain('www.nextcloud.com');
 		$this->contentSecurityPolicy->useJsNonce('MyJsNonce');
@@ -436,7 +436,7 @@ class EmptyContentSecurityPolicyTest extends \Test\TestCase {
 	}
 
 	public function testGetPolicyWithJsNonceAndSelfScriptDomain() {
-		$expectedPolicy = "default-src 'none';base-uri 'none';manifest-src 'self';script-src 'nonce-TXlKc05vbmNl';frame-ancestors 'none'";
+		$expectedPolicy = "default-src 'none';base-uri 'none';manifest-src 'self';script-src 'strict-dynamic' 'nonce-TXlKc05vbmNl';frame-ancestors 'none'";
 
 		$this->contentSecurityPolicy->useJsNonce('MyJsNonce');
 		$this->contentSecurityPolicy->addAllowedScriptDomain("'self'");
