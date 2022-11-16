@@ -112,7 +112,7 @@
     "eslint-plugin-vue": "^6.2.2",
     "exports-loader": "^1.1.1",
     "file-loader": "^6.2.0",
-    "handlebars-loader": "^1.7.1",
+    "handlebars-loader": "^1.7.2",
     "jsdom": "^16.4.0",
     "jsdom-global": "^3.0.2",
     "mocha": "^8.2.1",
