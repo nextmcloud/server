@@ -70,7 +70,7 @@
     "p-limit": "^4.0.0",
     "p-queue": "^7.1.0",
     "query-string": "^7.0.1",
-    "regenerator-runtime": "^0.13.9",
+    "regenerator-runtime": "^0.13.10",
     "select2": "3.5.1",
     "snap.js": "^2.0.9",
     "strengthify": "github:nextcloud/strengthify#0.5.9",
