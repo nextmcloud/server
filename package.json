@@ -32,7 +32,7 @@
     "@nextcloud/calendar-availability-vue": "^0.3.1",
     "@nextcloud/capabilities": "^1.0.4",
     "@nextcloud/dialogs": "^3.1.2",
-    "@nextcloud/event-bus": "^2.1.1",
+    "@nextcloud/event-bus": "^3.0.2",
     "@nextcloud/files": "^2.1.0",
     "@nextcloud/initial-state": "^1.2.1",
     "@nextcloud/jcrop": "^0.10.0",
