@@ -36,7 +36,7 @@ class Capabilities implements ICapability {
 	public function getCapabilities() {
 		$capabilities = [
 			'dav' => [
-				'chunking' => '1.0',
+				'chunking' => '2.0'
 			]
 		];
 		if ($this->config->getSystemValueBool('bulkupload.enabled', true)) {

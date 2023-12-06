@@ -269,8 +269,15 @@ OC.FileUpload.prototype = {
 			&& this.getFile().size > this.uploader.fileUploadParam.maxChunkSize
 		) {
 			data.isChunked = true;
+			var headers = {};
+			if (OC.getCapabilities().dav.chunking === '2.0') {
+				headers = {
+					'X-Chunking-Destination': this.uploader.davClient._buildUrl(this.getTargetDestination())
+				};
+			}
+
 			chunkFolderPromise = this.uploader.davClient.createDirectory(
-				'uploads/' + OC.getCurrentUser().uid + '/' + this.getId()
+				'uploads/' + OC.getCurrentUser().uid + '/' + this.getId(), headers
 			);
 			// TODO: if fails, it means same id already existed, need to retry
 		} else {
@@ -309,15 +316,22 @@ OC.FileUpload.prototype = {
 		}
 		if (size) {
 			headers['OC-Total-Length'] = size;
-
+		}
+		if (OC.getCapabilities().dav.chunking === '2.0') {
+			headers['X-Chunking-Destination'] = this.uploader.davClient._buildUrl(this.getTargetDestination());
 		}
 
 		return this.uploader.davClient.move(
 			'uploads/' + uid + '/' + this.getId() + '/.file',
-			'files/' + uid + '/' + OC.joinPaths(this.getFullPath(), this.getFileName()),
+			this.getTargetDestination(),
 			true,
 			headers
 		);
+	},
+
+	getTargetDestination: function() {
+		var uid = OC.getCurrentUser().uid;
+		return 'files/' + uid + '/' + OC.joinPaths(this.getFullPath(), this.getFileName());
 	},
 
 	_deleteChunkFolder: function() {
@@ -1326,6 +1340,12 @@ OC.Uploader.prototype = _.extend({
 					}
 					var range = data.contentRange.split(' ')[1];
 					var chunkId = range.split('/')[0].split('-')[0];
+					if (OC.getCapabilities().dav.chunking === '2.0') {
+						// Calculate chunk index for usage with s3
+						chunkId = Math.ceil((data.chunkSize+Number(chunkId)) / upload.uploader.fileUploadParam.maxChunkSize);
+						data.headers['X-Chunking-Destination'] = self.davClient._buildUrl(upload.getTargetDestination());
+					}
+
 					data.url = OC.getRootPath() +
 						'/remote.php/dav/uploads' +
 						'/' + OC.getCurrentUser().uid +
