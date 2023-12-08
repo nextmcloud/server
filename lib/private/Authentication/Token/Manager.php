@@ -55,12 +55,12 @@ class Manager implements IProvider, OCPIProvider {
 	 * @return IToken
 	 */
 	public function generateToken(string $token,
-								  string $uid,
-								  string $loginName,
-								  $password,
-								  string $name,
-								  int $type = IToken::TEMPORARY_TOKEN,
-								  int $remember = IToken::DO_NOT_REMEMBER): IToken {
+		string $uid,
+		string $loginName,
+		$password,
+		string $name,
+		int $type = IToken::TEMPORARY_TOKEN,
+		int $remember = IToken::DO_NOT_REMEMBER): IToken {
 		if (mb_strlen($name) > 128) {
 			$name = mb_substr($name, 0, 120) . '…';
 		}
@@ -202,6 +202,10 @@ class Manager implements IProvider, OCPIProvider {
 
 	public function invalidateOldTokens() {
 		$this->publicKeyTokenProvider->invalidateOldTokens();
+	}
+
+	public function invalidateLastUsedBefore(string $uid, int $before): void {
+		$this->publicKeyTokenProvider->invalidateLastUsedBefore($uid, $before);
 	}
 
 	/**

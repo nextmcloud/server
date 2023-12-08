@@ -6,11 +6,18 @@
 			:aria-label="ariaLabel(section)"
 			:title="ariaLabel(section)"
 			v-bind="section"
+			dir="auto"
+			:to="section.to"
 			@click.native="onClick(section.to)">
 			<template v-if="index === 0" #icon>
 				<Home :size="20" />
 			</template>
 		</NcBreadcrumb>
+
+		<!-- Forward the actions slot -->
+		<template #actions>
+			<slot name="actions" />
+		</template>
 	</NcBreadcrumbs>
 </template>
 
@@ -64,7 +71,8 @@ export default Vue.extend({
 
 		sections() {
 			return this.dirs.map(dir => {
-				const to = { ...this.$route, query: { dir } }
+				const fileid = this.getFileIdFromPath(dir)
+				const to = { ...this.$route, params: { fileid }, query: { dir } }
 				return {
 					dir,
 					exact: true,

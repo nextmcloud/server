@@ -30,11 +30,11 @@ namespace OCA\FederatedFileSharing\Controller;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCA\FederatedFileSharing\Notifications;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\OCS\OCSBadRequestException;
 use OCP\AppFramework\OCS\OCSException;
 use OCP\AppFramework\OCSController;
-use OCP\App\IAppManager;
 use OCP\Constants;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\Exceptions\ProviderCouldNotAddShareException;
@@ -89,18 +89,18 @@ class RequestHandlerController extends OCSController {
 	private $eventDispatcher;
 
 	public function __construct(string $appName,
-								IRequest $request,
-								FederatedShareProvider $federatedShareProvider,
-								IDBConnection $connection,
-								Share\IManager $shareManager,
-								Notifications $notifications,
-								AddressHandler $addressHandler,
-								IUserManager $userManager,
-								ICloudIdManager $cloudIdManager,
-								LoggerInterface $logger,
-								ICloudFederationFactory $cloudFederationFactory,
-								ICloudFederationProviderManager $cloudFederationProviderManager,
-								IEventDispatcher $eventDispatcher
+		IRequest $request,
+		FederatedShareProvider $federatedShareProvider,
+		IDBConnection $connection,
+		Share\IManager $shareManager,
+		Notifications $notifications,
+		AddressHandler $addressHandler,
+		IUserManager $userManager,
+		ICloudIdManager $cloudIdManager,
+		LoggerInterface $logger,
+		ICloudFederationFactory $cloudFederationFactory,
+		ICloudFederationProviderManager $cloudFederationProviderManager,
+		IEventDispatcher $eventDispatcher
 	) {
 		parent::__construct($appName, $request);
 
@@ -134,6 +134,8 @@ class RequestHandlerController extends OCSController {
 	 * @param string|null $ownerFederatedId Federated ID of the receiver
 	 * @return Http\DataResponse<Http::STATUS_OK, array<empty>, array{}>
 	 * @throws OCSException
+	 *
+	 * 200: Share created successfully
 	 */
 	public function createShare(
 		?string $remote = null,
@@ -173,9 +175,9 @@ class RequestHandlerController extends OCSController {
 			$provider = $this->cloudFederationProviderManager->getCloudFederationProvider('file');
 			$provider->shareReceived($share);
 			if ($sharedByFederatedId === $ownerFederatedId) {
-					$this->eventDispatcher->dispatchTyped(new CriticalActionPerformedEvent('A new federated share with "%s" was created by "%s" and shared with "%s"', [$name, $ownerFederatedId, $shareWith]));
+				$this->eventDispatcher->dispatchTyped(new CriticalActionPerformedEvent('A new federated share with "%s" was created by "%s" and shared with "%s"', [$name, $ownerFederatedId, $shareWith]));
 			} else {
-					$this->eventDispatcher->dispatchTyped(new CriticalActionPerformedEvent('A new federated share with "%s" was shared by "%s" (resource owner is: "%s") and shared with "%s"', [$name, $sharedByFederatedId, $ownerFederatedId, $shareWith]));
+				$this->eventDispatcher->dispatchTyped(new CriticalActionPerformedEvent('A new federated share with "%s" was shared by "%s" (resource owner is: "%s") and shared with "%s"', [$name, $sharedByFederatedId, $ownerFederatedId, $shareWith]));
 			}
 		} catch (ProviderDoesNotExistsException $e) {
 			throw new OCSException('Server does not support federated cloud sharing', 503);
@@ -284,6 +286,8 @@ class RequestHandlerController extends OCSController {
 	 * @param string|null $token Shared secret between servers
 	 * @return Http\DataResponse<Http::STATUS_OK, array<empty>, array{}>
 	 * @throws OCSException
+	 *
+	 * 200: Share declined successfully
 	 */
 	public function declineShare(int $id, ?string $token = null) {
 		$notification = [
@@ -316,6 +320,8 @@ class RequestHandlerController extends OCSController {
 	 * @param string|null $token Shared secret between servers
 	 * @return Http\DataResponse<Http::STATUS_OK, array<empty>, array{}>
 	 * @throws OCSException
+	 *
+	 * 200: Share unshared successfully
 	 */
 	public function unshare(int $id, ?string $token = null) {
 		if (!$this->isS2SEnabled()) {

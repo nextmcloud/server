@@ -53,14 +53,13 @@ use OCP\Session\Exceptions\SessionNotAvailableException;
 use Psr\Log\LoggerInterface;
 
 class AuthSettingsController extends Controller {
-
 	/** @var IProvider */
 	private $tokenProvider;
 
 	/** @var ISession */
 	private $session;
 
-	/** IUserSession */
+	/** @var IUserSession */
 	private $userSession;
 
 	/** @var string */
@@ -91,15 +90,15 @@ class AuthSettingsController extends Controller {
 	 * @param LoggerInterface $logger
 	 */
 	public function __construct(string $appName,
-								IRequest $request,
-								IProvider $tokenProvider,
-								ISession $session,
-								ISecureRandom $random,
-								?string $userId,
-								IUserSession $userSession,
-								IManager $activityManager,
-								RemoteWipe $remoteWipe,
-								LoggerInterface $logger) {
+		IRequest $request,
+		IProvider $tokenProvider,
+		ISession $session,
+		ISecureRandom $random,
+		?string $userId,
+		IUserSession $userSession,
+		IManager $activityManager,
+		RemoteWipe $remoteWipe,
+		LoggerInterface $logger) {
 		parent::__construct($appName, $request);
 		$this->tokenProvider = $tokenProvider;
 		$this->uid = $userId;

@@ -49,12 +49,12 @@ interface IProvider {
 	 * @throws \RuntimeException when OpenSSL reports a problem
 	 */
 	public function generateToken(string $token,
-								  string $uid,
-								  string $loginName,
-								  ?string $password,
-								  string $name,
-								  int $type = IToken::TEMPORARY_TOKEN,
-								  int $remember = IToken::DO_NOT_REMEMBER): IToken;
+		string $uid,
+		string $loginName,
+		?string $password,
+		string $name,
+		int $type = IToken::TEMPORARY_TOKEN,
+		int $remember = IToken::DO_NOT_REMEMBER): IToken;
 
 	/**
 	 * Get a token by token id
@@ -108,6 +108,11 @@ interface IProvider {
 	 * Invalidate (delete) old session tokens
 	 */
 	public function invalidateOldTokens();
+
+	/**
+	 * Invalidate (delete) tokens last used before a given date
+	 */
+	public function invalidateLastUsedBefore(string $uid, int $before): void;
 
 	/**
 	 * Save the updated token

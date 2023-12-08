@@ -223,7 +223,7 @@ class UsersController extends Controller {
 
 				foreach ($groups as $key => $group) {
 					// $userCount += (int)$group['usercount'];
-					array_push($groupsNames, $group['name']);
+					$groupsNames[] = $group['name'];
 					// we prevent subadmins from looking up themselves
 					// so we lower the count of the groups he belongs to
 					if (array_key_exists($group['id'], $userGroups)) {
@@ -367,20 +367,20 @@ class UsersController extends Controller {
 	 * @return DataResponse
 	 */
 	public function setUserSettings(?string $avatarScope = null,
-									?string $displayname = null,
-									?string $displaynameScope = null,
-									?string $phone = null,
-									?string $phoneScope = null,
-									?string $email = null,
-									?string $emailScope = null,
-									?string $website = null,
-									?string $websiteScope = null,
-									?string $address = null,
-									?string $addressScope = null,
-									?string $twitter = null,
-									?string $twitterScope = null,
-									?string $fediverse = null,
-									?string $fediverseScope = null
+		?string $displayname = null,
+		?string $displaynameScope = null,
+		?string $phone = null,
+		?string $phoneScope = null,
+		?string $email = null,
+		?string $emailScope = null,
+		?string $website = null,
+		?string $websiteScope = null,
+		?string $address = null,
+		?string $addressScope = null,
+		?string $twitter = null,
+		?string $twitterScope = null,
+		?string $fediverse = null,
+		?string $fediverseScope = null
 	) {
 		$user = $this->userSession->getUser();
 		if (!$user instanceof IUser) {

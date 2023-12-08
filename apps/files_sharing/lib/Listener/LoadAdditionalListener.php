@@ -25,8 +25,8 @@ declare(strict_types=1);
  */
 namespace OCA\Files_Sharing\Listener;
 
-use OCA\Files_Sharing\AppInfo\Application;
 use OCA\Files\Event\LoadAdditionalScriptsEvent;
+use OCA\Files_Sharing\AppInfo\Application;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Share\IManager;
@@ -44,7 +44,7 @@ class LoadAdditionalListener implements IEventListener {
 
 		$shareManager = \OC::$server->get(IManager::class);
 		if ($shareManager->shareApiEnabled() && class_exists('\OCA\Files\App')) {
-			Util::addScript(Application::APP_ID, 'files_sharing', 'files');
+			Util::addInitScript(Application::APP_ID, 'init');
 		}
 	}
 }

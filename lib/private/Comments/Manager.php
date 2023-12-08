@@ -40,8 +40,8 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IEmojiHelper;
-use OCP\IUser;
 use OCP\IInitialStateService;
+use OCP\IUser;
 use OCP\PreConditionNotMetException;
 use OCP\Util;
 use Psr\Log\LoggerInterface;
@@ -66,11 +66,11 @@ class Manager implements ICommentsManager {
 	protected array $displayNameResolvers = [];
 
 	public function __construct(IDBConnection $dbConn,
-								LoggerInterface $logger,
-								IConfig $config,
-								ITimeFactory $timeFactory,
-								IEmojiHelper $emojiHelper,
-								IInitialStateService $initialStateService) {
+		LoggerInterface $logger,
+		IConfig $config,
+		ITimeFactory $timeFactory,
+		IEmojiHelper $emojiHelper,
+		IInitialStateService $initialStateService) {
 		$this->dbConn = $dbConn;
 		$this->logger = $logger;
 		$this->config = $config;
@@ -501,6 +501,22 @@ class Manager implements ICommentsManager {
 					)
 				);
 			}
+		} elseif ($lastKnownCommentId > 0) {
+			// We didn't find the "$lastKnownComment" but we still use the ID as an offset.
+			// This is required as a fall-back for expired messages in talk and deleted comments in other apps.
+			if ($sortDirection === 'desc') {
+				if ($includeLastKnown) {
+					$query->andWhere($query->expr()->lte('id', $query->createNamedParameter($lastKnownCommentId)));
+				} else {
+					$query->andWhere($query->expr()->lt('id', $query->createNamedParameter($lastKnownCommentId)));
+				}
+			} else {
+				if ($includeLastKnown) {
+					$query->andWhere($query->expr()->gte('id', $query->createNamedParameter($lastKnownCommentId)));
+				} else {
+					$query->andWhere($query->expr()->gt('id', $query->createNamedParameter($lastKnownCommentId)));
+				}
+			}
 		}
 
 		$resultStatement = $query->execute();
@@ -520,8 +536,8 @@ class Manager implements ICommentsManager {
 	 * @param int $id the comment to look for
 	 */
 	protected function getLastKnownComment(string $objectType,
-										   string $objectId,
-										   int $id): ?IComment {
+		string $objectId,
+		int $id): ?IComment {
 		$query = $this->dbConn->getQueryBuilder();
 		$query->select('*')
 			->from('comments')

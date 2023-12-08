@@ -25,8 +25,8 @@ declare(strict_types=1);
  */
 namespace OCA\Files_External\Listener;
 
-use OCA\Files_External\AppInfo\Application;
 use OCA\Files\Event\LoadAdditionalScriptsEvent;
+use OCA\Files_External\AppInfo\Application;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -41,7 +41,8 @@ class LoadAdditionalListener implements IEventListener {
 	public function __construct(
 		private IConfig $config,
 		private IInitialState $initialState,
-	) {}
+	) {
+	}
 
 	public function handle(Event $event): void {
 		if (!($event instanceof LoadAdditionalScriptsEvent)) {
@@ -50,6 +51,7 @@ class LoadAdditionalListener implements IEventListener {
 
 		$allowUserMounting = $this->config->getAppValue('files_external', 'allow_user_mounting', 'no') === 'yes';
 		$this->initialState->provideInitialState('allowUserMounting', $allowUserMounting);
-		Util::addScript(Application::APP_ID, 'main', 'files');
+
+		Util::addInitScript(Application::APP_ID, 'init');
 	}
 }

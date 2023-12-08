@@ -37,14 +37,13 @@ use OCA\UserStatus\Service\StatusService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\OCS\OCSBadRequestException;
 use OCP\AppFramework\OCS\OCSNotFoundException;
-use OCP\ILogger;
 use OCP\IRequest;
+use Psr\Log\LoggerInterface;
 use Test\TestCase;
 use Throwable;
 
 class UserStatusControllerTest extends TestCase {
-
-	/** @var ILogger|\PHPUnit\Framework\MockObject\MockObject */
+	/** @var LoggerInterface|\PHPUnit\Framework\MockObject\MockObject */
 	private $logger;
 
 	/** @var StatusService|\PHPUnit\Framework\MockObject\MockObject */
@@ -58,7 +57,7 @@ class UserStatusControllerTest extends TestCase {
 
 		$request = $this->createMock(IRequest::class);
 		$userId = 'john.doe';
-		$this->logger = $this->createMock(ILogger::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->service = $this->createMock(StatusService::class);
 
 		$this->controller = new UserStatusController('user_status', $request, $userId, $this->logger, $this->service);
@@ -111,14 +110,14 @@ class UserStatusControllerTest extends TestCase {
 	 * @dataProvider setStatusDataProvider
 	 */
 	public function testSetStatus(string $statusType,
-								  ?string $statusIcon,
-								  ?string $message,
-								  ?int $clearAt,
-								  bool $expectSuccess,
-								  bool $expectException,
-								  ?Throwable $exception,
-								  bool $expectLogger,
-								  ?string $expectedLogMessage): void {
+		?string $statusIcon,
+		?string $message,
+		?int $clearAt,
+		bool $expectSuccess,
+		bool $expectException,
+		?Throwable $exception,
+		bool $expectLogger,
+		?string $expectedLogMessage): void {
 		$userStatus = $this->getUserStatus();
 
 		if ($expectException) {
@@ -179,12 +178,12 @@ class UserStatusControllerTest extends TestCase {
 	 * @dataProvider setPredefinedMessageDataProvider
 	 */
 	public function testSetPredefinedMessage(string $messageId,
-											 ?int $clearAt,
-											 bool $expectSuccess,
-											 bool $expectException,
-											 ?Throwable $exception,
-											 bool $expectLogger,
-											 ?string $expectedLogMessage): void {
+		?int $clearAt,
+		bool $expectSuccess,
+		bool $expectException,
+		?Throwable $exception,
+		bool $expectLogger,
+		?string $expectedLogMessage): void {
 		$userStatus = $this->getUserStatus();
 
 		if ($expectException) {
@@ -249,14 +248,14 @@ class UserStatusControllerTest extends TestCase {
 	 * @dataProvider setCustomMessageDataProvider
 	 */
 	public function testSetCustomMessage(?string $statusIcon,
-										 string $message,
-										 ?int $clearAt,
-										 bool $expectSuccess,
-										 bool $expectException,
-										 ?Throwable $exception,
-										 bool $expectLogger,
-										 ?string $expectedLogMessage,
-										 bool $expectSuccessAsReset = false): void {
+		string $message,
+		?int $clearAt,
+		bool $expectSuccess,
+		bool $expectException,
+		?Throwable $exception,
+		bool $expectLogger,
+		?string $expectedLogMessage,
+		bool $expectSuccessAsReset = false): void {
 		$userStatus = $this->getUserStatus();
 
 		if ($expectException) {

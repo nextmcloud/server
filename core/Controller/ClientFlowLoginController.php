@@ -46,6 +46,7 @@ use OCP\AppFramework\Http\Attribute\IgnoreOpenAPI;
 use OCP\AppFramework\Http\Attribute\UseSession;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\StandaloneTemplateResponse;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Defaults;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IL10N;
@@ -76,6 +77,7 @@ class ClientFlowLoginController extends Controller {
 		private AccessTokenMapper $accessTokenMapper,
 		private ICrypto $crypto,
 		private IEventDispatcher $eventDispatcher,
+		private ITimeFactory $timeFactory,
 	) {
 		parent::__construct($appName, $request);
 	}
@@ -179,8 +181,8 @@ class ClientFlowLoginController extends Controller {
 	 */
 	#[UseSession]
 	public function grantPage(string $stateToken = '',
-				  string $clientIdentifier = '',
-				  int $direct = 0): StandaloneTemplateResponse {
+		string $clientIdentifier = '',
+		int $direct = 0): StandaloneTemplateResponse {
 		if (!$this->isValidToken($stateToken)) {
 			return $this->stateTokenForbiddenResponse();
 		}
@@ -231,7 +233,7 @@ class ClientFlowLoginController extends Controller {
 	 */
 	#[UseSession]
 	public function generateAppPassword(string $stateToken,
-										string $clientIdentifier = '') {
+		string $clientIdentifier = '') {
 		if (!$this->isValidToken($stateToken)) {
 			$this->session->remove(self::STATE_NAME);
 			return $this->stateTokenForbiddenResponse();
@@ -287,6 +289,7 @@ class ClientFlowLoginController extends Controller {
 			$accessToken->setEncryptedToken($this->crypto->encrypt($token, $code));
 			$accessToken->setHashedCode(hash('sha512', $code));
 			$accessToken->setTokenId($generatedToken->getId());
+			$accessToken->setCodeCreatedAt($this->timeFactory->now()->getTimestamp());
 			$this->accessTokenMapper->insert($accessToken);
 
 			$redirectUri = $client->getRedirectUri();

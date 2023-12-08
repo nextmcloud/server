@@ -56,7 +56,7 @@
 						class="button"
 						:class="{ hidden: !updaterEnabled }">{{ t('updatenotification', 'Download now') }}</a>
 					<span v-if="updaterEnabled && !webUpdaterEnabled">
-						{{ t('updatenotification', 'Please use the command line updater to update.') }}
+						{{ t('updatenotification', 'Web updater is disabled. Please use the command line updater or the appropriate update mechanism for your installation method (e.g. Docker pull) to update.') }}
 					</span>
 					<NcActions v-if="whatsNewData || changelogURL"
 						:force-menu="true"
@@ -482,9 +482,6 @@ export default {
 					cursor: pointer;
 				}
 			}
-			&:first-of-type {
-				margin-top: 0;
-			}
 		}
 		h4 {
 			margin-block-end: 0.7rem;
@@ -510,6 +507,9 @@ export default {
 			cursor: pointer;
 			margin-left: 3px;
 			display: inline-block;
+			padding: 10px;
+			border-radius: 10px;
+			border: 2px solid var(--color-border-dark);
 			.icon-update-menu {
 				cursor: inherit;
 				.icon-triangle-s {

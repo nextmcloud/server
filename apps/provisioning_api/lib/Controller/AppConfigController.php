@@ -68,13 +68,13 @@ class AppConfigController extends OCSController {
 	 * @param IAppConfig $appConfig
 	 */
 	public function __construct(string $appName,
-								IRequest $request,
-								IConfig $config,
-								IAppConfig $appConfig,
-								IUserSession $userSession,
-								IL10N $l10n,
-								IGroupManager $groupManager,
-								IManager $settingManager) {
+		IRequest $request,
+		IConfig $config,
+		IAppConfig $appConfig,
+		IUserSession $userSession,
+		IL10N $l10n,
+		IGroupManager $groupManager,
+		IManager $settingManager) {
 		parent::__construct($appName, $request);
 		$this->config = $config;
 		$this->appConfig = $appConfig;
@@ -88,6 +88,8 @@ class AppConfigController extends OCSController {
 	 * Get a list of apps
 	 *
 	 * @return DataResponse<Http::STATUS_OK, array{data: string[]}, array{}>
+	 *
+	 * 200: Apps returned
 	 */
 	public function getApps(): DataResponse {
 		return new DataResponse([

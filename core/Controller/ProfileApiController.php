@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace OC\Core\Controller;
 
 use OC\Core\Db\ProfileConfigMapper;
+use OC\Profile\ProfileManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCS\OCSBadRequestException;
@@ -37,7 +38,6 @@ use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 use OCP\IUserManager;
 use OCP\IUserSession;
-use OC\Profile\ProfileManager;
 
 class ProfileApiController extends OCSController {
 	public function __construct(
@@ -56,7 +56,7 @@ class ProfileApiController extends OCSController {
 	 * @PasswordConfirmationRequired
 	 * @UserRateThrottle(limit=40, period=600)
 	 *
-	 * Update the visiblity of a parameter
+	 * Update the visibility of a parameter
 	 *
 	 * @param string $targetUserId ID of the user
 	 * @param string $paramId ID of the parameter
