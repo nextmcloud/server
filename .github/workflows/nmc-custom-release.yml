@@ -29,16 +29,16 @@ jobs:
     uses: nextmcloud/.github/.github/workflows/nmc-custom-assembly.yml@nmc/2027-build-test-rtoth
     with:
       trunk: 'master'
-      stable: ${{ vars.CUSTOM_BRANCH || 'stable26' }}
-      result: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH || 'nmcstable/26.0.9', inputs.increment ) }}
+      stable: ${{ vars.CUSTOM_BRANCH_26_26 || 'stable26' }}
+      result: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH_26 || 'nmcstable/26.0.9', inputs.increment ) }}
     secrets: inherit
   build-custom:
     uses: nextmcloud/.github/.github/workflows/nmc-custom-server-build.yml@nmc/2027-build-test-rtoth
     needs: assemble-custom
     with:
-      stable: ${{ vars.CUSTOM_BRANCH || 'stable26' }}
-      assembly: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH || 'stable26', inputs.increment ) }}
-      tag: ${{ format('{0}-{1}', vars.CUSTOM_BRANCH || 'stable26' , inputs.increment) }}
+      stable: ${{ vars.CUSTOM_BRANCH_26 || 'stable26' }}
+      assembly: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH_26 || 'stable26', inputs.increment ) }}
+      tag: ${{ format('{0}-{1}', vars.CUSTOM_BRANCH_26 || 'stable26' , inputs.increment) }}
       prerelease: false
     secrets: inherit
 
