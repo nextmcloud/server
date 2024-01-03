@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         custombase: [ "master", "stable26", stable27 ]
-    uses: nextmcloud/.github/.github/workflows/nmc-custom-assembly.yml@nmc/2027-custom-build-test-rtoth
+    uses: nextmcloud/.github/.github/workflows/nmc-custom-assembly.yml@nmc/2027-build-test-rtoth
     with:
       trunk: "master"
       stable: ${{ matrix.custombase }}
