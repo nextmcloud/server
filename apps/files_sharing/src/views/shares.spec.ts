@@ -21,25 +21,28 @@
  */
 /* eslint-disable n/no-extraneous-import */
 import { expect } from '@jest/globals'
+import { Folder, Navigation, View, getNavigation } from '@nextcloud/files'
 import axios from '@nextcloud/axios'
 
-import { type Navigation } from '../../../files/src/services/Navigation'
+import '../main'
 import { type OCSResponse } from '../services/SharingService'
-import NavigationService from '../../../files/src/services/Navigation'
 import registerSharingViews from './shares'
 
-import '../main'
-import { Folder } from '@nextcloud/files'
+declare global {
+	interface Window {
+		_nc_navigation?: Navigation
+	}
+}
 
 describe('Sharing views definition', () => {
 	let Navigation
 	beforeEach(() => {
-		Navigation = new NavigationService()
-		window.OCP = { Files: { Navigation } }
+		Navigation = getNavigation()
+		expect(window._nc_navigation).toBeDefined()
 	})
 
 	afterAll(() => {
-		delete window.OCP
+		delete window._nc_navigation
 	})
 
 	test('Default values', () => {
@@ -48,8 +51,8 @@ describe('Sharing views definition', () => {
 		expect(Navigation.views.length).toBe(0)
 
 		registerSharingViews()
-		const shareOverviewView = Navigation.views.find(view => view.id === 'shareoverview') as Navigation
-		const sharesChildViews = Navigation.views.filter(view => view.parent === 'shareoverview') as Navigation[]
+		const shareOverviewView = Navigation.views.find(view => view.id === 'shareoverview') as View
+		const sharesChildViews = Navigation.views.filter(view => view.parent === 'shareoverview') as View[]
 
 		expect(Navigation.register).toHaveBeenCalledTimes(6)
 
@@ -67,18 +70,20 @@ describe('Sharing views definition', () => {
 		expect(shareOverviewView?.getContents).toBeDefined()
 
 		const dataProvider = [
-			{ id: 'sharingin', name: 'Shared with you', caption: 'List of files that are shared with you.' },
-			{ id: 'sharingout', name: 'Shared with others', caption: 'List of files that you shared with others.' },
-			{ id: 'sharinglinks', name: 'Shared by link', caption: 'List of files that are shared by link.' },
-			{ id: 'deletedshares', name: 'Deleted shares', caption: 'List of shares that you removed yourself from.' },
-			{ id: 'pendingshares', name: 'Pending shares', caption: 'List of unapproved shares.' },
+			{ id: 'sharingin', name: 'Shared with you' },
+			{ id: 'sharingout', name: 'Shared with others' },
+			{ id: 'sharinglinks', name: 'Shared by link' },
+			{ id: 'deletedshares', name: 'Deleted shares' },
+			{ id: 'pendingshares', name: 'Pending shares' },
 		]
 
 		sharesChildViews.forEach((view, index) => {
 			expect(view?.id).toBe(dataProvider[index].id)
 			expect(view?.parent).toBe('shareoverview')
 			expect(view?.name).toBe(dataProvider[index].name)
-			expect(view?.caption).toBe(dataProvider[index].caption)
+			expect(view?.caption).toBeDefined()
+			expect(view?.emptyTitle).toBeDefined()
+			expect(view?.emptyCaption).toBeDefined()
 			expect(view?.icon).toBe('<svg>SvgMock</svg>')
 			expect(view?.order).toBe(index + 1)
 			expect(view?.columns).toStrictEqual([])
@@ -90,12 +95,12 @@ describe('Sharing views definition', () => {
 describe('Sharing views contents', () => {
 	let Navigation
 	beforeEach(() => {
-		Navigation = new NavigationService()
-		window.OCP = { Files: { Navigation } }
+		Navigation = getNavigation()
+		expect(window._nc_navigation).toBeDefined()
 	})
 
 	afterAll(() => {
-		delete window.OCP
+		delete window._nc_navigation
 	})
 
 	test('Sharing overview get contents', async () => {
@@ -110,13 +115,13 @@ describe('Sharing views contents', () => {
 						},
 						data: [],
 					},
-				} as OCSResponse,
+				} as OCSResponse<any>,
 			}
 		})
 
 		registerSharingViews()
 		expect(Navigation.views.length).toBe(6)
-		Navigation.views.forEach(async (view: Navigation) => {
+		Navigation.views.forEach(async (view: View) => {
 			const content = await view.getContents('/')
 			expect(content.contents).toStrictEqual([])
 			expect(content.folder).toBeInstanceOf(Folder)

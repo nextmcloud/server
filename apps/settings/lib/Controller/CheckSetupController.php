@@ -48,7 +48,6 @@ namespace OCA\Settings\Controller;
 use bantu\IniGetWrapper\IniGetWrapper;
 use DirectoryIterator;
 use Doctrine\DBAL\Exception;
-use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\TransactionIsolationLevel;
 use GuzzleHttp\Exception\ClientException;
 use OC;
@@ -62,19 +61,15 @@ use OC\IntegrityCheck\Checker;
 use OC\Lock\NoopLockingProvider;
 use OC\Lock\DBLockingProvider;
 use OC\MemoryInfo;
-use OCA\Settings\SetupChecks\CheckUserCertificates;
-use OCA\Settings\SetupChecks\LdapInvalidUuids;
-use OCA\Settings\SetupChecks\LegacySSEKeyFormat;
-use OCA\Settings\SetupChecks\PhpDefaultCharset;
-use OCA\Settings\SetupChecks\PhpOutputBuffering;
-use OCA\Settings\SetupChecks\SupportedDatabase;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\IgnoreOpenAPI;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\RedirectResponse;
+use OCP\DB\Events\AddMissingColumnsEvent;
 use OCP\DB\Events\AddMissingIndicesEvent;
+use OCP\DB\Events\AddMissingPrimaryKeyEvent;
 use OCP\DB\Types;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Http\Client\IClientService;
@@ -88,10 +83,10 @@ use OCP\ITempManager;
 use OCP\IURLGenerator;
 use OCP\Lock\ILockingProvider;
 use OCP\Notification\IManager;
+use OCP\Security\Bruteforce\IThrottler;
 use OCP\Security\ISecureRandom;
+use OCP\SetupCheck\ISetupCheckManager;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\EventDispatcher\GenericEvent;
 
 #[IgnoreOpenAPI]
 class CheckSetupController extends Controller {
@@ -108,8 +103,6 @@ class CheckSetupController extends Controller {
 	/** @var LoggerInterface */
 	private $logger;
 	/** @var IEventDispatcher */
-	private $eventDispatcher;
-	/** @var EventDispatcherInterface */
 	private $dispatcher;
 	/** @var Connection */
 	private $db;
@@ -125,6 +118,8 @@ class CheckSetupController extends Controller {
 	private $iniGetWrapper;
 	/** @var IDBConnection */
 	private $connection;
+	/** @var IThrottler */
+	private $throttler;
 	/** @var ITempManager */
 	private $tempManager;
 	/** @var IManager */
@@ -133,6 +128,7 @@ class CheckSetupController extends Controller {
 	private $appManager;
 	/** @var IServerContainer */
 	private $serverContainer;
+	private ISetupCheckManager $setupCheckManager;
 
 	public function __construct($AppName,
 								IRequest $request,
@@ -142,8 +138,7 @@ class CheckSetupController extends Controller {
 								IL10N $l10n,
 								Checker $checker,
 								LoggerInterface $logger,
-								IEventDispatcher $eventDispatcher,
-								EventDispatcherInterface $dispatcher,
+								IEventDispatcher $dispatcher,
 								Connection $db,
 								ILockingProvider $lockingProvider,
 								IDateTimeFormatter $dateTimeFormatter,
@@ -151,10 +146,12 @@ class CheckSetupController extends Controller {
 								ISecureRandom $secureRandom,
 								IniGetWrapper $iniGetWrapper,
 								IDBConnection $connection,
+								IThrottler $throttler,
 								ITempManager $tempManager,
 								IManager $manager,
 								IAppManager $appManager,
-								IServerContainer $serverContainer
+								IServerContainer $serverContainer,
+								ISetupCheckManager $setupCheckManager,
 	) {
 		parent::__construct($AppName, $request);
 		$this->config = $config;
@@ -163,9 +160,9 @@ class CheckSetupController extends Controller {
 		$this->l10n = $l10n;
 		$this->checker = $checker;
 		$this->logger = $logger;
-		$this->eventDispatcher = $eventDispatcher;
 		$this->dispatcher = $dispatcher;
 		$this->db = $db;
+		$this->throttler = $throttler;
 		$this->lockingProvider = $lockingProvider;
 		$this->dateTimeFormatter = $dateTimeFormatter;
 		$this->memoryInfo = $memoryInfo;
@@ -176,6 +173,16 @@ class CheckSetupController extends Controller {
 		$this->manager = $manager;
 		$this->appManager = $appManager;
 		$this->serverContainer = $serverContainer;
+		$this->setupCheckManager = $setupCheckManager;
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 * @return DataResponse
+	 */
+	public function setupCheckManager(): DataResponse {
+		return new DataResponse($this->setupCheckManager->runAll());
 	}
 
 	/**
@@ -184,54 +191,6 @@ class CheckSetupController extends Controller {
 	 */
 	private function isFairUseOfFreePushService(): bool {
 		return $this->manager->isFairUseOfFreePushService();
-	}
-
-	/**
-	 * Checks if the server can connect to the internet using HTTPS and HTTP
-	 * @return bool
-	 */
-	private function hasInternetConnectivityProblems(): bool {
-		if ($this->config->getSystemValue('has_internet_connection', true) === false) {
-			return false;
-		}
-
-		$siteArray = $this->config->getSystemValue('connectivity_check_domains', [
-			'www.nextcloud.com', 'www.startpage.com', 'www.eff.org', 'www.edri.org'
-		]);
-
-		foreach ($siteArray as $site) {
-			if ($this->isSiteReachable($site)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Checks if the Nextcloud server can connect to a specific URL
-	 * @param string $site site domain or full URL with http/https protocol
-	 * @return bool
-	 */
-	private function isSiteReachable(string $site): bool {
-		try {
-			$client = $this->clientService->newClient();
-			// if there is no protocol, test http:// AND https://
-			if (preg_match('/^https?:\/\//', $site) !== 1) {
-				$httpSite = 'http://' . $site . '/';
-				$client->get($httpSite);
-				$httpsSite = 'https://' . $site . '/';
-				$client->get($httpsSite);
-			} else {
-				$client->get($site);
-			}
-		} catch (\Exception $e) {
-			$this->logger->error('Cannot connect to: ' . $site, [
-				'app' => 'internet_connection_check',
-				'exception' => $e,
-			]);
-			return false;
-		}
-		return true;
 	}
 
 	/**
@@ -300,7 +259,7 @@ class CheckSetupController extends Controller {
 		}
 
 		// Check if NSS and perform heuristic check
-		if (strpos($versionString, 'NSS/') === 0) {
+		if (str_starts_with($versionString, 'NSS/')) {
 			try {
 				$firstClient = $this->clientService->newClient();
 				$firstClient->get('https://nextcloud.com/');
@@ -321,25 +280,6 @@ class CheckSetupController extends Controller {
 		}
 
 		return '';
-	}
-
-	/**
-	 * Whether the version is outdated
-	 *
-	 * @return bool
-	 */
-	protected function isPhpOutdated(): bool {
-		return PHP_VERSION_ID < 80100;
-	}
-
-	/**
-	 * Whether the php version is still supported (at time of release)
-	 * according to: https://www.php.net/supported-versions.php
-	 *
-	 * @return array
-	 */
-	private function isPhpSupported(): array {
-		return ['eol' => $this->isPhpOutdated(), 'version' => PHP_VERSION];
 	}
 
 	/**
@@ -374,7 +314,8 @@ class CheckSetupController extends Controller {
 	 * @return bool
 	 */
 	private function isCorrectMemcachedPHPModuleInstalled() {
-		if ($this->config->getSystemValue('memcache.distributed', null) !== '\OC\Memcache\Memcached') {
+		$memcacheDistributedClass = $this->config->getSystemValue('memcache.distributed', null);
+		if ($memcacheDistributedClass === null || ltrim($memcacheDistributedClass, '\\') !== \OC\Memcache\Memcached::class) {
 			return true;
 		}
 
@@ -391,7 +332,7 @@ class CheckSetupController extends Controller {
 	 */
 	private function isSettimelimitAvailable() {
 		if (function_exists('set_time_limit')
-			&& strpos(ini_get('disable_functions'), 'set_time_limit') === false) {
+			&& !str_contains(ini_get('disable_functions'), 'set_time_limit')) {
 			return true;
 		}
 
@@ -551,11 +492,8 @@ Raw output
 		$indexInfo = new MissingIndexInformation();
 
 		// Dispatch event so apps can also hint for pending index updates if needed
-		$event = new GenericEvent($indexInfo);
-		$this->dispatcher->dispatch(IDBConnection::CHECK_MISSING_INDEXES_EVENT, $event);
-
 		$event = new AddMissingIndicesEvent();
-		$this->eventDispatcher->dispatchTyped($event);
+		$this->dispatcher->dispatchTyped($event);
 		$missingIndices = $event->getMissingIndices();
 
 		if ($missingIndices !== []) {
@@ -575,24 +513,50 @@ Raw output
 
 	protected function hasMissingPrimaryKeys(): array {
 		$info = new MissingPrimaryKeyInformation();
-		// Dispatch event so apps can also hint for pending index updates if needed
-		$event = new GenericEvent($info);
-		$this->dispatcher->dispatch(IDBConnection::CHECK_MISSING_PRIMARY_KEYS_EVENT, $event);
+		// Dispatch event so apps can also hint for pending key updates if needed
+		$event = new AddMissingPrimaryKeyEvent();
+		$this->dispatcher->dispatchTyped($event);
+		$missingKeys = $event->getMissingPrimaryKeys();
+
+		if (!empty($missingKeys)) {
+			$schema = new SchemaWrapper(\OCP\Server::get(Connection::class));
+			foreach ($missingKeys as $missingKey) {
+				if ($schema->hasTable($missingKey['tableName'])) {
+					$table = $schema->getTable($missingKey['tableName']);
+					if (!$table->hasPrimaryKey()) {
+						$info->addHintForMissingSubject($missingKey['tableName']);
+					}
+				}
+			}
+		}
 
 		return $info->getListOfMissingPrimaryKeys();
 	}
 
 	protected function hasMissingColumns(): array {
-		$indexInfo = new MissingColumnInformation();
-		// Dispatch event so apps can also hint for pending index updates if needed
-		$event = new GenericEvent($indexInfo);
-		$this->dispatcher->dispatch(IDBConnection::CHECK_MISSING_COLUMNS_EVENT, $event);
+		$columnInfo = new MissingColumnInformation();
+		// Dispatch event so apps can also hint for pending column updates if needed
+		$event = new AddMissingColumnsEvent();
+		$this->dispatcher->dispatchTyped($event);
+		$missingColumns = $event->getMissingColumns();
 
-		return $indexInfo->getListOfMissingColumns();
+		if (!empty($missingColumns)) {
+			$schema = new SchemaWrapper(\OCP\Server::get(Connection::class));
+			foreach ($missingColumns as $missingColumn) {
+				if ($schema->hasTable($missingColumn['tableName'])) {
+					$table = $schema->getTable($missingColumn['tableName']);
+					if (!$table->hasColumn($missingColumn['columnName'])) {
+						$columnInfo->addHintForMissingColumn($missingColumn['tableName'], $missingColumn['columnName']);
+					}
+				}
+			}
+		}
+
+		return $columnInfo->getListOfMissingColumns();
 	}
 
 	protected function isSqliteUsed() {
-		return strpos($this->config->getSystemValue('dbtype'), 'sqlite') !== false;
+		return str_contains($this->config->getSystemValue('dbtype'), 'sqlite');
 	}
 
 	protected function isReadOnlyConfig(): bool {
@@ -615,7 +579,7 @@ Raw output
 
 	protected function hasValidTransactionIsolationLevel(): bool {
 		try {
-			if ($this->db->getDatabasePlatform() instanceof SqlitePlatform) {
+			if ($this->connection->getDatabaseProvider() === IDBConnection::PLATFORM_SQLITE) {
 				return true;
 			}
 
@@ -813,7 +777,7 @@ Raw output
 		];
 
 		$schema = new SchemaWrapper($this->db);
-		$isSqlite = $this->db->getDatabasePlatform() instanceof SqlitePlatform;
+		$isSqlite = $this->connection->getDatabaseProvider() === IDBConnection::PLATFORM_SQLITE;
 		$pendingColumns = [];
 
 		foreach ($tables as $tableName => $columns) {
@@ -880,13 +844,6 @@ Raw output
 	 * @AuthorizedAdminSetting(settings=OCA\Settings\Settings\Admin\Overview)
 	 */
 	public function check() {
-		$phpDefaultCharset = new PhpDefaultCharset();
-		$phpOutputBuffering = new PhpOutputBuffering();
-		$legacySSEKeyFormat = new LegacySSEKeyFormat($this->l10n, $this->config, $this->urlGenerator);
-		$checkUserCertificates = new CheckUserCertificates($this->l10n, $this->config, $this->urlGenerator);
-		$supportedDatabases = new SupportedDatabase($this->l10n, $this->connection);
-		$ldapInvalidUuids = new LdapInvalidUuids($this->appManager, $this->l10n, $this->serverContainer);
-
 		return new DataResponse(
 			[
 				'isGetenvServerWorking' => !empty(getenv('PATH')),
@@ -900,13 +857,13 @@ Raw output
 				'cronInfo' => $this->getLastCronInfo(),
 				'cronErrors' => $this->getCronErrors(),
 				'isFairUseOfFreePushService' => $this->isFairUseOfFreePushService(),
-				'serverHasInternetConnectionProblems' => $this->hasInternetConnectivityProblems(),
+				'isBruteforceThrottled' => $this->throttler->getAttempts($this->request->getRemoteAddress()) !== 0,
+				'bruteforceRemoteAddress' => $this->request->getRemoteAddress(),
 				'isMemcacheConfigured' => $this->isMemcacheConfigured(),
 				'memcacheDocs' => $this->urlGenerator->linkToDocs('admin-performance'),
 				'isRandomnessSecure' => $this->isRandomnessSecure(),
 				'securityDocs' => $this->urlGenerator->linkToDocs('admin-security'),
 				'isUsedTlsLibOutdated' => $this->isUsedTlsLibOutdated(),
-				'phpSupported' => $this->isPhpSupported(),
 				'forwardedForHeadersWorking' => $this->forwardedForHeadersWorking(),
 				'reverseProxyDocs' => $this->urlGenerator->linkToDocs('admin-reverse-proxy'),
 				'isCorrectMemcachedPHPModuleInstalled' => $this->isCorrectMemcachedPHPModuleInstalled(),
@@ -931,14 +888,8 @@ Raw output
 				'isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed' => $this->isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed(),
 				'reverseProxyGeneratedURL' => $this->urlGenerator->getAbsoluteURL('index.php'),
 				'imageMagickLacksSVGSupport' => $this->imageMagickLacksSVGSupport(),
-				PhpDefaultCharset::class => ['pass' => $phpDefaultCharset->run(), 'description' => $phpDefaultCharset->description(), 'severity' => $phpDefaultCharset->severity()],
-				PhpOutputBuffering::class => ['pass' => $phpOutputBuffering->run(), 'description' => $phpOutputBuffering->description(), 'severity' => $phpOutputBuffering->severity()],
-				LegacySSEKeyFormat::class => ['pass' => $legacySSEKeyFormat->run(), 'description' => $legacySSEKeyFormat->description(), 'severity' => $legacySSEKeyFormat->severity(), 'linkToDocumentation' => $legacySSEKeyFormat->linkToDocumentation()],
-				CheckUserCertificates::class => ['pass' => $checkUserCertificates->run(), 'description' => $checkUserCertificates->description(), 'severity' => $checkUserCertificates->severity(), 'elements' => $checkUserCertificates->elements()],
-				'isDefaultPhoneRegionSet' => $this->config->getSystemValueString('default_phone_region', '') !== '',
-				SupportedDatabase::class => ['pass' => $supportedDatabases->run(), 'description' => $supportedDatabases->description(), 'severity' => $supportedDatabases->severity()],
 				'temporaryDirectoryWritable' => $this->isTemporaryDirectoryWritable(),
-				LdapInvalidUuids::class => ['pass' => $ldapInvalidUuids->run(), 'description' => $ldapInvalidUuids->description(), 'severity' => $ldapInvalidUuids->severity()],
+				'generic' => $this->setupCheckManager->runAll(),
 			]
 		);
 	}

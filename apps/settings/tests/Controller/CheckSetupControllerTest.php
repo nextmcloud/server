@@ -59,10 +59,11 @@ use OCP\ITempManager;
 use OCP\IURLGenerator;
 use OCP\Lock\ILockingProvider;
 use OCP\Notification\IManager;
+use OCP\Security\Bruteforce\IThrottler;
+use OCP\SetupCheck\ISetupCheckManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Test\TestCase;
 
 /**
@@ -89,11 +90,10 @@ class CheckSetupControllerTest extends TestCase {
 	/** @var Checker|\PHPUnit\Framework\MockObject\MockObject */
 	private $checker;
 	/** @var IEventDispatcher|\PHPUnit\Framework\MockObject\MockObject */
-	private $eventDispatcher;
-	/** @var EventDispatcherInterface|\PHPUnit\Framework\MockObject\MockObject */
 	private $dispatcher;
 	/** @var Connection|\PHPUnit\Framework\MockObject\MockObject */
 	private $db;
+	private IThrottler $throttler;
 	/** @var ILockingProvider|\PHPUnit\Framework\MockObject\MockObject */
 	private $lockingProvider;
 	/** @var IDateTimeFormatter|\PHPUnit\Framework\MockObject\MockObject */
@@ -114,6 +114,8 @@ class CheckSetupControllerTest extends TestCase {
 	private $appManager;
 	/** @var IServerContainer|MockObject */
 	private $serverContainer;
+	/** @var ISetupCheckManager|MockObject */
+	private $setupCheckManager;
 
 	/**
 	 * Holds a list of directories created during tests.
@@ -140,14 +142,13 @@ class CheckSetupControllerTest extends TestCase {
 			->willReturnCallback(function ($message, array $replace) {
 				return vsprintf($message, $replace);
 			});
-		$this->eventDispatcher = $this->createMock(IEventDispatcher::class);
-		$this->dispatcher = $this->getMockBuilder(EventDispatcherInterface::class)
-			->disableOriginalConstructor()->getMock();
+		$this->dispatcher = $this->createMock(IEventDispatcher::class);
 		$this->checker = $this->getMockBuilder('\OC\IntegrityCheck\Checker')
 				->disableOriginalConstructor()->getMock();
 		$this->logger = $this->getMockBuilder(LoggerInterface::class)->getMock();
 		$this->db = $this->getMockBuilder(Connection::class)
 			->disableOriginalConstructor()->getMock();
+		$this->throttler = $this->createMock(IThrottler::class);
 		$this->lockingProvider = $this->getMockBuilder(ILockingProvider::class)->getMock();
 		$this->dateTimeFormatter = $this->getMockBuilder(IDateTimeFormatter::class)->getMock();
 		$this->memoryInfo = $this->getMockBuilder(MemoryInfo::class)
@@ -161,6 +162,7 @@ class CheckSetupControllerTest extends TestCase {
 		$this->notificationManager = $this->getMockBuilder(IManager::class)->getMock();
 		$this->appManager = $this->createMock(IAppManager::class);
 		$this->serverContainer = $this->createMock(IServerContainer::class);
+		$this->setupCheckManager = $this->createMock(ISetupCheckManager::class);
 		$this->checkSetupController = $this->getMockBuilder(CheckSetupController::class)
 			->setConstructorArgs([
 				'settings',
@@ -171,7 +173,6 @@ class CheckSetupControllerTest extends TestCase {
 				$this->l10n,
 				$this->checker,
 				$this->logger,
-				$this->eventDispatcher,
 				$this->dispatcher,
 				$this->db,
 				$this->lockingProvider,
@@ -180,10 +181,12 @@ class CheckSetupControllerTest extends TestCase {
 				$this->secureRandom,
 				$this->iniGetWrapper,
 				$this->connection,
+				$this->throttler,
 				$this->tempManager,
 				$this->notificationManager,
 				$this->appManager,
 				$this->serverContainer,
+				$this->setupCheckManager,
 			])
 			->setMethods([
 				'isReadOnlyConfig',
@@ -226,73 +229,6 @@ class CheckSetupControllerTest extends TestCase {
 		$this->dirsToRemove = [];
 	}
 
-	public function testIsInternetConnectionWorkingDisabledViaConfig() {
-		$this->config->expects($this->once())
-			->method('getSystemValue')
-			->with('has_internet_connection', true)
-			->willReturn(false);
-
-		$this->assertFalse(
-			self::invokePrivate(
-				$this->checkSetupController,
-				'hasInternetConnectivityProblems'
-			)
-		);
-	}
-
-	public function testIsInternetConnectionWorkingCorrectly() {
-		$this->config->expects($this->exactly(2))
-			->method('getSystemValue')
-			->withConsecutive(
-				['has_internet_connection', true],
-				['connectivity_check_domains', ['www.nextcloud.com', 'www.startpage.com', 'www.eff.org', 'www.edri.org']],
-			)->willReturnArgument(1);
-
-		$client = $this->getMockBuilder('\OCP\Http\Client\IClient')
-			->disableOriginalConstructor()->getMock();
-		$client->expects($this->any())
-			->method('get');
-
-		$this->clientService->expects($this->once())
-			->method('newClient')
-			->willReturn($client);
-
-
-		$this->assertFalse(
-			self::invokePrivate(
-				$this->checkSetupController,
-				'hasInternetConnectivityProblems'
-			)
-		);
-	}
-
-	public function testIsInternetConnectionFail() {
-		$this->config->expects($this->exactly(2))
-			->method('getSystemValue')
-			->withConsecutive(
-				['has_internet_connection', true],
-				['connectivity_check_domains', ['www.nextcloud.com', 'www.startpage.com', 'www.eff.org', 'www.edri.org']],
-			)->willReturnArgument(1);
-
-		$client = $this->getMockBuilder('\OCP\Http\Client\IClient')
-			->disableOriginalConstructor()->getMock();
-		$client->expects($this->any())
-			->method('get')
-			->will($this->throwException(new \Exception()));
-
-		$this->clientService->expects($this->exactly(4))
-			->method('newClient')
-			->willReturn($client);
-
-		$this->assertTrue(
-			self::invokePrivate(
-				$this->checkSetupController,
-				'hasInternetConnectivityProblems'
-			)
-		);
-	}
-
-
 	public function testIsMemcacheConfiguredFalse() {
 		$this->config->expects($this->once())
 			->method('getSystemValue')
@@ -318,36 +254,6 @@ class CheckSetupControllerTest extends TestCase {
 				$this->checkSetupController,
 				'isMemcacheConfigured'
 			)
-		);
-	}
-
-	public function testIsPhpSupportedFalse() {
-		$this->checkSetupController
-			->expects($this->once())
-			->method('isPhpOutdated')
-			->willReturn(true);
-
-		$this->assertEquals(
-			['eol' => true, 'version' => PHP_VERSION],
-			self::invokePrivate($this->checkSetupController, 'isPhpSupported')
-		);
-	}
-
-	public function testIsPhpSupportedTrue() {
-		$this->checkSetupController
-			->expects($this->exactly(2))
-			->method('isPhpOutdated')
-			->willReturn(false);
-
-		$this->assertEquals(
-			['eol' => false, 'version' => PHP_VERSION],
-			self::invokePrivate($this->checkSetupController, 'isPhpSupported')
-		);
-
-
-		$this->assertEquals(
-			['eol' => false, 'version' => PHP_VERSION],
-			self::invokePrivate($this->checkSetupController, 'isPhpSupported')
 		);
 	}
 
@@ -438,6 +344,7 @@ class CheckSetupControllerTest extends TestCase {
 			->willReturnMap([
 				['files_external', 'user_certificate_scan', '', '["a", "b"]'],
 				['core', 'cronErrors', '', ''],
+				['dav', 'needs_system_address_book_sync', 'no', 'no'],
 			]);
 		$this->config->expects($this->any())
 			->method('getSystemValue')
@@ -455,23 +362,8 @@ class CheckSetupControllerTest extends TestCase {
 				['X-Forwarded-Host', '']
 			]);
 
-		$client = $this->getMockBuilder('\OCP\Http\Client\IClient')
-			->disableOriginalConstructor()->getMock();
-		$client->expects($this->exactly(4))
-			->method('get')
-			->withConsecutive(
-				['http://www.nextcloud.com/', []],
-				['http://www.startpage.com/', []],
-				['http://www.eff.org/', []],
-				['http://www.edri.org/', []]
-			)->will($this->throwException(new \Exception()));
-		$this->clientService->expects($this->exactly(4))
-			->method('newClient')
-			->willReturn($client);
-		$this->checkSetupController
-			->expects($this->once())
-			->method('isPhpOutdated')
-			->willReturn(true);
+		$this->clientService->expects($this->never())
+			->method('newClient');
 		$this->checkSetupController
 			->expects($this->once())
 			->method('getOpcacheSetupRecommendations')
@@ -622,16 +514,11 @@ class CheckSetupControllerTest extends TestCase {
 					'backgroundJobsUrl' => 'https://example.org',
 				],
 				'cronErrors' => [],
-				'serverHasInternetConnectionProblems' => true,
 				'isMemcacheConfigured' => true,
 				'memcacheDocs' => 'http://docs.example.org/server/go.php?to=admin-performance',
 				'isRandomnessSecure' => self::invokePrivate($this->checkSetupController, 'isRandomnessSecure'),
 				'securityDocs' => 'https://docs.example.org/server/8.1/admin_manual/configuration_server/hardening.html',
 				'isUsedTlsLibOutdated' => '',
-				'phpSupported' => [
-					'eol' => true,
-					'version' => PHP_VERSION
-				],
 				'forwardedForHeadersWorking' => false,
 				'reverseProxyDocs' => 'reverse-proxy-doc-link',
 				'isCorrectMemcachedPHPModuleInstalled' => true,
@@ -655,16 +542,12 @@ class CheckSetupControllerTest extends TestCase {
 				'isMysqlUsedWithoutUTF8MB4' => false,
 				'isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed' => true,
 				'reverseProxyGeneratedURL' => 'https://server/index.php',
-				'OCA\Settings\SetupChecks\PhpDefaultCharset' => ['pass' => true, 'description' => 'PHP configuration option default_charset should be UTF-8', 'severity' => 'warning'],
-				'OCA\Settings\SetupChecks\PhpOutputBuffering' => ['pass' => true, 'description' => 'PHP configuration option output_buffering must be disabled', 'severity' => 'error'],
-				'OCA\Settings\SetupChecks\LegacySSEKeyFormat' => ['pass' => true, 'description' => 'The old server-side-encryption format is enabled. We recommend disabling this.', 'severity' => 'warning', 'linkToDocumentation' => ''],
-				'OCA\Settings\SetupChecks\CheckUserCertificates' => ['pass' => false, 'description' => 'There are some user imported SSL certificates present, that are not used anymore with Nextcloud 21. They can be imported on the command line via "occ security:certificates:import" command. Their paths inside the data directory are shown below.', 'severity' => 'warning', 'elements' => ['a', 'b']],
 				'imageMagickLacksSVGSupport' => false,
-				'isDefaultPhoneRegionSet' => false,
-				'OCA\Settings\SetupChecks\SupportedDatabase' => ['pass' => true, 'description' => '', 'severity' => 'info'],
 				'isFairUseOfFreePushService' => false,
 				'temporaryDirectoryWritable' => false,
-				\OCA\Settings\SetupChecks\LdapInvalidUuids::class => ['pass' => true, 'description' => 'Invalid UUIDs of LDAP users or groups have been found. Please review your "Override UUID detection" settings in the Expert part of the LDAP configuration and use "occ ldap:update-uuid" to update them.', 'severity' => 'warning'],
+				'isBruteforceThrottled' => false,
+				'bruteforceRemoteAddress' => '',
+				'generic' => [],
 			]
 		);
 		$this->assertEquals($expected, $this->checkSetupController->check());
@@ -681,7 +564,6 @@ class CheckSetupControllerTest extends TestCase {
 				$this->l10n,
 				$this->checker,
 				$this->logger,
-				$this->eventDispatcher,
 				$this->dispatcher,
 				$this->db,
 				$this->lockingProvider,
@@ -690,10 +572,12 @@ class CheckSetupControllerTest extends TestCase {
 				$this->secureRandom,
 				$this->iniGetWrapper,
 				$this->connection,
+				$this->throttler,
 				$this->tempManager,
 				$this->notificationManager,
 				$this->appManager,
-				$this->serverContainer
+				$this->serverContainer,
+				$this->setupCheckManager,
 			])
 			->setMethods(null)->getMock();
 
@@ -1409,7 +1293,6 @@ Array
 			$this->l10n,
 			$this->checker,
 			$this->logger,
-			$this->eventDispatcher,
 			$this->dispatcher,
 			$this->db,
 			$this->lockingProvider,
@@ -1418,10 +1301,12 @@ Array
 			$this->secureRandom,
 			$this->iniGetWrapper,
 			$this->connection,
+			$this->throttler,
 			$this->tempManager,
 			$this->notificationManager,
 			$this->appManager,
-			$this->serverContainer
+			$this->serverContainer,
+			$this->setupCheckManager,
 		);
 
 		$this->assertSame($expected, $this->invokePrivate($checkSetupController, 'isMysqlUsedWithoutUTF8MB4'));
@@ -1464,7 +1349,6 @@ Array
 			$this->l10n,
 			$this->checker,
 			$this->logger,
-			$this->eventDispatcher,
 			$this->dispatcher,
 			$this->db,
 			$this->lockingProvider,
@@ -1473,10 +1357,12 @@ Array
 			$this->secureRandom,
 			$this->iniGetWrapper,
 			$this->connection,
+			$this->throttler,
 			$this->tempManager,
 			$this->notificationManager,
 			$this->appManager,
-			$this->serverContainer
+			$this->serverContainer,
+			$this->setupCheckManager,
 		);
 
 		$this->assertSame($expected, $this->invokePrivate($checkSetupController, 'isEnoughTempSpaceAvailableIfS3PrimaryStorageIsUsed'));

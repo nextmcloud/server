@@ -53,6 +53,7 @@ use Exception;
 use InvalidArgumentException;
 use OC\Authentication\Token\PublicKeyTokenProvider;
 use OC\Authentication\Token\TokenCleanupJob;
+use OC\TextProcessing\RemoveOldTasksBackgroundJob;
 use OC\Log\Rotate;
 use OC\Preview\BackgroundCleanupJob;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -453,6 +454,7 @@ class Setup {
 		$jobList->add(TokenCleanupJob::class);
 		$jobList->add(Rotate::class);
 		$jobList->add(BackgroundCleanupJob::class);
+		$jobList->add(RemoveOldTasksBackgroundJob::class);
 	}
 
 	/**
@@ -535,7 +537,7 @@ class Setup {
 			$content .= "\n  RewriteCond %{REQUEST_FILENAME} !/(cron|public|remote|status)\\.php";
 			$content .= "\n  RewriteCond %{REQUEST_FILENAME} !/ocs/v(1|2)\\.php";
 			$content .= "\n  RewriteCond %{REQUEST_FILENAME} !/robots\\.txt";
-			$content .= "\n  RewriteCond %{REQUEST_FILENAME} !/(ocm-provider|ocs-provider|updater)/";
+			$content .= "\n  RewriteCond %{REQUEST_FILENAME} !/(ocs-provider|updater)/";
 			$content .= "\n  RewriteCond %{REQUEST_URI} !^/\\.well-known/(acme-challenge|pki-validation)/.*";
 			$content .= "\n  RewriteCond %{REQUEST_FILENAME} !/richdocumentscode(_arm64)?/proxy.php$";
 			$content .= "\n  RewriteRule . index.php [PT,E=PATH_INFO:$1]";

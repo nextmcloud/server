@@ -34,6 +34,7 @@
  */
 namespace OC;
 
+use OC\Repair\AddRemoveOldTasksBackgroundJob;
 use OC\Repair\CleanUpAbandonedApps;
 use OCP\AppFramework\QueryException;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -83,7 +84,6 @@ use OC\Repair\RemoveLinkShares;
 use OC\Repair\RepairDavShares;
 use OC\Repair\RepairInvalidShares;
 use OC\Repair\RepairMimeTypes;
-use OC\Repair\SqliteAutoincrement;
 use OC\Template\JSCombiner;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -210,6 +210,7 @@ class Repair implements IOutput {
 			\OCP\Server::get(AddTokenCleanupJob::class),
 			\OCP\Server::get(CleanUpAbandonedApps::class),
 			\OCP\Server::get(AddMissingSecretJob::class),
+			\OCP\Server::get(AddRemoveOldTasksBackgroundJob::class),
 		];
 	}
 
@@ -233,14 +234,11 @@ class Repair implements IOutput {
 	 * @return IRepairStep[]
 	 */
 	public static function getBeforeUpgradeRepairSteps() {
-		/** @var Connection $connection */
-		$connection = \OC::$server->get(Connection::class);
 		/** @var ConnectionAdapter $connectionAdapter */
 		$connectionAdapter = \OC::$server->get(ConnectionAdapter::class);
 		$config = \OC::$server->getConfig();
 		$steps = [
 			new Collation(\OC::$server->getConfig(), \OC::$server->get(LoggerInterface::class), $connectionAdapter, true),
-			new SqliteAutoincrement($connection),
 			new SaveAccountsTableData($connectionAdapter, $config),
 			new DropAccountTermsTable($connectionAdapter),
 		];

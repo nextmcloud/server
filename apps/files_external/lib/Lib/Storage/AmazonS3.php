@@ -497,7 +497,7 @@ class AmazonS3 extends \OC\Files\Storage\Common {
 
 				try {
 					return $this->readObject($path);
-				} catch (S3Exception $e) {
+				} catch (\Exception $e) {
 					$this->logger->error($e->getMessage(), [
 						'app' => 'files_external',
 						'exception' => $e,
@@ -580,10 +580,7 @@ class AmazonS3 extends \OC\Files\Storage\Common {
 
 		if ($isFile === true || $this->is_file($source)) {
 			try {
-				$this->getConnection()->copyObject([
-					'Bucket' => $this->bucket,
-					'Key' => $this->cleanKey($target),
-					'CopySource' => S3Client::encodeKey($this->bucket . '/' . $source),
+				$this->copyObject($source, $target, [
 					'StorageClass' => $this->storageClass,
 				]);
 				$this->testTimeout();

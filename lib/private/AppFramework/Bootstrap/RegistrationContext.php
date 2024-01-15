@@ -33,6 +33,7 @@ use Closure;
 use OCP\Calendar\Resource\IBackend as IResourceBackend;
 use OCP\Calendar\Room\IBackend as IRoomBackend;
 use OCP\Collaboration\Reference\IReferenceProvider;
+use OCP\TextProcessing\IProvider as ITextProcessingProvider;
 use OCP\SpeechToText\ISpeechToTextProvider;
 use OCP\Talk\ITalkBackend;
 use OCP\Translation\ITranslationProvider;
@@ -54,6 +55,7 @@ use OCP\Http\WellKnown\IHandler;
 use OCP\Notification\INotifier;
 use OCP\Profile\ILinkAction;
 use OCP\Search\IProvider;
+use OCP\SetupCheck\ISetupCheck;
 use OCP\Share\IPublicShareTemplateProvider;
 use OCP\Support\CrashReport\IReporter;
 use OCP\UserMigration\IMigrator as IUserMigrator;
@@ -115,6 +117,9 @@ class RegistrationContext {
 	/** @var ServiceRegistration<ISpeechToTextProvider>[] */
 	private $speechToTextProviders = [];
 
+	/** @var ServiceRegistration<ITextProcessingProvider>[] */
+	private $textProcessingProviders = [];
+
 	/** @var ServiceRegistration<ICustomTemplateProvider>[] */
 	private $templateProviders = [];
 
@@ -133,20 +138,19 @@ class RegistrationContext {
 	/** @var ServiceRegistration<IReferenceProvider>[] */
 	private array $referenceProviders = [];
 
-
-
-
 	/** @var ParameterRegistration[] */
 	private $sensitiveMethods = [];
 
 	/** @var ServiceRegistration<IPublicShareTemplateProvider>[] */
 	private $publicShareTemplateProviders = [];
 
-	/** @var LoggerInterface */
-	private $logger;
+	private LoggerInterface $logger;
+
+	/** @var ServiceRegistration<ISetupCheck>[] */
+	private array $setupChecks = [];
 
 	/** @var PreviewProviderRegistration[] */
-	private $previewProviders = [];
+	private array $previewProviders = [];
 
 	public function __construct(LoggerInterface $logger) {
 		$this->logger = $logger;
@@ -262,6 +266,12 @@ class RegistrationContext {
 					$providerClass
 				);
 			}
+			public function registerTextProcessingProvider(string $providerClass): void {
+				$this->context->registerTextProcessingProvider(
+					$this->appId,
+					$providerClass
+				);
+			}
 
 			public function registerTemplateProvider(string $providerClass): void {
 				$this->context->registerTemplateProvider(
@@ -362,6 +372,13 @@ class RegistrationContext {
 					$class
 				);
 			}
+
+			public function registerSetupCheck(string $setupCheckClass): void {
+				$this->context->registerSetupCheck(
+					$this->appId,
+					$setupCheckClass
+				);
+			}
 		};
 	}
 
@@ -373,14 +390,14 @@ class RegistrationContext {
 	}
 
 	/**
-	 * @psalm-param class-string<IReporter> $capability
+	 * @psalm-param class-string<IReporter> $reporterClass
 	 */
 	public function registerCrashReporter(string $appId, string $reporterClass): void {
 		$this->crashReporters[] = new ServiceRegistration($appId, $reporterClass);
 	}
 
 	/**
-	 * @psalm-param class-string<IWidget> $capability
+	 * @psalm-param class-string<IWidget> $panelClass
 	 */
 	public function registerDashboardPanel(string $appId, string $panelClass): void {
 		$this->dashboardPanels[] = new ServiceRegistration($appId, $panelClass);
@@ -427,6 +444,10 @@ class RegistrationContext {
 
 	public function registerSpeechToTextProvider(string $appId, string $class): void {
 		$this->speechToTextProviders[] = new ServiceRegistration($appId, $class);
+	}
+
+	public function registerTextProcessingProvider(string $appId, string $class): void {
+		$this->textProcessingProviders[] = new ServiceRegistration($appId, $class);
 	}
 
 	public function registerTemplateProvider(string $appId, string $class): void {
@@ -510,6 +531,13 @@ class RegistrationContext {
 	}
 
 	/**
+	 * @psalm-param class-string<ISetupCheck> $setupCheckClass
+	 */
+	public function registerSetupCheck(string $appId, string $setupCheckClass): void {
+		$this->setupChecks[] = new ServiceRegistration($appId, $setupCheckClass);
+	}
+
+	/**
 	 * @param App[] $apps
 	 */
 	public function delegateCapabilityRegistrations(array $apps): void {
@@ -551,9 +579,6 @@ class RegistrationContext {
 		}
 	}
 
-	/**
-	 * @param App[] $apps
-	 */
 	public function delegateDashboardPanelRegistrations(IManager $dashboardManager): void {
 		while (($panel = array_shift($this->dashboardPanels)) !== null) {
 			try {
@@ -708,6 +733,13 @@ class RegistrationContext {
 	}
 
 	/**
+	 * @return ServiceRegistration<ITextProcessingProvider>[]
+	 */
+	public function getTextProcessingProviders(): array {
+		return $this->textProcessingProviders;
+	}
+
+	/**
 	 * @return ServiceRegistration<ICustomTemplateProvider>[]
 	 */
 	public function getTemplateProviders(): array {
@@ -806,5 +838,12 @@ class RegistrationContext {
 	 */
 	public function getPublicShareTemplateProviders(): array {
 		return $this->publicShareTemplateProviders;
+	}
+
+	/**
+	 * @return ServiceRegistration<ISetupCheck>[]
+	 */
+	public function getSetupChecks(): array {
+		return $this->setupChecks;
 	}
 }
