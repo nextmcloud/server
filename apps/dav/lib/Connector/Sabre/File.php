@@ -567,6 +567,15 @@ class File extends Node implements IFile {
 	public function getContentType() {
 		$mimeType = $this->info->getMimetype();
 
+		if ($mimeType === 'application/octet-stream') {
+			$mimeType = \OC::$server->getMimeTypeDetector()->detectPath($this->info->getInternalPath());
+			if ($this->info->getMimetype() !== $mimeType) {
+				$this->info->getStorage()->getCache()->update($this->info->getId(), [
+					'mimetype' => $mimeType
+				]);
+			}
+		}
+
 		// PROPFIND needs to return the correct mime type, for consistency with the web UI
 		if ($this->request->getMethod() === 'PROPFIND') {
 			return $mimeType;
