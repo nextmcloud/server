@@ -26,14 +26,14 @@ on:
 
 jobs:
   assemble-custom:
-    uses: nextmcloud/.github/.github/workflows/nmc-custom-assembly.yml@nmc/2027-build-test-rtoth
+    uses: nextmcloud/.github/.github/workflows/nmc-custom-assembly.yml@nmc/2027-build-27
     with:
       trunk: 'master'
       stable: ${{ vars.CUSTOM_BRANCH_27 || 'stable27' }}
       result: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH_27 || 'nmcstable/27.1.5', inputs.increment ) }}
     secrets: inherit
   build-custom:
-    uses: nextmcloud/.github/.github/workflows/nmc-custom-server-build.yml@nmc/2027-build-test-rtoth
+    uses: nextmcloud/.github/.github/workflows/nmc-custom-server-build.yml@nmc/2027-build-27
     needs: assemble-custom
     with:
       stable: ${{ vars.CUSTOM_BRANCH_27 || 'stable27' }}
