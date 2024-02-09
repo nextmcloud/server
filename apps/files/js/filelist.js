@@ -410,7 +410,7 @@
 
 			if (options.scrollTo) {
 				this.$fileList.one('updated', function() {
-					self.scrollTo(options.scrollTo);
+					self.scrollTo(options.scrollTo, !options.openFile);
 				});
 			}
 
@@ -764,13 +764,6 @@
 		 */
 		_onShow: function(e) {
 			OCA.Files.App && OCA.Files.App.updateCurrentFileList(this);
-			if (e.itemId === this.id) {
-				this._setCurrentDir('/', false);
-			}
-			// Only reload if we don't navigate to a different directory
-			if (typeof e.dir === 'undefined' || e.dir === this.getCurrentDirectory()) {
-				this.reload();
-			}
 		},
 
 		/**
@@ -1235,6 +1228,10 @@
 			if (this.$table.hasClass('multiselect')) {
 				return;
 			}
+
+			// Ensure the url does not change
+			e.preventDefault();
+	
 			var $target = $(e.target);
 			var sort;
 			if (!$target.is('a')) {
@@ -3354,11 +3351,14 @@
 			this.$el.find('.mask').remove();
 			this.$table.removeClass('hidden');
 		},
-		scrollTo:function(file) {
+		scrollTo:function(file, showDetails) {
+			if (showDetails === undefined) {
+				showDetails = true
+			}
 			if (!_.isArray(file)) {
 				file = [file];
 			}
-			if (file.length === 1) {
+			if (file.length === 1 && showDetails) {
 				_.defer(function() {
 					if (document.documentElement.clientWidth > 1024) {
 						this.showDetailsView(file[0]);

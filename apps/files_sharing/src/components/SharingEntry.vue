@@ -34,13 +34,12 @@
 				:title="tooltip"
 				:aria-label="tooltip"
 				:href="share.shareWithLink"
-				class="sharing-entry__desc">
-				<span>{{ title }}<span v-if="!isUnique" class="sharing-entry__desc-unique"> ({{
-					share.shareWithDisplayNameUnique }})</span></span>
-				<p v-if="hasStatus">
-					<span>{{ share.status.icon || '' }}</span>
-					<span>{{ share.status.message || '' }}</span>
-				</p>
+				class="sharing-entry__summary__desc">
+				<span>{{ title }}
+					<span v-if="!isUnique" class="sharing-entry__summary__desc-unique"> ({{
+						share.shareWithDisplayNameUnique }})</span>
+					<small v-if="hasStatus && share.status.message">({{ share.status.message }})</small>
+				</span>
 			</component>
 			<QuickShareSelect :share="share"
 				:file-info="fileInfo"
@@ -154,32 +153,31 @@ export default {
 	align-items: center;
 	height: 44px;
 
-	&__desc {
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		padding-bottom: 0;
-		line-height: 1.2em;
-
-		p {
-			color: var(--color-text-maxcontrast);
-		}
-
-		&-unique {
-			color: var(--color-text-maxcontrast);
-		}
-	}
-
-	&__actions {
-		margin-left: auto;
-	}
-
 	&__summary {
 		padding: 8px;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		width: 100%;
+		width: 80%;
+		min-width: 80%;
+
+		&__desc {
+			display: inline-block;
+			padding-bottom: 0;
+			line-height: 1.2em;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+
+			p,
+			small {
+				color: var(--color-text-maxcontrast);
+			}
+
+			&-unique {
+				color: var(--color-text-maxcontrast);
+			}
+		}
 	}
 
 }

@@ -28,6 +28,7 @@ import type { FileStat, ResponseDataDetailed } from 'webdav'
 import type { ContentsWithRoot } from '../../../files/src/services/Navigation.ts'
 
 import client, { rootPath } from './client'
+import { encodePath } from '@nextcloud/paths'
 
 const data = `<?xml version="1.0"?>
 <d:propfind  xmlns:d="DAV:"

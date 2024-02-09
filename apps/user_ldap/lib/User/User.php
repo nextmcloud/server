@@ -695,9 +695,9 @@ class User {
 
 	/**
 	 * @brief attempts to get an image from LDAP and sets it as Nextcloud avatar
-	 * @return bool
+	 * @return bool true when the avatar was set successfully or is up to date
 	 */
-	public function updateAvatar($force = false) {
+	public function updateAvatar(bool $force = false): bool {
 		if (!$force && $this->wasRefreshed('avatar')) {
 			return false;
 		}
@@ -714,7 +714,7 @@ class User {
 		// use the checksum before modifications
 		$checksum = md5($this->image->data());
 
-		if ($checksum === $this->config->getUserValue($this->uid, 'user_ldap', 'lastAvatarChecksum', '')) {
+		if ($checksum === $this->config->getUserValue($this->uid, 'user_ldap', 'lastAvatarChecksum', '') && $this->avatarExists()) {
 			return true;
 		}
 
@@ -728,6 +728,15 @@ class User {
 		return $isSet;
 	}
 
+	private function avatarExists(): bool {
+		try {
+			$currentAvatar = $this->avatarManager->getAvatar($this->uid);
+			return $currentAvatar->exists() && $currentAvatar->isCustomAvatar();
+		} catch (\Exception $e) {
+			return false;
+		}
+	}
+
 	/**
 	 * @brief sets an image as Nextcloud avatar
 	 * @return bool
@@ -739,8 +748,8 @@ class User {
 		}
 
 
-		//make sure it is a square and not bigger than 128x128
-		$size = min([$this->image->width(), $this->image->height(), 128]);
+		//make sure it is a square and not bigger than 512x512
+		$size = min([$this->image->width(), $this->image->height(), 512]);
 		if (!$this->image->centerCrop($size)) {
 			$this->logger->error('croping image for avatar failed for '.$this->dn, ['app' => 'user_ldap']);
 			return false;

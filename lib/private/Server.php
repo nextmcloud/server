@@ -125,6 +125,7 @@ use OC\Metadata\Capabilities as MetadataCapabilities;
 use OC\Metadata\IMetadataManager;
 use OC\Metadata\MetadataManager;
 use OC\Notification\Manager;
+use OC\OCM\OCMDiscoveryService;
 use OC\OCS\DiscoveryService;
 use OC\Preview\GeneratorHelper;
 use OC\Preview\IMagickSupport;
@@ -147,6 +148,7 @@ use OC\Security\TrustedDomainHelper;
 use OC\Security\VerificationToken\VerificationToken;
 use OC\Session\CryptoWrapper;
 use OC\Share20\ProviderFactory;
+use OC\Share20\ShareDisableChecker;
 use OC\Share20\ShareHelper;
 use OC\SpeechToText\SpeechToTextManager;
 use OC\SystemTag\ManagerFactory as SystemTagManagerFactory;
@@ -163,6 +165,7 @@ use OCA\Theming\ThemingDefaults;
 use OCA\Theming\Util;
 use OCP\Accounts\IAccountManager;
 use OCP\App\IAppManager;
+use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Authentication\LoginCredentials\IStore;
 use OCP\Authentication\Token\IProvider as OCPIProvider;
 use OCP\BackgroundJob\IJobList;
@@ -234,6 +237,7 @@ use OCP\Lock\ILockingProvider;
 use OCP\Lockdown\ILockdownManager;
 use OCP\Log\ILogFactory;
 use OCP\Mail\IMailer;
+use OCP\OCM\IOCMDiscoveryService;
 use OCP\Remote\Api\IApiFactory;
 use OCP\Remote\IInstanceFactory;
 use OCP\RichObjectStrings\IValidator;
@@ -845,8 +849,8 @@ class Server extends ServerContainer implements IServerContainer {
 		$this->registerDeprecatedAlias('Search', ISearch::class);
 
 		$this->registerService(\OC\Security\RateLimiting\Backend\IBackend::class, function ($c) {
-			$cacheFactory = $c->get(ICacheFactory::class);
-			if ($cacheFactory->isAvailable()) {
+			$config = $c->get(\OCP\IConfig::class);
+			if (ltrim($config->getSystemValueString('memcache.distributed', ''), '\\') === \OC\Memcache\Redis::class) {
 				$backend = new \OC\Security\RateLimiting\Backend\MemoryCacheBackend(
 					$c->get(AllConfig::class),
 					$this->get(ICacheFactory::class),
@@ -1127,7 +1131,8 @@ class Server extends ServerContainer implements IServerContainer {
 				$memcacheFactory = $c->get(ICacheFactory::class);
 				$memcache = $memcacheFactory->createLocking('lock');
 				if (!($memcache instanceof \OC\Memcache\NullCache)) {
-					return new MemcacheLockingProvider($memcache, $ttl);
+					$timeFactory = $c->get(ITimeFactory::class);
+					return new MemcacheLockingProvider($memcache, $timeFactory, $ttl);
 				}
 				return new DBLockingProvider(
 					$c->get(IDBConnection::class),
@@ -1317,7 +1322,8 @@ class Server extends ServerContainer implements IServerContainer {
 				$c->get('ThemingDefaults'),
 				$c->get(IEventDispatcher::class),
 				$c->get(IUserSession::class),
-				$c->get(KnownUserService::class)
+				$c->get(KnownUserService::class),
+				$c->get(ShareDisableChecker::class)
 			);
 
 			return $manager;
@@ -1369,6 +1375,7 @@ class Server extends ServerContainer implements IServerContainer {
 				$c->get(IClientService::class)
 			);
 		});
+		$this->registerAlias(IOCMDiscoveryService::class, OCMDiscoveryService::class);
 
 		$this->registerService(ICloudIdManager::class, function (ContainerInterface $c) {
 			return new CloudIdManager(
@@ -1384,9 +1391,11 @@ class Server extends ServerContainer implements IServerContainer {
 
 		$this->registerService(ICloudFederationProviderManager::class, function (ContainerInterface $c) {
 			return new CloudFederationProviderManager(
+				$c->get(\OCP\IConfig::class),
 				$c->get(IAppManager::class),
 				$c->get(IClientService::class),
 				$c->get(ICloudIdManager::class),
+				$c->get(IOCMDiscoveryService::class),
 				$c->get(LoggerInterface::class)
 			);
 		});

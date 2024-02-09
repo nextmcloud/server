@@ -14,15 +14,13 @@ OC.L10N.register(
     "Named versions are persisted, and excluded from automatic cleanups when your storage quota is full." : "Named versions are persisted, and excluded from automatic cleanups when your storage quota is full.",
     "Remove version name" : "Remove version name",
     "Save version name" : "Save version name",
+    "Current version" : "Current version",
+    "Initial version" : "Initial version",
     "Initial version restored" : "Initial version restored",
     "Version restored" : "Version restored",
     "Could not restore version" : "Could not restore version",
     "Could not set version name" : "Could not set version name",
     "Could not delete version" : "Could not delete version",
-    "${version.label} restored" : "${version.label} restored",
-    "Failed to revert {file} to revision {timestamp}." : "Failed to revert {file} to revision {timestamp}.",
-    "_%n byte_::_%n bytes_" : ["%n byte","%n bytes"],
-    "Restore" : "Restore",
-    "No other versions available" : "No other versions available"
+    "${version.label} restored" : "${version.label} restored"
 },
 "nplurals=2; plural=(n != 1);");

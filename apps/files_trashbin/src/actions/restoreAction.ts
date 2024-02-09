@@ -29,6 +29,7 @@ import History from '@mdi/svg/svg/history.svg?raw'
 
 import { registerFileAction, FileAction } from '../../../files/src/services/FileAction.ts'
 import logger from '../../../files/src/logger.js'
+import { encodePath } from '@nextcloud/paths'
 
 registerFileAction(new FileAction({
 	id: 'restore',
@@ -50,11 +51,14 @@ registerFileAction(new FileAction({
 	},
 
 	async exec(node: Node) {
+		const { origin } = new URL(node.source)
+		const encodedSource = origin + encodePath(node.source.slice(origin.length))
+
 		try {
-			const destination = generateRemoteUrl(encodeURI(`dav/trashbin/${getCurrentUser()?.uid}/restore/${node.basename}`))
+			const destination = generateRemoteUrl(encodePath(`dav/trashbin/${getCurrentUser()?.uid}/restore/${node.basename}`))
 			await axios({
 				method: 'MOVE',
-				url: node.source,
+				url: encodedSource,
 				headers: {
 					destination,
 				},

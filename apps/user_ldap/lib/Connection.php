@@ -82,6 +82,7 @@ use Psr\Log\LoggerInterface;
  * @property string ldapAttributeRole
  * @property string ldapAttributeHeadline
  * @property string ldapAttributeBiography
+ * @property string ldapAdminGroup
  */
 class Connection extends LDAPUtility {
 	/**
@@ -295,6 +296,10 @@ class Connection extends LDAPUtility {
 		$key = $this->getCacheKey($key);
 
 		return json_decode(base64_decode($this->cache->get($key) ?? ''), true);
+	}
+
+	public function getConfigPrefix(): string {
+		return $this->configPrefix;
 	}
 
 	/**
