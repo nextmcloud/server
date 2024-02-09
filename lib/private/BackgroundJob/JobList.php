@@ -213,7 +213,7 @@ class JobList implements IJobList {
 	 * Get the next job in the list
 	 * @return ?IJob the next job to run. Beware that this object may be a singleton and may be modified by the next call to buildJob.
 	 */
-	public function getNext(bool $onlyTimeSensitive = false): ?IJob {
+	public function getNext(bool $onlyTimeSensitive = false, string $jobClass = null): ?IJob {
 		$query = $this->connection->getQueryBuilder();
 		$query->select('*')
 			->from('jobs')
@@ -225,6 +225,18 @@ class JobList implements IJobList {
 		if ($onlyTimeSensitive) {
 			$query->andWhere($query->expr()->eq('time_sensitive', $query->createNamedParameter(IJob::TIME_SENSITIVE, IQueryBuilder::PARAM_INT)));
 		}
+
+		if ($jobClass) {
+			$query->andWhere($query->expr()->eq('class', $query->createNamedParameter($jobClass)));
+		}
+
+		$update = $this->connection->getQueryBuilder();
+		$update->update('jobs')
+			->set('reserved_at', $update->createNamedParameter($this->timeFactory->getTime()))
+			->set('last_checked', $update->createNamedParameter($this->timeFactory->getTime()))
+			->where($update->expr()->eq('id', $update->createParameter('jobid')))
+			->andWhere($update->expr()->eq('reserved_at', $update->createParameter('reserved_at')))
+			->andWhere($update->expr()->eq('last_checked', $update->createParameter('last_checked')));
 
 		$result = $query->executeQuery();
 		$row = $result->fetch();
@@ -260,7 +272,7 @@ class JobList implements IJobList {
 
 			if ($count === 0) {
 				// Background job already executed elsewhere, try again.
-				return $this->getNext($onlyTimeSensitive);
+				return $this->getNext($onlyTimeSensitive, $jobClass);
 			}
 
 			if ($job === null) {
@@ -273,7 +285,7 @@ class JobList implements IJobList {
 				$reset->executeStatement();
 
 				// Background job from disabled app, try again.
-				return $this->getNext($onlyTimeSensitive);
+				return $this->getNext($onlyTimeSensitive, $jobClass);
 			}
 
 			return $job;
@@ -410,24 +422,42 @@ class JobList implements IJobList {
 	}
 
 	public function hasReservedJob(?string $className = null): bool {
+        $query = $this->connection->getQueryBuilder();
+        $query->select('*')
+            ->from('jobs')
+            ->where($query->expr()->neq('reserved_at', $query->createNamedParameter(0, IQueryBuilder::PARAM_INT)))
+            ->setMaxResults(1);
+
+        if ($className !== null) {
+            $query->andWhere($query->expr()->eq('class', $query->createNamedParameter($className)));
+        }
+
+        try {
+            $result = $query->executeQuery();
+            $hasReservedJobs = $result->fetch() !== false;
+            $result->closeCursor();
+            return $hasReservedJobs;
+        } catch (Exception $e) {
+            $this->logger->debug('Querying reserved jobs failed', ['exception' => $e]);
+            return false;
+        }
+    }
+        
+    public function countByClass(): array {
 		$query = $this->connection->getQueryBuilder();
-		$query->select('*')
+		$query->select('class')
+			->selectAlias($query->func()->count('id'), 'count')
 			->from('jobs')
-			->where($query->expr()->neq('reserved_at', $query->createNamedParameter(0, IQueryBuilder::PARAM_INT)))
-			->setMaxResults(1);
+			->orderBy('count')
+			->groupBy('class');
 
-		if ($className !== null) {
-			$query->andWhere($query->expr()->eq('class', $query->createNamedParameter($className)));
+		$result = $query->executeQuery();
+
+		$jobs = [];
+		while ($row = $result->fetch()) {
+			$jobs[] = $row;
 		}
 
-		try {
-			$result = $query->executeQuery();
-			$hasReservedJobs = $result->fetch() !== false;
-			$result->closeCursor();
-			return $hasReservedJobs;
-		} catch (Exception $e) {
-			$this->logger->debug('Querying reserved jobs failed', ['exception' => $e]);
-			return false;
-		}
+		return $jobs;
 	}
 }
