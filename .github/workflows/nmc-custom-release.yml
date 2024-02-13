@@ -38,7 +38,7 @@ jobs:
     with:
       trunk: 'master'
       stable: ${{ vars.CUSTOM_BRANCH || inputs.branch || 'stable27' }}
-      result: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH || ( 'nmcstable/', inputs.version || '25.0.6' ), inputs.increment ) }}
+      result: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH || inputs.version || '27.1.6', inputs.increment ) }}
     secrets: inherit
   build-custom:
     uses: nextmcloud/.github/.github/workflows/nmc-custom-server-build.yml@master
