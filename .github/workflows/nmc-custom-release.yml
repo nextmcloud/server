@@ -19,6 +19,14 @@ name: MCLOUD custom server release
 on:
   workflow_dispatch:
     inputs:
+      branch:
+        description: 'Stable branch like "stable27"'
+        required: true
+        type: string
+      version:
+        description: 'Nextcloud version like "27.1.6"'
+        required: true
+        type: string
       increment:
         description: 'Release increment'
         required: true
@@ -29,15 +37,15 @@ jobs:
     uses: nextmcloud/.github/.github/workflows/nmc-custom-assembly.yml@master
     with:
       trunk: 'master'
-      stable: ${{ vars.CUSTOM_BRANCH || 'stable25' }}
-      result: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH || 'nmcstable/25.0.6', inputs.increment ) }}
+      stable: ${{ vars.CUSTOM_BRANCH || inputs.branch || 'stable27' }}
+      result: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH || ( 'nmcstable/', inputs.version || '25.0.6' ), inputs.increment ) }}
     secrets: inherit
   build-custom:
     uses: nextmcloud/.github/.github/workflows/nmc-custom-server-build.yml@master
     needs: assemble-custom
     with:
-      stable: ${{ vars.CUSTOM_BRANCH || 'stable25' }}
-      assembly: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH || 'stable25', inputs.increment ) }}
-      tag: ${{ format('{0}-{1}', vars.CUSTOM_BRANCH || 'stable25' , inputs.increment) }}
+      stable: ${{ vars.CUSTOM_BRANCH || inputs.branch || 'stable27' }}
+      assembly: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH || inputs.branch || 'stable27', inputs.increment ) }}
+      tag: ${{ format('{0}-{1}', vars.CUSTOM_BRANCH || inputs.branch || 'stable27' , inputs.increment) }}
       prerelease: false
     secrets: inherit
