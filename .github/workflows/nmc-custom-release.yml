@@ -23,10 +23,6 @@ on:
         description: 'Stable branch like "stable27"'
         required: false
         type: string
-      version:
-        description: 'Nextcloud version like "27.1.6"'
-        required: false
-        type: string
       increment:
         description: 'Release increment'
         required: true
@@ -38,7 +34,7 @@ jobs:
     with:
       trunk: 'master'
       stable: ${{ inputs.branch || vars.CUSTOM_BRANCH || 'stable27' }}
-      result: ${{ format('customisation-{0}-{1}', inputs.version || vars.CUSTOM_BRANCH || '27.1.6', inputs.increment ) }}
+      result: ${{ format('customisation-{0}-{1}', inputs.branch || vars.CUSTOM_BRANCH || 'stable27', inputs.increment ) }}
     secrets: inherit
   build-custom:
     uses: nextmcloud/.github/.github/workflows/nmc-custom-server-build.yml@master
