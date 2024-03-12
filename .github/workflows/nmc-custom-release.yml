@@ -26,7 +26,7 @@ on:
 
 jobs:
   assemble-custom:
-    uses: nextmcloud/.github/.github/workflows/nmc-custom-assembly.yml@nmc/2028-custom-build-28
+    uses: nextmcloud/.github/.github/workflows/nmc-custom-assembly.yml@nmc/2028-build-28
     with:
       trunk: 'master'
       stable: ${{ vars.CUSTOM_BRANCH_28 || 'stable28' }}
