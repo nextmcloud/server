@@ -26,18 +26,18 @@ on:
 
 jobs:
   assemble-custom:
-    uses: nextmcloud/.github/.github/workflows/nmc-custom-assembly.yml@master
+    uses: nextmcloud/.github/.github/workflows/nmc-custom-assembly.yml@nmc/2028-custom-build-28
     with:
       trunk: 'master'
-      stable: ${{ vars.CUSTOM_BRANCH || 'stable25' }}
-      result: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH || 'nmcstable/25.0.6', inputs.increment ) }}
+      stable: ${{ vars.CUSTOM_BRANCH_28 || 'stable28' }}
+      result: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH_28 || 'nmcstable/28.0.3', inputs.increment ) }}
     secrets: inherit
   build-custom:
-    uses: nextmcloud/.github/.github/workflows/nmc-custom-server-build.yml@master
+    uses: nextmcloud/.github/.github/workflows/nmc-custom-server-build.yml@nmc/2028-custom-build-28
     needs: assemble-custom
     with:
-      stable: ${{ vars.CUSTOM_BRANCH || 'stable25' }}
-      assembly: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH || 'stable25', inputs.increment ) }}
-      tag: ${{ format('{0}-{1}', vars.CUSTOM_BRANCH || 'stable25' , inputs.increment) }}
+      stable: ${{ vars.CUSTOM_BRANCH || 'stable28' }}
+      assembly: ${{ format('customisation-{0}-{1}', vars.CUSTOM_BRANCH_28 || 'stable28', inputs.increment ) }}
+      tag: ${{ format('{0}-{1}', vars.CUSTOM_BRANCH_28 || 'stable28' , inputs.increment) }}
       prerelease: false
     secrets: inherit
