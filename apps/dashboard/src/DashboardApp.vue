@@ -65,7 +65,7 @@
 
 		<NcModal v-if="modal" size="large" @close="closeModal">
 			<div class="modal__content">
-				<h3>{{ t('dashboard', 'Edit widgets') }}</h3>
+				<h2>{{ t('dashboard', 'Edit widgets') }}</h2>
 				<ol class="panels">
 					<li v-for="status in sortedAllStatuses" :key="status" :class="'panel-' + status">
 						<input :id="'status-checkbox-' + status"
@@ -74,7 +74,8 @@
 							:checked="isStatusActive(status)"
 							@input="updateStatusCheckbox(status, $event.target.checked)">
 						<label :for="'status-checkbox-' + status">
-							<span :class="statusInfo[status].icon" aria-hidden="true" />
+							<NcUserStatusIcon v-if="status === 'status'" status="online" aria-hidden="true" />
+							<span v-else :class="statusInfo[status].icon" aria-hidden="true" />
 							{{ statusInfo[status].text }}
 						</label>
 					</li>
@@ -98,10 +99,10 @@
 					</li>
 				</Draggable>
 
-				<a v-if="isAdmin" :href="appStoreUrl" class="button">{{ t('dashboard', 'Get more widgets from the App Store') }}</a>
+				<a v-if="isAdmin && appStoreEnabled" :href="appStoreUrl" class="button">{{ t('dashboard', 'Get more widgets from the App Store') }}</a>
 
 				<div v-if="statuses.weather && isStatusActive('weather')">
-					<h3>{{ t('dashboard', 'Weather service') }}</h3>
+					<h2>{{ t('dashboard', 'Weather service') }}</h2>
 					<p>
 						{{ t('dashboard', 'For your privacy, the weather data is requested by your Nextcloud server on your behalf so the weather service receives no personal information.') }}
 					</p>
@@ -124,6 +125,7 @@ import axios from '@nextcloud/axios'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import Draggable from 'vuedraggable'
 import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
+import NcUserStatusIcon from '@nextcloud/vue/dist/Components/NcUserStatusIcon.js'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Vue from 'vue'
 
@@ -140,7 +142,6 @@ const statusInfo = {
 	},
 	status: {
 		text: t('dashboard', 'Status'),
-		icon: 'icon-user-status-online',
 	},
 }
 
@@ -152,6 +153,7 @@ export default {
 		Draggable,
 		NcModal,
 		Pencil,
+		NcUserStatusIcon,
 	},
 	mixins: [
 		isMobile,
@@ -174,6 +176,7 @@ export default {
 			layout: loadState('dashboard', 'layout').filter((panelId) => panels[panelId]),
 			modal: false,
 			appStoreUrl: generateUrl('/settings/apps/dashboard'),
+			appStoreEnabled: loadState('dashboard', 'appStoreEnabled', true),
 			statuses: {},
 			apiWidgets: [],
 			apiWidgetItems: {},
@@ -226,7 +229,7 @@ export default {
 			return (panel) => this.layout.indexOf(panel.id) > -1
 		},
 		isStatusActive() {
-			return (status) => !(status in this.enabledStatuses) || this.enabledStatuses[status]
+			return (status) => this.enabledStatuses.findIndex((s) => s === status) !== -1
 		},
 
 		sortedAllStatuses() {
@@ -346,13 +349,13 @@ export default {
 			}
 		},
 		saveLayout() {
-			axios.post(generateUrl('/apps/dashboard/layout'), {
-				layout: this.layout.join(','),
+			axios.post(generateOcsUrl('/apps/dashboard/api/v3/layout'), {
+				layout: this.layout,
 			})
 		},
 		saveStatuses() {
-			axios.post(generateUrl('/apps/dashboard/statuses'), {
-				statuses: JSON.stringify(this.enabledStatuses),
+			axios.post(generateOcsUrl('/apps/dashboard/api/v3/statuses'), {
+				statuses: this.enabledStatuses,
 			})
 		},
 		showModal() {
@@ -392,15 +395,18 @@ export default {
 			}
 		},
 		enableStatus(app) {
-			this.enabledStatuses[app] = true
+			this.enabledStatuses.push(app)
 			this.registerStatus(app, this.allCallbacksStatus[app])
 			this.saveStatuses()
 		},
 		disableStatus(app) {
-			this.enabledStatuses[app] = false
-			const i = this.registeredStatus.findIndex((s) => s === app)
+			const i = this.enabledStatuses.findIndex((s) => s === app)
 			if (i !== -1) {
-				this.registeredStatus.splice(i, 1)
+				this.enabledStatuses.splice(i, 1)
+			}
+			const j = this.registeredStatus.findIndex((s) => s === app)
+			if (j !== -1) {
+				this.registeredStatus.splice(j, 1)
 				Vue.set(this.statuses, app, { mounted: false })
 				this.$nextTick(() => {
 					Vue.delete(this.callbacksStatus, app)
@@ -465,7 +471,8 @@ export default {
 	background-attachment: fixed;
 
 	> h2 {
-		color: var(--color-primary-element-text);
+		// this is shown directly on the background image / color
+		color: var(--color-background-plain-text);
 		text-align: center;
 		font-size: 32px;
 		line-height: 130%;
@@ -485,6 +492,9 @@ export default {
 }
 
 .panel, .panels > div {
+	// Ensure the maxcontrast color is set for the background
+	--color-text-maxcontrast: var(--color-text-maxcontrast-background-blur, var(--color-main-text));
+
 	width: 320px;
 	max-width: 100%;
 	margin: 16px;
@@ -548,6 +558,7 @@ export default {
 				background-position: center;
 				float: left;
 				margin-top: -6px;
+				margin-left: 6px;
 			}
 		}
 	}
@@ -591,6 +602,9 @@ export default {
 .edit-panels,
 .statuses ::v-deep .action-item .action-item__menutoggle,
 .statuses ::v-deep .action-item.action-item--open .action-item__menutoggle {
+	// Ensure the maxcontrast color is set for the background
+	--color-text-maxcontrast: var(--color-text-maxcontrast-background-blur, var(--color-main-text));
+
 	background-color: var(--color-main-background-blur);
 	-webkit-backdrop-filter: var(--filter-background-blur);
 	backdrop-filter: var(--filter-background-blur);
@@ -662,12 +676,9 @@ export default {
 		}
 	}
 
-	h3 {
+	h2 {
 		font-weight: bold;
-
-		&:not(:first-of-type) {
-			margin-top: 64px;
-		}
+		margin-top: 12px;
 	}
 
 	// Adjust design of 'Get more widgets' button

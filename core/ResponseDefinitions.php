@@ -98,8 +98,13 @@ namespace OCA\Core;
  *
  * @psalm-type CoreUnifiedSearchProvider = array{
  *     id: string,
+ *     appId: string,
  *     name: string,
+ *     icon: string,
  *     order: int,
+ *     triggers: string[],
+ *     filters: array<string, string>,
+ *     inAppSearch: bool,
  * }
  *
  * @psalm-type CoreUnifiedSearchResultEntry = array{
@@ -143,7 +148,65 @@ namespace OCA\Core;
  *     input: string,
  *     output: ?string,
  *     identifier: string,
+ *     completionExpectedAt: ?int
  * }
+ *
+ * @psalm-type CoreTextToImageTask = array{
+ *      id: ?int,
+ *      status: 0|1|2|3|4,
+ *      userId: ?string,
+ *      appId: string,
+ *      input: string,
+ *      identifier: ?string,
+ *      numberOfImages: int,
+ *      completionExpectedAt: ?int,
+ *  }
+ *
+ * @psalm-type CoreTeam = array{
+ *      id: string,
+ *      name: string,
+ *      icon: string,
+ * }
+ *
+ * @psalm-type CoreTeamResource = array{
+ *       id: int,
+ *       label: string,
+ *       url: string,
+ *       iconSvg: ?string,
+ *       iconURL: ?string,
+ *       iconEmoji: ?string,
+ *   }
+ *
+ * @psalm-type CoreTaskProcessingShape = array{
+ *     name: string,
+ *     description: string,
+ *     type: "Number"|"Text"|"Audio"|"Image"|"Video"|"File"|"ListOfNumbers"|"ListOfTexts"|"ListOfImages"|"ListOfAudios"|"ListOfVideos"|"ListOfFiles",
+ *     mandatory: bool,
+ * }
+ *
+ * @psalm-type CoreTaskProcessingTaskType = array{
+ *     name: string,
+ *     description: string,
+ *     inputShape: CoreTaskProcessingShape[],
+ *     outputShape: CoreTaskProcessingShape[],
+ * }
+ *
+ * @psalm-type CoreTaskProcessingIO = array<string, numeric|list<numeric>|string|list<string>>
+ *
+ * @psalm-type CoreTaskProcessingTask = array{
+ *     id: int,
+ *     lastUpdated: int,
+ *     type: string,
+ *     status: 'STATUS_CANCELLED'|'STATUS_FAILED'|'STATUS_SUCCESSFUL'|'STATUS_RUNNING'|'STATUS_SCHEDULED'|'STATUS_UNKNOWN',
+ *     userId: ?string,
+ *     appId: string,
+ *     input: CoreTaskProcessingIO,
+ *     output: null|CoreTaskProcessingIO,
+ *     customId: ?string,
+ *     completionExpectedAt: ?int,
+ *     progress: ?float
+ * }
+ *
  */
 class ResponseDefinitions {
 }

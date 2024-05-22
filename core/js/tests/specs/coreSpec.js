@@ -1,23 +1,8 @@
 /**
-* ownCloud
-*
-* @author Vincent Petry
-* @copyright 2014 Vincent Petry <pvince81@owncloud.com>
-*
-* This library is free software; you can redistribute it and/or
-* modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
-* License as published by the Free Software Foundation; either
-* version 3 of the License, or any later version.
-*
-* This library is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU AFFERO GENERAL PUBLIC LICENSE for more details.
-*
-* You should have received a copy of the GNU Affero General Public
-* License along with this library.  If not, see <http://www.gnu.org/licenses/>.
-*
-*/
+ * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2014 ownCloud Inc.
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
 
 describe('Core base tests', function() {
 	var debounceStub
@@ -42,16 +27,16 @@ describe('Core base tests', function() {
 	describe('Base values', function() {
 		it('Sets webroots', function() {
 			expect(OC.getRootPath()).toBeDefined();
-			expect(OC.appswebroots).toBeDefined();
+			expect(window._oc_appswebroots).toBeDefined();
 		});
 	});
 	describe('filePath', function() {
 		beforeEach(function() {
-			OC.webroot = 'http://localhost';
-			OC.appswebroots.files = OC.getRootPath() + '/apps3/files';
+			window._oc_webroot = 'http://localhost';
+			window._oc_appswebroots.files = OC.getRootPath() + '/apps3/files';
 		});
 		afterEach(function() {
-			delete OC.appswebroots.files;
+			delete window._oc_appswebroots.files;
 		});
 
 		it('Uses a direct link for css and images,' , function() {
@@ -70,11 +55,11 @@ describe('Core base tests', function() {
 		var TESTAPP_ROOT = OC.getRootPath() + '/appsx/testapp';
 
 		beforeEach(function() {
-			OC.appswebroots[TESTAPP] = TESTAPP_ROOT;
+			window._oc_appswebroots[TESTAPP] = TESTAPP_ROOT;
 		});
 		afterEach(function() {
 			// restore original array
-			delete OC.appswebroots[TESTAPP];
+			delete window._oc_appswebroots[TESTAPP];
 		});
 		it('Generates correct links for core apps', function() {
 			expect(OC.linkTo('core', 'somefile.php')).toEqual(OC.getRootPath() + '/core/somefile.php');

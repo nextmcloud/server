@@ -40,10 +40,11 @@ use OCA\User_LDAP\ILDAPWrapper;
 use OCA\User_LDAP\LDAP;
 use OCA\User_LDAP\LoginListener;
 use OCA\User_LDAP\Notification\Notifier;
+use OCA\User_LDAP\SetupChecks\LdapConnection;
+use OCA\User_LDAP\SetupChecks\LdapInvalidUuids;
 use OCA\User_LDAP\User\Manager;
 use OCA\User_LDAP\User_Proxy;
 use OCA\User_LDAP\UserPluginManager;
-use OCA\User_LDAP\SetupChecks\LdapInvalidUuids;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -118,6 +119,7 @@ class Application extends App implements IBootstrap {
 		);
 		$context->registerEventListener(PostLoginEvent::class, LoginListener::class);
 		$context->registerSetupCheck(LdapInvalidUuids::class);
+		$context->registerSetupCheck(LdapConnection::class);
 	}
 
 	public function boot(IBootContext $context): void {

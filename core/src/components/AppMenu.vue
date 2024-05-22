@@ -1,23 +1,7 @@
 <!--
-  - @copyright Copyright (c) 2022 Julius Härtl <jus@bitgrid.net>
-  -
-  - @author Julius Härtl <jus@bitgrid.net>
-  -
-  - @license GNU AGPL version 3 or any later version
-  -
-  - This program is free software: you can redistribute it and/or modify
-  - it under the terms of the GNU Affero General Public License as
-  - published by the Free Software Foundation, either version 3 of the
-  - License, or (at your option) any later version.
-  -
-  - This program is distributed in the hope that it will be useful,
-  - but WITHOUT ANY WARRANTY; without even the implied warranty of
-  - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  - GNU Affero General Public License for more details.
-  -
-  - You should have received a copy of the GNU Affero General Public License
-  - along with this program. If not, see <http://www.gnu.org/licenses/>.
-  -->
+  - SPDX-FileCopyrightText: 2022 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 
 <template>
 	<nav class="app-menu"
@@ -160,7 +144,7 @@ $header-icon-size: 20px;
 				width: 12px;
 				height: 5px;
 				border-radius: 3px;
-				background-color: var(--color-primary-element-text);
+				background-color: var(--color-background-plain-text);
 				left: 50%;
 				bottom: 6px;
 				display: block;
@@ -177,7 +161,8 @@ $header-icon-size: 20px;
 			width: calc(100% - 4px);
 			height: calc(100% - 4px);
 			margin: 2px;
-			color: var(--color-primary-element-text);
+			// this is shown directly on the background
+			color: var(--color-background-plain-text);
 			position: relative;
 		}
 
@@ -194,7 +179,8 @@ $header-icon-size: 20px;
 			opacity: 0;
 			position: absolute;
 			font-size: 12px;
-			color: var(--color-primary-element-text);
+			// this is shown directly on the background
+			color: var(--color-background-plain-text);
 			text-align: center;
 			left: 50%;
 			top: 45%;
@@ -252,7 +238,7 @@ $header-icon-size: 20px;
 
 	/* Remove all background and align text color if not expanded */
 	&:not([aria-expanded="true"]) {
-		color: var(--color-primary-element-text);
+		color: var(--color-background-plain-text);
 
 		&:hover {
 			opacity: 1;
@@ -270,6 +256,10 @@ $header-icon-size: 20px;
 	.app-icon {
 		position: relative;
 		height: 44px;
+		width: 48px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		/* Icons are bright so invert them if bright color theme == bright background is used */
 		filter: var(--background-invert-if-bright);
 
@@ -280,7 +270,6 @@ $header-icon-size: 20px;
 		img {
 			width: $header-icon-size;
 			height: $header-icon-size;
-			padding: calc((50px - $header-icon-size) / 2);
 		}
 	}
 }
@@ -289,7 +278,7 @@ $header-icon-size: 20px;
 	content: "";
 	width: 8px;
 	height: 8px;
-	background-color: var(--color-primary-element-text);
+	background-color: var(--color-background-plain-text);
 	border-radius: 50%;
 	position: absolute;
 	display: block;

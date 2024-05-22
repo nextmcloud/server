@@ -1,25 +1,7 @@
 <!--
-  - @copyright 2023 Christopher Ng <chrng8@gmail.com>
-  -
-  - @author Christopher Ng <chrng8@gmail.com>
-  -
-  - @license AGPL-3.0-or-later
-  -
-  - This program is free software: you can redistribute it and/or modify
-  - it under the terms of the GNU Affero General Public License as
-  - published by the Free Software Foundation, either version 3 of the
-  - License, or (at your option) any later version.
-  -
-  - This program is distributed in the hope that it will be useful,
-  - but WITHOUT ANY WARRANTY; without even the implied warranty of
-  - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  - GNU Affero General Public License for more details.
-  -
-  - You should have received a copy of the GNU Affero General Public License
-  - along with this program. If not, see <http://www.gnu.org/licenses/>.
-  -
+ - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+ - SPDX-License-Identifier: AGPL-3.0-or-later
 -->
-
 <template>
 	<NcHeaderMenu id="user-menu"
 		class="user-menu"
@@ -35,7 +17,11 @@
 				:preloaded-user-status="userStatus" />
 		</template>
 		<ul>
-			<UserMenuEntry v-for="entry in settingsNavEntries"
+			<ProfileUserMenuEntry :id="profileEntry.id"
+				:name="profileEntry.name"
+				:href="profileEntry.href"
+				:active="profileEntry.active" />
+			<UserMenuEntry v-for="entry in otherEntries"
 				:id="entry.id"
 				:key="entry.id"
 				:name="entry.name"
@@ -58,6 +44,7 @@ import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
 import NcHeaderMenu from '@nextcloud/vue/dist/Components/NcHeaderMenu.js'
 
 import { getAllStatusOptions } from '../../../apps/user_status/src/services/statusOptionsService.js'
+import ProfileUserMenuEntry from '../components/UserMenu/ProfileUserMenuEntry.vue'
 import UserMenuEntry from '../components/UserMenu/UserMenuEntry.vue'
 
 import logger from '../logger.js'
@@ -75,8 +62,9 @@ import logger from '../logger.js'
  * @property {string} classes - Classes for custom styling
  */
 
-/** @type {SettingNavEntry[]} */
+/** @type {Record<string, SettingNavEntry>} */
 const settingsNavEntries = loadState('core', 'settingsNavEntries', [])
+const { profile: profileEntry, ...otherEntries } = settingsNavEntries
 
 const translateStatus = (status) => {
 	const statusMap = Object.fromEntries(
@@ -95,12 +83,14 @@ export default {
 	components: {
 		NcAvatar,
 		NcHeaderMenu,
+		ProfileUserMenuEntry,
 		UserMenuEntry,
 	},
 
 	data() {
 		return {
-			settingsNavEntries,
+			profileEntry,
+			otherEntries,
 			displayName: getCurrentUser()?.displayName,
 			userId: getCurrentUser()?.uid,
 			isLoadingUserStatus: true,
@@ -228,19 +218,22 @@ export default {
 						outline: none !important;
 					}
 
-					&:active,
-					&.active {
+					&:active:not(:focus-visible),
+					&.active:not(:focus-visible) {
 						background-color: var(--color-primary-element);
 						color: var(--color-primary-element-text);
+
+						img {
+							filter: var(--primary-invert-if-dark);
+						}
 					}
 
 					span {
 						padding-bottom: 0;
-						color: var(--color-main-text);
 						white-space: nowrap;
 						overflow: hidden;
 						text-overflow: ellipsis;
-						max-width: 110px;
+						max-width: 210px;
 					}
 
 					img {
@@ -249,8 +242,7 @@ export default {
 						margin-right: 10px;
 					}
 
-					img,
-					svg {
+					img {
 						filter: var(--background-invert-if-dark);
 					}
 				}

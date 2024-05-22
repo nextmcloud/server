@@ -2,7 +2,7 @@
 /** @var array $_ */
 /** @var \OCP\IL10N $l */
 
-style('core', ['styles', 'header']);
+style('core', ['styles', 'header', 'exception']);
 
 function print_exception(Throwable $e, \OCP\IL10N $l): void {
 	print_unescaped('<pre>');
@@ -25,6 +25,9 @@ function print_exception(Throwable $e, \OCP\IL10N $l): void {
 	<p><?php p($l->t('The server was unable to complete your request.')) ?></p>
 	<p><?php p($l->t('If this happens again, please send the technical details below to the server administrator.')) ?></p>
 	<p><?php p($l->t('More details can be found in the server log.')) ?></p>
+	<?php if (isset($_['serverLogsDocumentation']) && $_['serverLogsDocumentation'] !== ''): ?>
+		<p><a href="<?php print_unescaped($_['serverLogsDocumentation']) ?>" target="_blank" rel="noopener"><?php p($l->t('For more details see the documentation ↗.')) ?></a></p>
+	<?php endif; ?>
 
 	<h3><?php p($l->t('Technical details')) ?></h3>
 	<ul>

@@ -46,8 +46,8 @@
 use bantu\IniGetWrapper\IniGetWrapper;
 use OC\Files\Filesystem;
 use OCP\Files\Mount\IMountPoint;
-use OCP\ICacheFactory;
 use OCP\IBinaryFinder;
+use OCP\ICacheFactory;
 use OCP\IUser;
 use OCP\Util;
 use Psr\Log\LoggerInterface;
@@ -138,7 +138,7 @@ class OC_Helper {
 
 		$bytes = (float)$str;
 
-		if (preg_match('#([kmgtp]?b?)$#si', $str, $matches) && !empty($bytes_array[$matches[1]])) {
+		if (preg_match('#([kmgtp]?b?)$#si', $str, $matches) && isset($bytes_array[$matches[1]])) {
 			$bytes *= $bytes_array[$matches[1]];
 		} else {
 			return false;
@@ -595,6 +595,11 @@ class OC_Helper {
 			'mountType' => $mount->getMountType(),
 			'mountPoint' => trim($mountPoint, '/'),
 		];
+
+		if ($ownerId && $path === '/') {
+			// If path is root, store this as last known quota usage for this user
+			\OCP\Server::get(\OCP\IConfig::class)->setUserValue($ownerId, 'files', 'lastSeenQuotaUsage', (string)$relative);
+		}
 
 		$memcache->set($cacheKey, $info, 5 * 60);
 

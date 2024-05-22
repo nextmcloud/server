@@ -43,6 +43,7 @@ namespace OC\Group;
 use OC\Hooks\PublicEmitter;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Group\Backend\IBatchMethodsBackend;
+use OCP\Group\Backend\ICreateNamedGroupBackend;
 use OCP\Group\Backend\IGroupDetailsBackend;
 use OCP\Group\Events\BeforeGroupCreatedEvent;
 use OCP\Group\Events\GroupCreatedEvent;
@@ -52,6 +53,7 @@ use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IUser;
 use Psr\Log\LoggerInterface;
+use function is_string;
 
 /**
  * Class Manager
@@ -88,35 +90,26 @@ class Manager extends PublicEmitter implements IGroupManager {
 
 	private DisplayNameCache $displayNameCache;
 
+	private const MAX_GROUP_LENGTH = 255;
+
 	public function __construct(\OC\User\Manager $userManager,
-								IEventDispatcher $dispatcher,
-								LoggerInterface $logger,
-								ICacheFactory $cacheFactory) {
+		IEventDispatcher $dispatcher,
+		LoggerInterface $logger,
+		ICacheFactory $cacheFactory) {
 		$this->userManager = $userManager;
 		$this->dispatcher = $dispatcher;
 		$this->logger = $logger;
 		$this->displayNameCache = new DisplayNameCache($cacheFactory, $this);
 
-		$cachedGroups = &$this->cachedGroups;
-		$cachedUserGroups = &$this->cachedUserGroups;
-		$this->listen('\OC\Group', 'postDelete', function ($group) use (&$cachedGroups, &$cachedUserGroups) {
-			/**
-			 * @var \OC\Group\Group $group
-			 */
-			unset($cachedGroups[$group->getGID()]);
-			$cachedUserGroups = [];
+		$this->listen('\OC\Group', 'postDelete', function (IGroup $group): void {
+			unset($this->cachedGroups[$group->getGID()]);
+			$this->cachedUserGroups = [];
 		});
-		$this->listen('\OC\Group', 'postAddUser', function ($group) use (&$cachedUserGroups) {
-			/**
-			 * @var \OC\Group\Group $group
-			 */
-			$cachedUserGroups = [];
+		$this->listen('\OC\Group', 'postAddUser', function (IGroup $group): void {
+			$this->cachedUserGroups = [];
 		});
-		$this->listen('\OC\Group', 'postRemoveUser', function ($group) use (&$cachedUserGroups) {
-			/**
-			 * @var \OC\Group\Group $group
-			 */
-			$cachedUserGroups = [];
+		$this->listen('\OC\Group', 'postRemoveUser', function (IGroup $group): void {
+			$this->cachedUserGroups = [];
 		});
 	}
 
@@ -280,12 +273,22 @@ class Manager extends PublicEmitter implements IGroupManager {
 			return null;
 		} elseif ($group = $this->get($gid)) {
 			return $group;
+		} elseif (mb_strlen($gid) > self::MAX_GROUP_LENGTH) {
+			throw new \Exception('Group name is limited to '. self::MAX_GROUP_LENGTH.' characters');
 		} else {
 			$this->dispatcher->dispatchTyped(new BeforeGroupCreatedEvent($gid));
 			$this->emit('\OC\Group', 'preCreate', [$gid]);
 			foreach ($this->backends as $backend) {
 				if ($backend->implementsActions(Backend::CREATE_GROUP)) {
-					if ($backend->createGroup($gid)) {
+					if ($backend instanceof ICreateNamedGroupBackend) {
+						$groupName = $gid;
+						if (($gid = $backend->createGroup($groupName)) !== null) {
+							$group = $this->getGroupObject($gid);
+							$this->dispatcher->dispatchTyped(new GroupCreatedEvent($group));
+							$this->emit('\OC\Group', 'postCreate', [$group]);
+							return $group;
+						}
+					} elseif ($backend->createGroup($gid)) {
 						$group = $this->getGroupObject($gid);
 						$this->dispatcher->dispatchTyped(new GroupCreatedEvent($group));
 						$this->emit('\OC\Group', 'postCreate', [$group]);
@@ -322,7 +325,7 @@ class Manager extends PublicEmitter implements IGroupManager {
 	 * @param IUser|null $user
 	 * @return \OC\Group\Group[]
 	 */
-	public function getUserGroups(IUser $user = null) {
+	public function getUserGroups(?IUser $user = null) {
 		if (!$user instanceof IUser) {
 			return [];
 		}
@@ -356,7 +359,7 @@ class Manager extends PublicEmitter implements IGroupManager {
 	 */
 	public function isAdmin($userId) {
 		foreach ($this->backends as $backend) {
-			if ($backend->implementsActions(Backend::IS_ADMIN) && $backend->isAdmin($userId)) {
+			if (is_string($userId) && $backend->implementsActions(Backend::IS_ADMIN) && $backend->isAdmin($userId)) {
 				return true;
 			}
 		}
@@ -371,7 +374,7 @@ class Manager extends PublicEmitter implements IGroupManager {
 	 * @return bool if in group
 	 */
 	public function isInGroup($userId, $group) {
-		return array_search($group, $this->getUserIdGroupIds($userId)) !== false;
+		return in_array($group, $this->getUserIdGroupIds($userId));
 	}
 
 	/**

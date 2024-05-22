@@ -32,8 +32,8 @@ namespace OCP\BackgroundJob;
  * This interface provides functions to register background jobs
  *
  * To create a new background job create a new class that inherits from either
- * \OC\BackgroundJob\Job, \OC\BackgroundJob\QueuedJob or
- * \OC\BackgroundJob\TimedJob and register it using ->add($job, $argument),
+ * \OCP\BackgroundJob\Job, \OCP\BackgroundJob\QueuedJob or
+ * \OCP\BackgroundJob\TimedJob and register it using ->add($job, $argument),
  * $argument will be passed to the run() function of the job when the job is
  * executed.
  *
@@ -108,11 +108,14 @@ interface IJobList {
 	public function getJobsIterator($job, ?int $limit, int $offset): iterable;
 
 	/**
-	 * get the next job in the list
+	 * Get the next job in the list
 	 *
-	 * @since 7.0.0 - In 24.0.0 parameter $onlyTimeSensitive got added
+	 * @param bool $onlyTimeSensitive Whether we get only time sensitive jobs or not
+	 * @param class-string<IJob>[]|null $jobClasses List of job classes to restrict which next job we get
+	 * @return ?IJob the next job to run. Beware that this object may be a singleton and may be modified by the next call to buildJob.
+	 * @since 7.0.0 - In 24.0.0 parameter $onlyTimeSensitive got added; In 30.0.0 parameter $jobClasses got added
 	 */
-	public function getNext(bool $onlyTimeSensitive = false): ?IJob;
+	public function getNext(bool $onlyTimeSensitive = false, ?array $jobClasses = null): ?IJob;
 
 	/**
 	 * @since 7.0.0
@@ -160,11 +163,20 @@ interface IJobList {
 	public function resetBackgroundJob(IJob $job): void;
 
 	/**
-	 * Checks whether a job of the passed class is reserved to run
+	 * Checks whether a job of the passed class was reserved to run
+	 * in the last 6h
 	 *
 	 * @param string|null $className
 	 * @return bool
 	 * @since 27.0.0
 	 */
 	public function hasReservedJob(?string $className): bool;
+
+	/**
+	 * Returns a count of jobs per Job class
+	 *
+	 * @return list<array{class:class-string, count:int}>
+	 * @since 30.0.0
+	 */
+	public function countByClass(): array;
 }

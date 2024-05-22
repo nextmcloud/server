@@ -65,19 +65,25 @@ class NavigationManager implements INavigationManager {
 	private $groupManager;
 	/** @var IConfig */
 	private $config;
+	/** The default app for the current user (cached for the `add` function) */
+	private ?string $defaultApp;
+	/** User defined app order (cached for the `add` function) */
+	private array $customAppOrder;
 
 	public function __construct(IAppManager $appManager,
-						 IURLGenerator $urlGenerator,
-						 IFactory $l10nFac,
-						 IUserSession $userSession,
-						 IGroupManager $groupManager,
-						 IConfig $config) {
+		IURLGenerator $urlGenerator,
+		IFactory $l10nFac,
+		IUserSession $userSession,
+		IGroupManager $groupManager,
+		IConfig $config) {
 		$this->appManager = $appManager;
 		$this->urlGenerator = $urlGenerator;
 		$this->l10nFac = $l10nFac;
 		$this->userSession = $userSession;
 		$this->groupManager = $groupManager;
 		$this->config = $config;
+
+		$this->defaultApp = null;
 	}
 
 	/**
@@ -88,8 +94,12 @@ class NavigationManager implements INavigationManager {
 			$this->closureEntries[] = $entry;
 			return;
 		}
+		$this->init();
+
+		$id = $entry['id'];
 
 		$entry['active'] = false;
+		$entry['unread'] = $this->unreadCounters[$id] ?? 0;
 		if (!isset($entry['icon'])) {
 			$entry['icon'] = '';
 		}
@@ -100,8 +110,17 @@ class NavigationManager implements INavigationManager {
 			$entry['type'] = 'link';
 		}
 
-		$id = $entry['id'];
-		$entry['unread'] = $this->unreadCounters[$id] ?? 0;
+		if ($entry['type'] === 'link') {
+			// app might not be set when using closures, in this case try to fallback to ID
+			if (!isset($entry['app']) && $this->appManager->isEnabledForUser($id)) {
+				$entry['app'] = $id;
+			}
+
+			// This is the default app that will always be shown first
+			$entry['default'] = ($entry['app'] ?? false) === $this->defaultApp;
+			// Set order from user defined app order
+			$entry['order'] = $this->customAppOrder[$id]['order'] ?? $entry['order'] ?? 100;
+		}
 
 		$this->entries[$id] = $entry;
 	}
@@ -213,12 +232,26 @@ class NavigationManager implements INavigationManager {
 				'id' => 'help',
 				'order' => 99998,
 				'href' => $this->urlGenerator->linkToRoute('settings.Help.help'),
-				'name' => $l->t('Help'),
+				'name' => $l->t('Help & privacy'),
 				'icon' => $this->urlGenerator->imagePath('settings', 'help.svg'),
 			]);
 		}
 
+		$this->defaultApp = $this->appManager->getDefaultAppForUser($this->userSession->getUser(), false);
+
 		if ($this->userSession->isLoggedIn()) {
+			// Profile
+			$this->add([
+				'type' => 'settings',
+				'id' => 'profile',
+				'order' => 1,
+				'href' => $this->urlGenerator->linkToRoute(
+					'core.ProfilePage.index',
+					['targetUserId' => $this->userSession->getUser()->getUID()],
+				),
+				'name' => $l->t('View profile'),
+			]);
+
 			// Accessibility settings
 			if ($this->appManager->isEnabledForUser('theming', $this->userSession->getUser())) {
 				$this->add([
@@ -230,6 +263,7 @@ class NavigationManager implements INavigationManager {
 					'icon' => $this->urlGenerator->imagePath('theming', 'accessibility-dark.svg'),
 				]);
 			}
+
 			if ($this->isAdmin()) {
 				// App management
 				$this->add([
@@ -292,27 +326,20 @@ class NavigationManager implements INavigationManager {
 					'id' => 'core_users',
 					'order' => 6,
 					'href' => $this->urlGenerator->linkToRoute('settings.Users.usersList'),
-					'name' => $l->t('Users'),
+					'name' => $l->t('Accounts'),
 					'icon' => $this->urlGenerator->imagePath('settings', 'users.svg'),
 				]);
 			}
 		}
 
-		if ($this->appManager === 'null') {
-			return;
-		}
-
 		if ($this->userSession->isLoggedIn()) {
 			$user = $this->userSession->getUser();
 			$apps = $this->appManager->getEnabledAppsForUser($user);
-			$customOrders = json_decode($this->config->getUserValue($user->getUID(), 'core', 'apporder', '[]'), true, flags:JSON_THROW_ON_ERROR);
+			$this->customAppOrder = json_decode($this->config->getUserValue($user->getUID(), 'core', 'apporder', '[]'), true, flags:JSON_THROW_ON_ERROR);
 		} else {
 			$apps = $this->appManager->getInstalledApps();
-			$customOrders = [];
+			$this->customAppOrder = [];
 		}
-
-		// The default app of the current user without fallbacks
-		$defaultApp = $this->appManager->getDefaultAppForUser($this->userSession->getUser(), false);
 
 		foreach ($apps as $app) {
 			if (!$this->userSession->isLoggedIn() && !$this->appManager->isEnabledForUser($app, $this->userSession->getUser())) {
@@ -339,17 +366,19 @@ class NavigationManager implements INavigationManager {
 				}
 				$l = $this->l10nFac->get($app);
 				$id = $nav['id'] ?? $app . ($key === 0 ? '' : $key);
-				$order = $customOrders[$app][$key] ?? $nav['order'] ?? 100;
+				$order = $nav['order'] ?? 100;
 				$type = $nav['type'];
 				$route = !empty($nav['route']) ? $this->urlGenerator->linkToRoute($nav['route']) : '';
-				$icon = $nav['icon'] ?? 'app.svg';
-				foreach ([$icon, "$app.svg"] as $i) {
+				$icon = $nav['icon'] ?? null;
+				if ($icon !== null) {
 					try {
-						$icon = $this->urlGenerator->imagePath($app, $i);
-						break;
+						$icon = $this->urlGenerator->imagePath($app, $icon);
 					} catch (\RuntimeException $ex) {
-						// no icon? - ignore it then
+						// ignore
 					}
+				}
+				if ($icon === null) {
+					$icon = $this->appManager->getAppIcon($app);
 				}
 				if ($icon === null) {
 					$icon = $this->urlGenerator->imagePath('core', 'default-app-icon');
@@ -369,12 +398,8 @@ class NavigationManager implements INavigationManager {
 					// Localized name of the navigation entry
 					'name' => $l->t($nav['name']),
 				], $type === 'link' ? [
-					// This is the default app that will always be shown first
-					'default' => $defaultApp === $id,
 					// App that registered this navigation entry (not necessarly the same as the id)
 					'app' => $app,
-					// The key used to identify this entry in the navigations entries
-					'key' => $key,
 				] : []
 				));
 			}

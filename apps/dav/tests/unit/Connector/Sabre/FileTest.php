@@ -42,6 +42,8 @@ use OCP\Files\ForbiddenException;
 use OCP\Files\Storage;
 use OCP\IConfig;
 use OCP\IRequestId;
+use OCP\ITempManager;
+use OCP\IUserManager;
 use OCP\Lock\ILockingProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use Test\HookHelper;
@@ -86,7 +88,7 @@ class FileTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		$userManager = \OC::$server->getUserManager();
+		$userManager = \OCP\Server::get(IUserManager::class);
 		$userManager->get($this->user)->delete();
 
 		parent::tearDown();
@@ -177,13 +179,13 @@ class FileTest extends TestCase {
 	public function testSimplePutFails($thrownException, $expectedException, $checkPreviousClass = true): void {
 		// setup
 		$storage = $this->getMockBuilder(Local::class)
-			->setMethods(['writeStream'])
-			->setConstructorArgs([['datadir' => \OC::$server->getTempManager()->getTemporaryFolder()]])
+			->onlyMethods(['writeStream'])
+			->setConstructorArgs([['datadir' => \OCP\Server::get(ITempManager::class)->getTemporaryFolder()]])
 			->getMock();
 		\OC\Files\Filesystem::mount($storage, [], $this->user . '/');
 		/** @var View | MockObject $view */
 		$view = $this->getMockBuilder(View::class)
-			->setMethods(['getRelativePath', 'resolvePath'])
+			->onlyMethods(['getRelativePath', 'resolvePath'])
 			->getMock();
 		$view->expects($this->atLeastOnce())
 			->method('resolvePath')
@@ -238,12 +240,13 @@ class FileTest extends TestCase {
 	public function testChunkedPutFails($thrownException, $expectedException, $checkPreviousClass = false): void {
 		// setup
 		$storage = $this->getMockBuilder(Local::class)
-			->setMethods(['fopen'])
-			->setConstructorArgs([['datadir' => \OC::$server->getTempManager()->getTemporaryFolder()]])
+			->onlyMethods(['fopen'])
+			->setConstructorArgs([['datadir' => \OCP\Server::get(ITempManager::class)->getTemporaryFolder()]])
 			->getMock();
 		\OC\Files\Filesystem::mount($storage, [], $this->user . '/');
+		/** @var View|MockObject */
 		$view = $this->getMockBuilder(View::class)
-			->setMethods(['getRelativePath', 'resolvePath'])
+			->onlyMethods(['getRelativePath', 'resolvePath'])
 			->getMock();
 		$view->expects($this->atLeastOnce())
 			->method('resolvePath')
@@ -318,7 +321,7 @@ class FileTest extends TestCase {
 	 *
 	 * @return null|string of the PUT operation which is usually the etag
 	 */
-	private function doPut($path, $viewRoot = null, Request $request = null) {
+	private function doPut($path, $viewRoot = null, ?Request $request = null) {
 		$view = \OC\Files\Filesystem::getView();
 		if (!is_null($viewRoot)) {
 			$view = new \OC\Files\View($viewRoot);
@@ -340,7 +343,7 @@ class FileTest extends TestCase {
 		/** @var \OCA\DAV\Connector\Sabre\File | MockObject $file */
 		$file = $this->getMockBuilder(\OCA\DAV\Connector\Sabre\File::class)
 			->setConstructorArgs([$view, $info, null, $request])
-			->setMethods(['header'])
+			->onlyMethods(['header'])
 			->getMock();
 
 		// beforeMethod locks
@@ -690,8 +693,9 @@ class FileTest extends TestCase {
 	 */
 	public function testSimplePutFailsSizeCheck(): void {
 		// setup
+		/** @var View|MockObject */
 		$view = $this->getMockBuilder(View::class)
-			->setMethods(['rename', 'getRelativePath', 'filesize'])
+			->onlyMethods(['rename', 'getRelativePath', 'filesize'])
 			->getMock();
 		$view->expects($this->any())
 			->method('rename')
@@ -820,8 +824,9 @@ class FileTest extends TestCase {
 	 */
 	public function testSimplePutInvalidChars(): void {
 		// setup
+		/** @var View|MockObject */
 		$view = $this->getMockBuilder(View::class)
-			->setMethods(['getRelativePath'])
+			->onlyMethods(['getRelativePath'])
 			->getMock();
 		$view->expects($this->any())
 			->method('getRelativePath')
@@ -859,8 +864,9 @@ class FileTest extends TestCase {
 		$this->expectException(\OCA\DAV\Connector\Sabre\Exception\InvalidPath::class);
 
 		// setup
+		/** @var View|MockObject */
 		$view = $this->getMockBuilder(View::class)
-			->setMethods(['getRelativePath'])
+			->onlyMethods(['getRelativePath'])
 			->getMock();
 
 		$view->expects($this->any())
@@ -878,8 +884,9 @@ class FileTest extends TestCase {
 
 	public function testUploadAbort(): void {
 		// setup
+		/** @var View|MockObject */
 		$view = $this->getMockBuilder(View::class)
-			->setMethods(['rename', 'getRelativePath', 'filesize'])
+			->onlyMethods(['rename', 'getRelativePath', 'filesize'])
 			->getMock();
 		$view->expects($this->any())
 			->method('rename')
@@ -927,6 +934,7 @@ class FileTest extends TestCase {
 
 	public function testDeleteWhenAllowed(): void {
 		// setup
+		/** @var View|MockObject */
 		$view = $this->getMockBuilder(View::class)
 			->getMock();
 
@@ -950,6 +958,7 @@ class FileTest extends TestCase {
 		$this->expectException(\Sabre\DAV\Exception\Forbidden::class);
 
 		// setup
+		/** @var View|MockObject */
 		$view = $this->getMockBuilder(View::class)
 			->getMock();
 
@@ -969,6 +978,7 @@ class FileTest extends TestCase {
 		$this->expectException(\Sabre\DAV\Exception\Forbidden::class);
 
 		// setup
+		/** @var View|MockObject */
 		$view = $this->getMockBuilder(View::class)
 			->getMock();
 
@@ -993,6 +1003,7 @@ class FileTest extends TestCase {
 		$this->expectException(\OCA\DAV\Connector\Sabre\Exception\Forbidden::class);
 
 		// setup
+		/** @var View|MockObject */
 		$view = $this->getMockBuilder(View::class)
 			->getMock();
 
@@ -1060,7 +1071,7 @@ class FileTest extends TestCase {
 		$wasLockedPre = false;
 		$wasLockedPost = false;
 		$eventHandler = $this->getMockBuilder(\stdclass::class)
-			->setMethods(['writeCallback', 'postWriteCallback'])
+			->addMethods(['writeCallback', 'postWriteCallback'])
 			->getMock();
 
 		// both pre and post hooks might need access to the file,
@@ -1124,7 +1135,7 @@ class FileTest extends TestCase {
 	 *
 	 * @return array list of part files
 	 */
-	private function listPartFiles(\OC\Files\View $userView = null, $path = '') {
+	private function listPartFiles(?\OC\Files\View $userView = null, $path = '') {
 		if ($userView === null) {
 			$userView = \OC\Files\Filesystem::getView();
 		}
@@ -1134,7 +1145,7 @@ class FileTest extends TestCase {
 			$realPath = $storage->getSourcePath($internalPath);
 			$dh = opendir($realPath);
 			while (($file = readdir($dh)) !== false) {
-				if (substr($file, strlen($file) - 5, 5) === '.part') {
+				if (str_ends_with($file, '.part')) {
 					$files[] = $file;
 				}
 			}
@@ -1150,7 +1161,7 @@ class FileTest extends TestCase {
 	 * @param View $userView
 	 * @return array
 	 */
-	private function getFileInfos($path = '', View $userView = null) {
+	private function getFileInfos($path = '', ?View $userView = null) {
 		if ($userView === null) {
 			$userView = Filesystem::getView();
 		}
@@ -1166,8 +1177,9 @@ class FileTest extends TestCase {
 	public function testGetFopenFails(): void {
 		$this->expectException(\Sabre\DAV\Exception\ServiceUnavailable::class);
 
+		/** @var View|MockObject */
 		$view = $this->getMockBuilder(View::class)
-			->setMethods(['fopen'])
+			->onlyMethods(['fopen'])
 			->getMock();
 		$view->expects($this->atLeastOnce())
 			->method('fopen')
@@ -1187,8 +1199,9 @@ class FileTest extends TestCase {
 	public function testGetFopenThrows(): void {
 		$this->expectException(\OCA\DAV\Connector\Sabre\Exception\Forbidden::class);
 
+		/** @var View|MockObject */
 		$view = $this->getMockBuilder(View::class)
-			->setMethods(['fopen'])
+			->onlyMethods(['fopen'])
 			->getMock();
 		$view->expects($this->atLeastOnce())
 			->method('fopen')
@@ -1208,8 +1221,9 @@ class FileTest extends TestCase {
 	public function testGetThrowsIfNoPermission(): void {
 		$this->expectException(\Sabre\DAV\Exception\NotFound::class);
 
+		/** @var View|MockObject */
 		$view = $this->getMockBuilder(View::class)
-			->setMethods(['fopen'])
+			->onlyMethods(['fopen'])
 			->getMock();
 		$view->expects($this->never())
 			->method('fopen');

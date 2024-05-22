@@ -41,14 +41,8 @@ use OCA\DAV\CalDAV\EventComparisonService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Defaults;
 use OCP\IConfig;
-use OCP\IDBConnection;
-use OCP\IL10N;
-use OCP\IURLGenerator;
-use OCP\IUserManager;
-use OCP\L10N\IFactory as L10NFactory;
-use OCP\Mail\IEMailTemplate;
+use OCP\IUserSession;
 use OCP\Mail\IMailer;
-use OCP\Security\ISecureRandom;
 use OCP\Util;
 use Psr\Log\LoggerInterface;
 use Sabre\CalDAV\Schedule\IMipPlugin as SabreIMipPlugin;
@@ -56,13 +50,9 @@ use Sabre\DAV;
 use Sabre\DAV\INode;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VEvent;
-use Sabre\VObject\Component\VTimeZone;
-use Sabre\VObject\DateTimeParser;
 use Sabre\VObject\ITip\Message;
 use Sabre\VObject\Parameter;
-use Sabre\VObject\Property;
 use Sabre\VObject\Reader;
-use Sabre\VObject\Recur\EventIterator;
 
 /**
  * iMIP handler.
@@ -79,13 +69,12 @@ use Sabre\VObject\Recur\EventIterator;
  * @license http://sabre.io/license/ Modified BSD License
  */
 class IMipPlugin extends SabreIMipPlugin {
-	private ?string $userId;
+	private IUserSession $userSession;
 	private IConfig $config;
 	private IMailer $mailer;
 	private LoggerInterface $logger;
 	private ITimeFactory $timeFactory;
 	private Defaults $defaults;
-	private IUserManager $userManager;
 	private ?VCalendar $vCalendar = null;
 	private IMipService $imipService;
 	public const MAX_DATE = '2038-01-01';
@@ -96,22 +85,20 @@ class IMipPlugin extends SabreIMipPlugin {
 	private EventComparisonService $eventComparisonService;
 
 	public function __construct(IConfig $config,
-								IMailer $mailer,
-								LoggerInterface $logger,
-								ITimeFactory $timeFactory,
-								Defaults $defaults,
-								IUserManager $userManager,
-								$userId,
-								IMipService $imipService,
-								EventComparisonService $eventComparisonService) {
+		IMailer $mailer,
+		LoggerInterface $logger,
+		ITimeFactory $timeFactory,
+		Defaults $defaults,
+		IUserSession $userSession,
+		IMipService $imipService,
+		EventComparisonService $eventComparisonService) {
 		parent::__construct('');
-		$this->userId = $userId;
+		$this->userSession = $userSession;
 		$this->config = $config;
 		$this->mailer = $mailer;
 		$this->logger = $logger;
 		$this->timeFactory = $timeFactory;
 		$this->defaults = $defaults;
-		$this->userManager = $userManager;
 		$this->imipService = $imipService;
 		$this->eventComparisonService = $eventComparisonService;
 	}
@@ -199,20 +186,33 @@ class IMipPlugin extends SabreIMipPlugin {
 		// we also might not have an old event as this could be a new
 		// invitation, or a new recurrence exception
 		$attendee = $this->imipService->getCurrentAttendee($iTipMessage);
+		if($attendee === null) {
+			$uid = $vEvent->UID ?? 'no UID found';
+			$this->logger->debug('Could not find recipient ' . $recipient . ' as attendee for event with UID ' . $uid);
+			$iTipMessage->scheduleStatus = '5.0; EMail delivery failed';
+			return;
+		}
+		// Don't send emails to things
+		if($this->imipService->isRoomOrResource($attendee)) {
+			$this->logger->debug('No invitation sent as recipient is room or resource', [
+				'attendee' => $recipient,
+			]);
+			$iTipMessage->scheduleStatus = '1.0;We got the message, but it\'s not significant enough to warrant an email';
+			return;
+		}
 		$this->imipService->setL10n($attendee);
 
 		// Build the sender name.
-		// Due to a bug in sabre, the senderName property for an iTIP message
-		// can actually also be a VObject Property
-		/** @var Parameter|string|null $senderName */
-		$senderName = $iTipMessage->senderName ?: null;
-		if($senderName instanceof Parameter) {
-			$senderName = $senderName->getValue() ?? null;
-		}
-
-		// Try to get the sender name from the current user id if available.
-		if ($this->userId !== null && ($senderName === null || empty(trim($senderName)))) {
-			$senderName = $this->userManager->getDisplayName($this->userId);
+		// Due to a bug in sabre, the senderName property for an iTIP message can actually also be a VObject Property
+		// If the iTIP message senderName is null or empty use the user session name as the senderName
+		if (($iTipMessage->senderName instanceof Parameter) && !empty(trim($iTipMessage->senderName->getValue()))) {
+			$senderName = trim($iTipMessage->senderName->getValue());
+		} elseif (is_string($iTipMessage->senderName) && !empty(trim($iTipMessage->senderName))) {
+			$senderName = trim($iTipMessage->senderName);
+		} elseif ($this->userSession->getUser() !== null) {
+			$senderName = trim($this->userSession->getUser()->getDisplayName());
+		} else {
+			$senderName = '';
 		}
 
 		$sender = substr($iTipMessage->sender, 7);
@@ -301,9 +301,9 @@ class IMipPlugin extends SabreIMipPlugin {
 
 		$itip_msg = $iTipMessage->message->serialize();
 		$message->attachInline(
-				$itip_msg,
+			$itip_msg,
 			'event.ics',
-				'text/calendar; method=' . $iTipMessage->method,
+			'text/calendar; method=' . $iTipMessage->method,
 		);
 
 		try {

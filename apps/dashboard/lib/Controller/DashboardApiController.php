@@ -29,24 +29,25 @@ declare(strict_types=1);
 namespace OCA\Dashboard\Controller;
 
 use OCA\Dashboard\ResponseDefinitions;
-use OCP\AppFramework\OCSController;
+use OCA\Dashboard\Service\DashboardService;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\AppFramework\OCSController;
+use OCP\Dashboard\IAPIWidget;
+use OCP\Dashboard\IAPIWidgetV2;
 use OCP\Dashboard\IButtonWidget;
 use OCP\Dashboard\IIconWidget;
-use OCP\Dashboard\IOptionWidget;
 use OCP\Dashboard\IManager;
+use OCP\Dashboard\IOptionWidget;
 use OCP\Dashboard\IReloadableWidget;
 use OCP\Dashboard\IWidget;
 use OCP\Dashboard\Model\WidgetButton;
+use OCP\Dashboard\Model\WidgetItem;
+
 use OCP\Dashboard\Model\WidgetOptions;
 use OCP\IConfig;
 use OCP\IRequest;
-
-use OCP\Dashboard\IAPIWidget;
-use OCP\Dashboard\IAPIWidgetV2;
-use OCP\Dashboard\Model\WidgetItem;
-use OCP\Dashboard\Model\WidgetItems;
 
 /**
  * @psalm-import-type DashboardWidget from ResponseDefinitions
@@ -55,25 +56,15 @@ use OCP\Dashboard\Model\WidgetItems;
  */
 class DashboardApiController extends OCSController {
 
-	/** @var IManager */
-	private $dashboardManager;
-	/** @var IConfig */
-	private $config;
-	/** @var string|null */
-	private $userId;
-
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		IManager $dashboardManager,
-		IConfig $config,
-		?string $userId
+		private IManager $dashboardManager,
+		private IConfig $config,
+		private ?string $userId,
+		private DashboardService $service,
 	) {
 		parent::__construct($appName, $request);
-
-		$this->dashboardManager = $dashboardManager;
-		$this->config = $config;
-		$this->userId = $userId;
 	}
 
 	/**
@@ -102,11 +93,13 @@ class DashboardApiController extends OCSController {
 	 *
 	 * @param array<string, string> $sinceIds Array indexed by widget Ids, contains date/id from which we want the new items
 	 * @param int $limit Limit number of result items per widget
+	 * @psalm-param int<1, 30> $limit
 	 * @param string[] $widgets Limit results to specific widgets
 	 * @return DataResponse<Http::STATUS_OK, array<string, DashboardWidgetItem[]>, array{}>
 	 *
 	 * 200: Widget items returned
 	 */
+	#[ApiRoute(verb: 'GET', url: '/api/v1/widget-items')]
 	public function getWidgetItems(array $sinceIds = [], int $limit = 7, array $widgets = []): DataResponse {
 		$items = [];
 		$widgets = $this->getShownWidgets($widgets);
@@ -128,12 +121,14 @@ class DashboardApiController extends OCSController {
 	 * Get the items for the widgets
 	 *
 	 * @param array<string, string> $sinceIds Array indexed by widget Ids, contains date/id from which we want the new items
-	 * @param int $limit Limit number of result items per widget
+	 * @param int $limit Limit number of result items per widget, not more than 30 are allowed
+	 * @psalm-param int<1, 30> $limit
 	 * @param string[] $widgets Limit results to specific widgets
 	 * @return DataResponse<Http::STATUS_OK, array<string, DashboardWidgetItems>, array{}>
 	 *
 	 * 200: Widget items returned
 	 */
+	#[ApiRoute(verb: 'GET', url: '/api/v2/widget-items')]
 	public function getWidgetItemsV2(array $sinceIds = [], int $limit = 7, array $widgets = []): DataResponse {
 		$items = [];
 		$widgets = $this->getShownWidgets($widgets);
@@ -158,6 +153,7 @@ class DashboardApiController extends OCSController {
 	 *
 	 * 200: Widgets returned
 	 */
+	#[ApiRoute(verb: 'GET', url: '/api/v1/widgets')]
 	public function getWidgets(): DataResponse {
 		$widgets = $this->dashboardManager->getWidgets();
 
@@ -198,5 +194,61 @@ class DashboardApiController extends OCSController {
 		}, $widgets);
 
 		return new DataResponse($items);
+	}
+
+	/**
+	 * Get the layout
+	 *
+	 * @NoAdminRequired
+	 * @return DataResponse<Http::STATUS_OK, array{layout: list<string>}, array{}>
+	 *
+	 * 200: Layout returned
+	 */
+	#[ApiRoute(verb: 'GET', url: '/api/v3/layout')]
+	public function getLayout(): DataResponse {
+		return new DataResponse(['layout' => $this->service->getLayout()]);
+	}
+
+	/**
+	 * Update the layout
+	 *
+	 * @NoAdminRequired
+	 * @param list<string> $layout The new layout
+	 * @return DataResponse<Http::STATUS_OK, array{layout: list<string>}, array{}>
+	 *
+	 * 200: Statuses updated successfully
+	 */
+	#[ApiRoute(verb: 'POST', url: '/api/v3/layout')]
+	public function updateLayout(array $layout): DataResponse {
+		$this->config->setUserValue($this->userId, 'dashboard', 'layout', implode(',', $layout));
+		return new DataResponse(['layout' => $layout]);
+	}
+
+	/**
+	 * Get the statuses
+	 *
+	 * @NoAdminRequired
+	 * @return DataResponse<Http::STATUS_OK, array{statuses: list<string>}, array{}>
+	 *
+	 * 200: Statuses returned
+	 */
+	#[ApiRoute(verb: 'GET', url: '/api/v3/statuses')]
+	public function getStatuses(): DataResponse {
+		return new DataResponse(['statuses' => $this->service->getStatuses()]);
+	}
+
+	/**
+	 * Update the statuses
+	 *
+	 * @NoAdminRequired
+	 * @param list<string> $statuses The new statuses
+	 * @return DataResponse<Http::STATUS_OK, array{statuses: list<string>}, array{}>
+	 *
+	 * 200: Statuses updated successfully
+	 */
+	#[ApiRoute(verb: 'POST', url: '/api/v3/statuses')]
+	public function updateStatuses(array $statuses): DataResponse {
+		$this->config->setUserValue($this->userId, 'dashboard', 'statuses', implode(',', $statuses));
+		return new DataResponse(['statuses' => $statuses]);
 	}
 }

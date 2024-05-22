@@ -1,25 +1,18 @@
-/*
- * @copyright Copyright (c) 2023 Julius Härtl <jus@bitgrid.net>
- *
- * @author Julius Härtl <jus@bitgrid.net>
- *
- * @license GNU AGPL version 3 or any later version
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+/**
+ * SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
 import { getRootUrl } from '@nextcloud/router'
+
+/**
+ *
+ * @param {string} url the URL to check
+ * @returns {boolean}
+ */
+const isRelativeUrl = (url) => {
+	return !url.startsWith('https://') && !url.startsWith('http://')
+}
 
 /**
  * @param {string} url The URL to check
@@ -27,8 +20,10 @@ import { getRootUrl } from '@nextcloud/router'
  */
 const isNextcloudUrl = (url) => {
 	const nextcloudBaseUrl = window.location.protocol + '//' + window.location.host + getRootUrl()
-	// try with relative and absolute URL
-	return url.startsWith(nextcloudBaseUrl) || url.startsWith(getRootUrl())
+	// if the URL is absolute and starts with the baseUrl+rootUrl
+	// OR if the URL is relative and starts with rootUrl
+	return url.startsWith(nextcloudBaseUrl)
+		|| (isRelativeUrl(url) && url.startsWith(getRootUrl()))
 }
 
 /**

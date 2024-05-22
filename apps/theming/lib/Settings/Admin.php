@@ -30,6 +30,7 @@ namespace OCA\Theming\Settings;
 use OCA\Theming\AppInfo\Application;
 use OCA\Theming\Controller\ThemingController;
 use OCA\Theming\ImageManager;
+use OCA\Theming\Service\BackgroundService;
 use OCA\Theming\ThemingDefaults;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
@@ -64,7 +65,7 @@ class Admin implements IDelegatedSettings {
 			$errorMessage = $this->l->t('You are already using a custom theme. Theming app settings might be overwritten by that.');
 		}
 
-		$allowedMimeTypes = array_reduce(ThemingController::VALID_UPLOAD_KEYS, function($carry, $key) {
+		$allowedMimeTypes = array_reduce(ThemingController::VALID_UPLOAD_KEYS, function ($carry, $key) {
 			$carry[$key] = $this->imageManager->getSupportedUploadImageFormats($key);
 			return $carry;
 		}, []);
@@ -75,9 +76,13 @@ class Admin implements IDelegatedSettings {
 			'name' => $this->themingDefaults->getEntity(),
 			'url' => $this->themingDefaults->getBaseUrl(),
 			'slogan' => $this->themingDefaults->getSlogan(),
-			'color' => $this->themingDefaults->getDefaultColorPrimary(),
+			'primaryColor' => $this->themingDefaults->getDefaultColorPrimary(),
+			'backgroundColor' => $this->themingDefaults->getDefaultColorBackground(),
 			'logoMime' => $this->config->getAppValue(Application::APP_ID, 'logoMime', ''),
 			'allowedMimeTypes' => $allowedMimeTypes,
+			'backgroundURL' => $this->imageManager->getImageUrl('background'),
+			'defaultBackgroundURL' => $this->urlGenerator->linkTo(Application::APP_ID, 'img/background/' . BackgroundService::DEFAULT_BACKGROUND_IMAGE),
+			'defaultBackgroundColor' => BackgroundService::DEFAULT_BACKGROUND_COLOR,
 			'backgroundMime' => $this->config->getAppValue(Application::APP_ID, 'backgroundMime', ''),
 			'logoheaderMime' => $this->config->getAppValue(Application::APP_ID, 'logoheaderMime', ''),
 			'faviconMime' => $this->config->getAppValue(Application::APP_ID, 'faviconMime', ''),

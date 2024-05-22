@@ -1,4 +1,27 @@
+/**
+ * @copyright Copyright (c) 2023 Ferdinand Thiessen <opensource@fthiessen.de>
+ *
+ * @author Ferdinand Thiessen <opensource@fthiessen.de>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 import type { User } from '@nextcloud/cypress'
+import { getNextcloudUserMenu, getNextcloudUserMenuToggle } from '../../support/commonUtils'
 
 describe('Login', () => {
 	let user: User
@@ -21,12 +44,12 @@ describe('Login', () => {
 		cy.logout()
 	})
 
-	it('log in with valid user and password', () => {
+	it('log in with valid account and password', () => {
 		// Given I visit the Home page
 		cy.visit('/')
 		// I see the login page
 		cy.get('form[name="login"]').should('be.visible')
-		// I log in with a valid user
+		// I log in with a valid account
 		cy.get('form[name="login"]').within(() => {
 			cy.get('input[name="user"]').type(user.userId)
 			cy.get('input[name="password"]').type(user.password)
@@ -40,12 +63,12 @@ describe('Login', () => {
 		cy.url().should('match', /apps\/dashboard(\/|$)/)
 	})
 
-	it('try to log in with valid user and invalid password', () => {
+	it('try to log in with valid account and invalid password', () => {
 		// Given I visit the Home page
 		cy.visit('/')
 		// I see the login page
 		cy.get('form[name="login"]').should('be.visible')
-		// I log in with a valid user but invalid password
+		// I log in with a valid account but invalid password
 		cy.get('form[name="login"]').within(() => {
 			cy.get('input[name="user"]').type(user.userId)
 			cy.get('input[name="password"]').type(`${user.password}--wrong`)
@@ -62,12 +85,12 @@ describe('Login', () => {
 		cy.get('input[name="password"]:invalid').should('exist')
 	})
 
-	it('try to log in with valid user and invalid password', () => {
+	it('try to log in with valid account and invalid password', () => {
 		// Given I visit the Home page
 		cy.visit('/')
 		// I see the login page
 		cy.get('form[name="login"]').should('be.visible')
-		// I log in with a valid user but invalid password
+		// I log in with a valid account but invalid password
 		cy.get('form[name="login"]').within(() => {
 			cy.get('input[name="user"]').type(user.userId)
 			cy.get('input[name="password"]').type(`${user.password}--wrong`)
@@ -80,11 +103,11 @@ describe('Login', () => {
 		// Then I see that the current page is the Login page
 		cy.url().should('match', /\/login/)
 		// And I see that a wrong password message is shown
-		cy.get('form[name="login"]').then(($el) => expect($el.text()).to.match(/Wrong.+password/i).and.to.match(/Wrong.+username/))
+		cy.get('form[name="login"]').then(($el) => expect($el.text()).to.match(/Wrong.+password/i).and.to.match(/Wrong.+login/))
 		cy.get('input[name="password"]:invalid').should('exist')
 	})
 
-	it('try to log in with invalid user', () => {
+	it('try to log in with invalid account', () => {
 		// Given I visit the Home page
 		cy.visit('/')
 		// I see the login page
@@ -102,11 +125,11 @@ describe('Login', () => {
 		// Then I see that the current page is the Login page
 		cy.url().should('match', /\/login/)
 		// And I see that a wrong password message is shown
-		cy.get('form[name="login"]').then(($el) => expect($el.text()).to.match(/Wrong.+password/i).and.to.match(/Wrong.+username/))
+		cy.get('form[name="login"]').then(($el) => expect($el.text()).to.match(/Wrong.+password/i).and.to.match(/Wrong.+login/))
 		cy.get('input[name="password"]:invalid').should('exist')
 	})
 
-	it('try to log in as disabled user', () => {
+	it('try to log in as disabled account', () => {
 		// Given I visit the Home page
 		cy.visit('/')
 		// I see the login page
@@ -123,8 +146,8 @@ describe('Login', () => {
 
 		// Then I see that the current page is the Login page
 		cy.url().should('match', /\/login/)
-		// And I see that the disabled user message is shown
-		cy.get('form[name="login"]').then(($el) => expect($el.text()).to.match(/User.+disabled/i))
+		// And I see that the disabled account message is shown
+		cy.get('form[name="login"]').then(($el) => expect($el.text()).to.match(/Account.+disabled/i))
 		cy.get('input[name="password"]:invalid').should('exist')
 	})
 
@@ -137,8 +160,8 @@ describe('Login', () => {
 		cy.url().should('match', /apps\/dashboard(\/|$)/)
 
 		// When click logout
-		cy.get('#user-menu button').should('exist').click()
-		cy.get('#logout a').should('contain.text', 'Log out').click()
+		getNextcloudUserMenuToggle().should('exist').click()
+		getNextcloudUserMenu().contains('a', 'Log out').click()
 
 		// Then I see that the current page is the Login page
 		cy.url().should('match', /\/login/)

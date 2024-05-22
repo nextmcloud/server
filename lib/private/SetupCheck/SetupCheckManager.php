@@ -30,6 +30,7 @@ use OC\AppFramework\Bootstrap\Coordinator;
 use OCP\Server;
 use OCP\SetupCheck\ISetupCheck;
 use OCP\SetupCheck\ISetupCheckManager;
+use OCP\SetupCheck\SetupResult;
 use Psr\Log\LoggerInterface;
 
 class SetupCheckManager implements ISetupCheckManager {
@@ -46,10 +47,16 @@ class SetupCheckManager implements ISetupCheckManager {
 			/** @var ISetupCheck $setupCheckObject */
 			$setupCheckObject = Server::get($setupCheck->getService());
 			$this->logger->debug('Running check '.get_class($setupCheckObject));
-			$setupResult = $setupCheckObject->run();
+			try {
+				$setupResult = $setupCheckObject->run();
+			} catch (\Throwable $t) {
+				$setupResult = SetupResult::error("An exception occured while running the setup check:\n$t");
+				$this->logger->error('Exception running check '.get_class($setupCheckObject).': '.$t->getMessage(), ['exception' => $t]);
+			}
+			$setupResult->setName($setupCheckObject->getName());
 			$category = $setupCheckObject->getCategory();
 			$results[$category] ??= [];
-			$results[$category][$setupCheckObject->getName()] = $setupResult;
+			$results[$category][$setupCheckObject::class] = $setupResult;
 		}
 		return $results;
 	}

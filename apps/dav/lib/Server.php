@@ -11,6 +11,7 @@
  * @author Joas Schilling <coding@schilljs.com>
  * @author John Molakvoæ <skjnldsv@protonmail.com>
  * @author Lukas Reschke <lukas@statuscode.ch>
+ * @author Maxence Lange <maxence@artificial-owl.com>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
@@ -38,6 +39,8 @@ namespace OCA\DAV;
 use OCA\DAV\AppInfo\PluginManager;
 use OCA\DAV\BulkUpload\BulkUploadPlugin;
 use OCA\DAV\CalDAV\BirthdayService;
+use OCA\DAV\CalDAV\Schedule\IMipPlugin;
+use OCA\DAV\CalDAV\Security\RateLimitingPlugin;
 use OCA\DAV\CardDAV\HasPhotoPlugin;
 use OCA\DAV\CardDAV\ImageExportPlugin;
 use OCA\DAV\CardDAV\MultiGetExportPlugin;
@@ -76,6 +79,7 @@ use OCA\DAV\Upload\ChunkingV2Plugin;
 use OCP\AppFramework\Http\Response;
 use OCP\Diagnostics\IEventLogger;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\FilesMetadata\IFilesMetadataManager;
 use OCP\ICacheFactory;
 use OCP\IRequest;
 use OCP\Profiler\IProfiler;
@@ -173,12 +177,10 @@ class Server {
 
 		// calendar plugins
 		if ($this->requestIsForSubtree(['calendars', 'public-calendars', 'system-calendars', 'principals'])) {
+			$this->server->addPlugin(new DAV\Sharing\Plugin($authBackend, \OC::$server->getRequest(), \OC::$server->getConfig()));
 			$this->server->addPlugin(new \OCA\DAV\CalDAV\Plugin());
 			$this->server->addPlugin(new \OCA\DAV\CalDAV\ICSExportPlugin\ICSExportPlugin(\OC::$server->getConfig(), $logger));
 			$this->server->addPlugin(new \OCA\DAV\CalDAV\Schedule\Plugin(\OC::$server->getConfig(), \OC::$server->get(LoggerInterface::class)));
-			if (\OC::$server->getConfig()->getAppValue('dav', 'sendInvitations', 'yes') === 'yes') {
-				$this->server->addPlugin(\OC::$server->query(\OCA\DAV\CalDAV\Schedule\IMipPlugin::class));
-			}
 
 			$this->server->addPlugin(\OC::$server->get(\OCA\DAV\CalDAV\Trashbin\Plugin::class));
 			$this->server->addPlugin(new \OCA\DAV\CalDAV\WebcalCaching\Plugin($request));
@@ -187,11 +189,12 @@ class Server {
 			}
 
 			$this->server->addPlugin(new \Sabre\CalDAV\Notifications\Plugin());
-			$this->server->addPlugin(new DAV\Sharing\Plugin($authBackend, \OC::$server->getRequest(), \OC::$server->getConfig()));
 			$this->server->addPlugin(new \OCA\DAV\CalDAV\Publishing\PublishPlugin(
 				\OC::$server->getConfig(),
 				\OC::$server->getURLGenerator()
 			));
+
+			$this->server->addPlugin(\OCP\Server::get(RateLimitingPlugin::class));
 		}
 
 		// addressbook plugins
@@ -236,11 +239,6 @@ class Server {
 			$this->server->addPlugin(new FakeLockerPlugin());
 		}
 
-		// Allow view-only plugin for webdav requests
-		$this->server->addPlugin(new ViewOnlyPlugin(
-			$logger
-		));
-
 		if (BrowserErrorPagePlugin::isBrowserRequest($request)) {
 			$this->server->addPlugin(new BrowserErrorPagePlugin());
 		}
@@ -250,6 +248,11 @@ class Server {
 
 		// wait with registering these until auth is handled and the filesystem is setup
 		$this->server->on('beforeMethod:*', function () use ($root, $lazySearchBackend, $logger) {
+			// Allow view-only plugin for webdav requests
+			$this->server->addPlugin(new ViewOnlyPlugin(
+				\OC::$server->getUserFolder(),
+			));
+
 			// custom properties plugin must be the last one
 			$userSession = \OC::$server->getUserSession();
 			$user = $userSession->getUser();
@@ -271,6 +274,7 @@ class Server {
 				$this->server->addPlugin(
 					new \Sabre\DAV\PropertyStorage\Plugin(
 						new CustomPropertiesBackend(
+							$this->server,
 							$this->server->tree,
 							\OC::$server->getDatabaseConnection(),
 							\OC::$server->getUserSession()->getUser()
@@ -298,6 +302,18 @@ class Server {
 					\OC::$server->getCommentsManager(),
 					$userSession
 				));
+				if (\OC::$server->getConfig()->getAppValue('dav', 'sendInvitations', 'yes') === 'yes') {
+					$this->server->addPlugin(new IMipPlugin(
+						\OC::$server->get(\OCP\IConfig::class),
+						\OC::$server->get(\OCP\Mail\IMailer::class),
+						\OC::$server->get(LoggerInterface::class),
+						\OC::$server->get(\OCP\AppFramework\Utility\ITimeFactory::class),
+						\OC::$server->get(\OCP\Defaults::class),
+						$userSession,
+						\OC::$server->get(\OCA\DAV\CalDAV\Schedule\IMipService::class),
+						\OC::$server->get(\OCA\DAV\CalDAV\EventComparisonService::class)
+					));
+				}
 				$this->server->addPlugin(new \OCA\DAV\CalDAV\Search\SearchPlugin());
 				if ($view !== null) {
 					$this->server->addPlugin(new FilesReportPlugin(
@@ -316,7 +332,8 @@ class Server {
 						$user,
 						\OC::$server->getRootFolder(),
 						\OC::$server->getShareManager(),
-						$view
+						$view,
+						\OCP\Server::get(IFilesMetadataManager::class)
 					));
 					$this->server->addPlugin(
 						new BulkUploadPlugin(
@@ -382,4 +399,5 @@ class Server {
 		}
 		return false;
 	}
+
 }
