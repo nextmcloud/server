@@ -28,8 +28,10 @@
 namespace OCA\DAV\Tests\DAV;
 
 use OCA\DAV\DAV\CustomPropertiesBackend;
+use OCA\DAV\Service\CustomPropertiesService;
 use OCP\IDBConnection;
 use OCP\IUser;
+use PHPUnit\Framework\MockObject\MockObject;
 use Sabre\DAV\PropFind;
 use Sabre\DAV\PropPatch;
 use Sabre\DAV\Tree;
@@ -40,16 +42,19 @@ use Test\TestCase;
  */
 class CustomPropertiesBackendTest extends TestCase {
 
-	/** @var Tree | \PHPUnit\Framework\MockObject\MockObject */
+	/** @var Tree | MockObject */
 	private $tree;
 
 	/** @var  IDBConnection */
 	private $dbConnection;
 
-	/** @var IUser | \PHPUnit\Framework\MockObject\MockObject */
+	/** @var CustomPropertiesService */
+	private $customPropertiesService;
+
+	/** @var IUser | MockObject */
 	private $user;
 
-	/** @var CustomPropertiesBackend | \PHPUnit\Framework\MockObject\MockObject */
+	/** @var CustomPropertiesBackend */
 	private $backend;
 
 	protected function setUp(): void {
@@ -61,10 +66,12 @@ class CustomPropertiesBackendTest extends TestCase {
 			->with()
 			->willReturn('dummy_user_42');
 		$this->dbConnection = \OC::$server->getDatabaseConnection();
+		$this->customPropertiesService = new CustomPropertiesService($this->dbConnection);
 
 		$this->backend = new CustomPropertiesBackend(
 			$this->tree,
 			$this->dbConnection,
+			$this->customPropertiesService,
 			$this->user
 		);
 	}
@@ -122,9 +129,11 @@ class CustomPropertiesBackendTest extends TestCase {
 
 	public function testPropFindNoDbCalls() {
 		$db = $this->createMock(IDBConnection::class);
+		$service = new CustomPropertiesService($db);
 		$backend = new CustomPropertiesBackend(
 			$this->tree,
 			$db,
+			$service,
 			$this->user
 		);
 
