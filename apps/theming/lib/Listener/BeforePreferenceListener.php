@@ -3,25 +3,8 @@
 declare(strict_types=1);
 
 /**
- * @copyright Copyright (c) 2022 Joas Schilling <coding@schilljs.com>
- *
- * @author Joas Schilling <coding@schilljs.com>
- *
- * @license GNU AGPL version 3 or any later version
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-FileCopyrightText: 2022 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 namespace OCA\Theming\Listener;
 
@@ -34,6 +17,12 @@ use OCP\EventDispatcher\IEventListener;
 
 /** @template-implements IEventListener<BeforePreferenceDeletedEvent|BeforePreferenceSetEvent> */
 class BeforePreferenceListener implements IEventListener {
+
+	/**
+	 * @var string[]
+	 */
+	private const ALLOWED_KEYS = ['force_enable_blur_filter', 'shortcuts_disabled', 'primary_color'];
+
 	public function __construct(
 		private IAppManager $appManager,
 	) {
@@ -55,15 +44,16 @@ class BeforePreferenceListener implements IEventListener {
 	}
 
 	private function handleThemingValues(BeforePreferenceSetEvent|BeforePreferenceDeletedEvent $event): void {
-		$allowedKeys = ['shortcuts_disabled', 'primary_color'];
-
-		if (!in_array($event->getConfigKey(), $allowedKeys)) {
+		if (!in_array($event->getConfigKey(), self::ALLOWED_KEYS)) {
 			// Not allowed config key
 			return;
 		}
 
 		if ($event instanceof BeforePreferenceSetEvent) {
 			switch ($event->getConfigKey()) {
+				case 'force_enable_blur_filter':
+					$event->setValid($event->getConfigValue() === 'yes' || $event->getConfigValue() === 'no');
+					break;
 				case 'shortcuts_disabled':
 					$event->setValid($event->getConfigValue() === 'yes');
 					break;
@@ -73,6 +63,7 @@ class BeforePreferenceListener implements IEventListener {
 				default:
 					$event->setValid(false);
 			}
+			return;
 		}
 
 		$event->setValid(true);

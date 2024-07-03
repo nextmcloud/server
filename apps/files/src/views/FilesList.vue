@@ -1,24 +1,7 @@
 <!--
-  - @copyright Copyright (c) 2023 John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @author John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @license GNU AGPL version 3 or any later version
-  -
-  - This program is free software: you can redistribute it and/or modify
-  - it under the terms of the GNU Affero General Public License as
-  - published by the Free Software Foundation, either version 3 of the
-  - License, or (at your option) any later version.
-  -
-  - This program is distributed in the hope that it will be useful,
-  - but WITHOUT ANY WARRANTY; without even the implied warranty of
-  - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  - GNU Affero General Public License for more details.
-  -
-  - You should have received a copy of the GNU Affero General Public License
-  - along with this program. If not, see <http://www.gnu.org/licenses/>.
-  -
-  -->
+  - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 <template>
 	<NcAppContent :page-heading="pageHeading" data-cy-files-content>
 		<div class="files-list__header">
@@ -54,10 +37,12 @@
 
 					<!-- Uploader -->
 					<UploadPicker v-else-if="currentFolder"
-						:content="dirContents"
-						:destination="currentFolder"
-						:multiple="true"
+						allow-folders
 						class="files-list__header-upload-button"
+						:content="getContent"
+						:destination="currentFolder"
+						:forbidden-characters="forbiddenCharacters"
+						multiple
 						@failed="onUploadFail"
 						@uploaded="onUpload" />
 				</template>
@@ -93,11 +78,21 @@
 			:name="currentView?.emptyTitle || t('files', 'No files in here')"
 			:description="currentView?.emptyCaption || t('files', 'Upload some content or sync with your devices!')"
 			data-cy-files-content-empty>
-			<template #action>
-				<NcButton v-if="dir !== '/'"
+			<template v-if="dir !== '/'" #action>
+				<!-- Uploader -->
+				<UploadPicker v-if="currentFolder && canUpload && !isQuotaExceeded"
+					allow-folders
+					class="files-list__header-upload-button"
+					:content="getContent"
+					:destination="currentFolder"
+					:forbidden-characters="forbiddenCharacters"
+					multiple
+					@failed="onUploadFail"
+					@uploaded="onUpload" />
+				<NcButton v-else
 					:aria-label="t('files', 'Go to the previous folder')"
-					type="primary"
-					:to="toPreviousDir">
+					:to="toPreviousDir"
+					type="primary">
 					{{ t('files', 'Go back') }}
 				</NcButton>
 			</template>
@@ -116,20 +111,21 @@
 </template>
 
 <script lang="ts">
-import type { Route } from 'vue-router'
+import type { ContentsWithRoot } from '@nextcloud/files'
 import type { Upload } from '@nextcloud/upload'
+import type { CancelablePromise } from 'cancelable-promise'
+import type { ComponentPublicInstance } from 'vue'
+import type { Route } from 'vue-router'
 import type { UserConfig } from '../types.ts'
-import type { View, ContentsWithRoot } from '@nextcloud/files'
 
 import { getCapabilities } from '@nextcloud/capabilities'
 import { emit, subscribe, unsubscribe } from '@nextcloud/event-bus'
 import { Folder, Node, Permission } from '@nextcloud/files'
 import { translate as t } from '@nextcloud/l10n'
-import { join, dirname } from 'path'
-import { orderBy } from 'natural-orderby'
-import { showError } from '@nextcloud/dialogs'
+import { join, dirname, normalize } from 'path'
+import { showError, showWarning } from '@nextcloud/dialogs'
 import { Type } from '@nextcloud/sharing'
-import { UploadPicker } from '@nextcloud/upload'
+import { UploadPicker, UploadStatus } from '@nextcloud/upload'
 import { loadState } from '@nextcloud/initial-state'
 import { defineComponent } from 'vue'
 
@@ -145,12 +141,14 @@ import AccountPlusIcon from 'vue-material-design-icons/AccountPlus.vue'
 import ViewGridIcon from 'vue-material-design-icons/ViewGrid.vue'
 
 import { action as sidebarAction } from '../actions/sidebarAction.ts'
+import { useNavigation } from '../composables/useNavigation.ts'
 import { useFilesStore } from '../store/files.ts'
 import { usePathsStore } from '../store/paths.ts'
 import { useSelectionStore } from '../store/selection.ts'
 import { useUploaderStore } from '../store/uploader.ts'
 import { useUserConfigStore } from '../store/userconfig.ts'
 import { useViewConfigStore } from '../store/viewConfig.ts'
+import { orderBy } from '../services/SortingService.ts'
 import BreadCrumbs from '../components/BreadCrumbs.vue'
 import FilesListVirtual from '../components/FilesListVirtual.vue'
 import filesListWidthMixin from '../mixins/filesListWidth.ts'
@@ -193,17 +191,25 @@ export default defineComponent({
 		const uploaderStore = useUploaderStore()
 		const userConfigStore = useUserConfigStore()
 		const viewConfigStore = useViewConfigStore()
+		const { currentView } = useNavigation()
 
 		const enableGridView = (loadState('core', 'config', [])['enable_non-accessible_features'] ?? true)
+		const forbiddenCharacters = loadState<string[]>('files', 'forbiddenCharacters', [])
 
 		return {
+			currentView,
+
 			filesStore,
 			pathsStore,
 			selectionStore,
 			uploaderStore,
 			userConfigStore,
 			viewConfigStore,
+
+			// non reactive data
 			enableGridView,
+			forbiddenCharacters,
+			Type,
 		}
 	},
 
@@ -211,24 +217,42 @@ export default defineComponent({
 		return {
 			filterText: '',
 			loading: true,
-			promise: null,
-			Type,
+			promise: null as CancelablePromise<ContentsWithRoot> | Promise<ContentsWithRoot> | null,
 
-			_unsubscribeStore: () => {},
+			unsubscribeStoreCallback: () => {},
 		}
 	},
 
 	computed: {
+		/**
+		 * Handle search event from unified search.
+		 */
+		onSearch() {
+			return debounce((searchEvent: { query: string }) => {
+				console.debug('Files app handling search event from unified search...', searchEvent)
+				this.filterText = searchEvent.query
+			}, 500)
+		},
+
+		/**
+		 * Get a callback function for the uploader to fetch directory contents for conflict resolution
+		 */
+		getContent() {
+			const view = this.currentView
+			return async (path?: string) => {
+				// as the path is allowed to be undefined we need to normalize the path ('//' to '/')
+				const normalizedPath = normalize(`${this.currentFolder?.path ?? ''}/${path ?? ''}`)
+				// use the current view to fetch the content for the requested path
+				return (await view.getContents(normalizedPath)).contents
+			}
+		},
+
 		userConfig(): UserConfig {
 			return this.userConfigStore.userConfig
 		},
 
-		currentView(): View {
-			return this.$navigation.active || this.$navigation.views.find((view) => view.id === (this.$route.params?.view ?? 'files'))
-		},
-
 		pageHeading(): string {
-			return this.currentView?.name ?? this.t('files', 'Files')
+			return this.currentView?.name ?? t('files', 'Files')
 		},
 
 		/**
@@ -237,6 +261,14 @@ export default defineComponent({
 		dir(): string {
 			// Remove any trailing slash but leave root slash
 			return (this.$route?.query?.dir?.toString() || '/').replace(/^(.+)\/$/, '$1')
+		},
+
+		/**
+		 * The current file id
+		 */
+		fileId(): number | null {
+			const number = Number.parseInt(this.$route?.params.fileid ?? '')
+			return Number.isNaN(number) ? null : number
 		},
 
 		/**
@@ -250,8 +282,13 @@ export default defineComponent({
 			if (this.dir === '/') {
 				return this.filesStore.getRoot(this.currentView.id)
 			}
-			const fileId = this.pathsStore.getPath(this.currentView.id, this.dir)
-			return this.filesStore.getNode(fileId)
+
+			const source = this.pathsStore.getPath(this.currentView.id, this.dir)
+			if (source === undefined) {
+				return
+			}
+
+			return this.filesStore.getNode(source) as Folder
 		},
 
 		/**
@@ -266,8 +303,8 @@ export default defineComponent({
 				...(this.userConfig.sort_folders_first ? [v => v.type !== 'folder'] : []),
 				// 3: Use sorting mode if NOT basename (to be able to use displayName too)
 				...(this.sortingMode !== 'basename' ? [v => v[this.sortingMode]] : []),
-				// 4: Use displayName if available, fallback to name
-				v => v.attributes?.displayName || v.basename,
+				// 4: Use displayname if available, fallback to name
+				v => v.attributes?.displayname || v.basename,
 				// 5: Finally, use basename if all previous sorting methods failed
 				v => v.basename,
 			]
@@ -284,7 +321,7 @@ export default defineComponent({
 				this.isAscSorting ? 'asc' : 'desc',
 				// for 5: use configured sorting direction
 				this.isAscSorting ? 'asc' : 'desc',
-			]
+			] as ('asc'|'desc')[]
 			return [identifiers, orders] as const
 		},
 
@@ -300,7 +337,7 @@ export default defineComponent({
 			// Filter based on the filterText obtained from nextcloud:unified-search.search event.
 			if (this.filterText) {
 				filteredDirContent = filteredDirContent.filter(node => {
-					return node.attributes.basename.toLowerCase().includes(this.filterText.toLowerCase())
+					return node.basename.toLowerCase().includes(this.filterText.toLowerCase())
 				})
 				console.debug('Files view filtered', filteredDirContent)
 			}
@@ -367,13 +404,13 @@ export default defineComponent({
 		},
 		shareButtonLabel() {
 			if (!this.shareAttributes) {
-				return this.t('files', 'Share')
+				return t('files', 'Share')
 			}
 
 			if (this.shareButtonType === Type.SHARE_TYPE_LINK) {
-				return this.t('files', 'Shared by link')
+				return t('files', 'Shared by link')
 			}
-			return this.t('files', 'Shared')
+			return t('files', 'Shared')
 		},
 		shareButtonType(): Type | null {
 			if (!this.shareAttributes) {
@@ -390,8 +427,8 @@ export default defineComponent({
 
 		gridViewButtonLabel() {
 			return this.userConfig.grid_view
-				? this.t('files', 'Switch to list view')
-				: this.t('files', 'Switch to grid view')
+				? t('files', 'Switch to list view')
+				: t('files', 'Switch to grid view')
 		},
 
 		/**
@@ -405,9 +442,9 @@ export default defineComponent({
 		},
 		cantUploadLabel() {
 			if (this.isQuotaExceeded) {
-				return this.t('files', 'Your have used your space quota and cannot upload files anymore')
+				return t('files', 'Your have used your space quota and cannot upload files anymore')
 			}
-			return this.t('files', 'You don’t have permission to upload or create files here')
+			return t('files', 'You don’t have permission to upload or create files here')
 		},
 
 		/**
@@ -427,7 +464,7 @@ export default defineComponent({
 
 			logger.debug('View changed', { newView, oldView })
 			this.selectionStore.reset()
-			this.resetSearch()
+			this.triggerResetSearch()
 			this.fetchContent()
 		},
 
@@ -435,12 +472,13 @@ export default defineComponent({
 			logger.debug('Directory changed', { newDir, oldDir })
 			// TODO: preserve selection on browsing?
 			this.selectionStore.reset()
-			this.resetSearch()
+			this.triggerResetSearch()
 			this.fetchContent()
 
 			// Scroll to top, force virtual scroller to re-render
-			if (this.$refs?.filesListVirtual?.$el) {
-				this.$refs.filesListVirtual.$el.scrollTop = 0
+			const filesListVirtual = this.$refs?.filesListVirtual as ComponentPublicInstance<typeof FilesListVirtual> | undefined
+			if (filesListVirtual?.$el) {
+				filesListVirtual.$el.scrollTop = 0
 			}
 		},
 
@@ -452,19 +490,22 @@ export default defineComponent({
 
 	mounted() {
 		this.fetchContent()
+
+		subscribe('files:node:deleted', this.onNodeDeleted)
 		subscribe('files:node:updated', this.onUpdatedNode)
-		subscribe('nextcloud:unified-search.search', this.onSearch)
-		subscribe('nextcloud:unified-search.reset', this.onSearch)
+		subscribe('nextcloud:unified-search:search', this.onSearch)
+		subscribe('nextcloud:unified-search:reset', this.onResetSearch)
 
 		// reload on settings change
-		this._unsubscribeStore = this.userConfigStore.$subscribe(() => this.fetchContent(), { deep: true })
+		this.unsubscribeStoreCallback = this.userConfigStore.$subscribe(() => this.fetchContent(), { deep: true })
 	},
 
 	unmounted() {
+		unsubscribe('files:node:deleted', this.onNodeDeleted)
 		unsubscribe('files:node:updated', this.onUpdatedNode)
-		unsubscribe('nextcloud:unified-search.search', this.onSearch)
-		unsubscribe('nextcloud:unified-search.reset', this.onSearch)
-		this._unsubscribeStore()
+		unsubscribe('nextcloud:unified-search:search', this.onSearch)
+		unsubscribe('nextcloud:unified-search:reset', this.onResetSearch)
+		this.unsubscribeStoreCallback()
 	},
 
 	methods: {
@@ -481,7 +522,7 @@ export default defineComponent({
 			}
 
 			// If we have a cancellable promise ongoing, cancel it
-			if (typeof this.promise?.cancel === 'function') {
+			if (this.promise && 'cancel' in this.promise) {
 				this.promise.cancel()
 				logger.debug('Cancelled previous ongoing fetch')
 			}
@@ -497,7 +538,7 @@ export default defineComponent({
 
 				// Define current directory children
 				// TODO: make it more official
-				this.$set(folder, '_children', contents.map(node => node.fileid))
+				this.$set(folder, '_children', contents.map(node => node.source))
 
 				// If we're in the root dir, define the root
 				if (dir === '/') {
@@ -506,17 +547,17 @@ export default defineComponent({
 					// Otherwise, add the folder to the store
 					if (folder.fileid) {
 						this.filesStore.updateNodes([folder])
-						this.pathsStore.addPath({ service: currentView.id, fileid: folder.fileid, path: dir })
+						this.pathsStore.addPath({ service: currentView.id, source: folder.source, path: dir })
 					} else {
 						// If we're here, the view API messed up
-						logger.error('Invalid root folder returned', { dir, folder, currentView })
+						logger.fatal('Invalid root folder returned', { dir, folder, currentView })
 					}
 				}
 
 				// Update paths store
 				const folders = contents.filter(node => node.type === 'folder')
-				folders.forEach(node => {
-					this.pathsStore.addPath({ service: currentView.id, fileid: node.fileid, path: join(dir, node.basename) })
+				folders.forEach((node) => {
+					this.pathsStore.addPath({ service: currentView.id, source: node.source, path: join(dir, node.basename) })
 				})
 			} catch (error) {
 				logger.error('Error while fetching content', { error })
@@ -537,14 +578,38 @@ export default defineComponent({
 		},
 
 		/**
+		 * Handle the node deleted event to reset open file
+		 * @param node The deleted node
+		 */
+		 onNodeDeleted(node: Node) {
+			if (node.fileid && node.fileid === this.fileId) {
+				if (node.fileid === this.currentFolder?.fileid) {
+					// Handle the edge case that the current directory is deleted
+					// in this case we neeed to keept the current view but move to the parent directory
+					window.OCP.Files.Router.goToRoute(
+						null,
+						{ view: this.$route.params.view },
+						{ dir: this.currentFolder?.dirname ?? '/' },
+					)
+				} else {
+					// If the currently active file is deleted we need to remove the fileid and possible the `openfile` query
+					window.OCP.Files.Router.goToRoute(
+						null,
+						{ ...this.$route.params, fileid: undefined },
+						{ ...this.$route.query, openfile: undefined },
+					)
+				}
+			}
+		},
+
+		/**
 		 * The upload manager have finished handling the queue
 		 * @param {Upload} upload the uploaded data
 		 */
 		onUpload(upload: Upload) {
 			// Let's only refresh the current Folder
 			// Navigating to a different folder will refresh it anyway
-			const destinationSource = dirname(upload.source)
-			const needsRefresh = destinationSource === this.currentFolder?.source
+			const needsRefresh = dirname(upload.source) === this.currentFolder!.source
 
 			// TODO: fetch uploaded files data only
 			// Use parseInt(upload.response?.headers?.['oc-fileid']) to get the fileid
@@ -557,15 +622,20 @@ export default defineComponent({
 		async onUploadFail(upload: Upload) {
 			const status = upload.response?.status || 0
 
+			if (upload.status === UploadStatus.CANCELLED) {
+				showWarning(t('files', 'Upload was cancelled by user'))
+				return
+			}
+
 			// Check known status codes
 			if (status === 507) {
-				showError(this.t('files', 'Not enough free space'))
+				showError(t('files', 'Not enough free space'))
 				return
 			} else if (status === 404 || status === 409) {
-				showError(this.t('files', 'Target folder does not exist any more'))
+				showError(t('files', 'Target folder does not exist any more'))
 				return
 			} else if (status === 403) {
-				showError(this.t('files', 'Operation is blocked by access control'))
+				showError(t('files', 'Operation is blocked by access control'))
 				return
 			}
 
@@ -587,11 +657,11 @@ export default defineComponent({
 
 			// Finally, check the status code if we have one
 			if (status !== 0) {
-				showError(this.t('files', 'Error during upload, status code {status}', { status }))
+				showError(t('files', 'Error during upload, status code {status}', { status }))
 				return
 			}
 
-			showError(this.t('files', 'Unknown error during upload'))
+			showError(t('files', 'Unknown error during upload'))
 		},
 
 		/**
@@ -604,21 +674,23 @@ export default defineComponent({
 				this.fetchContent()
 			}
 		},
-		/**
-		 * Handle search event from unified search.
-		 *
-		 * @param searchEvent is event object.
-		 */
-		onSearch: debounce(function(searchEvent) {
-			console.debug('Files app handling search event from unified search...', searchEvent)
-			this.filterText = searchEvent.query
-		}, 500),
 
 		/**
-		 * Reset the search query
+		 * Handle reset search query event
 		 */
-		resetSearch() {
+		onResetSearch() {
+			// Reset debounced calls to not set the query again
+			this.onSearch.clear()
+			// Reset filter query
 			this.filterText = ''
+		},
+
+		/**
+		 * Trigger a reset of the local search (part of unified search)
+		 * This is usful to reset the search on directory / view change
+		 */
+		triggerResetSearch() {
+			emit('nextcloud:unified-search:reset')
 		},
 
 		openSharingSidebar() {
@@ -630,7 +702,7 @@ export default defineComponent({
 			if (window?.OCA?.Files?.Sidebar?.setActiveTab) {
 				window.OCA.Files.Sidebar.setActiveTab('sharing')
 			}
-			sidebarAction.exec(this.currentFolder, this.currentView, this.currentFolder.path)
+			sidebarAction.exec(this.currentFolder, this.currentView!, this.currentFolder.path)
 		},
 		toggleGridView() {
 			this.userConfigStore.update('grid_view', !this.userConfig.grid_view)

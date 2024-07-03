@@ -1,34 +1,9 @@
 <?php
+
 /**
- * @copyright Copyright (c) 2016, ownCloud, Inc.
- *
- * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
- * @author Bart Visscher <bartv@thisnet.nl>
- * @author Björn Schießle <bjoern@schiessle.org>
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Jakob Sack <mail@jakobsack.de>
- * @author Joas Schilling <coding@schilljs.com>
- * @author Julius Härtl <jus@bitgrid.net>
- * @author Morris Jobke <hey@morrisjobke.de>
- * @author Robin Appelman <robin@icewind.nl>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Vincent Petry <vincent@nextcloud.com>
- *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program. If not, see <http://www.gnu.org/licenses/>
- *
+ * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 namespace OCA\DAV\Connector\Sabre;
 
@@ -111,21 +86,8 @@ class Directory extends \OCA\DAV\Connector\Sabre\Node implements \Sabre\DAV\ICol
 	 */
 	public function createFile($name, $data = null) {
 		try {
-			// for chunked upload also updating a existing file is a "createFile"
-			// because we create all the chunks before re-assemble them to the existing file.
-			if (isset($_SERVER['HTTP_OC_CHUNKED'])) {
-				// exit if we can't create a new file and we don't updatable existing file
-				$chunkInfo = \OC_FileChunking::decodeName($name);
-				if (!$this->fileView->isCreatable($this->path) &&
-					!$this->fileView->isUpdatable($this->path . '/' . $chunkInfo['name'])
-				) {
-					throw new \Sabre\DAV\Exception\Forbidden();
-				}
-			} else {
-				// For non-chunked upload it is enough to check if we can create a new file
-				if (!$this->fileView->isCreatable($this->path)) {
-					throw new \Sabre\DAV\Exception\Forbidden();
-				}
+			if (!$this->fileView->isCreatable($this->path)) {
+				throw new \Sabre\DAV\Exception\Forbidden();
 			}
 
 			$this->fileView->verifyPath($this->path, $name);

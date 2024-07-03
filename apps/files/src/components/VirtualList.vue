@@ -1,3 +1,7 @@
+<!--
+ - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+ - SPDX-License-Identifier: AGPL-3.0-or-later
+ -->
 <template>
 	<div class="files-list" data-cy-files-list>
 		<!-- Header -->
@@ -47,7 +51,7 @@
 import type { File, Folder, Node } from '@nextcloud/files'
 import type { PropType } from 'vue'
 
-import { debounce } from 'debounce'
+import debounce from 'debounce'
 import Vue from 'vue'
 
 import filesListWidthMixin from '../mixins/filesListWidth.ts'
@@ -142,9 +146,17 @@ export default Vue.extend({
 			return Math.floor(this.filesListWidth / this.itemWidth)
 		},
 
+		/**
+		 * Index of the first item to be rendered
+		 */
 		startIndex() {
 			return Math.max(0, this.index - this.bufferItems)
 		},
+
+		/**
+		 * Number of items to be rendered at the same time
+		 * For list view this is the same as `rowCount`, for grid view this is `rowCount` * `columnCount`
+		 */
 		shownItems() {
 			// If in grid mode, we need to multiply the number of rows by the number of columns
 			if (this.gridMode) {
@@ -153,6 +165,7 @@ export default Vue.extend({
 
 			return this.rowCount
 		},
+
 		renderedItems(): RecycledPoolItem[] {
 			if (!this.isReady) {
 				return []
@@ -181,6 +194,13 @@ export default Vue.extend({
 			})
 		},
 
+		/**
+		 * The total number of rows that are available
+		 */
+		totalRowCount() {
+			return Math.floor(this.dataSources.length / this.columnCount)
+		},
+
 		tbodyStyle() {
 			const isOverScrolled = this.startIndex + this.rowCount > this.dataSources.length
 			const lastIndex = this.dataSources.length - this.startIndex - this.shownItems
@@ -188,6 +208,7 @@ export default Vue.extend({
 			return {
 				paddingTop: `${Math.floor(this.startIndex / this.columnCount) * this.itemHeight}px`,
 				paddingBottom: isOverScrolled ? 0 : `${hiddenAfterItems * this.itemHeight}px`,
+				minHeight: `${this.totalRowCount * this.itemHeight + this.beforeHeight}px`,
 			}
 		},
 	},
@@ -195,6 +216,13 @@ export default Vue.extend({
 		scrollToIndex(index) {
 			this.scrollTo(index)
 		},
+
+		totalRowCount() {
+			if (this.scrollToIndex) {
+				this.$nextTick(() => this.scrollTo(this.scrollToIndex))
+			}
+		},
+
 		columnCount(columnCount, oldColumnCount) {
 			if (oldColumnCount === 0) {
 				// We're initializing, the scroll position

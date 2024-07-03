@@ -1,24 +1,7 @@
 <!--
-  - @copyright Copyright (c) 2023 John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @author John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @license AGPL-3.0-or-later
-  -
-  - This program is free software: you can redistribute it and/or modify
-  - it under the terms of the GNU Affero General Public License as
-  - published by the Free Software Foundation, either version 3 of the
-  - License, or (at your option) any later version.
-  -
-  - This program is distributed in the hope that it will be useful,
-  - but WITHOUT ANY WARRANTY; without even the implied warranty of
-  - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  - GNU Affero General Public License for more details.
-  -
-  - You should have received a copy of the GNU Affero General Public License
-  - along with this program. If not, see <http://www.gnu.org/licenses/>.
-  -
-  -->
+  - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 <template>
 	<VirtualList ref="table"
 		:data-component="userConfig.grid_view ? FileEntryGrid : FileEntry"
@@ -60,7 +43,8 @@
 
 		<!-- Tfoot-->
 		<template #footer>
-			<FilesListTableFooter :files-list-width="filesListWidth"
+			<FilesListTableFooter :current-view="currentView"
+				:files-list-width="filesListWidth"
 				:is-mtime-available="isMtimeAvailable"
 				:is-size-available="isSizeAvailable"
 				:nodes="nodes"
@@ -71,13 +55,13 @@
 
 <script lang="ts">
 import type { Node as NcNode } from '@nextcloud/files'
-import type { PropType } from 'vue'
+import type { ComponentPublicInstance, PropType } from 'vue'
 import type { UserConfig } from '../types'
 
 import { getFileListHeaders, Folder, View, getFileActions, FileType } from '@nextcloud/files'
 import { showError } from '@nextcloud/dialogs'
 import { loadState } from '@nextcloud/initial-state'
-import { translate as t, translatePlural as n } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 import { defineComponent } from 'vue'
 
 import { action as sidebarAction } from '../actions/sidebarAction.ts'
@@ -177,7 +161,7 @@ export default defineComponent({
 			if (this.filesListWidth < 768) {
 				return false
 			}
-			return this.nodes.some(node => node.attributes.size !== undefined)
+			return this.nodes.some(node => node.size !== undefined)
 		},
 
 		sortedHeaders() {
@@ -222,8 +206,7 @@ export default defineComponent({
 		const mainContent = window.document.querySelector('main.app-content') as HTMLElement
 		mainContent.addEventListener('dragover', this.onDragOver)
 
-		// handle initially opening a given file
-		const { id } = loadState<{ id?: number }>('files', 'openFileInfo', {})
+		const { id } = loadState<{ id?: number }>('files', 'fileInfo', {})
 		this.scrollToFile(id ?? this.fileId)
 		this.openSidebarForFile(id ?? this.fileId)
 		this.handleOpenFile(id ?? null)
@@ -264,6 +247,10 @@ export default defineComponent({
 		 * @param fileId File to open
 		 */
 		handleOpenFile(fileId: number|null) {
+			if (!this.openFile) {
+				return
+			}
+
 			if (fileId === null || this.openFileId === fileId) {
 				return
 			}
@@ -275,14 +262,18 @@ export default defineComponent({
 
 			logger.debug('Opening file ' + node.path, { node })
 			this.openFileId = fileId
-			getFileActions()
-				.filter(action => !action.enabled || action.enabled([node], this.currentView))
+			const defaultAction = getFileActions()
+				// Get only default actions (visible and hidden)
+				.filter(action => !!action?.default)
+				// Find actions that are either always enabled or enabled for the current node
+				.filter((action) => !action.enabled || action.enabled([node], this.currentView))
+				// Sort enabled default actions by order
 				.sort((a, b) => (a.order || 0) - (b.order || 0))
-				.filter(action => !!action?.default)[0].exec(node, this.currentView, this.currentFolder.path)
-		},
-
-		getFileId(node) {
-			return node.fileid
+				// Get the first one
+				.at(0)
+			// Some file types do not have a default action (e.g. they can only be downloaded)
+			// So if there is an enabled default action, so execute it
+			defaultAction?.exec(node, this.currentView, this.currentFolder.path)
 		},
 
 		onDragOver(event: DragEvent) {
@@ -297,18 +288,19 @@ export default defineComponent({
 			event.preventDefault()
 			event.stopPropagation()
 
-			const tableTop = this.$refs.table.$el.getBoundingClientRect().top
-			const tableBottom = tableTop + this.$refs.table.$el.getBoundingClientRect().height
+			const tableElement = (this.$refs.table as ComponentPublicInstance<typeof VirtualList>).$el
+			const tableTop = tableElement.getBoundingClientRect().top
+			const tableBottom = tableTop + tableElement.getBoundingClientRect().height
 
 			// If reaching top, scroll up. Using 100 because of the floating header
 			if (event.clientY < tableTop + 100) {
-				this.$refs.table.$el.scrollTop = this.$refs.table.$el.scrollTop - 25
+				tableElement.scrollTop = tableElement.scrollTop - 25
 				return
 			}
 
 			// If reaching bottom, scroll down
 			if (event.clientY > tableBottom - 50) {
-				this.$refs.table.$el.scrollTop = this.$refs.table.$el.scrollTop + 25
+				tableElement.scrollTop = tableElement.scrollTop + 25
 			}
 		},
 

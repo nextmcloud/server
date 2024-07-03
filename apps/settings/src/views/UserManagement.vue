@@ -1,24 +1,7 @@
 <!--
-  - @copyright Copyright (c) 2018 John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @author John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @license GNU AGPL version 3 or any later version
-  -
-  - This program is free software: you can redistribute it and/or modify
-  - it under the terms of the GNU Affero General Public License as
-  - published by the Free Software Foundation, either version 3 of the
-  - License, or (at your option) any later version.
-  -
-  - This program is distributed in the hope that it will be useful,
-  - but WITHOUT ANY WARRANTY; without even the implied warranty of
-  - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  - GNU Affero General Public License for more details.
-  -
-  - You should have received a copy of the GNU Affero General Public License
-  - along with this program. If not, see <http://www.gnu.org/licenses/>.
-  -
-  -->
+  - SPDX-FileCopyrightText: 2018 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 
 <template>
 	<NcAppContent :page-heading="pageHeading">
@@ -29,6 +12,7 @@
 
 <script>
 import { translate as t } from '@nextcloud/l10n'
+import { emit } from '@nextcloud/event-bus'
 import { defineComponent } from 'vue'
 
 import NcAppContent from '@nextcloud/vue/dist/Components/NcAppContent.js'
@@ -86,6 +70,7 @@ export default defineComponent({
 		window.OCA.Settings.UserList = window.OCA.Settings.UserList ?? {}
 		// and add the registerAction method
 		window.OCA.Settings.UserList.registerAction = this.registerAction
+		emit('settings:user-management:loaded')
 	},
 
 	methods: {
@@ -97,13 +82,15 @@ export default defineComponent({
 		 * @param {string} icon the icon class
 		 * @param {string} text the text to display
 		 * @param {Function} action the function to run
+		 * @param {(user: Record<string, unknown>) => boolean} enabled return true if the action is enabled for the user
 		 * @return {Array}
 		 */
-		registerAction(icon, text, action) {
+		registerAction(icon, text, action, enabled) {
 			this.externalActions.push({
 				icon,
 				text,
 				action,
+				enabled,
 			})
 			return this.externalActions
 		},

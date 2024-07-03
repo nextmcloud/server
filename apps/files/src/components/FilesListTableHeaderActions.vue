@@ -1,24 +1,7 @@
 <!--
-  - @copyright Copyright (c) 2023 John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @author John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @license GNU AGPL version 3 or any later version
-  -
-  - This program is free software: you can redistribute it and/or modify
-  - it under the terms of the GNU Affero General Public License as
-  - published by the Free Software Foundation, either version 3 of the
-  - License, or (at your option) any later version.
-  -
-  - This program is distributed in the hope that it will be useful,
-  - but WITHOUT ANY WARRANTY; without even the implied warranty of
-  - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  - GNU Affero General Public License for more details.
-  -
-  - You should have received a copy of the GNU Affero General Public License
-  - along with this program. If not, see <http://www.gnu.org/licenses/>.
-  -
-  -->
+  - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 <template>
 	<div class="files-list__column files-list__row-actions-batch">
 		<NcActions ref="actionsMenu"
@@ -56,7 +39,7 @@ import { useFilesStore } from '../store/files.ts'
 import { useSelectionStore } from '../store/selection.ts'
 import filesListWidthMixin from '../mixins/filesListWidth.ts'
 import logger from '../logger.js'
-import type { FileId } from '../types'
+import type { FileSource } from '../types'
 
 // The registered actions list
 const actions = getFileActions()
@@ -81,7 +64,7 @@ export default defineComponent({
 			required: true,
 		},
 		selectedNodes: {
-			type: Array as PropType<FileId[]>,
+			type: Array as PropType<FileSource[]>,
 			default: () => ([]),
 		},
 	},
@@ -117,7 +100,7 @@ export default defineComponent({
 
 		nodes() {
 			return this.selectedNodes
-				.map(fileid => this.getNode(fileid))
+				.map(source => this.getNode(source))
 				.filter(Boolean) as Node[]
 		},
 
@@ -161,7 +144,7 @@ export default defineComponent({
 
 		async onActionClick(action) {
 			const displayName = action.displayName(this.nodes, this.currentView)
-			const selectionIds = this.selectedNodes
+			const selectionSources = this.selectedNodes
 			try {
 				// Set loading markers
 				this.loading = action.id
@@ -182,9 +165,9 @@ export default defineComponent({
 				// Handle potential failures
 				if (results.some(result => result === false)) {
 					// Remove the failed ids from the selection
-					const failedIds = selectionIds
-						.filter((fileid, index) => results[index] === false)
-					this.selectionStore.set(failedIds)
+					const failedSources = selectionSources
+						.filter((source, index) => results[index] === false)
+					this.selectionStore.set(failedSources)
 
 					if (results.some(result => result === null)) {
 						// If some actions returned null, we assume that the dev

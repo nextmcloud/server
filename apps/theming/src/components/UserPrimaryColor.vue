@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 <template>
 	<div class="primary-color__wrapper">
 		<NcColorPicker v-model="primaryColor"
@@ -27,10 +31,10 @@ import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { generateOcsUrl } from '@nextcloud/router'
 import { colord } from 'colord'
-import { debounce } from 'debounce'
 import { defineComponent } from 'vue'
-
 import axios from '@nextcloud/axios'
+import debounce from 'debounce'
+
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcColorPicker from '@nextcloud/vue/dist/Components/NcColorPicker.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'

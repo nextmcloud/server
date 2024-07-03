@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.24.0@462c80e31c34e58cc4f750c656be3927e80e550e">
+<files psalm-version="5.25.0@01a8eb06b9e9cc6cfb6a320bf9fb14331919d505">
   <file src="3rdparty/sabre/dav/lib/CalDAV/Calendar.php">
     <MoreSpecificImplementedParamType>
       <code><![CDATA[$data]]></code>
@@ -2125,9 +2125,6 @@
       <code><![CDATA[ClientResolver::_default_signature_provider()]]></code>
     </InternalMethod>
     <UndefinedFunction>
-      <code><![CDATA[Promise\promise_for(
-					new Credentials($key, $secret)
-				)]]></code>
       <code><![CDATA[\Aws\or_chain([self::class, 'legacySignatureProvider'], ClientResolver::_default_signature_provider())]]></code>
     </UndefinedFunction>
   </file>
@@ -2138,11 +2135,6 @@
     <UndefinedFunction>
       <code><![CDATA[\Aws\serialize($command)]]></code>
     </UndefinedFunction>
-  </file>
-  <file src="lib/private/Files/ObjectStore/S3Signature.php">
-    <NullArgument>
-      <code><![CDATA[null]]></code>
-    </NullArgument>
   </file>
   <file src="lib/private/Files/ObjectStore/StorageObjectStore.php">
     <InvalidReturnType>

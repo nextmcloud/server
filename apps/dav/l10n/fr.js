@@ -86,7 +86,6 @@ OC.L10N.register(
     "Organizer:" : "Organisateur :",
     "Attendees:" : "Participants :",
     "Title:" : "Titre :",
-    "Time:" : "Heure :",
     "Location:" : "Lieu :",
     "Link:" : "Lien :",
     "Accept" : "Accepter",
@@ -133,8 +132,6 @@ OC.L10N.register(
     "Encryption not ready: %1$s" : "Encryption pas prête : %1$s",
     "Failed to open file: %1$s" : "Échec à l'ouverture du fichier : %1$s",
     "Failed to unlink: %1$s" : "Échec à la suppression :%1$s",
-    "Invalid chunk name" : "Nom de morceau invalide",
-    "Could not rename part file assembled from chunks" : "Impossible de renommer le fichier partiel à partir des morceaux",
     "Failed to write file contents: %1$s" : "Échec à l'écriture du contenu du fichier : %1$s",
     "File not found: %1$s" : "Fichier non trouvé : %1$s",
     "System is in maintenance mode." : "Le système est en mode maintenance.",
@@ -209,6 +206,9 @@ OC.L10N.register(
     "Tentative" : "Tentative",
     "Your attendance was updated successfully." : "Votre présence a été mise à jour avec succès.",
     "To-dos" : "Tâches à faire",
+    "Time:" : "Heure :",
+    "Invalid chunk name" : "Nom de morceau invalide",
+    "Could not rename part file assembled from chunks" : "Impossible de renommer le fichier partiel à partir des morceaux",
     "If you configure your working hours, other users will see when you are out of office when they book a meeting." : "Si vous configurez vos heures de travail, les autres utilisateurs verront si vous êtes disponible quand ils planifient une réunion."
 },
 "nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;");

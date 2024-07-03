@@ -1,29 +1,7 @@
 <?php
 /**
- * @copyright Copyright (c) 2016 Lukas Reschke <lukas@statuscode.ch>
- *
- * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
- * @author Jan-Christoph Borchardt <hey@jancborchardt.net>
- * @author Julius Härtl <jus@bitgrid.net>
- * @author Lukas Reschke <lukas@statuscode.ch>
- * @author Morris Jobke <hey@morrisjobke.de>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- *
- * @license GNU AGPL version 3 or any later version
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-FileCopyrightText: 2016 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 namespace OCA\Theming\Tests\Settings;
 
@@ -48,14 +26,15 @@ use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\IUserSession;
+use PHPUnit\Framework\MockObject\MockObject;
 use Test\TestCase;
 
 class PersonalTest extends TestCase {
-	private IConfig $config;
-	private ThemesService $themesService;
-	private IInitialState $initialStateService;
-	private ThemingDefaults $themingDefaults;
-	private IAppManager $appManager;
+	private IConfig&MockObject $config;
+	private ThemesService&MockObject $themesService;
+	private IInitialState&MockObject $initialStateService;
+	private ThemingDefaults&MockObject $themingDefaults;
+	private IAppManager&MockObject $appManager;
 	private Personal $admin;
 
 	/** @var ITheme[] */
@@ -128,17 +107,18 @@ class PersonalTest extends TestCase {
 			->method('getDefaultAppForUser')
 			->willReturn('forcedapp');
 
-		$this->initialStateService->expects($this->exactly(7))
+		$this->initialStateService->expects($this->exactly(8))
 			->method('provideInitialState')
-			->withConsecutive(
+			->willReturnMap([
 				['shippedBackgrounds', BackgroundService::SHIPPED_BACKGROUNDS],
 				['themingDefaults'],
+				['enableBlurFilter', ''],
 				['userBackgroundImage'],
 				['themes', $themesState],
 				['enforceTheme', $enforcedTheme],
 				['isUserThemingDisabled', false],
 				['navigationBar', ['userAppOrder' => [], 'enforcedDefaultApp' => 'forcedapp']],
-			);
+			]);
 
 		$expected = new TemplateResponse('theming', 'settings-personal');
 		$this->assertEquals($expected, $this->admin->getForm());
@@ -180,6 +160,7 @@ class PersonalTest extends TestCase {
 				$config,
 				$l10n,
 				$appManager,
+				null,
 			),
 			'light' => new LightTheme(
 				$util,
@@ -190,6 +171,7 @@ class PersonalTest extends TestCase {
 				$config,
 				$l10n,
 				$appManager,
+				null,
 			),
 			'dark' => new DarkTheme(
 				$util,
@@ -200,6 +182,7 @@ class PersonalTest extends TestCase {
 				$config,
 				$l10n,
 				$appManager,
+				null,
 			),
 			'light-highcontrast' => new HighContrastTheme(
 				$util,
@@ -210,6 +193,7 @@ class PersonalTest extends TestCase {
 				$config,
 				$l10n,
 				$appManager,
+				null,
 			),
 			'dark-highcontrast' => new DarkHighContrastTheme(
 				$util,
@@ -220,6 +204,7 @@ class PersonalTest extends TestCase {
 				$config,
 				$l10n,
 				$appManager,
+				null,
 			),
 			'opendyslexic' => new DyslexiaFont(
 				$util,
@@ -230,6 +215,7 @@ class PersonalTest extends TestCase {
 				$config,
 				$l10n,
 				$appManager,
+				null,
 			),
 		];
 	}

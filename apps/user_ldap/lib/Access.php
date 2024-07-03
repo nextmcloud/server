@@ -1,48 +1,9 @@
 <?php
+
 /**
- * @copyright Copyright (c) 2016, ownCloud, Inc.
- *
- * @author Aaron Wood <aaronjwood@gmail.com>
- * @author Andreas Fischer <bantu@owncloud.com>
- * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
- * @author Bart Visscher <bartv@thisnet.nl>
- * @author Benjamin Diele <benjamin@diele.be>
- * @author bline <scottbeck@gmail.com>
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Daniel Kesselberg <mail@danielkesselberg.de>
- * @author J0WI <J0WI@users.noreply.github.com>
- * @author Joas Schilling <coding@schilljs.com>
- * @author Jörn Friedrich Dreyer <jfd@butonic.de>
- * @author Juan Pablo Villafáñez <jvillafanez@solidgear.es>
- * @author Lorenzo M. Catucci <lorenzo@sancho.ccd.uniroma2.it>
- * @author Lukas Reschke <lukas@statuscode.ch>
- * @author Mario Kolling <mario.kolling@serpro.gov.br>
- * @author Max Kovalenko <mxss1998@yandex.ru>
- * @author Morris Jobke <hey@morrisjobke.de>
- * @author Nicolas Grekas <nicolas.grekas@gmail.com>
- * @author Peter Kubica <peter@kubica.ch>
- * @author Ralph Krimmel <rkrimme1@gwdg.de>
- * @author Robin McCorkell <robin@mccorkell.me.uk>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Roger Szabo <roger.szabo@web.de>
- * @author Roland Tapken <roland@bitarbeiter.net>
- * @author root <root@localhost.localdomain>
- * @author Victor Dubiniuk <dubiniuk@owncloud.com>
- *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program. If not, see <http://www.gnu.org/licenses/>
- *
+ * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 namespace OCA\User_LDAP;
 
@@ -55,6 +16,7 @@ use OCA\User_LDAP\Mapping\AbstractMapping;
 use OCA\User_LDAP\User\Manager;
 use OCA\User_LDAP\User\OfflineUser;
 use OCP\HintException;
+use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
@@ -69,10 +31,6 @@ use function substr;
 class Access extends LDAPUtility {
 	public const UUID_ATTRIBUTES = ['entryuuid', 'nsuniqueid', 'objectguid', 'guid', 'ipauniqueid'];
 
-	/** @var \OCA\User_LDAP\Connection */
-	public $connection;
-	/** @var Manager */
-	public $userManager;
 	/**
 	 * never ever check this var directly, always use getPagedSearchResultState
 	 * @var ?bool
@@ -84,27 +42,17 @@ class Access extends LDAPUtility {
 
 	/** @var ?AbstractMapping */
 	protected $groupMapper;
-
-	/**
-	 * @var \OCA\User_LDAP\Helper
-	 */
-	private $helper;
-	/** @var IConfig */
-	private $config;
-	/** @var IUserManager */
-	private $ncUserManager;
-	/** @var LoggerInterface */
-	private $logger;
 	private string $lastCookie = '';
 
 	public function __construct(
-		Connection $connection,
 		ILDAPWrapper $ldap,
-		Manager $userManager,
-		Helper $helper,
-		IConfig $config,
-		IUserManager $ncUserManager,
-		LoggerInterface $logger
+		public Connection $connection,
+		public Manager $userManager,
+		private Helper $helper,
+		private IConfig $config,
+		private IUserManager $ncUserManager,
+		private LoggerInterface $logger,
+		private IAppConfig $appConfig,
 	) {
 		parent::__construct($ldap);
 		$this->connection = $connection;
@@ -861,8 +809,7 @@ class Access extends LDAPUtility {
 		$ldapRecords = $this->searchUsers($filter, $attr, $limit, $offset);
 		$recordsToUpdate = $ldapRecords;
 		if (!$forceApplyAttributes) {
-			$isBackgroundJobModeAjax = $this->config
-					->getAppValue('core', 'backgroundjobs_mode', 'ajax') === 'ajax';
+			$isBackgroundJobModeAjax = $this->appConfig->getValueString('core', 'backgroundjobs_mode', 'ajax') === 'ajax';
 			$listOfDNs = array_reduce($ldapRecords, function ($listOfDNs, $entry) {
 				$listOfDNs[] = $entry['dn'][0];
 				return $listOfDNs;

@@ -1,29 +1,12 @@
 <!--
-  - @copyright Copyright (c) 2019 John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @author John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @license GNU AGPL version 3 or any later version
-  -
-  - This program is free software: you can redistribute it and/or modify
-  - it under the terms of the GNU Affero General Public License as
-  - published by the Free Software Foundation, either version 3 of the
-  - License, or (at your option) any later version.
-  -
-  - This program is distributed in the hope that it will be useful,
-  - but WITHOUT ANY WARRANTY; without even the implied warranty of
-  - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  - GNU Affero General Public License for more details.
-  -
-  - You should have received a copy of the GNU Affero General Public License
-  - along with this program. If not, see <http://www.gnu.org/licenses/>.
-  -
-  -->
+  - SPDX-FileCopyrightText: 2019 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 
 <template>
 	<NcAppSidebar v-if="file"
 		ref="sidebar"
-		cy-data-sidebar
+		data-cy-sidebar
 		v-bind="appSidebar"
 		:force-menu="true"
 		@close="close"
@@ -106,7 +89,7 @@
 import { getCurrentUser } from '@nextcloud/auth'
 import { getCapabilities } from '@nextcloud/capabilities'
 import { showError } from '@nextcloud/dialogs'
-import { emit } from '@nextcloud/event-bus'
+import { emit, subscribe, unsubscribe } from '@nextcloud/event-bus'
 import { File, Folder, formatFileSize } from '@nextcloud/files'
 import { encodePath } from '@nextcloud/paths'
 import { generateRemoteUrl, generateUrl } from '@nextcloud/router'
@@ -306,10 +289,13 @@ export default {
 		},
 	},
 	created() {
+		subscribe('files:node:deleted', this.onNodeDeleted)
+
 		window.addEventListener('resize', this.handleWindowResize)
 		this.handleWindowResize()
 	},
 	beforeDestroy() {
+		unsubscribe('file:node:deleted', this.onNodeDeleted)
 		window.removeEventListener('resize', this.handleWindowResize)
 	},
 
@@ -335,7 +321,8 @@ export default {
 
 		getPreviewIfAny(fileInfo) {
 			if (fileInfo?.hasPreview && !this.isFullScreen) {
-				return generateUrl(`/core/preview?fileId=${fileInfo.id}&x=${screen.width}&y=${screen.height}&a=true`)
+				const etag = fileInfo?.etag || ''
+				return generateUrl(`/core/preview?fileId=${fileInfo.id}&x=${screen.width}&y=${screen.height}&a=true&v=${etag.slice(0, 6)}`)
 			}
 			return this.getIconUrl(fileInfo)
 		},
@@ -507,6 +494,16 @@ export default {
 			this.Sidebar.file = ''
 			this.showTags = false
 			this.resetData()
+		},
+
+		/**
+		 * Handle if the current node was deleted
+		 * @param {import('@nextcloud/files').Node} node The deleted node
+		 */
+		onNodeDeleted(node) {
+			if (this.fileInfo && node && this.fileInfo.id === node.fileid) {
+				this.close()
+			}
 		},
 
 		/**

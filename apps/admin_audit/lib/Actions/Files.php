@@ -1,33 +1,14 @@
 <?php
 
 declare(strict_types=1);
-
 /**
- * @copyright Copyright (c) 2016 Lukas Reschke <lukas@statuscode.ch>
- *
- * @author Joas Schilling <coding@schilljs.com>
- * @author Lukas Reschke <lukas@statuscode.ch>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- *
- * @license GNU AGPL version 3 or any later version
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-FileCopyrightText: 2016 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 namespace OCA\AdminAudit\Actions;
 
 use OCP\Files\Events\Node\BeforeNodeReadEvent;
+use OCP\Files\Events\Node\BeforeNodeRenamedEvent;
 use OCP\Files\Events\Node\BeforeNodeWrittenEvent;
 use OCP\Files\Events\Node\NodeCopiedEvent;
 use OCP\Files\Events\Node\NodeCreatedEvent;
@@ -45,6 +26,8 @@ use Psr\Log\LoggerInterface;
  * @package OCA\AdminAudit\Actions
  */
 class Files extends Action {
+
+	private array $renamedNodes = [];
 	/**
 	 * Logs file read actions
 	 *
@@ -72,16 +55,33 @@ class Files extends Action {
 	/**
 	 * Logs rename actions of files
 	 *
-	 * @param NodeRenamedEvent $event
+	 * @param BeforeNodeRenamedEvent $event
 	 */
-	public function rename(NodeRenamedEvent $event): void {
+	public function beforeRename(BeforeNodeRenamedEvent $event): void {
 		try {
 			$source = $event->getSource();
+			$this->renamedNodes[$source->getId()] = $source;
+		} catch (InvalidPathException|NotFoundException $e) {
+			\OCP\Server::get(LoggerInterface::class)->error(
+				"Exception thrown in file rename: ".$e->getMessage(), ['app' => 'admin_audit', 'exception' => $e]
+			);
+			return;
+		}
+	}
+
+	/**
+	 * Logs rename actions of files
+	 *
+	 * @param NodeRenamedEvent $event
+	 */
+	public function afterRename(NodeRenamedEvent $event): void {
+		try {
 			$target = $event->getTarget();
+			$originalSource = $this->renamedNodes[$target->getId()];
 			$params = [
 				'newid' => $target->getId(),
-				'oldpath' => mb_substr($source->getPath(), 5),
-				'newpath' => mb_substr($target->getPath(), 5),
+				'oldpath' => mb_substr($originalSource->getInternalPath(), 5),
+				'newpath' => mb_substr($target->getInternalPath(), 5),
 			];
 		} catch (InvalidPathException|NotFoundException $e) {
 			\OCP\Server::get(LoggerInterface::class)->error(
@@ -96,6 +96,7 @@ class Files extends Action {
 			array_keys($params)
 		);
 	}
+
 
 	/**
 	 * Logs creation of files

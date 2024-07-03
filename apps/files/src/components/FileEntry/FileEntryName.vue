@@ -1,24 +1,7 @@
 <!--
-	- @copyright Copyright (c) 2023 John Molakvoæ <skjnldsv@protonmail.com>
-	-
-	- @author John Molakvoæ <skjnldsv@protonmail.com>
-	-
-	- @license GNU AGPL version 3 or any later version
-	-
-	- This program is free software: you can redistribute it and/or modify
-	- it under the terms of the GNU Affero General Public License as
-	- published by the Free Software Foundation, either version 3 of the
-	- License, or (at your option) any later version.
-	-
-	- This program is distributed in the hope that it will be useful,
-	- but WITHOUT ANY WARRANTY; without even the implied warranty of
-	- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	- GNU Affero General Public License for more details.
-	-
-	- You should have received a copy of the GNU Affero General Public License
-	- along with this program. If not, see <http://www.gnu.org/licenses/>.
-	-
-	-->
+  - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 <template>
 	<!-- Rename input -->
 	<form v-if="isRenaming"
@@ -43,8 +26,7 @@
 		:aria-hidden="isRenaming"
 		class="files-list__row-name-link"
 		data-cy-files-list-row-name-link
-		v-bind="linkTo.params"
-		@click="$emit('click', $event)">
+		v-bind="linkTo.params">
 		<!-- File name -->
 		<span class="files-list__row-name-text">
 			<!-- Keep the displayName stuck to the extension to avoid whitespace rendering issues-->
@@ -55,7 +37,7 @@
 </template>
 
 <script lang="ts">
-import type { Node, View } from '@nextcloud/files'
+import type { Node } from '@nextcloud/files'
 import type { PropType } from 'vue'
 
 import { showError, showSuccess } from '@nextcloud/dialogs'
@@ -63,12 +45,12 @@ import { emit } from '@nextcloud/event-bus'
 import { FileType, NodeStatus, Permission } from '@nextcloud/files'
 import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
-import axios from '@nextcloud/axios'
-import { isAxiosError } from 'axios'
-import Vue, { defineComponent } from 'vue'
+import axios, { isAxiosError } from '@nextcloud/axios'
+import { defineComponent } from 'vue'
 
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
 
+import { useNavigation } from '../../composables/useNavigation'
 import { useRenamingStore } from '../../store/renaming.ts'
 import logger from '../../logger.js'
 
@@ -109,17 +91,17 @@ export default defineComponent({
 	},
 
 	setup() {
+		const { currentView } = useNavigation()
 		const renamingStore = useRenamingStore()
+
 		return {
+			currentView,
+
 			renamingStore,
 		}
 	},
 
 	computed: {
-		currentView(): View {
-			return this.$navigation.active as View
-		},
-
 		isRenaming() {
 			return this.renamingStore.renamingNode === this.source
 		},
@@ -144,7 +126,7 @@ export default defineComponent({
 		},
 
 		linkTo() {
-			if (this.source.attributes.failed) {
+			if (this.source.status === NodeStatus.FAILED) {
 				return {
 					is: 'span',
 					params: {
@@ -301,7 +283,7 @@ export default defineComponent({
 			}
 
 			// Set loading state
-			Vue.set(this.source, 'status', NodeStatus.LOADING)
+			this.$set(this.source, 'status', NodeStatus.LOADING)
 
 			// Update node
 			this.source.rename(newName)
@@ -346,7 +328,7 @@ export default defineComponent({
 				// Unknown error
 				showError(t('files', 'Could not rename "{oldName}"', { oldName }))
 			} finally {
-				Vue.set(this.source, 'status', undefined)
+				this.$set(this.source, 'status', undefined)
 			}
 		},
 

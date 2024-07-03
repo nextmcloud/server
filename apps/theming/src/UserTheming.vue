@@ -1,24 +1,6 @@
 <!--
-  - @copyright Copyright (c) 2020 Julius Härtl <jus@bitgrid.net>
-  - @copyright Copyright (c) 2022 Greta Doci <gretadoci@gmail.com>
-  -
-  - @author Christopher Ng <chrng8@gmail.com>
-  -
-  - @license AGPL-3.0-or-later
-  -
-  - This program is free software: you can redistribute it and/or modify
-  - it under the terms of the GNU Affero General Public License as
-  - published by the Free Software Foundation, either version 3 of the
-  - License, or (at your option) any later version.
-  -
-  - This program is distributed in the hope that it will be useful,
-  - but WITHOUT ANY WARRANTY; without even the implied warranty of
-  - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  - GNU Affero General Public License for more details.
-  -
-  - You should have received a copy of the GNU Affero General Public License
-  - along with this program. If not, see <http://www.gnu.org/licenses/>.
-  -
+  - SPDX-FileCopyrightText: 2020 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <template>
@@ -51,6 +33,14 @@
 					type="font"
 					@change="changeFont" />
 			</div>
+
+			<h3>{{ t('theming', 'Misc accessibility options') }}</h3>
+			<NcCheckboxRadioSwitch type="checkbox"
+				:checked="enableBlurFilter === 'yes'"
+				:indeterminate="enableBlurFilter === ''"
+				@update:checked="changeEnableBlurFilter">
+				{{ t('theming', 'Enable blur background filter (may increase GPU load)') }}
+			</NcCheckboxRadioSwitch>
 		</NcSettingsSection>
 
 		<NcSettingsSection :name="t('theming', 'Primary color')"
@@ -104,6 +94,7 @@ import UserPrimaryColor from './components/UserPrimaryColor.vue'
 const availableThemes = loadState('theming', 'themes', [])
 const enforceTheme = loadState('theming', 'enforceTheme', '')
 const shortcutsDisabled = loadState('theming', 'shortcutsDisabled', false)
+const enableBlurFilter = loadState('theming', 'enableBlurFilter', '')
 
 const isUserThemingDisabled = loadState('theming', 'isUserThemingDisabled')
 
@@ -127,6 +118,8 @@ export default {
 			enforceTheme,
 			shortcutsDisabled,
 			isUserThemingDisabled,
+
+			enableBlurFilter,
 		}
 	},
 
@@ -239,6 +232,22 @@ export default {
 					method: 'DELETE',
 				})
 			}
+		},
+
+		async changeEnableBlurFilter() {
+			this.enableBlurFilter = this.enableBlurFilter === 'no' ? 'yes' : 'no'
+			await axios({
+				url: generateOcsUrl('apps/provisioning_api/api/v1/config/users/{appId}/{configKey}', {
+					appId: 'theming',
+					configKey: 'force_enable_blur_filter',
+				}),
+				data: {
+					configValue: this.enableBlurFilter,
+				},
+				method: 'POST',
+			})
+			// Refresh the styles
+			this.$emit('update:background')
 		},
 
 		updateBodyAttributes() {

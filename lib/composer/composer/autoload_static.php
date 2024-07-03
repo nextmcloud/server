@@ -17,10 +17,6 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
             'OC\\' => 3,
             'OCP\\' => 4,
         ),
-        'B' => 
-        array (
-            'Bamarni\\Composer\\Bin\\' => 21,
-        ),
     );
 
     public static $prefixDirsPsr4 = array (
@@ -35,10 +31,6 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OCP\\' => 
         array (
             0 => __DIR__ . '/../../..' . '/lib/public',
-        ),
-        'Bamarni\\Composer\\Bin\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/bamarni/composer-bin-plugin/src',
         ),
     );
 
@@ -88,6 +80,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OCP\\AppFramework\\Http\\Attribute\\AuthorizedAdminSetting' => __DIR__ . '/../../..' . '/lib/public/AppFramework/Http/Attribute/AuthorizedAdminSetting.php',
         'OCP\\AppFramework\\Http\\Attribute\\BruteForceProtection' => __DIR__ . '/../../..' . '/lib/public/AppFramework/Http/Attribute/BruteForceProtection.php',
         'OCP\\AppFramework\\Http\\Attribute\\CORS' => __DIR__ . '/../../..' . '/lib/public/AppFramework/Http/Attribute/CORS.php',
+        'OCP\\AppFramework\\Http\\Attribute\\ExAppRequired' => __DIR__ . '/../../..' . '/lib/public/AppFramework/Http/Attribute/ExAppRequired.php',
         'OCP\\AppFramework\\Http\\Attribute\\FrontpageRoute' => __DIR__ . '/../../..' . '/lib/public/AppFramework/Http/Attribute/FrontpageRoute.php',
         'OCP\\AppFramework\\Http\\Attribute\\IgnoreOpenAPI' => __DIR__ . '/../../..' . '/lib/public/AppFramework/Http/Attribute/IgnoreOpenAPI.php',
         'OCP\\AppFramework\\Http\\Attribute\\NoAdminRequired' => __DIR__ . '/../../..' . '/lib/public/AppFramework/Http/Attribute/NoAdminRequired.php',
@@ -322,6 +315,8 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OCP\\EventDispatcher\\GenericEvent' => __DIR__ . '/../../..' . '/lib/public/EventDispatcher/GenericEvent.php',
         'OCP\\EventDispatcher\\IEventDispatcher' => __DIR__ . '/../../..' . '/lib/public/EventDispatcher/IEventDispatcher.php',
         'OCP\\EventDispatcher\\IEventListener' => __DIR__ . '/../../..' . '/lib/public/EventDispatcher/IEventListener.php',
+        'OCP\\EventDispatcher\\IWebhookCompatibleEvent' => __DIR__ . '/../../..' . '/lib/public/EventDispatcher/IWebhookCompatibleEvent.php',
+        'OCP\\EventDispatcher\\JsonSerializer' => __DIR__ . '/../../..' . '/lib/public/EventDispatcher/JsonSerializer.php',
         'OCP\\Exceptions\\AbortedEventException' => __DIR__ . '/../../..' . '/lib/public/Exceptions/AbortedEventException.php',
         'OCP\\Exceptions\\AppConfigException' => __DIR__ . '/../../..' . '/lib/public/Exceptions/AppConfigException.php',
         'OCP\\Exceptions\\AppConfigIncorrectTypeException' => __DIR__ . '/../../..' . '/lib/public/Exceptions/AppConfigIncorrectTypeException.php',
@@ -926,6 +921,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\AppFramework\\Middleware\\Security\\CSPMiddleware' => __DIR__ . '/../../..' . '/lib/private/AppFramework/Middleware/Security/CSPMiddleware.php',
         'OC\\AppFramework\\Middleware\\Security\\Exceptions\\AppNotEnabledException' => __DIR__ . '/../../..' . '/lib/private/AppFramework/Middleware/Security/Exceptions/AppNotEnabledException.php',
         'OC\\AppFramework\\Middleware\\Security\\Exceptions\\CrossSiteRequestForgeryException' => __DIR__ . '/../../..' . '/lib/private/AppFramework/Middleware/Security/Exceptions/CrossSiteRequestForgeryException.php',
+        'OC\\AppFramework\\Middleware\\Security\\Exceptions\\ExAppRequiredException' => __DIR__ . '/../../..' . '/lib/private/AppFramework/Middleware/Security/Exceptions/ExAppRequiredException.php',
         'OC\\AppFramework\\Middleware\\Security\\Exceptions\\LaxSameSiteCookieFailedException' => __DIR__ . '/../../..' . '/lib/private/AppFramework/Middleware/Security/Exceptions/LaxSameSiteCookieFailedException.php',
         'OC\\AppFramework\\Middleware\\Security\\Exceptions\\NotAdminException' => __DIR__ . '/../../..' . '/lib/private/AppFramework/Middleware/Security/Exceptions/NotAdminException.php',
         'OC\\AppFramework\\Middleware\\Security\\Exceptions\\NotConfirmedException' => __DIR__ . '/../../..' . '/lib/private/AppFramework/Middleware/Security/Exceptions/NotConfirmedException.php',
@@ -1059,6 +1055,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Calendar\\CalendarQuery' => __DIR__ . '/../../..' . '/lib/private/Calendar/CalendarQuery.php',
         'OC\\Calendar\\Manager' => __DIR__ . '/../../..' . '/lib/private/Calendar/Manager.php',
         'OC\\Calendar\\Resource\\Manager' => __DIR__ . '/../../..' . '/lib/private/Calendar/Resource/Manager.php',
+        'OC\\Calendar\\ResourcesRoomsUpdater' => __DIR__ . '/../../..' . '/lib/private/Calendar/ResourcesRoomsUpdater.php',
         'OC\\Calendar\\Room\\Manager' => __DIR__ . '/../../..' . '/lib/private/Calendar/Room/Manager.php',
         'OC\\CapabilitiesManager' => __DIR__ . '/../../..' . '/lib/private/CapabilitiesManager.php',
         'OC\\Collaboration\\AutoComplete\\Manager' => __DIR__ . '/../../..' . '/lib/private/Collaboration/AutoComplete/Manager.php',
@@ -1117,15 +1114,12 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Core\\Command\\App\\ListApps' => __DIR__ . '/../../..' . '/core/Command/App/ListApps.php',
         'OC\\Core\\Command\\App\\Remove' => __DIR__ . '/../../..' . '/core/Command/App/Remove.php',
         'OC\\Core\\Command\\App\\Update' => __DIR__ . '/../../..' . '/core/Command/App/Update.php',
-        'OC\\Core\\Command\\Background\\Ajax' => __DIR__ . '/../../..' . '/core/Command/Background/Ajax.php',
-        'OC\\Core\\Command\\Background\\Base' => __DIR__ . '/../../..' . '/core/Command/Background/Base.php',
-        'OC\\Core\\Command\\Background\\Cron' => __DIR__ . '/../../..' . '/core/Command/Background/Cron.php',
         'OC\\Core\\Command\\Background\\Delete' => __DIR__ . '/../../..' . '/core/Command/Background/Delete.php',
         'OC\\Core\\Command\\Background\\Job' => __DIR__ . '/../../..' . '/core/Command/Background/Job.php',
         'OC\\Core\\Command\\Background\\JobBase' => __DIR__ . '/../../..' . '/core/Command/Background/JobBase.php',
         'OC\\Core\\Command\\Background\\JobWorker' => __DIR__ . '/../../..' . '/core/Command/Background/JobWorker.php',
         'OC\\Core\\Command\\Background\\ListCommand' => __DIR__ . '/../../..' . '/core/Command/Background/ListCommand.php',
-        'OC\\Core\\Command\\Background\\WebCron' => __DIR__ . '/../../..' . '/core/Command/Background/WebCron.php',
+        'OC\\Core\\Command\\Background\\Mode' => __DIR__ . '/../../..' . '/core/Command/Background/Mode.php',
         'OC\\Core\\Command\\Base' => __DIR__ . '/../../..' . '/core/Command/Base.php',
         'OC\\Core\\Command\\Broadcast\\Test' => __DIR__ . '/../../..' . '/core/Command/Broadcast/Test.php',
         'OC\\Core\\Command\\Check' => __DIR__ . '/../../..' . '/core/Command/Check.php',
@@ -1145,10 +1139,13 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Core\\Command\\Db\\ConvertFilecacheBigInt' => __DIR__ . '/../../..' . '/core/Command/Db/ConvertFilecacheBigInt.php',
         'OC\\Core\\Command\\Db\\ConvertMysqlToMB4' => __DIR__ . '/../../..' . '/core/Command/Db/ConvertMysqlToMB4.php',
         'OC\\Core\\Command\\Db\\ConvertType' => __DIR__ . '/../../..' . '/core/Command/Db/ConvertType.php',
+        'OC\\Core\\Command\\Db\\ExpectedSchema' => __DIR__ . '/../../..' . '/core/Command/Db/ExpectedSchema.php',
+        'OC\\Core\\Command\\Db\\ExportSchema' => __DIR__ . '/../../..' . '/core/Command/Db/ExportSchema.php',
         'OC\\Core\\Command\\Db\\Migrations\\ExecuteCommand' => __DIR__ . '/../../..' . '/core/Command/Db/Migrations/ExecuteCommand.php',
         'OC\\Core\\Command\\Db\\Migrations\\GenerateCommand' => __DIR__ . '/../../..' . '/core/Command/Db/Migrations/GenerateCommand.php',
         'OC\\Core\\Command\\Db\\Migrations\\MigrateCommand' => __DIR__ . '/../../..' . '/core/Command/Db/Migrations/MigrateCommand.php',
         'OC\\Core\\Command\\Db\\Migrations\\StatusCommand' => __DIR__ . '/../../..' . '/core/Command/Db/Migrations/StatusCommand.php',
+        'OC\\Core\\Command\\Db\\SchemaEncoder' => __DIR__ . '/../../..' . '/core/Command/Db/SchemaEncoder.php',
         'OC\\Core\\Command\\Encryption\\ChangeKeyStorageRoot' => __DIR__ . '/../../..' . '/core/Command/Encryption/ChangeKeyStorageRoot.php',
         'OC\\Core\\Command\\Encryption\\DecryptAll' => __DIR__ . '/../../..' . '/core/Command/Encryption/DecryptAll.php',
         'OC\\Core\\Command\\Encryption\\Disable' => __DIR__ . '/../../..' . '/core/Command/Encryption/Disable.php',
@@ -1646,6 +1643,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\MemoryInfo' => __DIR__ . '/../../..' . '/lib/private/MemoryInfo.php',
         'OC\\Migration\\BackgroundRepair' => __DIR__ . '/../../..' . '/lib/private/Migration/BackgroundRepair.php',
         'OC\\Migration\\ConsoleOutput' => __DIR__ . '/../../..' . '/lib/private/Migration/ConsoleOutput.php',
+        'OC\\Migration\\NullOutput' => __DIR__ . '/../../..' . '/lib/private/Migration/NullOutput.php',
         'OC\\Migration\\SimpleOutput' => __DIR__ . '/../../..' . '/lib/private/Migration/SimpleOutput.php',
         'OC\\NaturalSort' => __DIR__ . '/../../..' . '/lib/private/NaturalSort.php',
         'OC\\NaturalSort_DefaultCollator' => __DIR__ . '/../../..' . '/lib/private/NaturalSort_DefaultCollator.php',
@@ -1947,7 +1945,6 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC_API' => __DIR__ . '/../../..' . '/lib/private/legacy/OC_API.php',
         'OC_App' => __DIR__ . '/../../..' . '/lib/private/legacy/OC_App.php',
         'OC_Defaults' => __DIR__ . '/../../..' . '/lib/private/legacy/OC_Defaults.php',
-        'OC_FileChunking' => __DIR__ . '/../../..' . '/lib/private/legacy/OC_FileChunking.php',
         'OC_Files' => __DIR__ . '/../../..' . '/lib/private/legacy/OC_Files.php',
         'OC_Helper' => __DIR__ . '/../../..' . '/lib/private/legacy/OC_Helper.php',
         'OC_Hook' => __DIR__ . '/../../..' . '/lib/private/legacy/OC_Hook.php',

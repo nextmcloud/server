@@ -3,45 +3,9 @@
 declare(strict_types=1);
 
 /**
- * @copyright Copyright (c) 2016, ownCloud, Inc.
- * @copyright Copyright (c) 2023, Ezhil Shanmugham <ezhil930@gmail.com>
- *
- * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
- * @author Bjoern Schiessle <bjoern@schiessle.org>
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Daniel Calviño Sánchez <danxuliu@gmail.com>
- * @author Daniel Kesselberg <mail@danielkesselberg.de>
- * @author Joas Schilling <coding@schilljs.com>
- * @author John Molakvoæ <skjnldsv@protonmail.com>
- * @author Julius Härtl <jus@bitgrid.net>
- * @author Lukas Reschke <lukas@statuscode.ch>
- * @author michag86 <micha_g@arcor.de>
- * @author Mikael Hammarin <mikael@try2.se>
- * @author Morris Jobke <hey@morrisjobke.de>
- * @author Robin Appelman <robin@icewind.nl>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Sujith Haridasan <sujith.h@gmail.com>
- * @author Thomas Citharel <nextcloud@tcit.fr>
- * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Tom Needham <tom@owncloud.com>
- * @author Vincent Petry <vincent@nextcloud.com>
- * @author Kate Döen <kate.doeen@nextcloud.com>
- * @author Ezhil Shanmugham <ezhil930@gmail.com>
- *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program. If not, see <http://www.gnu.org/licenses/>
- *
+ * SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 namespace OCA\Provisioning_API\Controller;
@@ -225,13 +189,14 @@ class UsersController extends AUserData {
 	 *
 	 * Get the list of disabled users and their details
 	 *
+	 * @param string $search Text to search for
 	 * @param ?int $limit Limit the amount of users returned
 	 * @param int $offset Offset
 	 * @return DataResponse<Http::STATUS_OK, array{users: array<string, Provisioning_APIUserDetails|array{id: string}>}, array{}>
 	 *
 	 * 200: Disabled users details returned
 	 */
-	public function getDisabledUsersDetails(?int $limit = null, int $offset = 0): DataResponse {
+	public function getDisabledUsersDetails(string $search = '', ?int $limit = null, int $offset = 0): DataResponse {
 		$currentUser = $this->userSession->getUser();
 		if ($currentUser === null) {
 			return new DataResponse(['users' => []]);
@@ -249,7 +214,7 @@ class UsersController extends AUserData {
 		$uid = $currentUser->getUID();
 		$subAdminManager = $this->groupManager->getSubAdmin();
 		if ($this->groupManager->isAdmin($uid)) {
-			$users = $this->userManager->getDisabledUsers($limit, $offset);
+			$users = $this->userManager->getDisabledUsers($limit, $offset, $search);
 			$users = array_map(fn (IUser $user): string => $user->getUID(), $users);
 		} elseif ($subAdminManager->isSubAdmin($currentUser)) {
 			$subAdminOfGroups = $subAdminManager->getSubAdminsGroups($currentUser);
@@ -263,7 +228,7 @@ class UsersController extends AUserData {
 					array_map(
 						fn (IUser $user): string => $user->getUID(),
 						array_filter(
-							$group->searchUsers('', ($tempLimit === null ? null : $tempLimit - count($users))),
+							$group->searchUsers($search, ($tempLimit === null ? null : $tempLimit - count($users))),
 							fn (IUser $user): bool => !$user->isEnabled()
 						)
 					)
@@ -904,6 +869,7 @@ class UsersController extends AUserData {
 			$permittedFields[] = IAccountManager::PROPERTY_HEADLINE;
 			$permittedFields[] = IAccountManager::PROPERTY_BIOGRAPHY;
 			$permittedFields[] = IAccountManager::PROPERTY_PROFILE_ENABLED;
+			$permittedFields[] = IAccountManager::PROPERTY_BIRTHDATE;
 			$permittedFields[] = IAccountManager::PROPERTY_PHONE . self::SCOPE_SUFFIX;
 			$permittedFields[] = IAccountManager::PROPERTY_ADDRESS . self::SCOPE_SUFFIX;
 			$permittedFields[] = IAccountManager::PROPERTY_WEBSITE . self::SCOPE_SUFFIX;
@@ -914,6 +880,7 @@ class UsersController extends AUserData {
 			$permittedFields[] = IAccountManager::PROPERTY_HEADLINE . self::SCOPE_SUFFIX;
 			$permittedFields[] = IAccountManager::PROPERTY_BIOGRAPHY . self::SCOPE_SUFFIX;
 			$permittedFields[] = IAccountManager::PROPERTY_PROFILE_ENABLED . self::SCOPE_SUFFIX;
+			$permittedFields[] = IAccountManager::PROPERTY_BIRTHDATE . self::SCOPE_SUFFIX;
 
 			$permittedFields[] = IAccountManager::PROPERTY_AVATAR . self::SCOPE_SUFFIX;
 
@@ -1084,6 +1051,7 @@ class UsersController extends AUserData {
 			case IAccountManager::PROPERTY_ROLE:
 			case IAccountManager::PROPERTY_HEADLINE:
 			case IAccountManager::PROPERTY_BIOGRAPHY:
+			case IAccountManager::PROPERTY_BIRTHDATE:
 				$userAccount = $this->accountManager->getAccount($targetUser);
 				try {
 					$userProperty = $userAccount->getProperty($key);
@@ -1130,6 +1098,7 @@ class UsersController extends AUserData {
 			case IAccountManager::PROPERTY_HEADLINE . self::SCOPE_SUFFIX:
 			case IAccountManager::PROPERTY_BIOGRAPHY . self::SCOPE_SUFFIX:
 			case IAccountManager::PROPERTY_PROFILE_ENABLED . self::SCOPE_SUFFIX:
+			case IAccountManager::PROPERTY_BIRTHDATE . self::SCOPE_SUFFIX:
 			case IAccountManager::PROPERTY_AVATAR . self::SCOPE_SUFFIX:
 				$propertyName = substr($key, 0, strlen($key) - strlen(self::SCOPE_SUFFIX));
 				$userAccount = $this->accountManager->getAccount($targetUser);

@@ -1,47 +1,10 @@
 <?php
 
 declare(strict_types=1);
-
 /**
- * @copyright Copyright (c) 2016, ownCloud, Inc.
- *
- * @author Bjoern Schiessle <bjoern@schiessle.org>
- * @author castillo92 <37965565+castillo92@users.noreply.github.com>
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Daniel Calviño Sánchez <danxuliu@gmail.com>
- * @author Daniel Kesselberg <mail@danielkesselberg.de>
- * @author Gary Kim <gary@garykim.dev>
- * @author Georg Ehrke <oc.list@georgehrke.com>
- * @author Joas Schilling <coding@schilljs.com>
- * @author John Molakvoæ <skjnldsv@protonmail.com>
- * @author Julius Härtl <jus@bitgrid.net>
- * @author Lukas Reschke <lukas@statuscode.ch>
- * @author Maxence Lange <maxence@artificial-owl.com>
- * @author Maxence Lange <maxence@nextcloud.com>
- * @author Michael Jobst <mjobst+github@tecratech.de>
- * @author Morris Jobke <hey@morrisjobke.de>
- * @author Richard Steinmetz <richard@steinmetz.cloud>
- * @author Robin Appelman <robin@icewind.nl>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Valdnet <47037905+Valdnet@users.noreply.github.com>
- * @author Vincent Petry <vincent@nextcloud.com>
- * @author waleczny <michal@walczak.xyz>
- * @author Kate Döen <kate.doeen@nextcloud.com>
- *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program. If not, see <http://www.gnu.org/licenses/>
- *
+ * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 namespace OCA\Files_Sharing\Controller;
@@ -549,7 +512,8 @@ class ShareAPIController extends OCSController {
 	 * @param string $publicUpload If public uploading is allowed
 	 * @param string $password Password for the share
 	 * @param string|null $sendPasswordByTalk Send the password for the share over Talk
-	 * @param string $expireDate Expiry date of the share using user timezone at 00:00. It means date in UTC timezone will be used.
+	 * @param ?string $expireDate The expiry date of the share in the user's timezone at 00:00.
+	 *                If $expireDate is not supplied or set to `null`, the system default will be used.
 	 * @param string $note Note for the share
 	 * @param string $label Label for the share (only used in link and email)
 	 * @param string|null $attributes Additional attributes for the share
@@ -571,7 +535,7 @@ class ShareAPIController extends OCSController {
 		string $publicUpload = 'false',
 		string $password = '',
 		?string $sendPasswordByTalk = null,
-		string $expireDate = '',
+		?string $expireDate = null,
 		string $note = '',
 		string $label = '',
 		?string $attributes = null
@@ -646,12 +610,18 @@ class ShareAPIController extends OCSController {
 		}
 
 		//Expire date
-		if ($expireDate !== '') {
-			try {
-				$expireDateTime = $this->parseDate($expireDate);
-				$share->setExpirationDate($expireDateTime);
-			} catch (\Exception $e) {
-				throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
+		if ($expireDate !== null) {
+			if ($expireDate !== '') {
+				try {
+					$expireDateTime = $this->parseDate($expireDate);
+					$share->setExpirationDate($expireDateTime);
+				} catch (\Exception $e) {
+					throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
+				}
+			} else {
+				// Client sent empty string for expire date.
+				// Set noExpirationDate to true so overwrite is prevented.
+				$share->setNoExpirationDate(true);
 			}
 		}
 
@@ -768,19 +738,19 @@ class ShareAPIController extends OCSController {
 			$share->setPermissions($permissions);
 		} elseif ($shareType === IShare::TYPE_ROOM) {
 			try {
-				$this->getRoomShareHelper()->createShare($share, $shareWith, $permissions, $expireDate);
+				$this->getRoomShareHelper()->createShare($share, $shareWith, $permissions, $expireDate ?? '');
 			} catch (QueryException $e) {
 				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support room shares', [$node->getPath()]));
 			}
 		} elseif ($shareType === IShare::TYPE_DECK) {
 			try {
-				$this->getDeckShareHelper()->createShare($share, $shareWith, $permissions, $expireDate);
+				$this->getDeckShareHelper()->createShare($share, $shareWith, $permissions, $expireDate ?? '');
 			} catch (QueryException $e) {
 				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support room shares', [$node->getPath()]));
 			}
 		} elseif ($shareType === IShare::TYPE_SCIENCEMESH) {
 			try {
-				$this->getSciencemeshShareHelper()->createShare($share, $shareWith, $permissions, $expireDate);
+				$this->getSciencemeshShareHelper()->createShare($share, $shareWith, $permissions, $expireDate ?? '');
 			} catch (QueryException $e) {
 				throw new OCSForbiddenException($this->l->t('Sharing %s failed because the back end does not support ScienceMesh shares', [$node->getPath()]));
 			}
@@ -1644,9 +1614,6 @@ class ShareAPIController extends OCSController {
 		} catch (\Exception $e) {
 			throw new \Exception('Invalid date. Format must be YYYY-MM-DD');
 		}
-
-		// Use server timezone to store the date
-		$date->setTimezone(new \DateTimeZone(date_default_timezone_get()));
 
 		return $date;
 	}

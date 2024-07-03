@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
 namespace OC\TaskProcessing;
 
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -39,7 +43,7 @@ class SynchronousBackgroundJob extends QueuedJob {
 			}
 			$taskType = $provider->getTaskTypeId();
 			try {
-				$task = $this->taskProcessingManager->getNextScheduledTask($taskType);
+				$task = $this->taskProcessingManager->getNextScheduledTask([$taskType]);
 			} catch (NotFoundException $e) {
 				continue;
 			} catch (Exception $e) {
@@ -87,7 +91,7 @@ class SynchronousBackgroundJob extends QueuedJob {
 		));
 		$taskTypesWithTasks = array_filter($taskTypes, function ($taskType) {
 			try {
-				$this->taskProcessingManager->getNextScheduledTask($taskType);
+				$this->taskProcessingManager->getNextScheduledTask([$taskType]);
 				return true;
 			} catch (NotFoundException|Exception $e) {
 				return false;

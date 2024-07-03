@@ -59,7 +59,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Read package.json node and npm engines version
         uses: skjnldsv/read-package-engines-version-actions@06d6baf7d8f41934ab630e97d9e6c0bc9c9ac5e4 # v3
@@ -80,7 +80,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up node ${{ needs.versions.outputs.nodeVersion }}
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
@@ -88,7 +88,7 @@ jobs:
           node-version: ${{ needs.versions.outputs.nodeVersion }}
 
       - name: Set up npm ${{ needs.versions.outputs.npmVersion }}
-        run: npm i -g npm@"${{ needs.versions.outputs.npmVersion }}"
+        run: npm i -g 'npm@${{ needs.versions.outputs.npmVersion }}'
 
       - name: Install dependencies & build
         run: |
@@ -114,7 +114,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up node ${{ needs.versions.outputs.nodeVersion }}
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
@@ -122,7 +122,7 @@ jobs:
           node-version: ${{ needs.versions.outputs.nodeVersion }}
 
       - name: Set up npm ${{ needs.versions.outputs.npmVersion }}
-        run: npm i -g npm@"${{ needs.versions.outputs.npmVersion }}"
+        run: npm i -g 'npm@${{ needs.versions.outputs.npmVersion }}'
 
       - name: Install dependencies
         run: npm ci
@@ -142,7 +142,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up node ${{ needs.versions.outputs.nodeVersion }}
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
@@ -150,7 +150,7 @@ jobs:
           node-version: ${{ needs.versions.outputs.nodeVersion }}
 
       - name: Set up npm ${{ needs.versions.outputs.npmVersion }}
-        run: npm i -g npm@"${{ needs.versions.outputs.npmVersion }}"
+        run: npm i -g 'npm@${{ needs.versions.outputs.npmVersion }}'
 
       - name: Install dependencies
         run: npm ci

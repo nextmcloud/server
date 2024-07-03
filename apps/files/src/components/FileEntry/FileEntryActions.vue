@@ -1,24 +1,7 @@
 <!--
-  - @copyright Copyright (c) 2023 John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @author John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @license GNU AGPL version 3 or any later version
-  -
-  - This program is free software: you can redistribute it and/or modify
-  - it under the terms of the GNU Affero General Public License as
-  - published by the Free Software Foundation, either version 3 of the
-  - License, or (at your option) any later version.
-  -
-  - This program is distributed in the hope that it will be useful,
-  - but WITHOUT ANY WARRANTY; without even the implied warranty of
-  - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  - GNU Affero General Public License for more details.
-  -
-  - You should have received a copy of the GNU Affero General Public License
-  - along with this program. If not, see <http://www.gnu.org/licenses/>.
-  -
-  -->
+  - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 <template>
 	<td class="files-list__row-actions"
 		data-cy-files-list-row-actions>
@@ -93,11 +76,13 @@
 </template>
 
 <script lang="ts">
-import type { PropType } from 'vue'
+import type { PropType, ShallowRef } from 'vue'
+import type { FileAction, Node, View } from '@nextcloud/files'
 
-import { DefaultType, FileAction, Node, NodeStatus, View, getFileActions } from '@nextcloud/files'
+import { DefaultType, NodeStatus, getFileActions } from '@nextcloud/files'
 import { showError, showSuccess } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
+import { defineComponent } from 'vue'
 
 import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js'
 import NcActions from '@nextcloud/vue/dist/Components/NcActions.js'
@@ -105,9 +90,9 @@ import NcActionSeparator from '@nextcloud/vue/dist/Components/NcActionSeparator.
 import NcIconSvgWrapper from '@nextcloud/vue/dist/Components/NcIconSvgWrapper.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
 import ArrowLeftIcon from 'vue-material-design-icons/ArrowLeft.vue'
-import Vue, { defineComponent } from 'vue'
-
 import CustomElementRender from '../CustomElementRender.vue'
+
+import { useNavigation } from '../../composables/useNavigation'
 import logger from '../../logger.js'
 
 // The registered actions list
@@ -149,6 +134,15 @@ export default defineComponent({
 		},
 	},
 
+	setup() {
+		const { currentView } = useNavigation()
+
+		return {
+			// The file list is guaranteed to be only shown with active view
+			currentView: currentView as ShallowRef<View>,
+		}
+	},
+
 	data() {
 		return {
 			openedSubmenu: null as FileAction | null,
@@ -160,16 +154,13 @@ export default defineComponent({
 			// Remove any trailing slash but leave root slash
 			return (this.$route?.query?.dir?.toString() || '/').replace(/^(.+)\/$/, '$1')
 		},
-		currentView(): View {
-			return this.$navigation.active as View
-		},
 		isLoading() {
 			return this.source.status === NodeStatus.LOADING
 		},
 
 		// Sorted actions that are enabled for this node
 		enabledActions() {
-			if (this.source.attributes.failed) {
+			if (this.source.status === NodeStatus.FAILED) {
 				return []
 			}
 
@@ -228,12 +219,12 @@ export default defineComponent({
 			return this.enabledActions
 				.filter(action => action.parent)
 				.reduce((arr, action) => {
-					if (!arr[action.parent]) {
-						arr[action.parent] = []
+					if (!arr[action.parent!]) {
+						arr[action.parent!] = []
 					}
-					arr[action.parent].push(action)
+					arr[action.parent!].push(action)
 					return arr
-				}, {} as Record<string, FileAction>)
+				}, {} as Record<string, FileAction[]>)
 		},
 
 		openedMenu: {
@@ -255,7 +246,7 @@ export default defineComponent({
 		},
 
 		mountType() {
-			return this.source._attributes['mount-type']
+			return this.source.attributes['mount-type']
 		},
 	},
 
@@ -286,7 +277,7 @@ export default defineComponent({
 			try {
 				// Set the loading marker
 				this.$emit('update:loading', action.id)
-				Vue.set(this.source, 'status', NodeStatus.LOADING)
+				this.$set(this.source, 'status', NodeStatus.LOADING)
 
 				const success = await action.exec(this.source, this.currentView, this.currentDir)
 
@@ -306,7 +297,7 @@ export default defineComponent({
 			} finally {
 				// Reset the loading marker
 				this.$emit('update:loading', '')
-				Vue.set(this.source, 'status', undefined)
+				this.$set(this.source, 'status', undefined)
 
 				// If that was a submenu, we just go back after the action
 				if (isSubmenu) {

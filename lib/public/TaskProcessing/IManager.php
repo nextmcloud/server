@@ -3,24 +3,8 @@
 declare(strict_types=1);
 
 /**
- * @copyright Copyright (c) 2023 Marcel Klehr <mklehr@gmx.net>
- *
- * @author Marcel Klehr <mklehr@gmx.net>
- *
- * @license GNU AGPL version 3 or any later version
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
 
@@ -52,6 +36,14 @@ interface IManager {
 	 * @since 30.0.0
 	 */
 	public function getProviders(): array;
+
+	/**
+	 * @param string $taskType
+	 * @return IProvider
+	 * @throws Exception
+	 * @since 30.0.0
+	 */
+	public function getPreferredProvider(string $taskType);
 
 	/**
 	 * @return array<string,array{name: string, description: string, inputShape: ShapeDescriptor[], optionalInputShape: ShapeDescriptor[], outputShape: ShapeDescriptor[], optionalOutputShape: ShapeDescriptor[]}>
@@ -117,13 +109,14 @@ interface IManager {
 	public function setTaskProgress(int $id, float $progress): bool;
 
 	/**
-	 * @param string|null $taskTypeId
+	 * @param list<string> $taskTypeIds
+	 * @param list<int> $taskIdsToIgnore
 	 * @return Task
 	 * @throws Exception If the query failed
 	 * @throws NotFoundException If no task could not be found
 	 * @since 30.0.0
 	 */
-	public function getNextScheduledTask(?string $taskTypeId = null): Task;
+	public function getNextScheduledTask(array $taskTypeIds = [], array $taskIdsToIgnore = []): Task;
 
 	/**
 	 * @param int $id The id of the task
@@ -170,4 +163,13 @@ interface IManager {
 	 * @since 30.0.0
 	 */
 	public function prepareInputData(Task $task): array;
+
+	/**
+	 * Changes the task status to STATUS_RUNNING and, if successful, returns True.
+	 *
+	 * @param Task $task
+	 * @return bool
+	 * @since 30.0.0
+	 */
+	public function lockTask(Task $task): bool;
 }

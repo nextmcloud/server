@@ -84,7 +84,7 @@
     "Organizer:" : "主催者:",
     "Attendees:" : "参加者:",
     "Title:" : "タイトル:",
-    "Time:" : "時刻:",
+    "Date and time:" : "日時",
     "Location:" : "場所：",
     "Link:" : "リンク:",
     "Accept" : "承諾",
@@ -131,8 +131,6 @@
     "Encryption not ready: %1$s" : "暗号化の準備が出来ていません: %1$s",
     "Failed to open file: %1$s" : "ファイルを開くのに失敗: %1$s",
     "Failed to unlink: %1$s" : "リンクの解除に失敗: %1$s",
-    "Invalid chunk name" : "無効なチャンク名",
-    "Could not rename part file assembled from chunks" : "チャンクから構成されている部分ファイルの名前の変更ができませんでした",
     "Failed to write file contents: %1$s" : "ファイルの内容の書き込みに失敗: %1$s",
     "File not found: %1$s" : "ファイルが見つかりません: %1$s",
     "System is in maintenance mode." : "システムはメンテナンスモードです。",
@@ -158,6 +156,10 @@
     "WebDAV" : "WebDAV",
     "First day" : "初日",
     "Last day (inclusive)" : "最終日（含む）",
+    "Out of office replacement (optional)" : "不在時の代理者（オプション）",
+    "Name of the replacement" : "交代要員の氏名",
+    "No results." : "結果はありません。",
+    "Start typing." : "入力を開始する。",
     "Short absence status" : "短い不在のステータス",
     "Long absence Message" : "長期不在のメッセージ",
     "Save" : "保存",
@@ -207,6 +209,9 @@
     "Tentative" : "暫定的",
     "Your attendance was updated successfully." : "出席は正常に更新されました。",
     "To-dos" : "To-dos",
+    "Time:" : "時刻:",
+    "Invalid chunk name" : "無効なチャンク名",
+    "Could not rename part file assembled from chunks" : "チャンクから構成されている部分ファイルの名前の変更ができませんでした",
     "If you configure your working hours, other users will see when you are out of office when they book a meeting." : "勤務時間を設定すると、他のユーザが会議を予約する際に、あなたがいつ不在であるかがわかります。"
 },"pluralForm" :"nplurals=1; plural=0;"
 }

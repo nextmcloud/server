@@ -1,23 +1,6 @@
 /**
- * @copyright Copyright (c) 2022 John Molakvoæ <skjnldsv@protonmail.com>
- *
- * @author John Molakvoæ <skjnldsv@protonmail.com>
- *
- * @license AGPL-3.0-or-later
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-FileCopyrightText: 2022 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 /* eslint-disable no-console */
 /* eslint-disable n/no-unpublished-import */
@@ -26,7 +9,9 @@
 import Docker from 'dockerode'
 import waitOn from 'wait-on'
 import tar from 'tar'
+import path from 'path'
 import { execSync } from 'child_process'
+import { existsSync } from 'fs'
 
 export const docker = new Docker()
 
@@ -146,7 +131,6 @@ export const configureNextcloud = async function() {
  */
 export const applyChangesToNextcloud = async function() {
 	console.log('\nApply local changes to nextcloud...')
-	const container = docker.getContainer(CONTAINER_NAME)
 
 	const htmlPath = '/var/www/html'
 	const folderPaths = [
@@ -168,9 +152,25 @@ export const applyChangesToNextcloud = async function() {
 		'./version.php',
 	]
 
-	folderPaths.forEach((path) => {
-		console.log(`├─ Copying ${path}`)
+	let needToApplyChanges = false
+
+	folderPaths.forEach((folderPath) => {
+		const fullPath = path.join(htmlPath, folderPath)
+
+		if (existsSync(fullPath)) {
+			needToApplyChanges = true
+			console.log(`├─ Copying ${folderPath}`)
+		}
 	})
+
+	// Don't try to apply changes, when there are none. Otherwise we
+	// still execute the 'chown' command, which is not needed.
+	if (!needToApplyChanges) {
+		console.log('└─ No local changes found to apply')
+		return
+	}
+
+	const container = docker.getContainer(CONTAINER_NAME)
 
 	// Tar-streaming the above folders into the container
 	const serverTar = tar.c({ gzip: false }, folderPaths)

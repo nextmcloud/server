@@ -2,11 +2,13 @@
 #
 # https://github.com/nextcloud/.github
 # https://docs.github.com/en/actions/learn-github-actions/sharing-workflows-with-your-organization
+#
+# SPDX-FileCopyrightText: 2021-2024 Nextcloud GmbH and Nextcloud contributors
+# SPDX-License-Identifier: MIT
 
 name: Lint php
 
-on:
-  pull_request:
+on: pull_request
 
 permissions:
   contents: read
@@ -18,10 +20,8 @@ concurrency:
 jobs:
   changes:
     runs-on: ubuntu-latest-low
-
     outputs:
       src: ${{ steps.changes.outputs.src}}
-
     steps:
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: changes
@@ -47,16 +47,16 @@ jobs:
 
     strategy:
       matrix:
-        php-versions: [ "8.1", "8.2", "8.3" ]
+        php-versions: [ '8.1', '8.2', '8.3' ]
 
     name: php-lint
 
     steps:
       - name: Checkout
-        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up php ${{ matrix.php-versions }}
-        uses: shivammathur/setup-php@4bd44f22a98a19e0950cbad5f31095157cc9621b # v2
+        uses: shivammathur/setup-php@2e947f1f6932d141d076ca441d0e1e881775e95b #v2.31.0
         with:
           php-version: ${{ matrix.php-versions }}
           coverage: none

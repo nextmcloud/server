@@ -1,30 +1,14 @@
 /**
- * @copyright Copyright (c) 2024 Ferdinand Thiessen <opensource@fthiessen.de>
- *
- * @author Ferdinand Thiessen <opensource@fthiessen.de>
- *
- * @license AGPL-3.0-or-later
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
 import type { User } from '@nextcloud/cypress'
 import { getRowForFile, navigateToFolder } from './FilesUtils'
-import { UnifiedSearchFilter, getUnifiedSearchFilter, getUnifiedSearchInput, getUnifiedSearchModal, openUnifiedSearch } from '../core-utils.ts'
+import { UnifiedSearchPage } from '../../pages/UnifiedSearch.ts'
 
 describe('files: Search and filter in files list', { testIsolation: true }, () => {
+	const unifiedSearch = new UnifiedSearchPage()
 	let user: User
 
 	beforeEach(() => cy.createRandomUser().then(($user) => {
@@ -37,17 +21,21 @@ describe('files: Search and filter in files list', { testIsolation: true }, () =
 		cy.visit('/apps/files')
 	}))
 
+	it('files app supports local search', () => {
+		unifiedSearch.openLocalSearch()
+		unifiedSearch.localSearchInput()
+			.should('not.have.css', 'display', 'none')
+			.and('not.be.disabled')
+	})
+
 	it('filters current view', () => {
 		// All are visible by default
 		getRowForFile('a folder').should('be.visible')
 		getRowForFile('b file').should('be.visible')
 
 		// Set up a search query
-		openUnifiedSearch()
-		getUnifiedSearchInput().type('a folder')
-		getUnifiedSearchFilter(UnifiedSearchFilter.FilterCurrentView).click({ force: true })
-		// Wait for modal to close
-		getUnifiedSearchModal().should('not.be.visible')
+		unifiedSearch.openLocalSearch()
+		unifiedSearch.typeLocalSearch('a folder')
 
 		// See that only the folder is visible
 		getRowForFile('a folder').should('be.visible')
@@ -60,11 +48,8 @@ describe('files: Search and filter in files list', { testIsolation: true }, () =
 		getRowForFile('b file').should('be.visible')
 
 		// Set up a search query
-		openUnifiedSearch()
-		getUnifiedSearchInput().type('a folder')
-		getUnifiedSearchFilter(UnifiedSearchFilter.FilterCurrentView).click({ force: true })
-		// Wait for modal to close
-		getUnifiedSearchModal().should('not.be.visible')
+		unifiedSearch.openLocalSearch()
+		unifiedSearch.typeLocalSearch('a folder')
 
 		// See that only the folder is visible
 		getRowForFile('a folder').should('be.visible')
@@ -83,11 +68,8 @@ describe('files: Search and filter in files list', { testIsolation: true }, () =
 		getRowForFile('b file').should('be.visible')
 
 		// Set up a search query
-		openUnifiedSearch()
-		getUnifiedSearchInput().type('a folder')
-		getUnifiedSearchFilter(UnifiedSearchFilter.FilterCurrentView).click({ force: true })
-		// Wait for modal to close
-		getUnifiedSearchModal().should('not.be.visible')
+		unifiedSearch.openLocalSearch()
+		unifiedSearch.typeLocalSearch('a folder')
 
 		// See that only the folder is visible
 		getRowForFile('a folder').should('be.visible')
@@ -101,5 +83,8 @@ describe('files: Search and filter in files list', { testIsolation: true }, () =
 		// see that the folder is not filtered
 		getRowForFile('a folder').should('be.visible')
 		getRowForFile('b file').should('be.visible')
+
+		// see the filter bar is gone
+		unifiedSearch.localSearchInput().should('not.exist')
 	})
 })

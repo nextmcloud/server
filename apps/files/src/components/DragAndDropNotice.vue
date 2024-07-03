@@ -1,25 +1,7 @@
 <!--
-	- @copyright Copyright (c) 2023 John Molakvoæ <skjnldsv@protonmail.com>
-	-
-	- @author John Molakvoæ <skjnldsv@protonmail.com>
-	- @author Ferdinand Thiessen <opensource@fthiessen.de>
-	-
-	- @license AGPL-3.0-or-later
-	-
-	- This program is free software: you can redistribute it and/or modify
-	- it under the terms of the GNU Affero General Public License as
-	- published by the Free Software Foundation, either version 3 of the
-	- License, or (at your option) any later version.
-	-
-	- This program is distributed in the hope that it will be useful,
-	- but WITHOUT ANY WARRANTY; without even the implied warranty of
-	- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	- GNU Affero General Public License for more details.
-	-
-	- You should have received a copy of the GNU Affero General Public License
-	- along with this program. If not, see <http://www.gnu.org/licenses/>.
-	-
-	-->
+  - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 <template>
 	<div v-show="dragover"
 		data-cy-files-drag-drop-area
@@ -44,16 +26,18 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import { Folder, Permission } from '@nextcloud/files'
+import type { Folder } from '@nextcloud/files'
+import { Permission } from '@nextcloud/files'
 import { showError } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { UploadStatus } from '@nextcloud/upload'
+import { defineComponent, type PropType } from 'vue'
 
 import TrayArrowDownIcon from 'vue-material-design-icons/TrayArrowDown.vue'
 
-import logger from '../logger.js'
+import { useNavigation } from '../composables/useNavigation'
 import { dataTransferToFileTree, onDropExternalFiles } from '../services/DropService'
+import logger from '../logger.js'
 
 export default defineComponent({
 	name: 'DragAndDropNotice',
@@ -64,9 +48,17 @@ export default defineComponent({
 
 	props: {
 		currentFolder: {
-			type: Folder,
+			type: Object as PropType<Folder>,
 			required: true,
 		},
+	},
+
+	setup() {
+		const { currentView } = useNavigation()
+
+		return {
+			currentView,
+		}
 	},
 
 	data() {
@@ -76,10 +68,6 @@ export default defineComponent({
 	},
 
 	computed: {
-		currentView() {
-			return this.$navigation.active
-		},
-
 		/**
 		 * Check if the current folder has create permissions
 		 */
