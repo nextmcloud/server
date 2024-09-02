@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace OCA\DAV\BackgroundJob;
 
 use OC\User\NoUserException;
+use OCA\DAV\Service\CustomPropertiesService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\IJobList;
@@ -42,12 +43,14 @@ use Psr\Log\LoggerInterface;
 class UploadCleanup extends TimedJob {
 	private IRootFolder $rootFolder;
 	private IJobList $jobList;
+	private CustomPropertiesService $customPropertiesService;
 	private LoggerInterface $logger;
 
-	public function __construct(ITimeFactory $time, IRootFolder $rootFolder, IJobList $jobList, LoggerInterface $logger) {
+	public function __construct(ITimeFactory $time, IRootFolder $rootFolder, IJobList $jobList, CustomPropertiesService $customPropertiesService, LoggerInterface $logger) {
 		parent::__construct($time);
 		$this->rootFolder = $rootFolder;
 		$this->jobList = $jobList;
+		$this->customPropertiesService = $customPropertiesService;
 		$this->logger = $logger;
 
 		// Run once a day
@@ -69,6 +72,10 @@ class UploadCleanup extends TimedJob {
 			$this->jobList->remove(self::class, $argument);
 			return;
 		}
+
+		$files = $uploadFolder->getDirectoryListing();
+
+		$davPath = 'uploads/' . $uid . '/' . $uploadFolder->getName();
 
 		// Remove if all files have an mtime of more than a day
 		$time = $this->time->getTime() - 60 * 60 * 24;
@@ -93,6 +100,7 @@ class UploadCleanup extends TimedJob {
 		}, $initial);
 
 		if ($expire) {
+			$this->customPropertiesService->delete($uid, $davPath);
 			$uploadFolder->delete();
 			$this->jobList->remove(self::class, $argument);
 		}
