@@ -66,6 +66,7 @@ use OC\EventDispatcher\SymfonyAdapter;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Group\Events\UserRemovedEvent;
 use OCP\ILogger;
+use OCP\IRequest;
 use OCP\Server;
 use OCP\Share;
 use OC\Encryption\HookManager;
@@ -414,8 +415,22 @@ class OC {
 		$tmpl->printPage();
 	}
 
-	public static function initSession() {
-		if (self::$server->getRequest()->getServerProtocol() === 'https') {
+	public static function initSession(): void {
+		$request = Server::get(IRequest::class);
+
+		// TODO: Temporary disabled again to solve issues with CalDAV/CardDAV clients like DAVx5 that use cookies
+		// TODO: See https://github.com/nextcloud/server/issues/37277#issuecomment-1476366147 and the other comments
+		// TODO: for further information.
+        // MagentaCLOUD stays with original version of the solution from production
+		$isDavRequest = strpos($request->getRequestUri(), '/remote.php/dav') === 0 || 
+                           strpos($request->getRequestUri(), '/remote.php/webdav') === 0;
+		if ($request->getHeader('Authorization') !== '' && $isDavRequest && !isset($_COOKIE['nc_session_id'])) {
+		   // Do not initialize the session if a request is authenticated directly
+		   // unless there is a session cookie already sent along
+		   return;
+		}
+
+		if ($request->getServerProtocol() === 'https') {
 			ini_set('session.cookie_secure', 'true');
 		}
 
