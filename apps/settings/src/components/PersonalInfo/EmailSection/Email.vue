@@ -104,6 +104,7 @@ import {
 	updateAdditionalEmail,
 } from '../../../service/PersonalInfo/EmailService.js'
 import { validateEmail } from '../../../utils/validate.js'
+import { translate } from '@nextcloud/l10n'
 
 export default {
 	name: 'Email',
@@ -263,10 +264,16 @@ export default {
 	methods: {
 		debounceEmailChange: debounce(async function(email) {
 			// TODO: provide method to get native input in NcTextField
-			this.helperText = this.$refs.email.$refs.inputField.$refs.input.validationMessage || null
+			this.helperText = this.setEmailValidationMessage(email)
+			// this.helperText = this.$refs.email.$refs.inputField.$refs.input.validationMessage || null
+			console.log('error msg....',this.helperText)
 			if (this.helperText !== null) {
 				return
 			}
+			// if(!validateEmail(email) && this.helperText == null && /\.{2,}/.test(email)) {
+			// 	this.helperText = "An invalid sequence of adjacent dots has been found"
+			// 	return
+			// }
 			if (validateEmail(email) || email === '') {
 				if (this.primary) {
 					await this.updatePrimaryEmail(email)
@@ -401,6 +408,21 @@ export default {
 		onScopeChange(scope) {
 			this.$emit('update:scope', scope)
 		},
+
+		setEmailValidationMessage(email) {
+			console.log(t('settings', 'Local'));
+			let message = this.$refs.email.$refs.inputField.$refs.input.validationMessage || null
+			const domainPart = email.split('@')[1];
+			const domainPattern = /^(?!.*\.\.)(?!.*--)[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z]{2,})+$/
+			//if (!domainPart) {
+			//	return message;
+			//}
+			if(!validateEmail(email) && message == null && /\.{2,}/.test(email)) {
+				return "An invalid sequence of adjacent dots has been found"
+			} else {
+				return message
+			}
+		}
 	},
 }
 </script>

@@ -1,3 +1,5790 @@
-/*! For license information please see settings-vue-settings-apps-users-management.js.LICENSE.txt */
-(()=>{var e,r,n,o={31755:(e,r,n)=>{"use strict";n.d(r,{P:()=>q});var o=n(85471),i=n(95353),s=n(59097),a=n(87485),u=n(35810),c=n(85168),p=n(63814),d=n(26287),l=n(15916),h=n(56760);n(51257);const f=function(t){return t.replace(/\/$/,"")},m=()=>(0,h.C)(),g=(t,e)=>d.A.get(f(t),e),v=(t,e)=>d.A.post(f(t),e),y=(t,e)=>d.A.put(f(t),e),b=(t,e)=>d.A.delete(f(t),{params:e});var w=n(36620),A=n(96763);const E=(0,s.c0)("settings").persist(!0).build(),_={id:"",name:"",usercount:0,disabled:0,canAdd:!0,canRemove:!0},x={users:[],groups:[],orderBy:l.q.UserCount,minPasswordLength:0,usersOffset:0,usersLimit:25,disabledUsersOffset:0,disabledUsersLimit:25,userCount:0,showConfig:{showStoragePath:"true"===E.getItem("account_settings__showStoragePath"),showUserBackend:"true"===E.getItem("account_settings__showUserBackend"),showLastLogin:"true"===E.getItem("account_settings__showLastLogin"),showNewUserForm:"true"===E.getItem("account_settings__showNewUserForm"),showLanguages:"true"===E.getItem("account_settings__showLanguages")}},P={appendUsers(t,e){const r=t.users.map((t=>{let{id:e}=t;return e})),n=Object.values(e).filter((t=>{let{id:e}=t;return!r.includes(e)})),o=t.users.concat(n);t.usersOffset+=t.usersLimit,t.users=o},updateDisabledUsers(t,e){t.disabledUsersOffset+=t.disabledUsersLimit},setPasswordPolicyMinLength(t,e){t.minPasswordLength=""!==e?e:0},initGroups(t,e){let{groups:r,orderBy:n,userCount:o}=e;t.groups=r.map((t=>Object.assign({},_,t))),t.orderBy=n,t.userCount=o},addGroup(t,e){let{gid:r,displayName:n}=e;try{if(void 0!==t.groups.find((t=>t.id===r)))return;const e=Object.assign({},_,{id:r,name:n});t.groups.unshift(e)}catch(t){A.error("Can't create group",t)}},renameGroup(t,e){let{gid:r,displayName:n}=e;const o=t.groups.findIndex((t=>t.id===r));if(o>=0){const e=t.groups[o];e.name=n,t.groups.splice(o,1,e)}},removeGroup(t,e){const r=t.groups.findIndex((t=>t.id===e));r>=0&&t.groups.splice(r,1)},addUserGroup(t,e){let{userid:r,gid:n}=e;const o=t.groups.find((t=>t.id===n)),i=t.users.find((t=>t.id===r));o&&i.enabled&&t.userCount>0&&o.usercount++,i.groups.push(n)},removeUserGroup(t,e){let{userid:r,gid:n}=e;const o=t.groups.find((t=>t.id===n)),i=t.users.find((t=>t.id===r));o&&i.enabled&&t.userCount>0&&o.usercount--;const s=i.groups;s.splice(s.indexOf(n),1)},addUserSubAdmin(t,e){let{userid:r,gid:n}=e;t.users.find((t=>t.id===r)).subadmin.push(n)},removeUserSubAdmin(t,e){let{userid:r,gid:n}=e;const o=t.users.find((t=>t.id===r)).subadmin;o.splice(o.indexOf(n),1)},deleteUser(t,e){const r=t.users.findIndex((t=>t.id===e));this.commit("updateUserCounts",{user:t.users[r],actionType:"remove"}),t.users.splice(r,1)},addUserData(t,e){const r=e.data.ocs.data;t.users.unshift(r),this.commit("updateUserCounts",{user:r,actionType:"create"})},enableDisableUser(t,e){let{userid:r,enabled:n}=e;const o=t.users.find((t=>t.id===r));o.enabled=n,this.commit("updateUserCounts",{user:o,actionType:n?"enable":"disable"})},updateUserCounts(t,e){let{user:r,actionType:n}=e;if(0===t.userCount)return;const o=t.groups.find((t=>"disabled"===t.id));switch(n){case"enable":case"disable":o.usercount+=r.enabled?-1:1,t.userCount+=r.enabled?1:-1,r.groups.forEach((e=>{t.groups.find((t=>t.id===e)).disabled+=r.enabled?-1:1}));break;case"create":t.userCount++,r.groups.forEach((e=>{t.groups.find((t=>t.id===e)).usercount++}));break;case"remove":r.enabled?(t.userCount--,r.groups.forEach((e=>{const r=t.groups.find((t=>t.id===e));r?r.usercount--:A.warn("User group "+e+" does not exist during user removal")}))):(o.usercount--,r.groups.forEach((e=>{t.groups.find((t=>t.id===e)).disabled--})));break;default:w.A.error("Unknown action type in updateUserCounts: '".concat(n,"'"))}},setUserData(t,e){let{userid:r,key:n,value:o}=e;if("quota"===n){const e=(0,u.lT)(o,!0);t.users.find((t=>t.id===r))[n][n]=null!==e?e:o}else t.users.find((t=>t.id===r))[n]=o},resetUsers(t){t.users=[],t.usersOffset=0,t.disabledUsersOffset=0},setShowConfig(t,e){let{key:r,value:n}=e;E.setItem("account_settings__".concat(r),JSON.stringify(n)),t.showConfig[r]=n},setGroupSorting(e,r){const n=e.orderBy;e.orderBy=r,d.A.post((0,p.Jv)("/settings/users/preferences/group.sortBy"),{value:String(r)}).catch((r=>{e.orderBy=n,(0,c.Qg)(t("settings","Could not set group sorting")),w.A.error(r)}))}},I={getUsers:t=>t.users,getGroups:t=>t.groups,getSubadminGroups:t=>t.groups.filter((t=>"admin"!==t.id&&"disabled"!==t.id)),getSortedGroups(t){const e=[...t.groups];return t.orderBy===l.q.UserCount?e.sort(((t,e)=>{const r=t.usercount-t.disabled,n=e.usercount-e.disabled;return r<n?1:n<r?-1:t.name.localeCompare(e.name)})):e.sort(((t,e)=>t.name.localeCompare(e.name)))},getGroupSorting:t=>t.orderBy,getPasswordPolicyMinLength:t=>t.minPasswordLength,getUsersOffset:t=>t.usersOffset,getUsersLimit:t=>t.usersLimit,getDisabledUsersOffset:t=>t.disabledUsersOffset,getDisabledUsersLimit:t=>t.disabledUsersLimit,getUserCount:t=>t.userCount,getShowConfig:t=>t.showConfig},L=d.A.CancelToken;let C=null;const R={state:x,mutations:P,getters:I,actions:{searchUsers(t,e){let{offset:r,limit:n,search:o}=e;return o="string"==typeof o?o:"",g((0,p.KT)("cloud/users/details?offset={offset}&limit={limit}&search={search}",{offset:r,limit:n,search:o})).catch((e=>{d.A.isCancel(e)||t.commit("API_FAILURE",e)}))},getUser:(t,e)=>g((0,p.KT)("cloud/users/".concat(e))).catch((e=>{d.A.isCancel(e)||t.commit("API_FAILURE",e)})),getUsers(t,e){let{offset:r,limit:n,search:o,group:i}=e;return C&&C.cancel("Operation canceled by another search request."),C=L.source(),o="string"==typeof o?o:"",o=o.replace(/in:[^\s]+/g,"").trim(),i="string"==typeof i?i:"",""!==i?g((0,p.KT)("cloud/groups/{group}/users/details?offset={offset}&limit={limit}&search={search}",{group:encodeURIComponent(i),offset:r,limit:n,search:o}),{cancelToken:C.token}).then((e=>{const r=Object.keys(e.data.ocs.data.users).length;return r>0&&t.commit("appendUsers",e.data.ocs.data.users),r})).catch((e=>{d.A.isCancel(e)||t.commit("API_FAILURE",e)})):g((0,p.KT)("cloud/users/details?offset={offset}&limit={limit}&search={search}",{offset:r,limit:n,search:o}),{cancelToken:C.token}).then((e=>{const r=Object.keys(e.data.ocs.data.users).length;return r>0&&t.commit("appendUsers",e.data.ocs.data.users),r})).catch((e=>{d.A.isCancel(e)||t.commit("API_FAILURE",e)}))},async getDisabledUsers(t,e){let{offset:r,limit:n,search:o}=e;const i=(0,p.KT)("cloud/users/disabled?offset={offset}&limit={limit}&search={search}",{offset:r,limit:n,search:o});try{const e=await g(i),r=Object.keys(e.data.ocs.data.users).length;return r>0&&(t.commit("appendUsers",e.data.ocs.data.users),t.commit("updateDisabledUsers",e.data.ocs.data.users)),r}catch(e){t.commit("API_FAILURE",e)}},getGroups(t,e){let{offset:r,limit:n,search:o}=e;o="string"==typeof o?o:"";const i=-1===n?"":"&limit=".concat(n);return g((0,p.KT)("cloud/groups?offset={offset}&search={search}",{offset:r,search:o})+i).then((e=>Object.keys(e.data.ocs.data.groups).length>0&&(e.data.ocs.data.groups.forEach((function(e){t.commit("addGroup",{gid:e,displayName:e})})),!0))).catch((e=>t.commit("API_FAILURE",e)))},getUsersFromList(t,e){let{offset:r,limit:n,search:o}=e;return o="string"==typeof o?o:"",g((0,p.KT)("cloud/users/details?offset={offset}&limit={limit}&search={search}",{offset:r,limit:n,search:o})).then((e=>Object.keys(e.data.ocs.data.users).length>0&&(t.commit("appendUsers",e.data.ocs.data.users),!0))).catch((e=>t.commit("API_FAILURE",e)))},getUsersFromGroup(t,e){let{groupid:r,offset:n,limit:o}=e;return g((0,p.KT)("cloud/users/{groupId}/details?offset={offset}&limit={limit}",{groupId:encodeURIComponent(r),offset:n,limit:o})).then((e=>t.commit("getUsersFromList",e.data.ocs.data.users))).catch((e=>t.commit("API_FAILURE",e)))},getPasswordPolicyMinLength:t=>!(!(0,a.F)().password_policy||!(0,a.F)().password_policy.minLength)&&(t.commit("setPasswordPolicyMinLength",(0,a.F)().password_policy.minLength),(0,a.F)().password_policy.minLength),addGroup:(t,e)=>m().then((r=>v((0,p.KT)("cloud/groups"),{groupid:e}).then((r=>(t.commit("addGroup",{gid:e,displayName:e}),{gid:e,displayName:e}))).catch((t=>{throw t})))).catch((r=>{throw t.commit("API_FAILURE",{gid:e,error:r}),r})),renameGroup(t,e){let{groupid:r,displayName:n}=e;return m().then((e=>y((0,p.KT)("cloud/groups/{groupId}",{groupId:encodeURIComponent(r)}),{key:"displayname",value:n}).then((e=>(t.commit("renameGroup",{gid:r,displayName:n}),{groupid:r,displayName:n}))).catch((t=>{throw t})))).catch((e=>{throw t.commit("API_FAILURE",{groupid:r,error:e}),e}))},removeGroup:(t,e)=>m().then((r=>b((0,p.KT)("cloud/groups/{groupId}",{groupId:encodeURIComponent(e)})).then((r=>t.commit("removeGroup",e))).catch((t=>{throw t})))).catch((r=>t.commit("API_FAILURE",{gid:e,error:r}))),addUserGroup(t,e){let{userid:r,gid:n}=e;return m().then((e=>v((0,p.KT)("cloud/users/{userid}/groups",{userid:r}),{groupid:n}).then((e=>t.commit("addUserGroup",{userid:r,gid:n}))).catch((t=>{throw t})))).catch((e=>t.commit("API_FAILURE",{userid:r,error:e})))},removeUserGroup(t,e){let{userid:r,gid:n}=e;return m().then((e=>b((0,p.KT)("cloud/users/{userid}/groups",{userid:r}),{groupid:n}).then((e=>t.commit("removeUserGroup",{userid:r,gid:n}))).catch((t=>{throw t})))).catch((e=>{throw t.commit("API_FAILURE",{userid:r,error:e}),e}))},addUserSubAdmin(t,e){let{userid:r,gid:n}=e;return m().then((e=>v((0,p.KT)("cloud/users/{userid}/subadmins",{userid:r}),{groupid:n}).then((e=>t.commit("addUserSubAdmin",{userid:r,gid:n}))).catch((t=>{throw t})))).catch((e=>t.commit("API_FAILURE",{userid:r,error:e})))},removeUserSubAdmin(t,e){let{userid:r,gid:n}=e;return m().then((e=>b((0,p.KT)("cloud/users/{userid}/subadmins",{userid:r}),{groupid:n}).then((e=>t.commit("removeUserSubAdmin",{userid:r,gid:n}))).catch((t=>{throw t})))).catch((e=>t.commit("API_FAILURE",{userid:r,error:e})))},wipeUserDevices:(t,e)=>m().then((t=>v((0,p.KT)("cloud/users/{userid}/wipe",{userid:e})).catch((t=>{throw t})))).catch((r=>t.commit("API_FAILURE",{userid:e,error:r}))),deleteUser:(t,e)=>m().then((r=>b((0,p.KT)("cloud/users/{userid}",{userid:e})).then((r=>t.commit("deleteUser",e))).catch((t=>{throw t})))).catch((r=>t.commit("API_FAILURE",{userid:e,error:r}))),addUser(t,e){let{commit:r,dispatch:n}=t,{userid:o,password:i,displayName:s,email:a,groups:u,subadmin:c,quota:d,language:l,manager:h}=e;return m().then((t=>v((0,p.KT)("cloud/users"),{userid:o,password:i,displayName:s,email:a,groups:u,subadmin:c,quota:d,language:l,manager:h}).then((t=>n("addUserData",o||t.data.ocs.data.id))).catch((t=>{throw t})))).catch((t=>{throw r("API_FAILURE",{userid:o,error:t}),t}))},addUserData:(t,e)=>m().then((r=>g((0,p.KT)("cloud/users/{userid}",{userid:e})).then((e=>t.commit("addUserData",e))).catch((t=>{throw t})))).catch((r=>t.commit("API_FAILURE",{userid:e,error:r}))),enableDisableUser(t,e){let{userid:r,enabled:n=!0}=e;const o=n?"enable":"disable";return m().then((e=>y((0,p.KT)("cloud/users/{userid}/{userStatus}",{userid:r,userStatus:o})).then((e=>t.commit("enableDisableUser",{userid:r,enabled:n}))).catch((t=>{throw t})))).catch((e=>t.commit("API_FAILURE",{userid:r,error:e})))},setUserData(t,e){let{userid:r,key:n,value:o}=e;const i=["email","displayname","manager"];return-1!==["email","language","quota","displayname","password","manager"].indexOf(n)&&"string"==typeof o&&(-1===i.indexOf(n)&&o.length>0||-1!==i.indexOf(n))?m().then((e=>y((0,p.KT)("cloud/users/{userid}",{userid:r}),{key:n,value:o}).then((e=>t.commit("setUserData",{userid:r,key:n,value:o}))).catch((t=>{throw t})))).catch((e=>t.commit("API_FAILURE",{userid:r,error:e}))):Promise.reject(new Error("Invalid request data"))},sendWelcomeMail:(t,e)=>m().then((t=>v((0,p.KT)("cloud/users/{userid}/welcome",{userid:e})).then((t=>!0)).catch((t=>{throw t})))).catch((r=>t.commit("API_FAILURE",{userid:e,error:r})))}};var U=n(38613),N=n(96763);const O={APPS_API_FAILURE(e,r){(0,c.Qg)(t("settings","An error occurred during the request. Unable to proceed.")+"<br>"+r.error.response.data.data.message,{isHTML:!0}),N.error(e,r)},initCategories(t,e){let{categories:r,updateCount:n}=e;t.categories=r,t.updateCount=n},updateCategories(t,e){t.gettingCategoriesPromise=e},setUpdateCount(t,e){t.updateCount=e},addCategory(t,e){t.categories.push(e)},appendCategories(t,e){t.categories=e},setAllApps(t,e){t.apps=e},setError(t,e){let{appId:r,error:n}=e;Array.isArray(r)||(r=[r]),r.forEach((e=>{t.apps.find((t=>t.id===e)).error=n}))},clearError(t,e){let{appId:r,error:n}=e;t.apps.find((t=>t.id===r)).error=null},enableApp(t,e){let{appId:r,groups:n}=e;const o=t.apps.find((t=>t.id===r));o.active=!0,o.groups=n},setInstallState(t,e){let{appId:r,canInstall:n}=e;const o=t.apps.find((t=>t.id===r));o&&(o.canInstall=!0===n)},disableApp(t,e){const r=t.apps.find((t=>t.id===e));r.active=!1,r.groups=[],r.removable&&(r.canUnInstall=!0)},uninstallApp(t,e){t.apps.find((t=>t.id===e)).active=!1,t.apps.find((t=>t.id===e)).groups=[],t.apps.find((t=>t.id===e)).needsDownload=!0,t.apps.find((t=>t.id===e)).installed=!1,t.apps.find((t=>t.id===e)).canUnInstall=!1,t.apps.find((t=>t.id===e)).canInstall=!0},updateApp(t,e){const r=t.apps.find((t=>t.id===e)),n=r.update;r.update=null,r.version=n,t.updateCount--},resetApps(t){t.apps=[]},reset(t){t.apps=[],t.categories=[],t.updateCount=0},startLoading(t,e){Array.isArray(e)?e.forEach((e=>{o.Ay.set(t.loading,e,!0)})):o.Ay.set(t.loading,e,!0)},stopLoading(t,e){Array.isArray(e)?e.forEach((e=>{o.Ay.set(t.loading,e,!1)})):o.Ay.set(t.loading,e,!1)}},k={enableApp(e,r){let n,{appId:o,groups:i}=r;return n=Array.isArray(o)?o:[o],m().then((r=>(e.commit("startLoading",n),e.commit("startLoading","install"),v((0,p.Jv)("settings/apps/enable"),{appIds:n,groups:i}).then((r=>(e.commit("stopLoading",n),e.commit("stopLoading","install"),n.forEach((t=>{e.commit("enableApp",{appId:t,groups:i})})),d.A.get((0,p.Jv)("apps/files/")).then((()=>{r.data.update_required&&((0,c.cf)(t("settings","The app has been enabled but needs to be updated. You will be redirected to the update page in 5 seconds."),{onClick:()=>window.location.reload(),close:!1}),setTimeout((function(){location.reload()}),5e3))})).catch((()=>{Array.isArray(o)||((0,c.Qg)(t("settings","Error: This app cannot be enabled because it makes the server unstable")),e.commit("setError",{appId:n,error:t("settings","Error: This app cannot be enabled because it makes the server unstable")}),e.dispatch("disableApp",{appId:o}))}))))).catch((t=>{e.commit("stopLoading",n),e.commit("stopLoading","install"),e.commit("setError",{appId:n,error:t.response.data.data.message}),e.commit("APPS_API_FAILURE",{appId:o,error:t})}))))).catch((t=>e.commit("API_FAILURE",{appId:o,error:t})))},forceEnableApp(t,e){let r,{appId:n,groups:o}=e;return r=Array.isArray(n)?n:[n],m().then((()=>(t.commit("startLoading",r),t.commit("startLoading","install"),v((0,p.Jv)("settings/apps/force"),{appId:n}).then((e=>{t.commit("setInstallState",{appId:n,canInstall:!0})})).catch((e=>{t.commit("stopLoading",r),t.commit("stopLoading","install"),t.commit("setError",{appId:r,error:e.response.data.data.message}),t.commit("APPS_API_FAILURE",{appId:n,error:e})})).finally((()=>{t.commit("stopLoading",r),t.commit("stopLoading","install")}))))).catch((e=>t.commit("API_FAILURE",{appId:n,error:e})))},disableApp(t,e){let r,{appId:n}=e;return r=Array.isArray(n)?n:[n],m().then((e=>(t.commit("startLoading",r),v((0,p.Jv)("settings/apps/disable"),{appIds:r}).then((e=>(t.commit("stopLoading",r),r.forEach((e=>{t.commit("disableApp",e)})),!0))).catch((e=>{t.commit("stopLoading",r),t.commit("APPS_API_FAILURE",{appId:n,error:e})}))))).catch((e=>t.commit("API_FAILURE",{appId:n,error:e})))},uninstallApp(t,e){let{appId:r}=e;return m().then((e=>(t.commit("startLoading",r),g((0,p.Jv)("settings/apps/uninstall/".concat(r))).then((e=>(t.commit("stopLoading",r),t.commit("uninstallApp",r),!0))).catch((e=>{t.commit("stopLoading",r),t.commit("APPS_API_FAILURE",{appId:r,error:e})}))))).catch((e=>t.commit("API_FAILURE",{appId:r,error:e})))},updateApp(t,e){let{appId:r}=e;return m().then((e=>(t.commit("startLoading",r),t.commit("startLoading","install"),g((0,p.Jv)("settings/apps/update/".concat(r))).then((e=>(t.commit("stopLoading","install"),t.commit("stopLoading",r),t.commit("updateApp",r),!0))).catch((e=>{t.commit("stopLoading",r),t.commit("stopLoading","install"),t.commit("APPS_API_FAILURE",{appId:r,error:e})}))))).catch((e=>t.commit("API_FAILURE",{appId:r,error:e})))},getAllApps:t=>(t.commit("startLoading","list"),g((0,p.Jv)("settings/apps/list")).then((e=>(t.commit("setAllApps",e.data.apps),t.commit("stopLoading","list"),!0))).catch((e=>t.commit("API_FAILURE",e)))),async getCategories(t){let{shouldRefetchCategories:e=!1}=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{};if(e||!t.state.gettingCategoriesPromise){t.commit("startLoading","categories");try{const e=g((0,p.Jv)("settings/apps/categories"));t.commit("updateCategories",e);const r=await e;return r.data.length>0?(t.commit("appendCategories",r.data),t.commit("stopLoading","categories"),!0):(t.commit("stopLoading","categories"),!1)}catch(e){t.commit("API_FAILURE",e)}}return t.state.gettingCategoriesPromise}},T={state:{apps:[],bundles:(0,U.C)("settings","appstoreBundles",[]),categories:[],updateCount:(0,U.C)("settings","appstoreUpdateCount",0),loading:{},gettingCategoriesPromise:null},mutations:O,getters:{loading:t=>function(e){return t.loading[e]},getCategories:t=>t.categories,getAllApps:t=>t.apps,getAppBundles:t=>t.bundles,getUpdateCount:t=>t.updateCount,getCategoryById:t=>e=>t.categories.find((t=>t.id===e))},actions:k},S={setServerData(t,e){t.serverData=e}},j={state:{serverData:(0,U.C)("settings","usersSettings",{})},mutations:S,getters:{getServerData:t=>t.serverData},actions:{}},F={state:{},mutations:{},getters:{},actions:{setAppConfig(t,e){let{app:r,key:n,value:o}=e;return m().then((t=>v((0,p.KT)("apps/provisioning_api/api/v1/config/apps/{app}/{key}",{app:r,key:n}),{value:o}).catch((t=>{throw t})))).catch((e=>t.commit("API_FAILURE",{app:r,key:n,value:o,error:e})))}}};var $=n(96763);o.Ay.use(i.Ay);const D={API_FAILURE(e,r){try{const e=r.error.response.data.ocs.meta.message;(0,c.Qg)(t("settings","An error occurred during the request. Unable to proceed.")+"<br>"+e,{isHTML:!0})}catch(e){(0,c.Qg)(t("settings","An error occurred during the request. Unable to proceed."))}$.error(e,r)}};let B=null;const q=()=>(null===B&&(B=new i.il({modules:{users:R,apps:T,settings:j,oc:F},strict:!1,mutations:D})),B)},15916:(t,e,r)=>{"use strict";var n;r.d(e,{q:()=>n}),function(t){t[t.UserCount=1]="UserCount",t[t.GroupName=2]="GroupName"}(n||(n={}))},36620:(t,e,r)=>{"use strict";r.d(e,{A:()=>n});const n=(0,r(53529).YK)().setApp("settings").detectUser().build()},74329:(t,e,r)=>{"use strict";var n=r(85471),o=r(80284),i=r(58723),s=r(53334),a=r(22378);const u=(0,n.pM)({__name:"SettingsApp",setup:t=>({__sfc:!0,NcContent:a.A})}),c=(0,r(14486).A)(u,(function(){var t=this,e=t._self._c;return e(t._self._setupProxy.NcContent,{attrs:{"app-name":"settings"}},[e("router-view",{attrs:{name:"navigation"}}),t._v(" "),e("router-view"),t._v(" "),e("router-view",{attrs:{name:"sidebar"}})],1)}),[],!1,null,null,null).exports;var p=r(40173),d=r(63814);const l=[{name:"users",path:"/:index(index.php/)?settings/users",components:{default:()=>Promise.all([r.e(4208),r.e(1439),r.e(3239)]).then(r.bind(r,33091)),navigation:()=>Promise.all([r.e(4208),r.e(1439),r.e(3239)]).then(r.bind(r,38250))},props:!0,children:[{path:":selectedGroup",name:"group"}]},{path:"/:index(index.php/)?settings/apps",name:"apps",redirect:{name:"apps-category",params:{category:"discover"}},components:{default:()=>Promise.all([r.e(4208),r.e(1439),r.e(4529)]).then(r.bind(r,4790)),navigation:()=>Promise.all([r.e(4208),r.e(1439),r.e(4529)]).then(r.bind(r,12336)),sidebar:()=>Promise.all([r.e(4208),r.e(1439),r.e(4529)]).then(r.bind(r,83625))},children:[{path:":category",name:"apps-category",children:[{path:":id",name:"apps-details"}]}]}];n.Ay.use(p.Ay);const h=new p.Ay({mode:"history",base:(0,d.Jv)(""),linkActiveClass:"active",routes:l});var f,m=r(31755),g=r(21777),v=r(65899);n.Ay.use(o.Ay,{defaultHtml:!1});const y=(0,m.P)();(0,i.O)(y,h),r.nc=btoa(null!==(f=(0,g.do)())&&void 0!==f?f:""),n.Ay.prototype.t=s.Tl,n.Ay.prototype.n=s.zw,n.Ay.use(v.R2);const b=(0,v.Ey)();new n.Ay({router:h,store:y,pinia:b,render:t=>t(c),el:"#content"})},40173:(t,e,r)=>{"use strict";r.d(e,{Ay:()=>Vt,Wk:()=>K});var n=r(96763);function o(t,e){for(var r in e)t[r]=e[r];return t}var i=/[!'()*]/g,s=function(t){return"%"+t.charCodeAt(0).toString(16)},a=/%2C/g,u=function(t){return encodeURIComponent(t).replace(i,s).replace(a,",")};function c(t){try{return decodeURIComponent(t)}catch(t){}return t}var p=function(t){return null==t||"object"==typeof t?t:String(t)};function d(t){var e={};return(t=t.trim().replace(/^(\?|#|&)/,""))?(t.split("&").forEach((function(t){var r=t.replace(/\+/g," ").split("="),n=c(r.shift()),o=r.length>0?c(r.join("=")):null;void 0===e[n]?e[n]=o:Array.isArray(e[n])?e[n].push(o):e[n]=[e[n],o]})),e):e}function l(t){var e=t?Object.keys(t).map((function(e){var r=t[e];if(void 0===r)return"";if(null===r)return u(e);if(Array.isArray(r)){var n=[];return r.forEach((function(t){void 0!==t&&(null===t?n.push(u(e)):n.push(u(e)+"="+u(t)))})),n.join("&")}return u(e)+"="+u(r)})).filter((function(t){return t.length>0})).join("&"):null;return e?"?"+e:""}var h=/\/?$/;function f(t,e,r,n){var o=n&&n.options.stringifyQuery,i=e.query||{};try{i=m(i)}catch(t){}var s={name:e.name||t&&t.name,meta:t&&t.meta||{},path:e.path||"/",hash:e.hash||"",query:i,params:e.params||{},fullPath:y(e,o),matched:t?v(t):[]};return r&&(s.redirectedFrom=y(r,o)),Object.freeze(s)}function m(t){if(Array.isArray(t))return t.map(m);if(t&&"object"==typeof t){var e={};for(var r in t)e[r]=m(t[r]);return e}return t}var g=f(null,{path:"/"});function v(t){for(var e=[];t;)e.unshift(t),t=t.parent;return e}function y(t,e){var r=t.path,n=t.query;void 0===n&&(n={});var o=t.hash;return void 0===o&&(o=""),(r||"/")+(e||l)(n)+o}function b(t,e,r){return e===g?t===e:!!e&&(t.path&&e.path?t.path.replace(h,"")===e.path.replace(h,"")&&(r||t.hash===e.hash&&w(t.query,e.query)):!(!t.name||!e.name)&&t.name===e.name&&(r||t.hash===e.hash&&w(t.query,e.query)&&w(t.params,e.params)))}function w(t,e){if(void 0===t&&(t={}),void 0===e&&(e={}),!t||!e)return t===e;var r=Object.keys(t).sort(),n=Object.keys(e).sort();return r.length===n.length&&r.every((function(r,o){var i=t[r];if(n[o]!==r)return!1;var s=e[r];return null==i||null==s?i===s:"object"==typeof i&&"object"==typeof s?w(i,s):String(i)===String(s)}))}function A(t){for(var e=0;e<t.matched.length;e++){var r=t.matched[e];for(var n in r.instances){var o=r.instances[n],i=r.enteredCbs[n];if(o&&i){delete r.enteredCbs[n];for(var s=0;s<i.length;s++)o._isBeingDestroyed||i[s](o)}}}}var E={name:"RouterView",functional:!0,props:{name:{type:String,default:"default"}},render:function(t,e){var r=e.props,n=e.children,i=e.parent,s=e.data;s.routerView=!0;for(var a=i.$createElement,u=r.name,c=i.$route,p=i._routerViewCache||(i._routerViewCache={}),d=0,l=!1;i&&i._routerRoot!==i;){var h=i.$vnode?i.$vnode.data:{};h.routerView&&d++,h.keepAlive&&i._directInactive&&i._inactive&&(l=!0),i=i.$parent}if(s.routerViewDepth=d,l){var f=p[u],m=f&&f.component;return m?(f.configProps&&_(m,s,f.route,f.configProps),a(m,s,n)):a()}var g=c.matched[d],v=g&&g.components[u];if(!g||!v)return p[u]=null,a();p[u]={component:v},s.registerRouteInstance=function(t,e){var r=g.instances[u];(e&&r!==t||!e&&r===t)&&(g.instances[u]=e)},(s.hook||(s.hook={})).prepatch=function(t,e){g.instances[u]=e.componentInstance},s.hook.init=function(t){t.data.keepAlive&&t.componentInstance&&t.componentInstance!==g.instances[u]&&(g.instances[u]=t.componentInstance),A(c)};var y=g.props&&g.props[u];return y&&(o(p[u],{route:c,configProps:y}),_(v,s,c,y)),a(v,s,n)}};function _(t,e,r,n){var i=e.props=function(t,e){switch(typeof e){case"undefined":return;case"object":return e;case"function":return e(t);case"boolean":return e?t.params:void 0}}(r,n);if(i){i=e.props=o({},i);var s=e.attrs=e.attrs||{};for(var a in i)t.props&&a in t.props||(s[a]=i[a],delete i[a])}}function x(t,e,r){var n=t.charAt(0);if("/"===n)return t;if("?"===n||"#"===n)return e+t;var o=e.split("/");r&&o[o.length-1]||o.pop();for(var i=t.replace(/^\//,"").split("/"),s=0;s<i.length;s++){var a=i[s];".."===a?o.pop():"."!==a&&o.push(a)}return""!==o[0]&&o.unshift(""),o.join("/")}function P(t){return t.replace(/\/(?:\s*\/)+/g,"/")}var I=Array.isArray||function(t){return"[object Array]"==Object.prototype.toString.call(t)},L=function t(e,r,n){return I(r)||(n=r||n,r=[]),n=n||{},e instanceof RegExp?function(t,e){var r=t.source.match(/\((?!\?)/g);if(r)for(var n=0;n<r.length;n++)e.push({name:n,prefix:null,delimiter:null,optional:!1,repeat:!1,partial:!1,asterisk:!1,pattern:null});return F(t,e)}(e,r):I(e)?function(e,r,n){for(var o=[],i=0;i<e.length;i++)o.push(t(e[i],r,n).source);return F(new RegExp("(?:"+o.join("|")+")",$(n)),r)}(e,r,n):function(t,e,r){return D(O(t,r),e,r)}(e,r,n)},C=O,R=T,U=D,N=new RegExp(["(\\\\.)","([\\/.])?(?:(?:\\:(\\w+)(?:\\(((?:\\\\.|[^\\\\()])+)\\))?|\\(((?:\\\\.|[^\\\\()])+)\\))([+*?])?|(\\*))"].join("|"),"g");function O(t,e){for(var r,n=[],o=0,i=0,s="",a=e&&e.delimiter||"/";null!=(r=N.exec(t));){var u=r[0],c=r[1],p=r.index;if(s+=t.slice(i,p),i=p+u.length,c)s+=c[1];else{var d=t[i],l=r[2],h=r[3],f=r[4],m=r[5],g=r[6],v=r[7];s&&(n.push(s),s="");var y=null!=l&&null!=d&&d!==l,b="+"===g||"*"===g,w="?"===g||"*"===g,A=r[2]||a,E=f||m;n.push({name:h||o++,prefix:l||"",delimiter:A,optional:w,repeat:b,partial:y,asterisk:!!v,pattern:E?j(E):v?".*":"[^"+S(A)+"]+?"})}}return i<t.length&&(s+=t.substr(i)),s&&n.push(s),n}function k(t){return encodeURI(t).replace(/[\/?#]/g,(function(t){return"%"+t.charCodeAt(0).toString(16).toUpperCase()}))}function T(t,e){for(var r=new Array(t.length),n=0;n<t.length;n++)"object"==typeof t[n]&&(r[n]=new RegExp("^(?:"+t[n].pattern+")$",$(e)));return function(e,n){for(var o="",i=e||{},s=(n||{}).pretty?k:encodeURIComponent,a=0;a<t.length;a++){var u=t[a];if("string"!=typeof u){var c,p=i[u.name];if(null==p){if(u.optional){u.partial&&(o+=u.prefix);continue}throw new TypeError('Expected "'+u.name+'" to be defined')}if(I(p)){if(!u.repeat)throw new TypeError('Expected "'+u.name+'" to not repeat, but received `'+JSON.stringify(p)+"`");if(0===p.length){if(u.optional)continue;throw new TypeError('Expected "'+u.name+'" to not be empty')}for(var d=0;d<p.length;d++){if(c=s(p[d]),!r[a].test(c))throw new TypeError('Expected all "'+u.name+'" to match "'+u.pattern+'", but received `'+JSON.stringify(c)+"`");o+=(0===d?u.prefix:u.delimiter)+c}}else{if(c=u.asterisk?encodeURI(p).replace(/[?#]/g,(function(t){return"%"+t.charCodeAt(0).toString(16).toUpperCase()})):s(p),!r[a].test(c))throw new TypeError('Expected "'+u.name+'" to match "'+u.pattern+'", but received "'+c+'"');o+=u.prefix+c}}else o+=u}return o}}function S(t){return t.replace(/([.+*?=^!:${}()[\]|\/\\])/g,"\\$1")}function j(t){return t.replace(/([=!:$\/()])/g,"\\$1")}function F(t,e){return t.keys=e,t}function $(t){return t&&t.sensitive?"":"i"}function D(t,e,r){I(e)||(r=e||r,e=[]);for(var n=(r=r||{}).strict,o=!1!==r.end,i="",s=0;s<t.length;s++){var a=t[s];if("string"==typeof a)i+=S(a);else{var u=S(a.prefix),c="(?:"+a.pattern+")";e.push(a),a.repeat&&(c+="(?:"+u+c+")*"),i+=c=a.optional?a.partial?u+"("+c+")?":"(?:"+u+"("+c+"))?":u+"("+c+")"}}var p=S(r.delimiter||"/"),d=i.slice(-p.length)===p;return n||(i=(d?i.slice(0,-p.length):i)+"(?:"+p+"(?=$))?"),i+=o?"$":n&&d?"":"(?="+p+"|$)",F(new RegExp("^"+i,$(r)),e)}L.parse=C,L.compile=function(t,e){return T(O(t,e),e)},L.tokensToFunction=R,L.tokensToRegExp=U;var B=Object.create(null);function q(t,e,r){e=e||{};try{var n=B[t]||(B[t]=L.compile(t));return"string"==typeof e.pathMatch&&(e[0]=e.pathMatch),n(e,{pretty:!0})}catch(t){return""}finally{delete e[0]}}function G(t,e,r,n){var i="string"==typeof t?{path:t}:t;if(i._normalized)return i;if(i.name){var s=(i=o({},t)).params;return s&&"object"==typeof s&&(i.params=o({},s)),i}if(!i.path&&i.params&&e){(i=o({},i))._normalized=!0;var a=o(o({},e.params),i.params);if(e.name)i.name=e.name,i.params=a;else if(e.matched.length){var u=e.matched[e.matched.length-1].path;i.path=q(u,a,e.path)}return i}var c=function(t){var e="",r="",n=t.indexOf("#");n>=0&&(e=t.slice(n),t=t.slice(0,n));var o=t.indexOf("?");return o>=0&&(r=t.slice(o+1),t=t.slice(0,o)),{path:t,query:r,hash:e}}(i.path||""),l=e&&e.path||"/",h=c.path?x(c.path,l,r||i.append):l,f=function(t,e,r){void 0===e&&(e={});var n,o=r||d;try{n=o(t||"")}catch(t){n={}}for(var i in e){var s=e[i];n[i]=Array.isArray(s)?s.map(p):p(s)}return n}(c.query,i.query,n&&n.options.parseQuery),m=i.hash||c.hash;return m&&"#"!==m.charAt(0)&&(m="#"+m),{_normalized:!0,path:h,query:f,hash:m}}var M,V=function(){},K={name:"RouterLink",props:{to:{type:[String,Object],required:!0},tag:{type:String,default:"a"},custom:Boolean,exact:Boolean,exactPath:Boolean,append:Boolean,replace:Boolean,activeClass:String,exactActiveClass:String,ariaCurrentValue:{type:String,default:"page"},event:{type:[String,Array],default:"click"}},render:function(t){var e=this,r=this.$router,n=this.$route,i=r.resolve(this.to,n,this.append),s=i.location,a=i.route,u=i.href,c={},p=r.options.linkActiveClass,d=r.options.linkExactActiveClass,l=null==p?"router-link-active":p,m=null==d?"router-link-exact-active":d,g=null==this.activeClass?l:this.activeClass,v=null==this.exactActiveClass?m:this.exactActiveClass,y=a.redirectedFrom?f(null,G(a.redirectedFrom),null,r):a;c[v]=b(n,y,this.exactPath),c[g]=this.exact||this.exactPath?c[v]:function(t,e){return 0===t.path.replace(h,"/").indexOf(e.path.replace(h,"/"))&&(!e.hash||t.hash===e.hash)&&function(t,e){for(var r in e)if(!(r in t))return!1;return!0}(t.query,e.query)}(n,y);var w=c[v]?this.ariaCurrentValue:null,A=function(t){H(t)&&(e.replace?r.replace(s,V):r.push(s,V))},E={click:H};Array.isArray(this.event)?this.event.forEach((function(t){E[t]=A})):E[this.event]=A;var _={class:c},x=!this.$scopedSlots.$hasNormal&&this.$scopedSlots.default&&this.$scopedSlots.default({href:u,route:a,navigate:A,isActive:c[g],isExactActive:c[v]});if(x){if(1===x.length)return x[0];if(x.length>1||!x.length)return 0===x.length?t():t("span",{},x)}if("a"===this.tag)_.on=E,_.attrs={href:u,"aria-current":w};else{var P=z(this.$slots.default);if(P){P.isStatic=!1;var I=P.data=o({},P.data);for(var L in I.on=I.on||{},I.on){var C=I.on[L];L in E&&(I.on[L]=Array.isArray(C)?C:[C])}for(var R in E)R in I.on?I.on[R].push(E[R]):I.on[R]=A;var U=P.data.attrs=o({},P.data.attrs);U.href=u,U["aria-current"]=w}else _.on=E}return t(this.tag,_,this.$slots.default)}};function H(t){if(!(t.metaKey||t.altKey||t.ctrlKey||t.shiftKey||t.defaultPrevented||void 0!==t.button&&0!==t.button)){if(t.currentTarget&&t.currentTarget.getAttribute){var e=t.currentTarget.getAttribute("target");if(/\b_blank\b/i.test(e))return}return t.preventDefault&&t.preventDefault(),!0}}function z(t){if(t)for(var e,r=0;r<t.length;r++){if("a"===(e=t[r]).tag)return e;if(e.children&&(e=z(e.children)))return e}}var J="undefined"!=typeof window;function W(t,e,r,n,o){var i=e||[],s=r||Object.create(null),a=n||Object.create(null);t.forEach((function(t){Q(i,s,a,t,o)}));for(var u=0,c=i.length;u<c;u++)"*"===i[u]&&(i.push(i.splice(u,1)[0]),c--,u--);return{pathList:i,pathMap:s,nameMap:a}}function Q(t,e,r,n,o,i){var s=n.path,a=n.name,u=n.pathToRegexpOptions||{},c=function(t,e,r){return r||(t=t.replace(/\/$/,"")),"/"===t[0]||null==e?t:P(e.path+"/"+t)}(s,o,u.strict);"boolean"==typeof n.caseSensitive&&(u.sensitive=n.caseSensitive);var p={path:c,regex:Y(c,u),components:n.components||{default:n.component},alias:n.alias?"string"==typeof n.alias?[n.alias]:n.alias:[],instances:{},enteredCbs:{},name:a,parent:o,matchAs:i,redirect:n.redirect,beforeEnter:n.beforeEnter,meta:n.meta||{},props:null==n.props?{}:n.components?n.props:{default:n.props}};if(n.children&&n.children.forEach((function(n){var o=i?P(i+"/"+n.path):void 0;Q(t,e,r,n,p,o)})),e[p.path]||(t.push(p.path),e[p.path]=p),void 0!==n.alias)for(var d=Array.isArray(n.alias)?n.alias:[n.alias],l=0;l<d.length;++l){var h={path:d[l],children:n.children};Q(t,e,r,h,o,p.path||"/")}a&&(r[a]||(r[a]=p))}function Y(t,e){return L(t,[],e)}function X(t,e){var r=W(t),n=r.pathList,o=r.pathMap,i=r.nameMap;function s(t,r,s){var u=G(t,r,!1,e),c=u.name;if(c){var p=i[c];if(!p)return a(null,u);var d=p.regex.keys.filter((function(t){return!t.optional})).map((function(t){return t.name}));if("object"!=typeof u.params&&(u.params={}),r&&"object"==typeof r.params)for(var l in r.params)!(l in u.params)&&d.indexOf(l)>-1&&(u.params[l]=r.params[l]);return u.path=q(p.path,u.params),a(p,u,s)}if(u.path){u.params={};for(var h=0;h<n.length;h++){var f=n[h],m=o[f];if(Z(m.regex,u.path,u.params))return a(m,u,s)}}return a(null,u)}function a(t,r,n){return t&&t.redirect?function(t,r){var n=t.redirect,o="function"==typeof n?n(f(t,r,null,e)):n;if("string"==typeof o&&(o={path:o}),!o||"object"!=typeof o)return a(null,r);var u=o,c=u.name,p=u.path,d=r.query,l=r.hash,h=r.params;if(d=u.hasOwnProperty("query")?u.query:d,l=u.hasOwnProperty("hash")?u.hash:l,h=u.hasOwnProperty("params")?u.params:h,c)return i[c],s({_normalized:!0,name:c,query:d,hash:l,params:h},void 0,r);if(p){var m=function(t,e){return x(t,e.parent?e.parent.path:"/",!0)}(p,t);return s({_normalized:!0,path:q(m,h),query:d,hash:l},void 0,r)}return a(null,r)}(t,n||r):t&&t.matchAs?function(t,e,r){var n=s({_normalized:!0,path:q(r,e.params)});if(n){var o=n.matched,i=o[o.length-1];return e.params=n.params,a(i,e)}return a(null,e)}(0,r,t.matchAs):f(t,r,n,e)}return{match:s,addRoute:function(t,e){var r="object"!=typeof t?i[t]:void 0;W([e||t],n,o,i,r),r&&r.alias.length&&W(r.alias.map((function(t){return{path:t,children:[e]}})),n,o,i,r)},getRoutes:function(){return n.map((function(t){return o[t]}))},addRoutes:function(t){W(t,n,o,i)}}}function Z(t,e,r){var n=e.match(t);if(!n)return!1;if(!r)return!0;for(var o=1,i=n.length;o<i;++o){var s=t.keys[o-1];s&&(r[s.name||"pathMatch"]="string"==typeof n[o]?c(n[o]):n[o])}return!0}var tt=J&&window.performance&&window.performance.now?window.performance:Date;function et(){return tt.now().toFixed(3)}var rt=et();function nt(){return rt}function ot(t){return rt=t}var it=Object.create(null);function st(){"scrollRestoration"in window.history&&(window.history.scrollRestoration="manual");var t=window.location.protocol+"//"+window.location.host,e=window.location.href.replace(t,""),r=o({},window.history.state);return r.key=nt(),window.history.replaceState(r,"",e),window.addEventListener("popstate",ct),function(){window.removeEventListener("popstate",ct)}}function at(t,e,r,n){if(t.app){var o=t.options.scrollBehavior;o&&t.app.$nextTick((function(){var i=function(){var t=nt();if(t)return it[t]}(),s=o.call(t,e,r,n?i:null);s&&("function"==typeof s.then?s.then((function(t){ft(t,i)})).catch((function(t){})):ft(s,i))}))}}function ut(){var t=nt();t&&(it[t]={x:window.pageXOffset,y:window.pageYOffset})}function ct(t){ut(),t.state&&t.state.key&&ot(t.state.key)}function pt(t){return lt(t.x)||lt(t.y)}function dt(t){return{x:lt(t.x)?t.x:window.pageXOffset,y:lt(t.y)?t.y:window.pageYOffset}}function lt(t){return"number"==typeof t}var ht=/^#\d/;function ft(t,e){var r,n="object"==typeof t;if(n&&"string"==typeof t.selector){var o=ht.test(t.selector)?document.getElementById(t.selector.slice(1)):document.querySelector(t.selector);if(o){var i=t.offset&&"object"==typeof t.offset?t.offset:{};e=function(t,e){var r=document.documentElement.getBoundingClientRect(),n=t.getBoundingClientRect();return{x:n.left-r.left-e.x,y:n.top-r.top-e.y}}(o,i={x:lt((r=i).x)?r.x:0,y:lt(r.y)?r.y:0})}else pt(t)&&(e=dt(t))}else n&&pt(t)&&(e=dt(t));e&&("scrollBehavior"in document.documentElement.style?window.scrollTo({left:e.x,top:e.y,behavior:t.behavior}):window.scrollTo(e.x,e.y))}var mt,gt=J&&(-1===(mt=window.navigator.userAgent).indexOf("Android 2.")&&-1===mt.indexOf("Android 4.0")||-1===mt.indexOf("Mobile Safari")||-1!==mt.indexOf("Chrome")||-1!==mt.indexOf("Windows Phone"))&&window.history&&"function"==typeof window.history.pushState;function vt(t,e){ut();var r=window.history;try{if(e){var n=o({},r.state);n.key=nt(),r.replaceState(n,"",t)}else r.pushState({key:ot(et())},"",t)}catch(r){window.location[e?"replace":"assign"](t)}}function yt(t){vt(t,!0)}var bt={redirected:2,aborted:4,cancelled:8,duplicated:16};function wt(t,e){return At(t,e,bt.cancelled,'Navigation cancelled from "'+t.fullPath+'" to "'+e.fullPath+'" with a new navigation.')}function At(t,e,r,n){var o=new Error(n);return o._isRouter=!0,o.from=t,o.to=e,o.type=r,o}var Et=["params","query","hash"];function _t(t){return Object.prototype.toString.call(t).indexOf("Error")>-1}function xt(t,e){return _t(t)&&t._isRouter&&(null==e||t.type===e)}function Pt(t,e,r){var n=function(o){o>=t.length?r():t[o]?e(t[o],(function(){n(o+1)})):n(o+1)};n(0)}function It(t,e){return Lt(t.map((function(t){return Object.keys(t.components).map((function(r){return e(t.components[r],t.instances[r],t,r)}))})))}function Lt(t){return Array.prototype.concat.apply([],t)}var Ct="function"==typeof Symbol&&"symbol"==typeof Symbol.toStringTag;function Rt(t){var e=!1;return function(){for(var r=[],n=arguments.length;n--;)r[n]=arguments[n];if(!e)return e=!0,t.apply(this,r)}}var Ut=function(t,e){this.router=t,this.base=function(t){if(!t)if(J){var e=document.querySelector("base");t=(t=e&&e.getAttribute("href")||"/").replace(/^https?:\/\/[^\/]+/,"")}else t="/";return"/"!==t.charAt(0)&&(t="/"+t),t.replace(/\/$/,"")}(e),this.current=g,this.pending=null,this.ready=!1,this.readyCbs=[],this.readyErrorCbs=[],this.errorCbs=[],this.listeners=[]};function Nt(t,e,r,n){var o=It(t,(function(t,n,o,i){var s=function(t,e){return"function"!=typeof t&&(t=M.extend(t)),t.options[e]}(t,e);if(s)return Array.isArray(s)?s.map((function(t){return r(t,n,o,i)})):r(s,n,o,i)}));return Lt(n?o.reverse():o)}function Ot(t,e){if(e)return function(){return t.apply(e,arguments)}}Ut.prototype.listen=function(t){this.cb=t},Ut.prototype.onReady=function(t,e){this.ready?t():(this.readyCbs.push(t),e&&this.readyErrorCbs.push(e))},Ut.prototype.onError=function(t){this.errorCbs.push(t)},Ut.prototype.transitionTo=function(t,e,r){var n,o=this;try{n=this.router.match(t,this.current)}catch(t){throw this.errorCbs.forEach((function(e){e(t)})),t}var i=this.current;this.confirmTransition(n,(function(){o.updateRoute(n),e&&e(n),o.ensureURL(),o.router.afterHooks.forEach((function(t){t&&t(n,i)})),o.ready||(o.ready=!0,o.readyCbs.forEach((function(t){t(n)})))}),(function(t){r&&r(t),t&&!o.ready&&(xt(t,bt.redirected)&&i===g||(o.ready=!0,o.readyErrorCbs.forEach((function(e){e(t)}))))}))},Ut.prototype.confirmTransition=function(t,e,r){var o=this,i=this.current;this.pending=t;var s,a,u=function(t){!xt(t)&&_t(t)&&(o.errorCbs.length?o.errorCbs.forEach((function(e){e(t)})):n.error(t)),r&&r(t)},c=t.matched.length-1,p=i.matched.length-1;if(b(t,i)&&c===p&&t.matched[c]===i.matched[p])return this.ensureURL(),t.hash&&at(this.router,i,t,!1),u(((a=At(s=i,t,bt.duplicated,'Avoided redundant navigation to current location: "'+s.fullPath+'".')).name="NavigationDuplicated",a));var d,l=function(t,e){var r,n=Math.max(t.length,e.length);for(r=0;r<n&&t[r]===e[r];r++);return{updated:e.slice(0,r),activated:e.slice(r),deactivated:t.slice(r)}}(this.current.matched,t.matched),h=l.updated,f=l.deactivated,m=l.activated,g=[].concat(function(t){return Nt(t,"beforeRouteLeave",Ot,!0)}(f),this.router.beforeHooks,function(t){return Nt(t,"beforeRouteUpdate",Ot)}(h),m.map((function(t){return t.beforeEnter})),(d=m,function(t,e,r){var n=!1,o=0,i=null;It(d,(function(t,e,s,a){if("function"==typeof t&&void 0===t.cid){n=!0,o++;var u,c=Rt((function(e){var n;((n=e).__esModule||Ct&&"Module"===n[Symbol.toStringTag])&&(e=e.default),t.resolved="function"==typeof e?e:M.extend(e),s.components[a]=e,--o<=0&&r()})),p=Rt((function(t){var e="Failed to resolve async component "+a+": "+t;i||(i=_t(t)?t:new Error(e),r(i))}));try{u=t(c,p)}catch(t){p(t)}if(u)if("function"==typeof u.then)u.then(c,p);else{var d=u.component;d&&"function"==typeof d.then&&d.then(c,p)}}})),n||r()})),v=function(e,r){if(o.pending!==t)return u(wt(i,t));try{e(t,i,(function(e){!1===e?(o.ensureURL(!0),u(function(t,e){return At(t,e,bt.aborted,'Navigation aborted from "'+t.fullPath+'" to "'+e.fullPath+'" via a navigation guard.')}(i,t))):_t(e)?(o.ensureURL(!0),u(e)):"string"==typeof e||"object"==typeof e&&("string"==typeof e.path||"string"==typeof e.name)?(u(function(t,e){return At(t,e,bt.redirected,'Redirected when going from "'+t.fullPath+'" to "'+function(t){if("string"==typeof t)return t;if("path"in t)return t.path;var e={};return Et.forEach((function(r){r in t&&(e[r]=t[r])})),JSON.stringify(e,null,2)}(e)+'" via a navigation guard.')}(i,t)),"object"==typeof e&&e.replace?o.replace(e):o.push(e)):r(e)}))}catch(t){u(t)}};Pt(g,v,(function(){var r=function(t){return Nt(t,"beforeRouteEnter",(function(t,e,r,n){return function(t,e,r){return function(n,o,i){return t(n,o,(function(t){"function"==typeof t&&(e.enteredCbs[r]||(e.enteredCbs[r]=[]),e.enteredCbs[r].push(t)),i(t)}))}}(t,r,n)}))}(m);Pt(r.concat(o.router.resolveHooks),v,(function(){if(o.pending!==t)return u(wt(i,t));o.pending=null,e(t),o.router.app&&o.router.app.$nextTick((function(){A(t)}))}))}))},Ut.prototype.updateRoute=function(t){this.current=t,this.cb&&this.cb(t)},Ut.prototype.setupListeners=function(){},Ut.prototype.teardown=function(){this.listeners.forEach((function(t){t()})),this.listeners=[],this.current=g,this.pending=null};var kt=function(t){function e(e,r){t.call(this,e,r),this._startLocation=Tt(this.base)}return t&&(e.__proto__=t),e.prototype=Object.create(t&&t.prototype),e.prototype.constructor=e,e.prototype.setupListeners=function(){var t=this;if(!(this.listeners.length>0)){var e=this.router,r=e.options.scrollBehavior,n=gt&&r;n&&this.listeners.push(st());var o=function(){var r=t.current,o=Tt(t.base);t.current===g&&o===t._startLocation||t.transitionTo(o,(function(t){n&&at(e,t,r,!0)}))};window.addEventListener("popstate",o),this.listeners.push((function(){window.removeEventListener("popstate",o)}))}},e.prototype.go=function(t){window.history.go(t)},e.prototype.push=function(t,e,r){var n=this,o=this.current;this.transitionTo(t,(function(t){vt(P(n.base+t.fullPath)),at(n.router,t,o,!1),e&&e(t)}),r)},e.prototype.replace=function(t,e,r){var n=this,o=this.current;this.transitionTo(t,(function(t){yt(P(n.base+t.fullPath)),at(n.router,t,o,!1),e&&e(t)}),r)},e.prototype.ensureURL=function(t){if(Tt(this.base)!==this.current.fullPath){var e=P(this.base+this.current.fullPath);t?vt(e):yt(e)}},e.prototype.getCurrentLocation=function(){return Tt(this.base)},e}(Ut);function Tt(t){var e=window.location.pathname,r=e.toLowerCase(),n=t.toLowerCase();return!t||r!==n&&0!==r.indexOf(P(n+"/"))||(e=e.slice(t.length)),(e||"/")+window.location.search+window.location.hash}var St=function(t){function e(e,r,n){t.call(this,e,r),n&&function(t){var e=Tt(t);if(!/^\/#/.test(e))return window.location.replace(P(t+"/#"+e)),!0}(this.base)||jt()}return t&&(e.__proto__=t),e.prototype=Object.create(t&&t.prototype),e.prototype.constructor=e,e.prototype.setupListeners=function(){var t=this;if(!(this.listeners.length>0)){var e=this.router.options.scrollBehavior,r=gt&&e;r&&this.listeners.push(st());var n=function(){var e=t.current;jt()&&t.transitionTo(Ft(),(function(n){r&&at(t.router,n,e,!0),gt||Bt(n.fullPath)}))},o=gt?"popstate":"hashchange";window.addEventListener(o,n),this.listeners.push((function(){window.removeEventListener(o,n)}))}},e.prototype.push=function(t,e,r){var n=this,o=this.current;this.transitionTo(t,(function(t){Dt(t.fullPath),at(n.router,t,o,!1),e&&e(t)}),r)},e.prototype.replace=function(t,e,r){var n=this,o=this.current;this.transitionTo(t,(function(t){Bt(t.fullPath),at(n.router,t,o,!1),e&&e(t)}),r)},e.prototype.go=function(t){window.history.go(t)},e.prototype.ensureURL=function(t){var e=this.current.fullPath;Ft()!==e&&(t?Dt(e):Bt(e))},e.prototype.getCurrentLocation=function(){return Ft()},e}(Ut);function jt(){var t=Ft();return"/"===t.charAt(0)||(Bt("/"+t),!1)}function Ft(){var t=window.location.href,e=t.indexOf("#");return e<0?"":t=t.slice(e+1)}function $t(t){var e=window.location.href,r=e.indexOf("#");return(r>=0?e.slice(0,r):e)+"#"+t}function Dt(t){gt?vt($t(t)):window.location.hash=t}function Bt(t){gt?yt($t(t)):window.location.replace($t(t))}var qt=function(t){function e(e,r){t.call(this,e,r),this.stack=[],this.index=-1}return t&&(e.__proto__=t),e.prototype=Object.create(t&&t.prototype),e.prototype.constructor=e,e.prototype.push=function(t,e,r){var n=this;this.transitionTo(t,(function(t){n.stack=n.stack.slice(0,n.index+1).concat(t),n.index++,e&&e(t)}),r)},e.prototype.replace=function(t,e,r){var n=this;this.transitionTo(t,(function(t){n.stack=n.stack.slice(0,n.index).concat(t),e&&e(t)}),r)},e.prototype.go=function(t){var e=this,r=this.index+t;if(!(r<0||r>=this.stack.length)){var n=this.stack[r];this.confirmTransition(n,(function(){var t=e.current;e.index=r,e.updateRoute(n),e.router.afterHooks.forEach((function(e){e&&e(n,t)}))}),(function(t){xt(t,bt.duplicated)&&(e.index=r)}))}},e.prototype.getCurrentLocation=function(){var t=this.stack[this.stack.length-1];return t?t.fullPath:"/"},e.prototype.ensureURL=function(){},e}(Ut),Gt=function(t){void 0===t&&(t={}),this.app=null,this.apps=[],this.options=t,this.beforeHooks=[],this.resolveHooks=[],this.afterHooks=[],this.matcher=X(t.routes||[],this);var e=t.mode||"hash";switch(this.fallback="history"===e&&!gt&&!1!==t.fallback,this.fallback&&(e="hash"),J||(e="abstract"),this.mode=e,e){case"history":this.history=new kt(this,t.base);break;case"hash":this.history=new St(this,t.base,this.fallback);break;case"abstract":this.history=new qt(this,t.base)}},Mt={currentRoute:{configurable:!0}};Gt.prototype.match=function(t,e,r){return this.matcher.match(t,e,r)},Mt.currentRoute.get=function(){return this.history&&this.history.current},Gt.prototype.init=function(t){var e=this;if(this.apps.push(t),t.$once("hook:destroyed",(function(){var r=e.apps.indexOf(t);r>-1&&e.apps.splice(r,1),e.app===t&&(e.app=e.apps[0]||null),e.app||e.history.teardown()})),!this.app){this.app=t;var r=this.history;if(r instanceof kt||r instanceof St){var n=function(t){r.setupListeners(),function(t){var n=r.current,o=e.options.scrollBehavior;gt&&o&&"fullPath"in t&&at(e,t,n,!1)}(t)};r.transitionTo(r.getCurrentLocation(),n,n)}r.listen((function(t){e.apps.forEach((function(e){e._route=t}))}))}},Gt.prototype.beforeEach=function(t){return Kt(this.beforeHooks,t)},Gt.prototype.beforeResolve=function(t){return Kt(this.resolveHooks,t)},Gt.prototype.afterEach=function(t){return Kt(this.afterHooks,t)},Gt.prototype.onReady=function(t,e){this.history.onReady(t,e)},Gt.prototype.onError=function(t){this.history.onError(t)},Gt.prototype.push=function(t,e,r){var n=this;if(!e&&!r&&"undefined"!=typeof Promise)return new Promise((function(e,r){n.history.push(t,e,r)}));this.history.push(t,e,r)},Gt.prototype.replace=function(t,e,r){var n=this;if(!e&&!r&&"undefined"!=typeof Promise)return new Promise((function(e,r){n.history.replace(t,e,r)}));this.history.replace(t,e,r)},Gt.prototype.go=function(t){this.history.go(t)},Gt.prototype.back=function(){this.go(-1)},Gt.prototype.forward=function(){this.go(1)},Gt.prototype.getMatchedComponents=function(t){var e=t?t.matched?t:this.resolve(t).route:this.currentRoute;return e?[].concat.apply([],e.matched.map((function(t){return Object.keys(t.components).map((function(e){return t.components[e]}))}))):[]},Gt.prototype.resolve=function(t,e,r){var n=G(t,e=e||this.history.current,r,this),o=this.match(n,e),i=o.redirectedFrom||o.fullPath,s=function(t,e,r){var n="hash"===r?"#"+e:e;return t?P(t+"/"+n):n}(this.history.base,i,this.mode);return{location:n,route:o,href:s,normalizedTo:n,resolved:o}},Gt.prototype.getRoutes=function(){return this.matcher.getRoutes()},Gt.prototype.addRoute=function(t,e){this.matcher.addRoute(t,e),this.history.current!==g&&this.history.transitionTo(this.history.getCurrentLocation())},Gt.prototype.addRoutes=function(t){this.matcher.addRoutes(t),this.history.current!==g&&this.history.transitionTo(this.history.getCurrentLocation())},Object.defineProperties(Gt.prototype,Mt);var Vt=Gt;function Kt(t,e){return t.push(e),function(){var r=t.indexOf(e);r>-1&&t.splice(r,1)}}Gt.install=function t(e){if(!t.installed||M!==e){t.installed=!0,M=e;var r=function(t){return void 0!==t},n=function(t,e){var n=t.$options._parentVnode;r(n)&&r(n=n.data)&&r(n=n.registerRouteInstance)&&n(t,e)};e.mixin({beforeCreate:function(){r(this.$options.router)?(this._routerRoot=this,this._router=this.$options.router,this._router.init(this),e.util.defineReactive(this,"_route",this._router.history.current)):this._routerRoot=this.$parent&&this.$parent._routerRoot||this,n(this,this)},destroyed:function(){n(this)}}),Object.defineProperty(e.prototype,"$router",{get:function(){return this._routerRoot._router}}),Object.defineProperty(e.prototype,"$route",{get:function(){return this._routerRoot._route}}),e.component("RouterView",E),e.component("RouterLink",K);var o=e.config.optionMergeStrategies;o.beforeRouteEnter=o.beforeRouteLeave=o.beforeRouteUpdate=o.created}},Gt.version="3.6.5",Gt.isNavigationFailure=xt,Gt.NavigationFailureType=bt,Gt.START_LOCATION=g,J&&window.Vue&&window.Vue.use(Gt)},58723:(t,e)=>{function r(t,e){var n={name:t.name,path:t.path,hash:t.hash,query:t.query,params:t.params,fullPath:t.fullPath,meta:t.meta};return e&&(n.from=r(e)),Object.freeze(n)}e.O=function(t,e,n){var o=(n||{}).moduleName||"route";t.registerModule(o,{namespaced:!0,state:r(e.currentRoute),mutations:{ROUTE_CHANGED:function(e,n){t.state[o]=r(n.to,n.from)}}});var i,s=!1,a=t.watch((function(t){return t[o]}),(function(t){var r=t.fullPath;r!==i&&(null!=i&&(s=!0,e.push(t)),i=r)}),{sync:!0}),u=e.afterEach((function(e,r){s?s=!1:(i=e.fullPath,t.commit(o+"/ROUTE_CHANGED",{to:e,from:r}))}));return function(){null!=u&&u(),null!=a&&a(),t.unregisterModule(o)}}},35810:(t,e,r)=>{"use strict";r.d(e,{Al:()=>N,H4:()=>R,PY:()=>C,Q$:()=>U,R3:()=>b,VL:()=>y,lJ:()=>L,lT:()=>S,pt:()=>w,v7:()=>T});var n=r(21777),o=r(84697),i=r(43627),s=r(71089),a=r(63814),u=r(44719),c=r(36117),p=r(2568);const d=null===(l=(0,n.HW)())?(0,o.YK)().setApp("files").build():(0,o.YK)().setApp("files").setUid(l.uid).build();var l,h=(t=>(t[t.NONE=0]="NONE",t[t.CREATE=4]="CREATE",t[t.READ=1]="READ",t[t.UPDATE=2]="UPDATE",t[t.DELETE=8]="DELETE",t[t.SHARE=16]="SHARE",t[t.ALL=31]="ALL",t))(h||{});const f=["d:getcontentlength","d:getcontenttype","d:getetag","d:getlastmodified","d:quota-available-bytes","d:resourcetype","nc:has-preview","nc:is-encrypted","nc:mount-type","oc:comments-unread","oc:favorite","oc:fileid","oc:owner-display-name","oc:owner-id","oc:permissions","oc:size"],m={d:"DAV:",nc:"http://nextcloud.org/ns",oc:"http://owncloud.org/ns",ocs:"http://open-collaboration-services.org/ns"},g=function(){return void 0===window._nc_dav_properties&&(window._nc_dav_properties=[...f]),window._nc_dav_properties.map((t=>`<${t} />`)).join(" ")},v=function(){return void 0===window._nc_dav_namespaces&&(window._nc_dav_namespaces={...m}),Object.keys(window._nc_dav_namespaces).map((t=>`xmlns:${t}="${window._nc_dav_namespaces?.[t]}"`)).join(" ")},y=function(){return`<?xml version="1.0"?>\n\t\t<d:propfind ${v()}>\n\t\t\t<d:prop>\n\t\t\t\t${g()}\n\t\t\t</d:prop>\n\t\t</d:propfind>`},b=function(t){return`<?xml version="1.0" encoding="UTF-8"?>\n<d:searchrequest ${v()}\n\txmlns:ns="https://github.com/icewind1991/SearchDAV/ns">\n\t<d:basicsearch>\n\t\t<d:select>\n\t\t\t<d:prop>\n\t\t\t\t${g()}\n\t\t\t</d:prop>\n\t\t</d:select>\n\t\t<d:from>\n\t\t\t<d:scope>\n\t\t\t\t<d:href>/files/${(0,n.HW)()?.uid}/</d:href>\n\t\t\t\t<d:depth>infinity</d:depth>\n\t\t\t</d:scope>\n\t\t</d:from>\n\t\t<d:where>\n\t\t\t<d:and>\n\t\t\t\t<d:or>\n\t\t\t\t\t<d:not>\n\t\t\t\t\t\t<d:eq>\n\t\t\t\t\t\t\t<d:prop>\n\t\t\t\t\t\t\t\t<d:getcontenttype/>\n\t\t\t\t\t\t\t</d:prop>\n\t\t\t\t\t\t\t<d:literal>httpd/unix-directory</d:literal>\n\t\t\t\t\t\t</d:eq>\n\t\t\t\t\t</d:not>\n\t\t\t\t\t<d:eq>\n\t\t\t\t\t\t<d:prop>\n\t\t\t\t\t\t\t<oc:size/>\n\t\t\t\t\t\t</d:prop>\n\t\t\t\t\t\t<d:literal>0</d:literal>\n\t\t\t\t\t</d:eq>\n\t\t\t\t</d:or>\n\t\t\t\t<d:gt>\n\t\t\t\t\t<d:prop>\n\t\t\t\t\t\t<d:getlastmodified/>\n\t\t\t\t\t</d:prop>\n\t\t\t\t\t<d:literal>${t}</d:literal>\n\t\t\t\t</d:gt>\n\t\t\t</d:and>\n\t\t</d:where>\n\t\t<d:orderby>\n\t\t\t<d:order>\n\t\t\t\t<d:prop>\n\t\t\t\t\t<d:getlastmodified/>\n\t\t\t\t</d:prop>\n\t\t\t\t<d:descending/>\n\t\t\t</d:order>\n\t\t</d:orderby>\n\t\t<d:limit>\n\t\t\t<d:nresults>100</d:nresults>\n\t\t\t<ns:firstresult>0</ns:firstresult>\n\t\t</d:limit>\n\t</d:basicsearch>\n</d:searchrequest>`};var w=(t=>(t.Folder="folder",t.File="file",t))(w||{});const A=function(t,e){return null!==t.match(e)},E=(t,e)=>{if(t.id&&"number"!=typeof t.id)throw new Error("Invalid id type of value");if(!t.source)throw new Error("Missing mandatory source");try{new URL(t.source)}catch(t){throw new Error("Invalid source format, source must be a valid URL")}if(!t.source.startsWith("http"))throw new Error("Invalid source format, only http(s) is supported");if(t.mtime&&!(t.mtime instanceof Date))throw new Error("Invalid mtime type");if(t.crtime&&!(t.crtime instanceof Date))throw new Error("Invalid crtime type");if(!t.mime||"string"!=typeof t.mime||!t.mime.match(/^[-\w.]+\/[-+\w.]+$/gi))throw new Error("Missing or invalid mandatory mime");if("size"in t&&"number"!=typeof t.size&&void 0!==t.size)throw new Error("Invalid size type");if("permissions"in t&&void 0!==t.permissions&&!("number"==typeof t.permissions&&t.permissions>=h.NONE&&t.permissions<=h.ALL))throw new Error("Invalid permissions");if(t.owner&&null!==t.owner&&"string"!=typeof t.owner)throw new Error("Invalid owner type");if(t.attributes&&"object"!=typeof t.attributes)throw new Error("Invalid attributes type");if(t.root&&"string"!=typeof t.root)throw new Error("Invalid root type");if(t.root&&!t.root.startsWith("/"))throw new Error("Root must start with a leading slash");if(t.root&&!t.source.includes(t.root))throw new Error("Root must be part of the source");if(t.root&&A(t.source,e)){const r=t.source.match(e)[0];if(!t.source.includes((0,i.join)(r,t.root)))throw new Error("The root must be relative to the service. e.g /files/emma")}if(t.status&&!Object.values(_).includes(t.status))throw new Error("Status must be a valid NodeStatus")};var _=(t=>(t.NEW="new",t.FAILED="failed",t.LOADING="loading",t.LOCKED="locked",t))(_||{});class x{_data;_attributes;_knownDavService=/(remote|public)\.php\/(web)?dav/i;readonlyAttributes=Object.entries(Object.getOwnPropertyDescriptors(x.prototype)).filter((t=>"function"==typeof t[1].get&&"__proto__"!==t[0])).map((t=>t[0]));handler={set:(t,e,r)=>!this.readonlyAttributes.includes(e)&&Reflect.set(t,e,r),deleteProperty:(t,e)=>!this.readonlyAttributes.includes(e)&&Reflect.deleteProperty(t,e),get:(t,e,r)=>this.readonlyAttributes.includes(e)?(d.warn(`Accessing "Node.attributes.${e}" is deprecated, access it directly on the Node instance.`),Reflect.get(this,e)):Reflect.get(t,e,r)};constructor(t,e){E(t,e||this._knownDavService),this._data={...t,attributes:{}},this._attributes=new Proxy(this._data.attributes,this.handler),this.update(t.attributes??{}),e&&(this._knownDavService=e)}get source(){return this._data.source.replace(/\/$/i,"")}get encodedSource(){const{origin:t}=new URL(this.source);return t+(0,s.O0)(this.source.slice(t.length))}get basename(){return(0,i.basename)(this.source)}get extension(){return(0,i.extname)(this.source)}get dirname(){if(this.root){let t=this.source;this.isDavRessource&&(t=t.split(this._knownDavService).pop());const e=t.indexOf(this.root),r=this.root.replace(/\/$/,"");return(0,i.dirname)(t.slice(e+r.length)||"/")}const t=new URL(this.source);return(0,i.dirname)(t.pathname)}get mime(){return this._data.mime}get mtime(){return this._data.mtime}set mtime(t){this._data.mtime=t}get crtime(){return this._data.crtime}get size(){return this._data.size}set size(t){this.updateMtime(),this._data.size=t}get attributes(){return this._attributes}get permissions(){return null!==this.owner||this.isDavRessource?void 0!==this._data.permissions?this._data.permissions:h.NONE:h.READ}set permissions(t){this.updateMtime(),this._data.permissions=t}get owner(){return this.isDavRessource?this._data.owner:null}get isDavRessource(){return A(this.source,this._knownDavService)}get root(){return this._data.root?this._data.root.replace(/^(.+)\/$/,"$1"):this.isDavRessource&&(0,i.dirname)(this.source).split(this._knownDavService).pop()||null}get path(){if(this.root){let t=this.source;this.isDavRessource&&(t=t.split(this._knownDavService).pop());const e=t.indexOf(this.root),r=this.root.replace(/\/$/,"");return t.slice(e+r.length)||"/"}return(this.dirname+"/"+this.basename).replace(/\/\//g,"/")}get fileid(){return this._data?.id}get status(){return this._data?.status}set status(t){this._data.status=t}move(t){E({...this._data,source:t},this._knownDavService),this._data.source=t,this.updateMtime()}rename(t){if(t.includes("/"))throw new Error("Invalid basename");this.move((0,i.dirname)(this.source)+"/"+t)}updateMtime(){this._data.mtime&&(this._data.mtime=new Date)}update(t){for(const[e,r]of Object.entries(t))try{void 0===r?delete this.attributes[e]:this.attributes[e]=r}catch(t){if(t instanceof TypeError)continue;throw t}}}class P extends x{get type(){return w.File}}class I extends x{constructor(t){super({...t,mime:"httpd/unix-directory"})}get type(){return w.Folder}get extension(){return null}get mime(){return"httpd/unix-directory"}}const L=`/files/${(0,n.HW)()?.uid}`,C=(0,a.dC)("dav"),R=function(t=C,e={}){const r=(0,u.UU)(t,{headers:e});function o(t){r.setHeaders({...e,"X-Requested-With":"XMLHttpRequest",requesttoken:t??""})}return(0,n.zo)(o),o((0,n.do)()),(0,u.Gu)().patch("fetch",((t,e)=>{const r=e.headers;return r?.method&&(e.method=r.method,delete r.method),fetch(t,e)})),r},U=(t,e="/",r=L)=>{const n=new AbortController;return new c.CancelablePromise((async(o,i,s)=>{s((()=>n.abort()));try{o((await t.getDirectoryContents(`${r}${e}`,{signal:n.signal,details:!0,data:`<?xml version="1.0"?>\n\t\t<oc:filter-files ${v()}>\n\t\t\t<d:prop>\n\t\t\t\t${g()}\n\t\t\t</d:prop>\n\t\t\t<oc:filter-rules>\n\t\t\t\t<oc:favorite>1</oc:favorite>\n\t\t\t</oc:filter-rules>\n\t\t</oc:filter-files>`,headers:{method:"REPORT"},includeSelf:!0})).data.filter((t=>t.filename!==e)).map((t=>N(t,r))))}catch(t){i(t)}}))},N=function(t,e=L,r=C){let o=(0,n.HW)()?.uid;const i=document.querySelector("input#isPublic")?.value;if(i)o=o??document.querySelector("input#sharingUserId")?.value,o=o??"anonymous";else if(!o)throw new Error("No user id found");const s=t.props,a=function(t=""){let e=h.NONE;return t?((t.includes("C")||t.includes("K"))&&(e|=h.CREATE),t.includes("G")&&(e|=h.READ),(t.includes("W")||t.includes("N")||t.includes("V"))&&(e|=h.UPDATE),t.includes("D")&&(e|=h.DELETE),t.includes("R")&&(e|=h.SHARE),e):e}(s?.permissions),u=String(s?.["owner-id"]||o),c={id:s?.fileid||0,source:`${r}${t.filename}`,mtime:new Date(Date.parse(t.lastmod)),mime:t.mime||"application/octet-stream",size:s?.size||Number.parseInt(s.getcontentlength||"0"),permissions:a,owner:u,root:e,attributes:{...t,...s,hasPreview:s?.["has-preview"]}};return delete c.attributes?.props,"file"===t.type?new P(c):new I(c)};window._oc_config,window._oc_config?.blacklist_files_regex&&new RegExp(window._oc_config.blacklist_files_regex);const O=["B","KB","MB","GB","TB","PB"],k=["B","KiB","MiB","GiB","TiB","PiB"];function T(t,e=!1,r=!1,n=!1){r=r&&!n,"string"==typeof t&&(t=Number(t));let o=t>0?Math.floor(Math.log(t)/Math.log(n?1e3:1024)):0;o=Math.min((r?k.length:O.length)-1,o);const i=r?k[o]:O[o];let s=(t/Math.pow(n?1e3:1024,o)).toFixed(1);return!0===e&&0===o?("0.0"!==s?"< 1 ":"0 ")+(r?k[1]:O[1]):(s=o<2?parseFloat(s).toFixed(0):parseFloat(s).toLocaleString((0,p.lO)()),s+" "+i)}function S(t,e=!1){try{t=`${t}`.toLocaleLowerCase().replaceAll(/\s+/g,"").replaceAll(",",".")}catch(t){return null}const r=t.match(/^([0-9]*(\.[0-9]*)?)([kmgtp]?)(i?)b?$/);if(null===r||"."===r[1]||""===r[1])return null;const n=`${r[1]}`,o="i"===r[4]||e?1024:1e3;return Math.round(Number.parseFloat(n)*o**{"":0,k:1,m:2,g:3,t:4,p:5,e:6}[r[3]])}var j={};!function(t){const e=":A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD",r="["+e+"]["+e+"\\-.\\d\\u00B7\\u0300-\\u036F\\u203F-\\u2040]*",n=new RegExp("^"+r+"$");t.isExist=function(t){return void 0!==t},t.isEmptyObject=function(t){return 0===Object.keys(t).length},t.merge=function(t,e,r){if(e){const n=Object.keys(e),o=n.length;for(let i=0;i<o;i++)t[n[i]]="strict"===r?[e[n[i]]]:e[n[i]]}},t.getValue=function(e){return t.isExist(e)?e:""},t.isName=function(t){return!(null==n.exec(t))},t.getAllMatches=function(t,e){const r=[];let n=e.exec(t);for(;n;){const o=[];o.startIndex=e.lastIndex-n[0].length;const i=n.length;for(let t=0;t<i;t++)o.push(n[t]);r.push(o),n=e.exec(t)}return r},t.nameRegexp=r}(j);new RegExp("(\\s*)([^\\s=]+)(\\s*=)?(\\s*(['\"])(([\\s\\S])*?)\\5)?","g");var F={};const $={preserveOrder:!1,attributeNamePrefix:"@_",attributesGroupName:!1,textNodeName:"#text",ignoreAttributes:!0,removeNSPrefix:!1,allowBooleanAttributes:!1,parseTagValue:!0,parseAttributeValue:!1,trimValues:!0,cdataPropName:!1,numberParseOptions:{hex:!0,leadingZeros:!0,eNotation:!0},tagValueProcessor:function(t,e){return e},attributeValueProcessor:function(t,e){return e},stopNodes:[],alwaysCreateTextNode:!1,isArray:()=>!1,commentPropName:!1,unpairedTags:[],processEntities:!0,htmlEntities:!1,ignoreDeclaration:!1,ignorePiTags:!1,transformTagName:!1,transformAttributeName:!1,updateTag:function(t,e,r){return t}};F.buildOptions=function(t){return Object.assign({},$,t)},F.defaultOptions=$,!Number.parseInt&&window.parseInt&&(Number.parseInt=window.parseInt),!Number.parseFloat&&window.parseFloat&&(Number.parseFloat=window.parseFloat),new RegExp("([^\\s=]+)\\s*(=\\s*(['\"])([\\s\\S]*?)\\3)?","gm");var D={};function B(t,e,r){let n;const o={};for(let i=0;i<t.length;i++){const s=t[i],a=q(s);let u="";if(u=void 0===r?a:r+"."+a,a===e.textNodeName)void 0===n?n=s[a]:n+=""+s[a];else{if(void 0===a)continue;if(s[a]){let t=B(s[a],e,u);const r=M(t,e);s[":@"]?G(t,s[":@"],u,e):1!==Object.keys(t).length||void 0===t[e.textNodeName]||e.alwaysCreateTextNode?0===Object.keys(t).length&&(e.alwaysCreateTextNode?t[e.textNodeName]="":t=""):t=t[e.textNodeName],void 0!==o[a]&&o.hasOwnProperty(a)?(Array.isArray(o[a])||(o[a]=[o[a]]),o[a].push(t)):e.isArray(a,u,r)?o[a]=[t]:o[a]=t}}}return"string"==typeof n?n.length>0&&(o[e.textNodeName]=n):void 0!==n&&(o[e.textNodeName]=n),o}function q(t){const e=Object.keys(t);for(let t=0;t<e.length;t++){const r=e[t];if(":@"!==r)return r}}function G(t,e,r,n){if(e){const o=Object.keys(e),i=o.length;for(let s=0;s<i;s++){const i=o[s];n.isArray(i,r+"."+i,!0,!0)?t[i]=[e[i]]:t[i]=e[i]}}}function M(t,e){const{textNodeName:r}=e,n=Object.keys(t).length;return 0===n||!(1!==n||!t[r]&&"boolean"!=typeof t[r]&&0!==t[r])}D.prettify=function(t,e){return B(t,e)};const{buildOptions:V}=F,{prettify:K}=D;function H(t,e,r,n){let o="",i=!1;for(let s=0;s<t.length;s++){const a=t[s],u=z(a);if(void 0===u)continue;let c="";if(c=0===r.length?u:`${r}.${u}`,u===e.textNodeName){let t=a[u];W(c,e)||(t=e.tagValueProcessor(u,t),t=Q(t,e)),i&&(o+=n),o+=t,i=!1;continue}if(u===e.cdataPropName){i&&(o+=n),o+=`<![CDATA[${a[u][0][e.textNodeName]}]]>`,i=!1;continue}if(u===e.commentPropName){o+=n+`\x3c!--${a[u][0][e.textNodeName]}--\x3e`,i=!0;continue}if("?"===u[0]){const t=J(a[":@"],e),r="?xml"===u?"":n;let s=a[u][0][e.textNodeName];s=0!==s.length?" "+s:"",o+=r+`<${u}${s}${t}?>`,i=!0;continue}let p=n;""!==p&&(p+=e.indentBy);const d=n+`<${u}${J(a[":@"],e)}`,l=H(a[u],e,c,p);-1!==e.unpairedTags.indexOf(u)?e.suppressUnpairedNode?o+=d+">":o+=d+"/>":l&&0!==l.length||!e.suppressEmptyNode?l&&l.endsWith(">")?o+=d+`>${l}${n}</${u}>`:(o+=d+">",l&&""!==n&&(l.includes("/>")||l.includes("</"))?o+=n+e.indentBy+l+n:o+=l,o+=`</${u}>`):o+=d+"/>",i=!0}return o}function z(t){const e=Object.keys(t);for(let r=0;r<e.length;r++){const n=e[r];if(t.hasOwnProperty(n)&&":@"!==n)return n}}function J(t,e){let r="";if(t&&!e.ignoreAttributes)for(let n in t){if(!t.hasOwnProperty(n))continue;let o=e.attributeValueProcessor(n,t[n]);o=Q(o,e),!0===o&&e.suppressBooleanAttributes?r+=` ${n.substr(e.attributeNamePrefix.length)}`:r+=` ${n.substr(e.attributeNamePrefix.length)}="${o}"`}return r}function W(t,e){let r=(t=t.substr(0,t.length-e.textNodeName.length-1)).substr(t.lastIndexOf(".")+1);for(let n in e.stopNodes)if(e.stopNodes[n]===t||e.stopNodes[n]==="*."+r)return!0;return!1}function Q(t,e){if(t&&t.length>0&&e.processEntities)for(let r=0;r<e.entities.length;r++){const n=e.entities[r];t=t.replace(n.regex,n.val)}return t}const Y=function(t,e){let r="";return e.format&&e.indentBy.length>0&&(r="\n"),H(t,e,"",r)},X={attributeNamePrefix:"@_",attributesGroupName:!1,textNodeName:"#text",ignoreAttributes:!0,cdataPropName:!1,format:!1,indentBy:"  ",suppressEmptyNode:!1,suppressUnpairedNode:!0,suppressBooleanAttributes:!0,tagValueProcessor:function(t,e){return e},attributeValueProcessor:function(t,e){return e},preserveOrder:!1,commentPropName:!1,unpairedTags:[],entities:[{regex:new RegExp("&","g"),val:"&amp;"},{regex:new RegExp(">","g"),val:"&gt;"},{regex:new RegExp("<","g"),val:"&lt;"},{regex:new RegExp("'","g"),val:"&apos;"},{regex:new RegExp('"',"g"),val:"&quot;"}],processEntities:!0,stopNodes:[],oneListGroup:!1};function Z(t){this.options=Object.assign({},X,t),this.options.ignoreAttributes||this.options.attributesGroupName?this.isAttribute=function(){return!1}:(this.attrPrefixLen=this.options.attributeNamePrefix.length,this.isAttribute=rt),this.processTextOrObjNode=tt,this.options.format?(this.indentate=et,this.tagEndChar=">\n",this.newLine="\n"):(this.indentate=function(){return""},this.tagEndChar=">",this.newLine="")}function tt(t,e,r){const n=this.j2x(t,r+1);return void 0!==t[this.options.textNodeName]&&1===Object.keys(t).length?this.buildTextValNode(t[this.options.textNodeName],e,n.attrStr,r):this.buildObjectNode(n.val,e,n.attrStr,r)}function et(t){return this.options.indentBy.repeat(t)}function rt(t){return!(!t.startsWith(this.options.attributeNamePrefix)||t===this.options.textNodeName)&&t.substr(this.attrPrefixLen)}Z.prototype.build=function(t){return this.options.preserveOrder?Y(t,this.options):(Array.isArray(t)&&this.options.arrayNodeName&&this.options.arrayNodeName.length>1&&(t={[this.options.arrayNodeName]:t}),this.j2x(t,0).val)},Z.prototype.j2x=function(t,e){let r="",n="";for(let o in t)if(Object.prototype.hasOwnProperty.call(t,o))if(void 0===t[o])this.isAttribute(o)&&(n+="");else if(null===t[o])this.isAttribute(o)?n+="":"?"===o[0]?n+=this.indentate(e)+"<"+o+"?"+this.tagEndChar:n+=this.indentate(e)+"<"+o+"/"+this.tagEndChar;else if(t[o]instanceof Date)n+=this.buildTextValNode(t[o],o,"",e);else if("object"!=typeof t[o]){const i=this.isAttribute(o);if(i)r+=this.buildAttrPairStr(i,""+t[o]);else if(o===this.options.textNodeName){let e=this.options.tagValueProcessor(o,""+t[o]);n+=this.replaceEntitiesValue(e)}else n+=this.buildTextValNode(t[o],o,"",e)}else if(Array.isArray(t[o])){const r=t[o].length;let i="";for(let s=0;s<r;s++){const r=t[o][s];void 0===r||(null===r?"?"===o[0]?n+=this.indentate(e)+"<"+o+"?"+this.tagEndChar:n+=this.indentate(e)+"<"+o+"/"+this.tagEndChar:"object"==typeof r?this.options.oneListGroup?i+=this.j2x(r,e+1).val:i+=this.processTextOrObjNode(r,o,e):i+=this.buildTextValNode(r,o,"",e))}this.options.oneListGroup&&(i=this.buildObjectNode(i,o,"",e)),n+=i}else if(this.options.attributesGroupName&&o===this.options.attributesGroupName){const e=Object.keys(t[o]),n=e.length;for(let i=0;i<n;i++)r+=this.buildAttrPairStr(e[i],""+t[o][e[i]])}else n+=this.processTextOrObjNode(t[o],o,e);return{attrStr:r,val:n}},Z.prototype.buildAttrPairStr=function(t,e){return e=this.options.attributeValueProcessor(t,""+e),e=this.replaceEntitiesValue(e),this.options.suppressBooleanAttributes&&"true"===e?" "+t:" "+t+'="'+e+'"'},Z.prototype.buildObjectNode=function(t,e,r,n){if(""===t)return"?"===e[0]?this.indentate(n)+"<"+e+r+"?"+this.tagEndChar:this.indentate(n)+"<"+e+r+this.closeTag(e)+this.tagEndChar;{let o="</"+e+this.tagEndChar,i="";return"?"===e[0]&&(i="?",o=""),!r&&""!==r||-1!==t.indexOf("<")?!1!==this.options.commentPropName&&e===this.options.commentPropName&&0===i.length?this.indentate(n)+`\x3c!--${t}--\x3e`+this.newLine:this.indentate(n)+"<"+e+r+i+this.tagEndChar+t+this.indentate(n)+o:this.indentate(n)+"<"+e+r+i+">"+t+o}},Z.prototype.closeTag=function(t){let e="";return-1!==this.options.unpairedTags.indexOf(t)?this.options.suppressUnpairedNode||(e="/"):e=this.options.suppressEmptyNode?"/":`></${t}`,e},Z.prototype.buildTextValNode=function(t,e,r,n){if(!1!==this.options.cdataPropName&&e===this.options.cdataPropName)return this.indentate(n)+`<![CDATA[${t}]]>`+this.newLine;if(!1!==this.options.commentPropName&&e===this.options.commentPropName)return this.indentate(n)+`\x3c!--${t}--\x3e`+this.newLine;if("?"===e[0])return this.indentate(n)+"<"+e+r+"?"+this.tagEndChar;{let o=this.options.tagValueProcessor(e,t);return o=this.replaceEntitiesValue(o),""===o?this.indentate(n)+"<"+e+r+this.closeTag(e)+this.tagEndChar:this.indentate(n)+"<"+e+r+">"+o+"</"+e+this.tagEndChar}},Z.prototype.replaceEntitiesValue=function(t){if(t&&t.length>0&&this.options.processEntities)for(let e=0;e<this.options.entities.length;e++){const r=this.options.entities[e];t=t.replace(r.regex,r.val)}return t}}},i={};function s(t){var e=i[t];if(void 0!==e)return e.exports;var r=i[t]={id:t,loaded:!1,exports:{}};return o[t].call(r.exports,r,r.exports,s),r.loaded=!0,r.exports}s.m=o,e=[],s.O=(t,r,n,o)=>{if(!r){var i=1/0;for(p=0;p<e.length;p++){r=e[p][0],n=e[p][1],o=e[p][2];for(var a=!0,u=0;u<r.length;u++)(!1&o||i>=o)&&Object.keys(s.O).every((t=>s.O[t](r[u])))?r.splice(u--,1):(a=!1,o<i&&(i=o));if(a){e.splice(p--,1);var c=n();void 0!==c&&(t=c)}}return t}o=o||0;for(var p=e.length;p>0&&e[p-1][2]>o;p--)e[p]=e[p-1];e[p]=[r,n,o]},s.n=t=>{var e=t&&t.__esModule?()=>t.default:()=>t;return s.d(e,{a:e}),e},s.d=(t,e)=>{for(var r in e)s.o(e,r)&&!s.o(t,r)&&Object.defineProperty(t,r,{enumerable:!0,get:e[r]})},s.f={},s.e=t=>Promise.all(Object.keys(s.f).reduce(((e,r)=>(s.f[r](t,e),e)),[])),s.u=t=>(({3239:"settings-users",4529:"settings-apps-view"}[t]||t)+"-"+t+".js?v="+{1439:"41c39783c33a6fb28f5c",1544:"cc77e7c92fccc45a4a9a",3239:"9fd1f52d57bbd9fedbef",3865:"1b3dd2786e4df4dcbf8d",4529:"cf981d1db3fc4b0689be",7560:"8bb59db6d769c5865c25",8618:"d30d39583cd1936d2676",8630:"eb1ab06c4928352754c5"}[t]),s.g=function(){if("object"==typeof globalThis)return globalThis;try{return this||new Function("return this")()}catch(t){if("object"==typeof window)return window}}(),s.o=(t,e)=>Object.prototype.hasOwnProperty.call(t,e),r={},n="nextcloud:",s.l=(t,e,o,i)=>{if(r[t])r[t].push(e);else{var a,u;if(void 0!==o)for(var c=document.getElementsByTagName("script"),p=0;p<c.length;p++){var d=c[p];if(d.getAttribute("src")==t||d.getAttribute("data-webpack")==n+o){a=d;break}}a||(u=!0,(a=document.createElement("script")).charset="utf-8",a.timeout=120,s.nc&&a.setAttribute("nonce",s.nc),a.setAttribute("data-webpack",n+o),a.src=t),r[t]=[e];var l=(e,n)=>{a.onerror=a.onload=null,clearTimeout(h);var o=r[t];if(delete r[t],a.parentNode&&a.parentNode.removeChild(a),o&&o.forEach((t=>t(n))),e)return e(n)},h=setTimeout(l.bind(null,void 0,{type:"timeout",target:a}),12e4);a.onerror=l.bind(null,a.onerror),a.onload=l.bind(null,a.onload),u&&document.head.appendChild(a)}},s.r=t=>{"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},s.nmd=t=>(t.paths=[],t.children||(t.children=[]),t),s.j=2689,(()=>{var t;s.g.importScripts&&(t=s.g.location+"");var e=s.g.document;if(!t&&e&&(e.currentScript&&(t=e.currentScript.src),!t)){var r=e.getElementsByTagName("script");if(r.length)for(var n=r.length-1;n>-1&&(!t||!/^http(s?):/.test(t));)t=r[n--].src}if(!t)throw new Error("Automatic publicPath is not supported in this browser");t=t.replace(/#.*$/,"").replace(/\?.*$/,"").replace(/\/[^\/]+$/,"/"),s.p=t})(),(()=>{s.b=document.baseURI||self.location.href;var t={2689:0};s.f.j=(e,r)=>{var n=s.o(t,e)?t[e]:void 0;if(0!==n)if(n)r.push(n[2]);else{var o=new Promise(((r,o)=>n=t[e]=[r,o]));r.push(n[2]=o);var i=s.p+s.u(e),a=new Error;s.l(i,(r=>{if(s.o(t,e)&&(0!==(n=t[e])&&(t[e]=void 0),n)){var o=r&&("load"===r.type?"missing":r.type),i=r&&r.target&&r.target.src;a.message="Loading chunk "+e+" failed.\n("+o+": "+i+")",a.name="ChunkLoadError",a.type=o,a.request=i,n[1](a)}}),"chunk-"+e,e)}},s.O.j=e=>0===t[e];var e=(e,r)=>{var n,o,i=r[0],a=r[1],u=r[2],c=0;if(i.some((e=>0!==t[e]))){for(n in a)s.o(a,n)&&(s.m[n]=a[n]);if(u)var p=u(s)}for(e&&e(r);c<i.length;c++)o=i[c],s.o(t,o)&&t[o]&&t[o][0](),t[o]=0;return s.O(p)},r=self.webpackChunknextcloud=self.webpackChunknextcloud||[];r.forEach(e.bind(null,0)),r.push=e.bind(null,r.push.bind(r))})(),s.nc=void 0;var a=s.O(void 0,[4208],(()=>s(74329)));a=s.O(a)})();
-//# sourceMappingURL=settings-vue-settings-apps-users-management.js.map?v=92aabbe1451d353029d6
+/******/ (() => { // webpackBootstrap
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./apps/settings/src/store/api.js":
+/*!****************************************!*\
+  !*** ./apps/settings/src/store/api.js ***!
+  \****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _nextcloud_axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @nextcloud/axios */ "./node_modules/@nextcloud/axios/dist/index.es.mjs");
+/* harmony import */ var _nextcloud_password_confirmation__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @nextcloud/password-confirmation */ "./node_modules/@nextcloud/password-confirmation/dist/index.mjs");
+/* harmony import */ var _nextcloud_password_confirmation_dist_style_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @nextcloud/password-confirmation/dist/style.css */ "./node_modules/@nextcloud/password-confirmation/dist/style.css");
+/**
+ * @copyright Copyright (c) 2018 John Molakvoæ <skjnldsv@protonmail.com>
+ *
+ * @author Christoph Wurst <christoph@winzerhof-wurst.at>
+ * @author John Molakvoæ <skjnldsv@protonmail.com>
+ * @author Julius Härtl <jus@bitgrid.net>
+ * @author Roeland Jago Douma <roeland@famdouma.nl>
+ * @author Sujith Haridasan <sujith.h@gmail.com>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+
+
+const sanitize = function (url) {
+  return url.replace(/\/$/, ''); // Remove last url slash
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  /**
+   * This Promise is used to chain a request that require an admin password confirmation
+   * Since chaining Promise have a very precise behavior concerning catch and then,
+   * you'll need to be careful when using it.
+   * e.g
+   * // store
+   * action(context) {
+   *   return api.requireAdmin().then((response) => {
+   *     return api.get('url')
+   *       .then((response) => {API success})
+   *       .catch((error) => {API failure});
+   *   }).catch((error) => {requireAdmin failure});
+   * }
+   * // vue
+   * this.$store.dispatch('action').then(() => {always executed})
+   *
+   * Since Promise.then().catch().then() will always execute the last then
+   * this.$store.dispatch('action').then will always be executed
+   *
+   * If you want requireAdmin failure to also catch the API request failure
+   * you will need to throw a new error in the api.get.catch()
+   *
+   * e.g
+   * api.requireAdmin().then((response) => {
+   *   api.get('url')
+   *     .then((response) => {API success})
+   *     .catch((error) => {throw error;});
+   * }).catch((error) => {requireAdmin OR API failure});
+   *
+   * @return {Promise}
+   */
+  requireAdmin() {
+    return (0,_nextcloud_password_confirmation__WEBPACK_IMPORTED_MODULE_1__.confirmPassword)();
+  },
+  get(url, options) {
+    return _nextcloud_axios__WEBPACK_IMPORTED_MODULE_0__["default"].get(sanitize(url), options);
+  },
+  post(url, data) {
+    return _nextcloud_axios__WEBPACK_IMPORTED_MODULE_0__["default"].post(sanitize(url), data);
+  },
+  patch(url, data) {
+    return _nextcloud_axios__WEBPACK_IMPORTED_MODULE_0__["default"].patch(sanitize(url), data);
+  },
+  put(url, data) {
+    return _nextcloud_axios__WEBPACK_IMPORTED_MODULE_0__["default"].put(sanitize(url), data);
+  },
+  delete(url, data) {
+    return _nextcloud_axios__WEBPACK_IMPORTED_MODULE_0__["default"].delete(sanitize(url), {
+      params: data
+    });
+  }
+});
+
+/***/ }),
+
+/***/ "./apps/settings/src/store/apps.js":
+/*!*****************************************!*\
+  !*** ./apps/settings/src/store/apps.js ***!
+  \*****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./api.js */ "./apps/settings/src/store/api.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.runtime.esm.js");
+/* harmony import */ var _nextcloud_axios__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @nextcloud/axios */ "./node_modules/@nextcloud/axios/dist/index.es.mjs");
+/* harmony import */ var _nextcloud_router__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @nextcloud/router */ "./node_modules/@nextcloud/router/dist/index.mjs");
+/* harmony import */ var _nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @nextcloud/dialogs */ "./node_modules/@nextcloud/dialogs/dist/index.mjs");
+/* harmony import */ var _nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @nextcloud/initial-state */ "./node_modules/@nextcloud/initial-state/dist/index.es.mjs");
+/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
+/**
+ * @copyright Copyright (c) 2018 Julius Härtl <jus@bitgrid.net>
+ *
+ * @author John Molakvoæ <skjnldsv@protonmail.com>
+ * @author Julius Härtl <jus@bitgrid.net>
+ * @author Roeland Jago Douma <roeland@famdouma.nl>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+
+
+
+
+
+const state = {
+  apps: [],
+  bundles: (0,_nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_4__.loadState)('settings', 'appstoreBundles', []),
+  categories: [],
+  updateCount: (0,_nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_4__.loadState)('settings', 'appstoreUpdateCount', 0),
+  loading: {},
+  gettingCategoriesPromise: null
+};
+const mutations = {
+  APPS_API_FAILURE(state, error) {
+    (0,_nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_3__.showError)(t('settings', 'An error occurred during the request. Unable to proceed.') + '<br>' + error.error.response.data.data.message, {
+      isHTML: true
+    });
+    console.error(state, error);
+  },
+  initCategories(state, _ref) {
+    let {
+      categories,
+      updateCount
+    } = _ref;
+    state.categories = categories;
+    state.updateCount = updateCount;
+  },
+  updateCategories(state, categoriesPromise) {
+    state.gettingCategoriesPromise = categoriesPromise;
+  },
+  setUpdateCount(state, updateCount) {
+    state.updateCount = updateCount;
+  },
+  addCategory(state, category) {
+    state.categories.push(category);
+  },
+  appendCategories(state, categoriesArray) {
+    // convert obj to array
+    state.categories = categoriesArray;
+  },
+  setAllApps(state, apps) {
+    state.apps = apps;
+  },
+  setError(state, _ref2) {
+    let {
+      appId,
+      error
+    } = _ref2;
+    if (!Array.isArray(appId)) {
+      appId = [appId];
+    }
+    appId.forEach(_id => {
+      const app = state.apps.find(app => app.id === _id);
+      app.error = error;
+    });
+  },
+  clearError(state, _ref3) {
+    let {
+      appId,
+      error
+    } = _ref3;
+    const app = state.apps.find(app => app.id === appId);
+    app.error = null;
+  },
+  enableApp(state, _ref4) {
+    let {
+      appId,
+      groups
+    } = _ref4;
+    const app = state.apps.find(app => app.id === appId);
+    app.active = true;
+    app.groups = groups;
+  },
+  setInstallState(state, _ref5) {
+    let {
+      appId,
+      canInstall
+    } = _ref5;
+    const app = state.apps.find(app => app.id === appId);
+    if (app) {
+      app.canInstall = canInstall === true;
+    }
+  },
+  disableApp(state, appId) {
+    const app = state.apps.find(app => app.id === appId);
+    app.active = false;
+    app.groups = [];
+    if (app.removable) {
+      app.canUnInstall = true;
+    }
+  },
+  uninstallApp(state, appId) {
+    state.apps.find(app => app.id === appId).active = false;
+    state.apps.find(app => app.id === appId).groups = [];
+    state.apps.find(app => app.id === appId).needsDownload = true;
+    state.apps.find(app => app.id === appId).installed = false;
+    state.apps.find(app => app.id === appId).canUnInstall = false;
+    state.apps.find(app => app.id === appId).canInstall = true;
+  },
+  updateApp(state, appId) {
+    const app = state.apps.find(app => app.id === appId);
+    const version = app.update;
+    app.update = null;
+    app.version = version;
+    state.updateCount--;
+  },
+  resetApps(state) {
+    state.apps = [];
+  },
+  reset(state) {
+    state.apps = [];
+    state.categories = [];
+    state.updateCount = 0;
+  },
+  startLoading(state, id) {
+    if (Array.isArray(id)) {
+      id.forEach(_id => {
+        vue__WEBPACK_IMPORTED_MODULE_5__["default"].set(state.loading, _id, true);
+      });
+    } else {
+      vue__WEBPACK_IMPORTED_MODULE_5__["default"].set(state.loading, id, true);
+    }
+  },
+  stopLoading(state, id) {
+    if (Array.isArray(id)) {
+      id.forEach(_id => {
+        vue__WEBPACK_IMPORTED_MODULE_5__["default"].set(state.loading, _id, false);
+      });
+    } else {
+      vue__WEBPACK_IMPORTED_MODULE_5__["default"].set(state.loading, id, false);
+    }
+  }
+};
+const getters = {
+  loading(state) {
+    return function (id) {
+      return state.loading[id];
+    };
+  },
+  getCategories(state) {
+    return state.categories;
+  },
+  getAllApps(state) {
+    return state.apps;
+  },
+  getAppBundles(state) {
+    return state.bundles;
+  },
+  getUpdateCount(state) {
+    return state.updateCount;
+  },
+  getCategoryById: state => selectedCategoryId => {
+    return state.categories.find(category => category.id === selectedCategoryId);
+  }
+};
+const actions = {
+  enableApp(context, _ref6) {
+    let {
+      appId,
+      groups
+    } = _ref6;
+    let apps;
+    if (Array.isArray(appId)) {
+      apps = appId;
+    } else {
+      apps = [appId];
+    }
+    return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].requireAdmin().then(response => {
+      context.commit('startLoading', apps);
+      context.commit('startLoading', 'install');
+      return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].post((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_2__.generateUrl)('settings/apps/enable'), {
+        appIds: apps,
+        groups
+      }).then(response => {
+        context.commit('stopLoading', apps);
+        context.commit('stopLoading', 'install');
+        apps.forEach(_appId => {
+          context.commit('enableApp', {
+            appId: _appId,
+            groups
+          });
+        });
+
+        // check for server health
+        return _nextcloud_axios__WEBPACK_IMPORTED_MODULE_1__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_2__.generateUrl)('apps/files/')).then(() => {
+          if (response.data.update_required) {
+            (0,_nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_3__.showInfo)(t('settings', 'The app has been enabled but needs to be updated. You will be redirected to the update page in 5 seconds.'), {
+              onClick: () => window.location.reload(),
+              close: false
+            });
+            setTimeout(function () {
+              location.reload();
+            }, 5000);
+          }
+        }).catch(() => {
+          if (!Array.isArray(appId)) {
+            (0,_nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_3__.showError)(t('settings', 'Error: This app cannot be enabled because it makes the server unstable'));
+            context.commit('setError', {
+              appId: apps,
+              error: t('settings', 'Error: This app cannot be enabled because it makes the server unstable')
+            });
+            context.dispatch('disableApp', {
+              appId
+            });
+          }
+        });
+      }).catch(error => {
+        context.commit('stopLoading', apps);
+        context.commit('stopLoading', 'install');
+        context.commit('setError', {
+          appId: apps,
+          error: error.response.data.data.message
+        });
+        context.commit('APPS_API_FAILURE', {
+          appId,
+          error
+        });
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      appId,
+      error
+    }));
+  },
+  forceEnableApp(context, _ref7) {
+    let {
+      appId,
+      groups
+    } = _ref7;
+    let apps;
+    if (Array.isArray(appId)) {
+      apps = appId;
+    } else {
+      apps = [appId];
+    }
+    return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].requireAdmin().then(() => {
+      context.commit('startLoading', apps);
+      context.commit('startLoading', 'install');
+      return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].post((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_2__.generateUrl)('settings/apps/force'), {
+        appId
+      }).then(response => {
+        context.commit('setInstallState', {
+          appId,
+          canInstall: true
+        });
+      }).catch(error => {
+        context.commit('stopLoading', apps);
+        context.commit('stopLoading', 'install');
+        context.commit('setError', {
+          appId: apps,
+          error: error.response.data.data.message
+        });
+        context.commit('APPS_API_FAILURE', {
+          appId,
+          error
+        });
+      }).finally(() => {
+        context.commit('stopLoading', apps);
+        context.commit('stopLoading', 'install');
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      appId,
+      error
+    }));
+  },
+  disableApp(context, _ref8) {
+    let {
+      appId
+    } = _ref8;
+    let apps;
+    if (Array.isArray(appId)) {
+      apps = appId;
+    } else {
+      apps = [appId];
+    }
+    return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].requireAdmin().then(response => {
+      context.commit('startLoading', apps);
+      return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].post((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_2__.generateUrl)('settings/apps/disable'), {
+        appIds: apps
+      }).then(response => {
+        context.commit('stopLoading', apps);
+        apps.forEach(_appId => {
+          context.commit('disableApp', _appId);
+        });
+        return true;
+      }).catch(error => {
+        context.commit('stopLoading', apps);
+        context.commit('APPS_API_FAILURE', {
+          appId,
+          error
+        });
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      appId,
+      error
+    }));
+  },
+  uninstallApp(context, _ref9) {
+    let {
+      appId
+    } = _ref9;
+    return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].requireAdmin().then(response => {
+      context.commit('startLoading', appId);
+      return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_2__.generateUrl)("settings/apps/uninstall/".concat(appId))).then(response => {
+        context.commit('stopLoading', appId);
+        context.commit('uninstallApp', appId);
+        return true;
+      }).catch(error => {
+        context.commit('stopLoading', appId);
+        context.commit('APPS_API_FAILURE', {
+          appId,
+          error
+        });
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      appId,
+      error
+    }));
+  },
+  updateApp(context, _ref10) {
+    let {
+      appId
+    } = _ref10;
+    return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].requireAdmin().then(response => {
+      context.commit('startLoading', appId);
+      context.commit('startLoading', 'install');
+      return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_2__.generateUrl)("settings/apps/update/".concat(appId))).then(response => {
+        context.commit('stopLoading', 'install');
+        context.commit('stopLoading', appId);
+        context.commit('updateApp', appId);
+        return true;
+      }).catch(error => {
+        context.commit('stopLoading', appId);
+        context.commit('stopLoading', 'install');
+        context.commit('APPS_API_FAILURE', {
+          appId,
+          error
+        });
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      appId,
+      error
+    }));
+  },
+  getAllApps(context) {
+    context.commit('startLoading', 'list');
+    return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_2__.generateUrl)('settings/apps/list')).then(response => {
+      context.commit('setAllApps', response.data.apps);
+      context.commit('stopLoading', 'list');
+      return true;
+    }).catch(error => context.commit('API_FAILURE', error));
+  },
+  async getCategories(context) {
+    let {
+      shouldRefetchCategories = false
+    } = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    if (shouldRefetchCategories || !context.state.gettingCategoriesPromise) {
+      context.commit('startLoading', 'categories');
+      try {
+        const categoriesPromise = _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_2__.generateUrl)('settings/apps/categories'));
+        context.commit('updateCategories', categoriesPromise);
+        const categoriesPromiseResponse = await categoriesPromise;
+        if (categoriesPromiseResponse.data.length > 0) {
+          context.commit('appendCategories', categoriesPromiseResponse.data);
+          context.commit('stopLoading', 'categories');
+          return true;
+        }
+        context.commit('stopLoading', 'categories');
+        return false;
+      } catch (error) {
+        context.commit('API_FAILURE', error);
+      }
+    }
+    return context.state.gettingCategoriesPromise;
+  }
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  state,
+  mutations,
+  getters,
+  actions
+});
+
+/***/ }),
+
+/***/ "./apps/settings/src/store/index.js":
+/*!******************************************!*\
+  !*** ./apps/settings/src/store/index.js ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   useStore: () => (/* binding */ useStore)
+/* harmony export */ });
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.runtime.esm.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+/* harmony import */ var _users_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./users.js */ "./apps/settings/src/store/users.js");
+/* harmony import */ var _apps_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./apps.js */ "./apps/settings/src/store/apps.js");
+/* harmony import */ var _users_settings_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./users-settings.js */ "./apps/settings/src/store/users-settings.js");
+/* harmony import */ var _oc_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./oc.js */ "./apps/settings/src/store/oc.js");
+/* harmony import */ var _nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @nextcloud/dialogs */ "./node_modules/@nextcloud/dialogs/dist/index.mjs");
+/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
+/**
+ * @copyright Copyright (c) 2018 John Molakvoæ <skjnldsv@protonmail.com>
+ *
+ * @author John Molakvoæ <skjnldsv@protonmail.com>
+ * @author Julius Härtl <jus@bitgrid.net>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+
+
+
+
+
+
+vue__WEBPACK_IMPORTED_MODULE_5__["default"].use(vuex__WEBPACK_IMPORTED_MODULE_6__["default"]);
+const debug = "development" !== 'production';
+const mutations = {
+  API_FAILURE(state, error) {
+    try {
+      const message = error.error.response.data.ocs.meta.message;
+      (0,_nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_4__.showError)(t('settings', 'An error occurred during the request. Unable to proceed.') + '<br>' + message, {
+        isHTML: true
+      });
+    } catch (e) {
+      (0,_nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_4__.showError)(t('settings', 'An error occurred during the request. Unable to proceed.'));
+    }
+    console.error(state, error);
+  }
+};
+let store = null;
+const useStore = () => {
+  if (store === null) {
+    store = new vuex__WEBPACK_IMPORTED_MODULE_6__.Store({
+      modules: {
+        users: _users_js__WEBPACK_IMPORTED_MODULE_0__["default"],
+        apps: _apps_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+        settings: _users_settings_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+        oc: _oc_js__WEBPACK_IMPORTED_MODULE_3__["default"]
+      },
+      strict: debug,
+      mutations
+    });
+  }
+  return store;
+};
+
+/***/ }),
+
+/***/ "./apps/settings/src/store/oc.js":
+/*!***************************************!*\
+  !*** ./apps/settings/src/store/oc.js ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./api.js */ "./apps/settings/src/store/api.js");
+/* harmony import */ var _nextcloud_router__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @nextcloud/router */ "./node_modules/@nextcloud/router/dist/index.mjs");
+/**
+ * @copyright Copyright (c) 2018 John Molakvoæ <skjnldsv@protonmail.com>
+ *
+ * @author John Molakvoæ <skjnldsv@protonmail.com>
+ * @author Roeland Jago Douma <roeland@famdouma.nl>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+
+const state = {};
+const mutations = {};
+const getters = {};
+const actions = {
+  /**
+   * Set application config in database
+   *
+   * @param {object} context store context
+   * @param {object} options destructuring object
+   * @param {string} options.app Application name
+   * @param {boolean} options.key Config key
+   * @param {boolean} options.value Value to set
+   * @return {Promise}
+   */
+  setAppConfig(context, _ref) {
+    let {
+      app,
+      key,
+      value
+    } = _ref;
+    return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_0__["default"].post((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_1__.generateOcsUrl)('apps/provisioning_api/api/v1/config/apps/{app}/{key}', {
+        app,
+        key
+      }), {
+        value
+      }).catch(error => {
+        throw error;
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      app,
+      key,
+      value,
+      error
+    }));
+  }
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  state,
+  mutations,
+  getters,
+  actions
+});
+
+/***/ }),
+
+/***/ "./apps/settings/src/store/users-settings.js":
+/*!***************************************************!*\
+  !*** ./apps/settings/src/store/users-settings.js ***!
+  \***************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @nextcloud/initial-state */ "./node_modules/@nextcloud/initial-state/dist/index.es.mjs");
+/**
+ * @copyright Copyright (c) 2018 John Molakvoæ <skjnldsv@protonmail.com>
+ *
+ * @author John Molakvoæ <skjnldsv@protonmail.com>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+const state = {
+  serverData: (0,_nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_0__.loadState)('settings', 'usersSettings', {})
+};
+const mutations = {
+  setServerData(state, data) {
+    state.serverData = data;
+  }
+};
+const getters = {
+  getServerData(state) {
+    return state.serverData;
+  }
+};
+const actions = {};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  state,
+  mutations,
+  getters,
+  actions
+});
+
+/***/ }),
+
+/***/ "./apps/settings/src/store/users.js":
+/*!******************************************!*\
+  !*** ./apps/settings/src/store/users.js ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _nextcloud_browser_storage__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @nextcloud/browser-storage */ "./node_modules/@nextcloud/browser-storage/dist/index.js");
+/* harmony import */ var _nextcloud_capabilities__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @nextcloud/capabilities */ "./node_modules/@nextcloud/capabilities/dist/index.mjs");
+/* harmony import */ var _nextcloud_files__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @nextcloud/files */ "./node_modules/@nextcloud/files/dist/index.mjs");
+/* harmony import */ var _nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @nextcloud/dialogs */ "./node_modules/@nextcloud/dialogs/dist/index.mjs");
+/* harmony import */ var _nextcloud_router__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @nextcloud/router */ "./node_modules/@nextcloud/router/dist/index.mjs");
+/* harmony import */ var _nextcloud_axios__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @nextcloud/axios */ "./node_modules/@nextcloud/axios/dist/index.es.mjs");
+/* harmony import */ var _constants_GroupManagement_ts__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../constants/GroupManagement.ts */ "./apps/settings/src/constants/GroupManagement.ts");
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./api.js */ "./apps/settings/src/store/api.js");
+/* harmony import */ var _logger_ts__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../logger.ts */ "./apps/settings/src/logger.ts");
+/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
+/**
+ * @copyright Copyright (c) 2018 John Molakvoæ <skjnldsv@protonmail.com>
+ *
+ * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
+ * @author Christoph Wurst <christoph@winzerhof-wurst.at>
+ * @author Daniel Calviño Sánchez <danxuliu@gmail.com>
+ * @author John Molakvoæ <skjnldsv@protonmail.com>
+ * @author Julius Härtl <jus@bitgrid.net>
+ * @author Roeland Jago Douma <roeland@famdouma.nl>
+ * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Stephan Orbaugh <stephan.orbaugh@nextcloud.com>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+
+
+
+
+
+
+
+
+const localStorage = (0,_nextcloud_browser_storage__WEBPACK_IMPORTED_MODULE_0__.getBuilder)('settings').persist(true).build();
+const defaults = {
+  group: {
+    id: '',
+    name: '',
+    usercount: 0,
+    disabled: 0,
+    canAdd: true,
+    canRemove: true
+  }
+};
+const state = {
+  users: [],
+  groups: [],
+  orderBy: _constants_GroupManagement_ts__WEBPACK_IMPORTED_MODULE_6__.GroupSorting.UserCount,
+  minPasswordLength: 0,
+  usersOffset: 0,
+  usersLimit: 25,
+  disabledUsersOffset: 0,
+  disabledUsersLimit: 25,
+  userCount: 0,
+  showConfig: {
+    showStoragePath: localStorage.getItem('account_settings__showStoragePath') === 'true',
+    showUserBackend: localStorage.getItem('account_settings__showUserBackend') === 'true',
+    showLastLogin: localStorage.getItem('account_settings__showLastLogin') === 'true',
+    showNewUserForm: localStorage.getItem('account_settings__showNewUserForm') === 'true',
+    showLanguages: localStorage.getItem('account_settings__showLanguages') === 'true'
+  }
+};
+const mutations = {
+  appendUsers(state, usersObj) {
+    const existingUsers = state.users.map(_ref => {
+      let {
+        id
+      } = _ref;
+      return id;
+    });
+    const newUsers = Object.values(usersObj).filter(_ref2 => {
+      let {
+        id
+      } = _ref2;
+      return !existingUsers.includes(id);
+    });
+    const users = state.users.concat(newUsers);
+    state.usersOffset += state.usersLimit;
+    state.users = users;
+  },
+  updateDisabledUsers(state, _usersObj) {
+    state.disabledUsersOffset += state.disabledUsersLimit;
+  },
+  setPasswordPolicyMinLength(state, length) {
+    state.minPasswordLength = length !== '' ? length : 0;
+  },
+  initGroups(state, _ref3) {
+    let {
+      groups,
+      orderBy,
+      userCount
+    } = _ref3;
+    state.groups = groups.map(group => Object.assign({}, defaults.group, group));
+    state.orderBy = orderBy;
+    state.userCount = userCount;
+  },
+  addGroup(state, _ref4) {
+    let {
+      gid,
+      displayName
+    } = _ref4;
+    try {
+      if (typeof state.groups.find(group => group.id === gid) !== 'undefined') {
+        return;
+      }
+      // extend group to default values
+      const group = Object.assign({}, defaults.group, {
+        id: gid,
+        name: displayName
+      });
+      state.groups.unshift(group);
+    } catch (e) {
+      console.error('Can\'t create group', e);
+    }
+  },
+  renameGroup(state, _ref5) {
+    let {
+      gid,
+      displayName
+    } = _ref5;
+    const groupIndex = state.groups.findIndex(groupSearch => groupSearch.id === gid);
+    if (groupIndex >= 0) {
+      const updatedGroup = state.groups[groupIndex];
+      updatedGroup.name = displayName;
+      state.groups.splice(groupIndex, 1, updatedGroup);
+    }
+  },
+  removeGroup(state, gid) {
+    const groupIndex = state.groups.findIndex(groupSearch => groupSearch.id === gid);
+    if (groupIndex >= 0) {
+      state.groups.splice(groupIndex, 1);
+    }
+  },
+  addUserGroup(state, _ref6) {
+    let {
+      userid,
+      gid
+    } = _ref6;
+    const group = state.groups.find(groupSearch => groupSearch.id === gid);
+    const user = state.users.find(user => user.id === userid);
+    // increase count if user is enabled
+    if (group && user.enabled && state.userCount > 0) {
+      group.usercount++;
+    }
+    const groups = user.groups;
+    groups.push(gid);
+  },
+  removeUserGroup(state, _ref7) {
+    let {
+      userid,
+      gid
+    } = _ref7;
+    const group = state.groups.find(groupSearch => groupSearch.id === gid);
+    const user = state.users.find(user => user.id === userid);
+    // lower count if user is enabled
+    if (group && user.enabled && state.userCount > 0) {
+      group.usercount--;
+    }
+    const groups = user.groups;
+    groups.splice(groups.indexOf(gid), 1);
+  },
+  addUserSubAdmin(state, _ref8) {
+    let {
+      userid,
+      gid
+    } = _ref8;
+    const groups = state.users.find(user => user.id === userid).subadmin;
+    groups.push(gid);
+  },
+  removeUserSubAdmin(state, _ref9) {
+    let {
+      userid,
+      gid
+    } = _ref9;
+    const groups = state.users.find(user => user.id === userid).subadmin;
+    groups.splice(groups.indexOf(gid), 1);
+  },
+  deleteUser(state, userid) {
+    const userIndex = state.users.findIndex(user => user.id === userid);
+    this.commit('updateUserCounts', {
+      user: state.users[userIndex],
+      actionType: 'remove'
+    });
+    state.users.splice(userIndex, 1);
+  },
+  addUserData(state, response) {
+    const user = response.data.ocs.data;
+    state.users.unshift(user);
+    this.commit('updateUserCounts', {
+      user,
+      actionType: 'create'
+    });
+  },
+  enableDisableUser(state, _ref10) {
+    let {
+      userid,
+      enabled
+    } = _ref10;
+    const user = state.users.find(user => user.id === userid);
+    user.enabled = enabled;
+    this.commit('updateUserCounts', {
+      user,
+      actionType: enabled ? 'enable' : 'disable'
+    });
+  },
+  // update active/disabled counts, groups counts
+  updateUserCounts(state, _ref11) {
+    let {
+      user,
+      actionType
+    } = _ref11;
+    // 0 is a special value
+    if (state.userCount === 0) {
+      return;
+    }
+    const disabledGroup = state.groups.find(group => group.id === 'disabled');
+    switch (actionType) {
+      case 'enable':
+      case 'disable':
+        disabledGroup.usercount += user.enabled ? -1 : 1; // update Disabled Users count
+        state.userCount += user.enabled ? 1 : -1; // update Active Users count
+        user.groups.forEach(userGroup => {
+          const group = state.groups.find(groupSearch => groupSearch.id === userGroup);
+          group.disabled += user.enabled ? -1 : 1; // update group disabled count
+        });
+        break;
+      case 'create':
+        state.userCount++; // increment Active Users count
+
+        user.groups.forEach(userGroup => {
+          state.groups.find(groupSearch => groupSearch.id === userGroup).usercount++; // increment group total count
+        });
+        break;
+      case 'remove':
+        if (user.enabled) {
+          state.userCount--; // decrement Active Users count
+          user.groups.forEach(userGroup => {
+            const group = state.groups.find(groupSearch => groupSearch.id === userGroup);
+            if (!group) {
+              console.warn('User group ' + userGroup + ' does not exist during user removal');
+              return;
+            }
+            group.usercount--; // decrement group total count
+          });
+        } else {
+          disabledGroup.usercount--; // decrement Disabled Users count
+          user.groups.forEach(userGroup => {
+            const group = state.groups.find(groupSearch => groupSearch.id === userGroup);
+            group.disabled--; // decrement group disabled count
+          });
+        }
+        break;
+      default:
+        _logger_ts__WEBPACK_IMPORTED_MODULE_8__["default"].error("Unknown action type in updateUserCounts: '".concat(actionType, "'"));
+      // not throwing error to interrupt execution as this is not fatal
+    }
+  },
+  setUserData(state, _ref12) {
+    let {
+      userid,
+      key,
+      value
+    } = _ref12;
+    if (key === 'quota') {
+      const humanValue = (0,_nextcloud_files__WEBPACK_IMPORTED_MODULE_2__.parseFileSize)(value, true);
+      state.users.find(user => user.id === userid)[key][key] = humanValue !== null ? humanValue : value;
+    } else {
+      state.users.find(user => user.id === userid)[key] = value;
+    }
+  },
+  /**
+   * Reset users list
+   *
+   * @param {object} state the store state
+   */
+  resetUsers(state) {
+    state.users = [];
+    state.usersOffset = 0;
+    state.disabledUsersOffset = 0;
+  },
+  setShowConfig(state, _ref13) {
+    let {
+      key,
+      value
+    } = _ref13;
+    localStorage.setItem("account_settings__".concat(key), JSON.stringify(value));
+    state.showConfig[key] = value;
+  },
+  setGroupSorting(state, sorting) {
+    const oldValue = state.orderBy;
+    state.orderBy = sorting;
+
+    // Persist the value on the server
+    _nextcloud_axios__WEBPACK_IMPORTED_MODULE_5__["default"].post((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateUrl)('/settings/users/preferences/group.sortBy'), {
+      value: String(sorting)
+    }).catch(error => {
+      state.orderBy = oldValue;
+      (0,_nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_3__.showError)(t('settings', 'Could not set group sorting'));
+      _logger_ts__WEBPACK_IMPORTED_MODULE_8__["default"].error(error);
+    });
+  }
+};
+const getters = {
+  getUsers(state) {
+    return state.users;
+  },
+  getGroups(state) {
+    return state.groups;
+  },
+  getSubadminGroups(state) {
+    // Can't be subadmin of admin or disabled
+    return state.groups.filter(group => group.id !== 'admin' && group.id !== 'disabled');
+  },
+  getSortedGroups(state) {
+    const groups = [...state.groups];
+    if (state.orderBy === _constants_GroupManagement_ts__WEBPACK_IMPORTED_MODULE_6__.GroupSorting.UserCount) {
+      return groups.sort((a, b) => {
+        const numA = a.usercount - a.disabled;
+        const numB = b.usercount - b.disabled;
+        return numA < numB ? 1 : numB < numA ? -1 : a.name.localeCompare(b.name);
+      });
+    } else {
+      return groups.sort((a, b) => a.name.localeCompare(b.name));
+    }
+  },
+  getGroupSorting(state) {
+    return state.orderBy;
+  },
+  getPasswordPolicyMinLength(state) {
+    return state.minPasswordLength;
+  },
+  getUsersOffset(state) {
+    return state.usersOffset;
+  },
+  getUsersLimit(state) {
+    return state.usersLimit;
+  },
+  getDisabledUsersOffset(state) {
+    return state.disabledUsersOffset;
+  },
+  getDisabledUsersLimit(state) {
+    return state.disabledUsersLimit;
+  },
+  getUserCount(state) {
+    return state.userCount;
+  },
+  getShowConfig(state) {
+    return state.showConfig;
+  }
+};
+const CancelToken = _nextcloud_axios__WEBPACK_IMPORTED_MODULE_5__["default"].CancelToken;
+let searchRequestCancelSource = null;
+const actions = {
+  /**
+   * search users
+   *
+   * @param {object} context store context
+   * @param {object} options destructuring object
+   * @param {number} options.offset List offset to request
+   * @param {number} options.limit List number to return from offset
+   * @param {string} options.search Search amongst users
+   * @return {Promise}
+   */
+  searchUsers(context, _ref14) {
+    let {
+      offset,
+      limit,
+      search
+    } = _ref14;
+    search = typeof search === 'string' ? search : '';
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/details?offset={offset}&limit={limit}&search={search}', {
+      offset,
+      limit,
+      search
+    })).catch(error => {
+      if (!_nextcloud_axios__WEBPACK_IMPORTED_MODULE_5__["default"].isCancel(error)) {
+        context.commit('API_FAILURE', error);
+      }
+    });
+  },
+  /**
+   * Get user details
+   *
+   * @param {object} context store context
+   * @param {string} userId user id
+   * @return {Promise}
+   */
+  getUser(context, userId) {
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)("cloud/users/".concat(userId))).catch(error => {
+      if (!_nextcloud_axios__WEBPACK_IMPORTED_MODULE_5__["default"].isCancel(error)) {
+        context.commit('API_FAILURE', error);
+      }
+    });
+  },
+  /**
+   * Get all users with full details
+   *
+   * @param {object} context store context
+   * @param {object} options destructuring object
+   * @param {number} options.offset List offset to request
+   * @param {number} options.limit List number to return from offset
+   * @param {string} options.search Search amongst users
+   * @param {string} options.group Get users from group
+   * @return {Promise}
+   */
+  getUsers(context, _ref15) {
+    let {
+      offset,
+      limit,
+      search,
+      group
+    } = _ref15;
+    if (searchRequestCancelSource) {
+      searchRequestCancelSource.cancel('Operation canceled by another search request.');
+    }
+    searchRequestCancelSource = CancelToken.source();
+    search = typeof search === 'string' ? search : '';
+
+    /**
+     * Adding filters in the search bar such as in:files, in:users, etc.
+     * collides with this particular search, so we need to remove them
+     * here and leave only the original search query
+     */
+    search = search.replace(/in:[^\s]+/g, '').trim();
+    group = typeof group === 'string' ? group : '';
+    if (group !== '') {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/groups/{group}/users/details?offset={offset}&limit={limit}&search={search}', {
+        group: encodeURIComponent(group),
+        offset,
+        limit,
+        search
+      }), {
+        cancelToken: searchRequestCancelSource.token
+      }).then(response => {
+        const usersCount = Object.keys(response.data.ocs.data.users).length;
+        if (usersCount > 0) {
+          context.commit('appendUsers', response.data.ocs.data.users);
+        }
+        return usersCount;
+      }).catch(error => {
+        if (!_nextcloud_axios__WEBPACK_IMPORTED_MODULE_5__["default"].isCancel(error)) {
+          context.commit('API_FAILURE', error);
+        }
+      });
+    }
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/details?offset={offset}&limit={limit}&search={search}', {
+      offset,
+      limit,
+      search
+    }), {
+      cancelToken: searchRequestCancelSource.token
+    }).then(response => {
+      const usersCount = Object.keys(response.data.ocs.data.users).length;
+      if (usersCount > 0) {
+        context.commit('appendUsers', response.data.ocs.data.users);
+      }
+      return usersCount;
+    }).catch(error => {
+      if (!_nextcloud_axios__WEBPACK_IMPORTED_MODULE_5__["default"].isCancel(error)) {
+        context.commit('API_FAILURE', error);
+      }
+    });
+  },
+  /**
+   * Get disabled users with full details
+   *
+   * @param {object} context store context
+   * @param {object} options destructuring object
+   * @param {number} options.offset List offset to request
+   * @param {number} options.limit List number to return from offset
+   * @return {Promise<number>}
+   */
+  async getDisabledUsers(context, _ref16) {
+    let {
+      offset,
+      limit,
+      search
+    } = _ref16;
+    const url = (0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/disabled?offset={offset}&limit={limit}&search={search}', {
+      offset,
+      limit,
+      search
+    });
+    try {
+      const response = await _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].get(url);
+      const usersCount = Object.keys(response.data.ocs.data.users).length;
+      if (usersCount > 0) {
+        context.commit('appendUsers', response.data.ocs.data.users);
+        context.commit('updateDisabledUsers', response.data.ocs.data.users);
+      }
+      return usersCount;
+    } catch (error) {
+      context.commit('API_FAILURE', error);
+    }
+  },
+  getGroups(context, _ref17) {
+    let {
+      offset,
+      limit,
+      search
+    } = _ref17;
+    search = typeof search === 'string' ? search : '';
+    const limitParam = limit === -1 ? '' : "&limit=".concat(limit);
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/groups?offset={offset}&search={search}', {
+      offset,
+      search
+    }) + limitParam).then(response => {
+      if (Object.keys(response.data.ocs.data.groups).length > 0) {
+        response.data.ocs.data.groups.forEach(function (group) {
+          context.commit('addGroup', {
+            gid: group,
+            displayName: group
+          });
+        });
+        return true;
+      }
+      return false;
+    }).catch(error => context.commit('API_FAILURE', error));
+  },
+  /**
+   * Get all users with full details
+   *
+   * @param {object} context store context
+   * @param {object} options destructuring object
+   * @param {number} options.offset List offset to request
+   * @param {number} options.limit List number to return from offset
+   * @param {string} options.search -
+   * @return {Promise}
+   */
+  getUsersFromList(context, _ref18) {
+    let {
+      offset,
+      limit,
+      search
+    } = _ref18;
+    search = typeof search === 'string' ? search : '';
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/details?offset={offset}&limit={limit}&search={search}', {
+      offset,
+      limit,
+      search
+    })).then(response => {
+      if (Object.keys(response.data.ocs.data.users).length > 0) {
+        context.commit('appendUsers', response.data.ocs.data.users);
+        return true;
+      }
+      return false;
+    }).catch(error => context.commit('API_FAILURE', error));
+  },
+  /**
+   * Get all users with full details from a groupid
+   *
+   * @param {object} context store context
+   * @param {object} options destructuring object
+   * @param {number} options.offset List offset to request
+   * @param {number} options.limit List number to return from offset
+   * @param {string} options.groupid -
+   * @return {Promise}
+   */
+  getUsersFromGroup(context, _ref19) {
+    let {
+      groupid,
+      offset,
+      limit
+    } = _ref19;
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/{groupId}/details?offset={offset}&limit={limit}', {
+      groupId: encodeURIComponent(groupid),
+      offset,
+      limit
+    })).then(response => context.commit('getUsersFromList', response.data.ocs.data.users)).catch(error => context.commit('API_FAILURE', error));
+  },
+  getPasswordPolicyMinLength(context) {
+    if ((0,_nextcloud_capabilities__WEBPACK_IMPORTED_MODULE_1__.getCapabilities)().password_policy && (0,_nextcloud_capabilities__WEBPACK_IMPORTED_MODULE_1__.getCapabilities)().password_policy.minLength) {
+      context.commit('setPasswordPolicyMinLength', (0,_nextcloud_capabilities__WEBPACK_IMPORTED_MODULE_1__.getCapabilities)().password_policy.minLength);
+      return (0,_nextcloud_capabilities__WEBPACK_IMPORTED_MODULE_1__.getCapabilities)().password_policy.minLength;
+    }
+    return false;
+  },
+  /**
+   * Add group
+   *
+   * @param {object} context store context
+   * @param {string} gid Group id
+   * @return {Promise}
+   */
+  addGroup(context, gid) {
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].post((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/groups'), {
+        groupid: gid
+      }).then(response => {
+        context.commit('addGroup', {
+          gid,
+          displayName: gid
+        });
+        return {
+          gid,
+          displayName: gid
+        };
+      }).catch(error => {
+        throw error;
+      });
+    }).catch(error => {
+      context.commit('API_FAILURE', {
+        gid,
+        error
+      });
+      // let's throw one more time to prevent the view
+      // from adding the user to a group that doesn't exists
+      throw error;
+    });
+  },
+  /**
+   * Rename group
+   *
+   * @param {object} context store context
+   * @param {string} groupid Group id
+   * @param {string} displayName Group display name
+   * @return {Promise}
+   */
+  renameGroup(context, _ref20) {
+    let {
+      groupid,
+      displayName
+    } = _ref20;
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].put((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/groups/{groupId}', {
+        groupId: encodeURIComponent(groupid)
+      }), {
+        key: 'displayname',
+        value: displayName
+      }).then(response => {
+        context.commit('renameGroup', {
+          gid: groupid,
+          displayName
+        });
+        return {
+          groupid,
+          displayName
+        };
+      }).catch(error => {
+        throw error;
+      });
+    }).catch(error => {
+      context.commit('API_FAILURE', {
+        groupid,
+        error
+      });
+      // let's throw one more time to prevent the view
+      // from renaming the group
+      throw error;
+    });
+  },
+  /**
+   * Remove group
+   *
+   * @param {object} context store context
+   * @param {string} gid Group id
+   * @return {Promise}
+   */
+  removeGroup(context, gid) {
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].delete((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/groups/{groupId}', {
+        groupId: encodeURIComponent(gid)
+      })).then(response => context.commit('removeGroup', gid)).catch(error => {
+        throw error;
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      gid,
+      error
+    }));
+  },
+  /**
+   * Add user to group
+   *
+   * @param {object} context store context
+   * @param {object} options destructuring object
+   * @param {string} options.userid User id
+   * @param {string} options.gid Group id
+   * @return {Promise}
+   */
+  addUserGroup(context, _ref21) {
+    let {
+      userid,
+      gid
+    } = _ref21;
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].post((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/{userid}/groups', {
+        userid
+      }), {
+        groupid: gid
+      }).then(response => context.commit('addUserGroup', {
+        userid,
+        gid
+      })).catch(error => {
+        throw error;
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      userid,
+      error
+    }));
+  },
+  /**
+   * Remove user from group
+   *
+   * @param {object} context store context
+   * @param {object} options destructuring object
+   * @param {string} options.userid User id
+   * @param {string} options.gid Group id
+   * @return {Promise}
+   */
+  removeUserGroup(context, _ref22) {
+    let {
+      userid,
+      gid
+    } = _ref22;
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].delete((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/{userid}/groups', {
+        userid
+      }), {
+        groupid: gid
+      }).then(response => context.commit('removeUserGroup', {
+        userid,
+        gid
+      })).catch(error => {
+        throw error;
+      });
+    }).catch(error => {
+      context.commit('API_FAILURE', {
+        userid,
+        error
+      });
+      // let's throw one more time to prevent
+      // the view from removing the user row on failure
+      throw error;
+    });
+  },
+  /**
+   * Add user to group admin
+   *
+   * @param {object} context store context
+   * @param {object} options destructuring object
+   * @param {string} options.userid User id
+   * @param {string} options.gid Group id
+   * @return {Promise}
+   */
+  addUserSubAdmin(context, _ref23) {
+    let {
+      userid,
+      gid
+    } = _ref23;
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].post((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/{userid}/subadmins', {
+        userid
+      }), {
+        groupid: gid
+      }).then(response => context.commit('addUserSubAdmin', {
+        userid,
+        gid
+      })).catch(error => {
+        throw error;
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      userid,
+      error
+    }));
+  },
+  /**
+   * Remove user from group admin
+   *
+   * @param {object} context store context
+   * @param {object} options destructuring object
+   * @param {string} options.userid User id
+   * @param {string} options.gid Group id
+   * @return {Promise}
+   */
+  removeUserSubAdmin(context, _ref24) {
+    let {
+      userid,
+      gid
+    } = _ref24;
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].delete((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/{userid}/subadmins', {
+        userid
+      }), {
+        groupid: gid
+      }).then(response => context.commit('removeUserSubAdmin', {
+        userid,
+        gid
+      })).catch(error => {
+        throw error;
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      userid,
+      error
+    }));
+  },
+  /**
+   * Mark all user devices for remote wipe
+   *
+   * @param {object} context store context
+   * @param {string} userid User id
+   * @return {Promise}
+   */
+  wipeUserDevices(context, userid) {
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].post((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/{userid}/wipe', {
+        userid
+      })).catch(error => {
+        throw error;
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      userid,
+      error
+    }));
+  },
+  /**
+   * Delete a user
+   *
+   * @param {object} context store context
+   * @param {string} userid User id
+   * @return {Promise}
+   */
+  deleteUser(context, userid) {
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].delete((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/{userid}', {
+        userid
+      })).then(response => context.commit('deleteUser', userid)).catch(error => {
+        throw error;
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      userid,
+      error
+    }));
+  },
+  /**
+   * Add a user
+   *
+   * @param {object} context store context
+   * @param {Function} context.commit -
+   * @param {Function} context.dispatch -
+   * @param {object} options destructuring object
+   * @param {string} options.userid User id
+   * @param {string} options.password User password
+   * @param {string} options.displayName User display name
+   * @param {string} options.email User email
+   * @param {string} options.groups User groups
+   * @param {string} options.subadmin User subadmin groups
+   * @param {string} options.quota User email
+   * @param {string} options.language User language
+   * @param {string} options.manager User manager
+   * @return {Promise}
+   */
+  addUser(_ref25, _ref26) {
+    let {
+      commit,
+      dispatch
+    } = _ref25;
+    let {
+      userid,
+      password,
+      displayName,
+      email,
+      groups,
+      subadmin,
+      quota,
+      language,
+      manager
+    } = _ref26;
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].post((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users'), {
+        userid,
+        password,
+        displayName,
+        email,
+        groups,
+        subadmin,
+        quota,
+        language,
+        manager
+      }).then(response => dispatch('addUserData', userid || response.data.ocs.data.id)).catch(error => {
+        throw error;
+      });
+    }).catch(error => {
+      commit('API_FAILURE', {
+        userid,
+        error
+      });
+      throw error;
+    });
+  },
+  /**
+   * Get user data and commit addition
+   *
+   * @param {object} context store context
+   * @param {string} userid User id
+   * @return {Promise}
+   */
+  addUserData(context, userid) {
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].get((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/{userid}', {
+        userid
+      })).then(response => context.commit('addUserData', response)).catch(error => {
+        throw error;
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      userid,
+      error
+    }));
+  },
+  /**
+   * Enable or disable user
+   *
+   * @param {object} context store context
+   * @param {object} options destructuring object
+   * @param {string} options.userid User id
+   * @param {boolean} options.enabled User enablement status
+   * @return {Promise}
+   */
+  enableDisableUser(context, _ref27) {
+    let {
+      userid,
+      enabled = true
+    } = _ref27;
+    const userStatus = enabled ? 'enable' : 'disable';
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].put((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/{userid}/{userStatus}', {
+        userid,
+        userStatus
+      })).then(response => context.commit('enableDisableUser', {
+        userid,
+        enabled
+      })).catch(error => {
+        throw error;
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      userid,
+      error
+    }));
+  },
+  /**
+   * Edit user data
+   *
+   * @param {object} context store context
+   * @param {object} options destructuring object
+   * @param {string} options.userid User id
+   * @param {string} options.key User field to edit
+   * @param {string} options.value Value of the change
+   * @return {Promise}
+   */
+  setUserData(context, _ref28) {
+    let {
+      userid,
+      key,
+      value
+    } = _ref28;
+    const allowedEmpty = ['email', 'displayname', 'manager'];
+    if (['email', 'language', 'quota', 'displayname', 'password', 'manager'].indexOf(key) !== -1) {
+      // We allow empty email or displayname
+      if (typeof value === 'string' && (allowedEmpty.indexOf(key) === -1 && value.length > 0 || allowedEmpty.indexOf(key) !== -1)) {
+        return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+          return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].put((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/{userid}', {
+            userid
+          }), {
+            key,
+            value
+          }).then(response => context.commit('setUserData', {
+            userid,
+            key,
+            value
+          })).catch(error => {
+            throw error;
+          });
+        }).catch(error => context.commit('API_FAILURE', {
+          userid,
+          error
+        }));
+      }
+    }
+    return Promise.reject(new Error('Invalid request data'));
+  },
+  /**
+   * Send welcome mail
+   *
+   * @param {object} context store context
+   * @param {string} userid User id
+   * @return {Promise}
+   */
+  sendWelcomeMail(context, userid) {
+    return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].requireAdmin().then(response => {
+      return _api_js__WEBPACK_IMPORTED_MODULE_7__["default"].post((0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_4__.generateOcsUrl)('cloud/users/{userid}/welcome', {
+        userid
+      })).then(response => true).catch(error => {
+        throw error;
+      });
+    }).catch(error => context.commit('API_FAILURE', {
+      userid,
+      error
+    }));
+  }
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  state,
+  mutations,
+  getters,
+  actions
+});
+
+/***/ }),
+
+/***/ "./apps/settings/src/constants/GroupManagement.ts":
+/*!********************************************************!*\
+  !*** ./apps/settings/src/constants/GroupManagement.ts ***!
+  \********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   GroupSorting: () => (/* binding */ GroupSorting)
+/* harmony export */ });
+/**
+ * @copyright Copyright (c) 2024 Ferdinand Thiessen <opensource@fthiessen.de>
+ *
+ * @author Ferdinand Thiessen <opensource@fthiessen.de>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+/**
+ * https://github.com/nextcloud/server/blob/208e38e84e1a07a49699aa90dc5b7272d24489f0/lib/private/Group/MetaData.php#L34
+ */
+var GroupSorting;
+(function (GroupSorting) {
+  GroupSorting[GroupSorting["UserCount"] = 1] = "UserCount";
+  GroupSorting[GroupSorting["GroupName"] = 2] = "GroupName";
+})(GroupSorting || (GroupSorting = {}));
+
+/***/ }),
+
+/***/ "./apps/settings/src/logger.ts":
+/*!*************************************!*\
+  !*** ./apps/settings/src/logger.ts ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _nextcloud_logger__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @nextcloud/logger */ "./node_modules/@nextcloud/logger/dist/index.js");
+/**
+ * @copyright 2020 Christoph Wurst <christoph@winzerhof-wurst.at>
+ *
+ * @author Christoph Wurst <christoph@winzerhof-wurst.at>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ((0,_nextcloud_logger__WEBPACK_IMPORTED_MODULE_0__.getLoggerBuilder)().setApp('settings').detectUser().build());
+
+/***/ }),
+
+/***/ "./apps/settings/src/main-apps-users-management.ts":
+/*!*********************************************************!*\
+  !*** ./apps/settings/src/main-apps-users-management.ts ***!
+  \*********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.runtime.esm.js");
+/* harmony import */ var v_tooltip__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! v-tooltip */ "./node_modules/v-tooltip/dist/v-tooltip.esm.js");
+/* harmony import */ var vuex_router_sync__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vuex-router-sync */ "./node_modules/vuex-router-sync/index.js");
+/* harmony import */ var _nextcloud_l10n__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @nextcloud/l10n */ "./node_modules/@nextcloud/l10n/dist/index.mjs");
+/* harmony import */ var _views_SettingsApp_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./views/SettingsApp.vue */ "./apps/settings/src/views/SettingsApp.vue");
+/* harmony import */ var _router_index_ts__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./router/index.ts */ "./apps/settings/src/router/index.ts");
+/* harmony import */ var _store_index_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./store/index.js */ "./apps/settings/src/store/index.js");
+/* harmony import */ var _nextcloud_auth__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @nextcloud/auth */ "./node_modules/@nextcloud/auth/dist/index.mjs");
+/* harmony import */ var pinia__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! pinia */ "./node_modules/pinia/dist/pinia.mjs");
+var _getRequestToken;
+/**
+ * @copyright Copyright (c) 2018 John Molakvoæ <skjnldsv@protonmail.com>
+ *
+ * @author John Molakvoæ <skjnldsv@protonmail.com>
+ * @author rakekniven <mark.ziegler@rakekniven.de>
+ * @author Roeland Jago Douma <roeland@famdouma.nl>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+
+
+
+
+
+
+
+vue__WEBPACK_IMPORTED_MODULE_7__["default"].use(v_tooltip__WEBPACK_IMPORTED_MODULE_0__["default"], {
+  defaultHtml: false
+});
+const store = (0,_store_index_js__WEBPACK_IMPORTED_MODULE_5__.useStore)();
+(0,vuex_router_sync__WEBPACK_IMPORTED_MODULE_1__.sync)(store, _router_index_ts__WEBPACK_IMPORTED_MODULE_4__["default"]);
+// CSP config for webpack dynamic chunk loading
+// eslint-disable-next-line camelcase
+__webpack_require__.nc = btoa((_getRequestToken = (0,_nextcloud_auth__WEBPACK_IMPORTED_MODULE_6__.getRequestToken)()) !== null && _getRequestToken !== void 0 ? _getRequestToken : '');
+// bind to window
+vue__WEBPACK_IMPORTED_MODULE_7__["default"].prototype.t = _nextcloud_l10n__WEBPACK_IMPORTED_MODULE_2__.translate;
+vue__WEBPACK_IMPORTED_MODULE_7__["default"].prototype.n = _nextcloud_l10n__WEBPACK_IMPORTED_MODULE_2__.translatePlural;
+vue__WEBPACK_IMPORTED_MODULE_7__["default"].use(pinia__WEBPACK_IMPORTED_MODULE_8__.PiniaVuePlugin);
+const pinia = (0,pinia__WEBPACK_IMPORTED_MODULE_8__.createPinia)();
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (new vue__WEBPACK_IMPORTED_MODULE_7__["default"]({
+  router: _router_index_ts__WEBPACK_IMPORTED_MODULE_4__["default"],
+  store,
+  pinia,
+  render: h => h(_views_SettingsApp_vue__WEBPACK_IMPORTED_MODULE_3__["default"]),
+  el: '#content'
+}));
+
+/***/ }),
+
+/***/ "./apps/settings/src/router/index.ts":
+/*!*******************************************!*\
+  !*** ./apps/settings/src/router/index.ts ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.runtime.esm.js");
+/* harmony import */ var vue_router__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue-router */ "./node_modules/vue-router/dist/vue-router.esm.js");
+/* harmony import */ var _nextcloud_router__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @nextcloud/router */ "./node_modules/@nextcloud/router/dist/index.mjs");
+/* harmony import */ var _routes_ts__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./routes.ts */ "./apps/settings/src/router/routes.ts");
+/**
+ * @copyright Copyright (c) 2018 John Molakvoæ <skjnldsv@protonmail.com>
+ *
+ * @author John Molakvoæ <skjnldsv@protonmail.com>
+ * @author Julius Härtl <jus@bitgrid.net>
+ * @author Roeland Jago Douma <roeland@famdouma.nl>
+ * @author Ferdinand Thiessen <opensource@fthiessen.de>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+
+
+vue__WEBPACK_IMPORTED_MODULE_2__["default"].use(vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]);
+const router = new vue_router__WEBPACK_IMPORTED_MODULE_3__["default"]({
+  mode: 'history',
+  // if index.php is in the url AND we got this far, then it's working:
+  // let's keep using index.php in the url
+  base: (0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_0__.generateUrl)(''),
+  linkActiveClass: 'active',
+  routes: _routes_ts__WEBPACK_IMPORTED_MODULE_1__["default"]
+});
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (router);
+
+/***/ }),
+
+/***/ "./apps/settings/src/router/routes.ts":
+/*!********************************************!*\
+  !*** ./apps/settings/src/router/routes.ts ***!
+  \********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+// Dynamic loading
+const AppStore = () => Promise.all(/*! import() | settings-apps-view */[__webpack_require__.e("core-common"), __webpack_require__.e("settings-apps-view")]).then(__webpack_require__.bind(__webpack_require__, /*! ../views/AppStore.vue */ "./apps/settings/src/views/AppStore.vue"));
+const AppStoreNavigation = () => Promise.all(/*! import() | settings-apps-view */[__webpack_require__.e("core-common"), __webpack_require__.e("settings-apps-view")]).then(__webpack_require__.bind(__webpack_require__, /*! ../views/AppStoreNavigation.vue */ "./apps/settings/src/views/AppStoreNavigation.vue"));
+const AppStoreSidebar = () => Promise.all(/*! import() | settings-apps-view */[__webpack_require__.e("core-common"), __webpack_require__.e("settings-apps-view")]).then(__webpack_require__.bind(__webpack_require__, /*! ../views/AppStoreSidebar.vue */ "./apps/settings/src/views/AppStoreSidebar.vue"));
+const UserManagement = () => Promise.all(/*! import() | settings-users */[__webpack_require__.e("core-common"), __webpack_require__.e("settings-users")]).then(__webpack_require__.bind(__webpack_require__, /*! ../views/UserManagement.vue */ "./apps/settings/src/views/UserManagement.vue"));
+const UserManagementNavigation = () => Promise.all(/*! import() | settings-users */[__webpack_require__.e("core-common"), __webpack_require__.e("settings-users")]).then(__webpack_require__.bind(__webpack_require__, /*! ../views/UserManagementNavigation.vue */ "./apps/settings/src/views/UserManagementNavigation.vue"));
+const routes = [{
+  name: 'users',
+  path: '/:index(index.php/)?settings/users',
+  components: {
+    default: UserManagement,
+    navigation: UserManagementNavigation
+  },
+  props: true,
+  children: [{
+    path: ':selectedGroup',
+    name: 'group'
+  }]
+}, {
+  path: '/:index(index.php/)?settings/apps',
+  name: 'apps',
+  // redirect to our default route - the app discover section
+  redirect: {
+    name: 'apps-category',
+    params: {
+      category: 'discover'
+    }
+  },
+  components: {
+    default: AppStore,
+    navigation: AppStoreNavigation,
+    sidebar: AppStoreSidebar
+  },
+  children: [{
+    path: ':category',
+    name: 'apps-category',
+    children: [{
+      path: ':id',
+      name: 'apps-details'
+    }]
+  }]
+}];
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (routes);
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js!./node_modules/ts-loader/index.js??clonedRuleSet-4.use[1]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/views/SettingsApp.vue?vue&type=script&setup=true&lang=ts":
+/*!**************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js!./node_modules/ts-loader/index.js??clonedRuleSet-4.use[1]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/views/SettingsApp.vue?vue&type=script&setup=true&lang=ts ***!
+  \**************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.runtime.esm.js");
+/* harmony import */ var _nextcloud_vue_dist_Components_NcContent_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @nextcloud/vue/dist/Components/NcContent.js */ "./node_modules/@nextcloud/vue/dist/Components/NcContent.mjs");
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.defineComponent)({
+  __name: 'SettingsApp',
+  setup(__props) {
+    return {
+      __sfc: true,
+      NcContent: _nextcloud_vue_dist_Components_NcContent_js__WEBPACK_IMPORTED_MODULE_0__["default"]
+    };
+  }
+}));
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/views/SettingsApp.vue?vue&type=template&id=21177c05":
+/*!****************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/views/SettingsApp.vue?vue&type=template&id=21177c05 ***!
+  \****************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* binding */ render),
+/* harmony export */   staticRenderFns: () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c,
+    _setup = _vm._self._setupProxy;
+  return _c(_setup.NcContent, {
+    attrs: {
+      "app-name": "settings"
+    }
+  }, [_c("router-view", {
+    attrs: {
+      name: "navigation"
+    }
+  }), _vm._v(" "), _c("router-view"), _vm._v(" "), _c("router-view", {
+    attrs: {
+      name: "sidebar"
+    }
+  })], 1);
+};
+var staticRenderFns = [];
+render._withStripped = true;
+
+
+/***/ }),
+
+/***/ "./apps/settings/src/views/SettingsApp.vue":
+/*!*************************************************!*\
+  !*** ./apps/settings/src/views/SettingsApp.vue ***!
+  \*************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _SettingsApp_vue_vue_type_template_id_21177c05__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./SettingsApp.vue?vue&type=template&id=21177c05 */ "./apps/settings/src/views/SettingsApp.vue?vue&type=template&id=21177c05");
+/* harmony import */ var _SettingsApp_vue_vue_type_script_setup_true_lang_ts__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./SettingsApp.vue?vue&type=script&setup=true&lang=ts */ "./apps/settings/src/views/SettingsApp.vue?vue&type=script&setup=true&lang=ts");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+;
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _SettingsApp_vue_vue_type_script_setup_true_lang_ts__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _SettingsApp_vue_vue_type_template_id_21177c05__WEBPACK_IMPORTED_MODULE_0__.render,
+  _SettingsApp_vue_vue_type_template_id_21177c05__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "apps/settings/src/views/SettingsApp.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
+/***/ "./apps/settings/src/views/SettingsApp.vue?vue&type=script&setup=true&lang=ts":
+/*!************************************************************************************!*\
+  !*** ./apps/settings/src/views/SettingsApp.vue?vue&type=script&setup=true&lang=ts ***!
+  \************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_node_modules_ts_loader_index_js_clonedRuleSet_4_use_1_node_modules_vue_loader_lib_index_js_vue_loader_options_SettingsApp_vue_vue_type_script_setup_true_lang_ts__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/babel-loader/lib/index.js!../../../../node_modules/ts-loader/index.js??clonedRuleSet-4.use[1]!../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./SettingsApp.vue?vue&type=script&setup=true&lang=ts */ "./node_modules/babel-loader/lib/index.js!./node_modules/ts-loader/index.js??clonedRuleSet-4.use[1]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/views/SettingsApp.vue?vue&type=script&setup=true&lang=ts");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_node_modules_ts_loader_index_js_clonedRuleSet_4_use_1_node_modules_vue_loader_lib_index_js_vue_loader_options_SettingsApp_vue_vue_type_script_setup_true_lang_ts__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./apps/settings/src/views/SettingsApp.vue?vue&type=template&id=21177c05":
+/*!*******************************************************************************!*\
+  !*** ./apps/settings/src/views/SettingsApp.vue?vue&type=template&id=21177c05 ***!
+  \*******************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_3_node_modules_vue_loader_lib_index_js_vue_loader_options_SettingsApp_vue_vue_type_template_id_21177c05__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   staticRenderFns: () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_3_node_modules_vue_loader_lib_index_js_vue_loader_options_SettingsApp_vue_vue_type_template_id_21177c05__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_3_node_modules_vue_loader_lib_index_js_vue_loader_options_SettingsApp_vue_vue_type_template_id_21177c05__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/babel-loader/lib/index.js!../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./SettingsApp.vue?vue&type=template&id=21177c05 */ "./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/views/SettingsApp.vue?vue&type=template&id=21177c05");
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-router/dist/vue-router.esm.js":
+/*!********************************************************!*\
+  !*** ./node_modules/vue-router/dist/vue-router.esm.js ***!
+  \********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   NavigationFailureType: () => (/* binding */ NavigationFailureType),
+/* harmony export */   RouterLink: () => (/* binding */ Link),
+/* harmony export */   RouterView: () => (/* binding */ View),
+/* harmony export */   START_LOCATION: () => (/* binding */ START),
+/* harmony export */   "default": () => (/* binding */ VueRouter$1),
+/* harmony export */   isNavigationFailure: () => (/* binding */ isNavigationFailure),
+/* harmony export */   version: () => (/* binding */ version)
+/* harmony export */ });
+/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
+/*!
+  * vue-router v3.6.5
+  * (c) 2022 Evan You
+  * @license MIT
+  */
+/*  */
+
+function assert (condition, message) {
+  if (!condition) {
+    throw new Error(("[vue-router] " + message))
+  }
+}
+
+function warn (condition, message) {
+  if (!condition) {
+    typeof console !== 'undefined' && console.warn(("[vue-router] " + message));
+  }
+}
+
+function extend (a, b) {
+  for (var key in b) {
+    a[key] = b[key];
+  }
+  return a
+}
+
+/*  */
+
+var encodeReserveRE = /[!'()*]/g;
+var encodeReserveReplacer = function (c) { return '%' + c.charCodeAt(0).toString(16); };
+var commaRE = /%2C/g;
+
+// fixed encodeURIComponent which is more conformant to RFC3986:
+// - escapes [!'()*]
+// - preserve commas
+var encode = function (str) { return encodeURIComponent(str)
+    .replace(encodeReserveRE, encodeReserveReplacer)
+    .replace(commaRE, ','); };
+
+function decode (str) {
+  try {
+    return decodeURIComponent(str)
+  } catch (err) {
+    if (true) {
+      warn(false, ("Error decoding \"" + str + "\". Leaving it intact."));
+    }
+  }
+  return str
+}
+
+function resolveQuery (
+  query,
+  extraQuery,
+  _parseQuery
+) {
+  if ( extraQuery === void 0 ) extraQuery = {};
+
+  var parse = _parseQuery || parseQuery;
+  var parsedQuery;
+  try {
+    parsedQuery = parse(query || '');
+  } catch (e) {
+     true && warn(false, e.message);
+    parsedQuery = {};
+  }
+  for (var key in extraQuery) {
+    var value = extraQuery[key];
+    parsedQuery[key] = Array.isArray(value)
+      ? value.map(castQueryParamValue)
+      : castQueryParamValue(value);
+  }
+  return parsedQuery
+}
+
+var castQueryParamValue = function (value) { return (value == null || typeof value === 'object' ? value : String(value)); };
+
+function parseQuery (query) {
+  var res = {};
+
+  query = query.trim().replace(/^(\?|#|&)/, '');
+
+  if (!query) {
+    return res
+  }
+
+  query.split('&').forEach(function (param) {
+    var parts = param.replace(/\+/g, ' ').split('=');
+    var key = decode(parts.shift());
+    var val = parts.length > 0 ? decode(parts.join('=')) : null;
+
+    if (res[key] === undefined) {
+      res[key] = val;
+    } else if (Array.isArray(res[key])) {
+      res[key].push(val);
+    } else {
+      res[key] = [res[key], val];
+    }
+  });
+
+  return res
+}
+
+function stringifyQuery (obj) {
+  var res = obj
+    ? Object.keys(obj)
+      .map(function (key) {
+        var val = obj[key];
+
+        if (val === undefined) {
+          return ''
+        }
+
+        if (val === null) {
+          return encode(key)
+        }
+
+        if (Array.isArray(val)) {
+          var result = [];
+          val.forEach(function (val2) {
+            if (val2 === undefined) {
+              return
+            }
+            if (val2 === null) {
+              result.push(encode(key));
+            } else {
+              result.push(encode(key) + '=' + encode(val2));
+            }
+          });
+          return result.join('&')
+        }
+
+        return encode(key) + '=' + encode(val)
+      })
+      .filter(function (x) { return x.length > 0; })
+      .join('&')
+    : null;
+  return res ? ("?" + res) : ''
+}
+
+/*  */
+
+var trailingSlashRE = /\/?$/;
+
+function createRoute (
+  record,
+  location,
+  redirectedFrom,
+  router
+) {
+  var stringifyQuery = router && router.options.stringifyQuery;
+
+  var query = location.query || {};
+  try {
+    query = clone(query);
+  } catch (e) {}
+
+  var route = {
+    name: location.name || (record && record.name),
+    meta: (record && record.meta) || {},
+    path: location.path || '/',
+    hash: location.hash || '',
+    query: query,
+    params: location.params || {},
+    fullPath: getFullPath(location, stringifyQuery),
+    matched: record ? formatMatch(record) : []
+  };
+  if (redirectedFrom) {
+    route.redirectedFrom = getFullPath(redirectedFrom, stringifyQuery);
+  }
+  return Object.freeze(route)
+}
+
+function clone (value) {
+  if (Array.isArray(value)) {
+    return value.map(clone)
+  } else if (value && typeof value === 'object') {
+    var res = {};
+    for (var key in value) {
+      res[key] = clone(value[key]);
+    }
+    return res
+  } else {
+    return value
+  }
+}
+
+// the starting route that represents the initial state
+var START = createRoute(null, {
+  path: '/'
+});
+
+function formatMatch (record) {
+  var res = [];
+  while (record) {
+    res.unshift(record);
+    record = record.parent;
+  }
+  return res
+}
+
+function getFullPath (
+  ref,
+  _stringifyQuery
+) {
+  var path = ref.path;
+  var query = ref.query; if ( query === void 0 ) query = {};
+  var hash = ref.hash; if ( hash === void 0 ) hash = '';
+
+  var stringify = _stringifyQuery || stringifyQuery;
+  return (path || '/') + stringify(query) + hash
+}
+
+function isSameRoute (a, b, onlyPath) {
+  if (b === START) {
+    return a === b
+  } else if (!b) {
+    return false
+  } else if (a.path && b.path) {
+    return a.path.replace(trailingSlashRE, '') === b.path.replace(trailingSlashRE, '') && (onlyPath ||
+      a.hash === b.hash &&
+      isObjectEqual(a.query, b.query))
+  } else if (a.name && b.name) {
+    return (
+      a.name === b.name &&
+      (onlyPath || (
+        a.hash === b.hash &&
+      isObjectEqual(a.query, b.query) &&
+      isObjectEqual(a.params, b.params))
+      )
+    )
+  } else {
+    return false
+  }
+}
+
+function isObjectEqual (a, b) {
+  if ( a === void 0 ) a = {};
+  if ( b === void 0 ) b = {};
+
+  // handle null value #1566
+  if (!a || !b) { return a === b }
+  var aKeys = Object.keys(a).sort();
+  var bKeys = Object.keys(b).sort();
+  if (aKeys.length !== bKeys.length) {
+    return false
+  }
+  return aKeys.every(function (key, i) {
+    var aVal = a[key];
+    var bKey = bKeys[i];
+    if (bKey !== key) { return false }
+    var bVal = b[key];
+    // query values can be null and undefined
+    if (aVal == null || bVal == null) { return aVal === bVal }
+    // check nested equality
+    if (typeof aVal === 'object' && typeof bVal === 'object') {
+      return isObjectEqual(aVal, bVal)
+    }
+    return String(aVal) === String(bVal)
+  })
+}
+
+function isIncludedRoute (current, target) {
+  return (
+    current.path.replace(trailingSlashRE, '/').indexOf(
+      target.path.replace(trailingSlashRE, '/')
+    ) === 0 &&
+    (!target.hash || current.hash === target.hash) &&
+    queryIncludes(current.query, target.query)
+  )
+}
+
+function queryIncludes (current, target) {
+  for (var key in target) {
+    if (!(key in current)) {
+      return false
+    }
+  }
+  return true
+}
+
+function handleRouteEntered (route) {
+  for (var i = 0; i < route.matched.length; i++) {
+    var record = route.matched[i];
+    for (var name in record.instances) {
+      var instance = record.instances[name];
+      var cbs = record.enteredCbs[name];
+      if (!instance || !cbs) { continue }
+      delete record.enteredCbs[name];
+      for (var i$1 = 0; i$1 < cbs.length; i$1++) {
+        if (!instance._isBeingDestroyed) { cbs[i$1](instance); }
+      }
+    }
+  }
+}
+
+var View = {
+  name: 'RouterView',
+  functional: true,
+  props: {
+    name: {
+      type: String,
+      default: 'default'
+    }
+  },
+  render: function render (_, ref) {
+    var props = ref.props;
+    var children = ref.children;
+    var parent = ref.parent;
+    var data = ref.data;
+
+    // used by devtools to display a router-view badge
+    data.routerView = true;
+
+    // directly use parent context's createElement() function
+    // so that components rendered by router-view can resolve named slots
+    var h = parent.$createElement;
+    var name = props.name;
+    var route = parent.$route;
+    var cache = parent._routerViewCache || (parent._routerViewCache = {});
+
+    // determine current view depth, also check to see if the tree
+    // has been toggled inactive but kept-alive.
+    var depth = 0;
+    var inactive = false;
+    while (parent && parent._routerRoot !== parent) {
+      var vnodeData = parent.$vnode ? parent.$vnode.data : {};
+      if (vnodeData.routerView) {
+        depth++;
+      }
+      if (vnodeData.keepAlive && parent._directInactive && parent._inactive) {
+        inactive = true;
+      }
+      parent = parent.$parent;
+    }
+    data.routerViewDepth = depth;
+
+    // render previous view if the tree is inactive and kept-alive
+    if (inactive) {
+      var cachedData = cache[name];
+      var cachedComponent = cachedData && cachedData.component;
+      if (cachedComponent) {
+        // #2301
+        // pass props
+        if (cachedData.configProps) {
+          fillPropsinData(cachedComponent, data, cachedData.route, cachedData.configProps);
+        }
+        return h(cachedComponent, data, children)
+      } else {
+        // render previous empty view
+        return h()
+      }
+    }
+
+    var matched = route.matched[depth];
+    var component = matched && matched.components[name];
+
+    // render empty node if no matched route or no config component
+    if (!matched || !component) {
+      cache[name] = null;
+      return h()
+    }
+
+    // cache component
+    cache[name] = { component: component };
+
+    // attach instance registration hook
+    // this will be called in the instance's injected lifecycle hooks
+    data.registerRouteInstance = function (vm, val) {
+      // val could be undefined for unregistration
+      var current = matched.instances[name];
+      if (
+        (val && current !== vm) ||
+        (!val && current === vm)
+      ) {
+        matched.instances[name] = val;
+      }
+    }
+
+    // also register instance in prepatch hook
+    // in case the same component instance is reused across different routes
+    ;(data.hook || (data.hook = {})).prepatch = function (_, vnode) {
+      matched.instances[name] = vnode.componentInstance;
+    };
+
+    // register instance in init hook
+    // in case kept-alive component be actived when routes changed
+    data.hook.init = function (vnode) {
+      if (vnode.data.keepAlive &&
+        vnode.componentInstance &&
+        vnode.componentInstance !== matched.instances[name]
+      ) {
+        matched.instances[name] = vnode.componentInstance;
+      }
+
+      // if the route transition has already been confirmed then we weren't
+      // able to call the cbs during confirmation as the component was not
+      // registered yet, so we call it here.
+      handleRouteEntered(route);
+    };
+
+    var configProps = matched.props && matched.props[name];
+    // save route and configProps in cache
+    if (configProps) {
+      extend(cache[name], {
+        route: route,
+        configProps: configProps
+      });
+      fillPropsinData(component, data, route, configProps);
+    }
+
+    return h(component, data, children)
+  }
+};
+
+function fillPropsinData (component, data, route, configProps) {
+  // resolve props
+  var propsToPass = data.props = resolveProps(route, configProps);
+  if (propsToPass) {
+    // clone to prevent mutation
+    propsToPass = data.props = extend({}, propsToPass);
+    // pass non-declared props as attrs
+    var attrs = data.attrs = data.attrs || {};
+    for (var key in propsToPass) {
+      if (!component.props || !(key in component.props)) {
+        attrs[key] = propsToPass[key];
+        delete propsToPass[key];
+      }
+    }
+  }
+}
+
+function resolveProps (route, config) {
+  switch (typeof config) {
+    case 'undefined':
+      return
+    case 'object':
+      return config
+    case 'function':
+      return config(route)
+    case 'boolean':
+      return config ? route.params : undefined
+    default:
+      if (true) {
+        warn(
+          false,
+          "props in \"" + (route.path) + "\" is a " + (typeof config) + ", " +
+          "expecting an object, function or boolean."
+        );
+      }
+  }
+}
+
+/*  */
+
+function resolvePath (
+  relative,
+  base,
+  append
+) {
+  var firstChar = relative.charAt(0);
+  if (firstChar === '/') {
+    return relative
+  }
+
+  if (firstChar === '?' || firstChar === '#') {
+    return base + relative
+  }
+
+  var stack = base.split('/');
+
+  // remove trailing segment if:
+  // - not appending
+  // - appending to trailing slash (last segment is empty)
+  if (!append || !stack[stack.length - 1]) {
+    stack.pop();
+  }
+
+  // resolve relative path
+  var segments = relative.replace(/^\//, '').split('/');
+  for (var i = 0; i < segments.length; i++) {
+    var segment = segments[i];
+    if (segment === '..') {
+      stack.pop();
+    } else if (segment !== '.') {
+      stack.push(segment);
+    }
+  }
+
+  // ensure leading slash
+  if (stack[0] !== '') {
+    stack.unshift('');
+  }
+
+  return stack.join('/')
+}
+
+function parsePath (path) {
+  var hash = '';
+  var query = '';
+
+  var hashIndex = path.indexOf('#');
+  if (hashIndex >= 0) {
+    hash = path.slice(hashIndex);
+    path = path.slice(0, hashIndex);
+  }
+
+  var queryIndex = path.indexOf('?');
+  if (queryIndex >= 0) {
+    query = path.slice(queryIndex + 1);
+    path = path.slice(0, queryIndex);
+  }
+
+  return {
+    path: path,
+    query: query,
+    hash: hash
+  }
+}
+
+function cleanPath (path) {
+  return path.replace(/\/(?:\s*\/)+/g, '/')
+}
+
+var isarray = Array.isArray || function (arr) {
+  return Object.prototype.toString.call(arr) == '[object Array]';
+};
+
+/**
+ * Expose `pathToRegexp`.
+ */
+var pathToRegexp_1 = pathToRegexp;
+var parse_1 = parse;
+var compile_1 = compile;
+var tokensToFunction_1 = tokensToFunction;
+var tokensToRegExp_1 = tokensToRegExp;
+
+/**
+ * The main path matching regexp utility.
+ *
+ * @type {RegExp}
+ */
+var PATH_REGEXP = new RegExp([
+  // Match escaped characters that would otherwise appear in future matches.
+  // This allows the user to escape special characters that won't transform.
+  '(\\\\.)',
+  // Match Express-style parameters and un-named parameters with a prefix
+  // and optional suffixes. Matches appear as:
+  //
+  // "/:test(\\d+)?" => ["/", "test", "\d+", undefined, "?", undefined]
+  // "/route(\\d+)"  => [undefined, undefined, undefined, "\d+", undefined, undefined]
+  // "/*"            => ["/", undefined, undefined, undefined, undefined, "*"]
+  '([\\/.])?(?:(?:\\:(\\w+)(?:\\(((?:\\\\.|[^\\\\()])+)\\))?|\\(((?:\\\\.|[^\\\\()])+)\\))([+*?])?|(\\*))'
+].join('|'), 'g');
+
+/**
+ * Parse a string for the raw tokens.
+ *
+ * @param  {string}  str
+ * @param  {Object=} options
+ * @return {!Array}
+ */
+function parse (str, options) {
+  var tokens = [];
+  var key = 0;
+  var index = 0;
+  var path = '';
+  var defaultDelimiter = options && options.delimiter || '/';
+  var res;
+
+  while ((res = PATH_REGEXP.exec(str)) != null) {
+    var m = res[0];
+    var escaped = res[1];
+    var offset = res.index;
+    path += str.slice(index, offset);
+    index = offset + m.length;
+
+    // Ignore already escaped sequences.
+    if (escaped) {
+      path += escaped[1];
+      continue
+    }
+
+    var next = str[index];
+    var prefix = res[2];
+    var name = res[3];
+    var capture = res[4];
+    var group = res[5];
+    var modifier = res[6];
+    var asterisk = res[7];
+
+    // Push the current path onto the tokens.
+    if (path) {
+      tokens.push(path);
+      path = '';
+    }
+
+    var partial = prefix != null && next != null && next !== prefix;
+    var repeat = modifier === '+' || modifier === '*';
+    var optional = modifier === '?' || modifier === '*';
+    var delimiter = res[2] || defaultDelimiter;
+    var pattern = capture || group;
+
+    tokens.push({
+      name: name || key++,
+      prefix: prefix || '',
+      delimiter: delimiter,
+      optional: optional,
+      repeat: repeat,
+      partial: partial,
+      asterisk: !!asterisk,
+      pattern: pattern ? escapeGroup(pattern) : (asterisk ? '.*' : '[^' + escapeString(delimiter) + ']+?')
+    });
+  }
+
+  // Match any characters still remaining.
+  if (index < str.length) {
+    path += str.substr(index);
+  }
+
+  // If the path exists, push it onto the end.
+  if (path) {
+    tokens.push(path);
+  }
+
+  return tokens
+}
+
+/**
+ * Compile a string to a template function for the path.
+ *
+ * @param  {string}             str
+ * @param  {Object=}            options
+ * @return {!function(Object=, Object=)}
+ */
+function compile (str, options) {
+  return tokensToFunction(parse(str, options), options)
+}
+
+/**
+ * Prettier encoding of URI path segments.
+ *
+ * @param  {string}
+ * @return {string}
+ */
+function encodeURIComponentPretty (str) {
+  return encodeURI(str).replace(/[\/?#]/g, function (c) {
+    return '%' + c.charCodeAt(0).toString(16).toUpperCase()
+  })
+}
+
+/**
+ * Encode the asterisk parameter. Similar to `pretty`, but allows slashes.
+ *
+ * @param  {string}
+ * @return {string}
+ */
+function encodeAsterisk (str) {
+  return encodeURI(str).replace(/[?#]/g, function (c) {
+    return '%' + c.charCodeAt(0).toString(16).toUpperCase()
+  })
+}
+
+/**
+ * Expose a method for transforming tokens into the path function.
+ */
+function tokensToFunction (tokens, options) {
+  // Compile all the tokens into regexps.
+  var matches = new Array(tokens.length);
+
+  // Compile all the patterns before compilation.
+  for (var i = 0; i < tokens.length; i++) {
+    if (typeof tokens[i] === 'object') {
+      matches[i] = new RegExp('^(?:' + tokens[i].pattern + ')$', flags(options));
+    }
+  }
+
+  return function (obj, opts) {
+    var path = '';
+    var data = obj || {};
+    var options = opts || {};
+    var encode = options.pretty ? encodeURIComponentPretty : encodeURIComponent;
+
+    for (var i = 0; i < tokens.length; i++) {
+      var token = tokens[i];
+
+      if (typeof token === 'string') {
+        path += token;
+
+        continue
+      }
+
+      var value = data[token.name];
+      var segment;
+
+      if (value == null) {
+        if (token.optional) {
+          // Prepend partial segment prefixes.
+          if (token.partial) {
+            path += token.prefix;
+          }
+
+          continue
+        } else {
+          throw new TypeError('Expected "' + token.name + '" to be defined')
+        }
+      }
+
+      if (isarray(value)) {
+        if (!token.repeat) {
+          throw new TypeError('Expected "' + token.name + '" to not repeat, but received `' + JSON.stringify(value) + '`')
+        }
+
+        if (value.length === 0) {
+          if (token.optional) {
+            continue
+          } else {
+            throw new TypeError('Expected "' + token.name + '" to not be empty')
+          }
+        }
+
+        for (var j = 0; j < value.length; j++) {
+          segment = encode(value[j]);
+
+          if (!matches[i].test(segment)) {
+            throw new TypeError('Expected all "' + token.name + '" to match "' + token.pattern + '", but received `' + JSON.stringify(segment) + '`')
+          }
+
+          path += (j === 0 ? token.prefix : token.delimiter) + segment;
+        }
+
+        continue
+      }
+
+      segment = token.asterisk ? encodeAsterisk(value) : encode(value);
+
+      if (!matches[i].test(segment)) {
+        throw new TypeError('Expected "' + token.name + '" to match "' + token.pattern + '", but received "' + segment + '"')
+      }
+
+      path += token.prefix + segment;
+    }
+
+    return path
+  }
+}
+
+/**
+ * Escape a regular expression string.
+ *
+ * @param  {string} str
+ * @return {string}
+ */
+function escapeString (str) {
+  return str.replace(/([.+*?=^!:${}()[\]|\/\\])/g, '\\$1')
+}
+
+/**
+ * Escape the capturing group by escaping special characters and meaning.
+ *
+ * @param  {string} group
+ * @return {string}
+ */
+function escapeGroup (group) {
+  return group.replace(/([=!:$\/()])/g, '\\$1')
+}
+
+/**
+ * Attach the keys as a property of the regexp.
+ *
+ * @param  {!RegExp} re
+ * @param  {Array}   keys
+ * @return {!RegExp}
+ */
+function attachKeys (re, keys) {
+  re.keys = keys;
+  return re
+}
+
+/**
+ * Get the flags for a regexp from the options.
+ *
+ * @param  {Object} options
+ * @return {string}
+ */
+function flags (options) {
+  return options && options.sensitive ? '' : 'i'
+}
+
+/**
+ * Pull out keys from a regexp.
+ *
+ * @param  {!RegExp} path
+ * @param  {!Array}  keys
+ * @return {!RegExp}
+ */
+function regexpToRegexp (path, keys) {
+  // Use a negative lookahead to match only capturing groups.
+  var groups = path.source.match(/\((?!\?)/g);
+
+  if (groups) {
+    for (var i = 0; i < groups.length; i++) {
+      keys.push({
+        name: i,
+        prefix: null,
+        delimiter: null,
+        optional: false,
+        repeat: false,
+        partial: false,
+        asterisk: false,
+        pattern: null
+      });
+    }
+  }
+
+  return attachKeys(path, keys)
+}
+
+/**
+ * Transform an array into a regexp.
+ *
+ * @param  {!Array}  path
+ * @param  {Array}   keys
+ * @param  {!Object} options
+ * @return {!RegExp}
+ */
+function arrayToRegexp (path, keys, options) {
+  var parts = [];
+
+  for (var i = 0; i < path.length; i++) {
+    parts.push(pathToRegexp(path[i], keys, options).source);
+  }
+
+  var regexp = new RegExp('(?:' + parts.join('|') + ')', flags(options));
+
+  return attachKeys(regexp, keys)
+}
+
+/**
+ * Create a path regexp from string input.
+ *
+ * @param  {string}  path
+ * @param  {!Array}  keys
+ * @param  {!Object} options
+ * @return {!RegExp}
+ */
+function stringToRegexp (path, keys, options) {
+  return tokensToRegExp(parse(path, options), keys, options)
+}
+
+/**
+ * Expose a function for taking tokens and returning a RegExp.
+ *
+ * @param  {!Array}          tokens
+ * @param  {(Array|Object)=} keys
+ * @param  {Object=}         options
+ * @return {!RegExp}
+ */
+function tokensToRegExp (tokens, keys, options) {
+  if (!isarray(keys)) {
+    options = /** @type {!Object} */ (keys || options);
+    keys = [];
+  }
+
+  options = options || {};
+
+  var strict = options.strict;
+  var end = options.end !== false;
+  var route = '';
+
+  // Iterate over the tokens and create our regexp string.
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i];
+
+    if (typeof token === 'string') {
+      route += escapeString(token);
+    } else {
+      var prefix = escapeString(token.prefix);
+      var capture = '(?:' + token.pattern + ')';
+
+      keys.push(token);
+
+      if (token.repeat) {
+        capture += '(?:' + prefix + capture + ')*';
+      }
+
+      if (token.optional) {
+        if (!token.partial) {
+          capture = '(?:' + prefix + '(' + capture + '))?';
+        } else {
+          capture = prefix + '(' + capture + ')?';
+        }
+      } else {
+        capture = prefix + '(' + capture + ')';
+      }
+
+      route += capture;
+    }
+  }
+
+  var delimiter = escapeString(options.delimiter || '/');
+  var endsWithDelimiter = route.slice(-delimiter.length) === delimiter;
+
+  // In non-strict mode we allow a slash at the end of match. If the path to
+  // match already ends with a slash, we remove it for consistency. The slash
+  // is valid at the end of a path match, not in the middle. This is important
+  // in non-ending mode, where "/test/" shouldn't match "/test//route".
+  if (!strict) {
+    route = (endsWithDelimiter ? route.slice(0, -delimiter.length) : route) + '(?:' + delimiter + '(?=$))?';
+  }
+
+  if (end) {
+    route += '$';
+  } else {
+    // In non-ending mode, we need the capturing groups to match as much as
+    // possible by using a positive lookahead to the end or next path segment.
+    route += strict && endsWithDelimiter ? '' : '(?=' + delimiter + '|$)';
+  }
+
+  return attachKeys(new RegExp('^' + route, flags(options)), keys)
+}
+
+/**
+ * Normalize the given path string, returning a regular expression.
+ *
+ * An empty array can be passed in for the keys, which will hold the
+ * placeholder key descriptions. For example, using `/user/:id`, `keys` will
+ * contain `[{ name: 'id', delimiter: '/', optional: false, repeat: false }]`.
+ *
+ * @param  {(string|RegExp|Array)} path
+ * @param  {(Array|Object)=}       keys
+ * @param  {Object=}               options
+ * @return {!RegExp}
+ */
+function pathToRegexp (path, keys, options) {
+  if (!isarray(keys)) {
+    options = /** @type {!Object} */ (keys || options);
+    keys = [];
+  }
+
+  options = options || {};
+
+  if (path instanceof RegExp) {
+    return regexpToRegexp(path, /** @type {!Array} */ (keys))
+  }
+
+  if (isarray(path)) {
+    return arrayToRegexp(/** @type {!Array} */ (path), /** @type {!Array} */ (keys), options)
+  }
+
+  return stringToRegexp(/** @type {string} */ (path), /** @type {!Array} */ (keys), options)
+}
+pathToRegexp_1.parse = parse_1;
+pathToRegexp_1.compile = compile_1;
+pathToRegexp_1.tokensToFunction = tokensToFunction_1;
+pathToRegexp_1.tokensToRegExp = tokensToRegExp_1;
+
+/*  */
+
+// $flow-disable-line
+var regexpCompileCache = Object.create(null);
+
+function fillParams (
+  path,
+  params,
+  routeMsg
+) {
+  params = params || {};
+  try {
+    var filler =
+      regexpCompileCache[path] ||
+      (regexpCompileCache[path] = pathToRegexp_1.compile(path));
+
+    // Fix #2505 resolving asterisk routes { name: 'not-found', params: { pathMatch: '/not-found' }}
+    // and fix #3106 so that you can work with location descriptor object having params.pathMatch equal to empty string
+    if (typeof params.pathMatch === 'string') { params[0] = params.pathMatch; }
+
+    return filler(params, { pretty: true })
+  } catch (e) {
+    if (true) {
+      // Fix #3072 no warn if `pathMatch` is string
+      warn(typeof params.pathMatch === 'string', ("missing param for " + routeMsg + ": " + (e.message)));
+    }
+    return ''
+  } finally {
+    // delete the 0 if it was added
+    delete params[0];
+  }
+}
+
+/*  */
+
+function normalizeLocation (
+  raw,
+  current,
+  append,
+  router
+) {
+  var next = typeof raw === 'string' ? { path: raw } : raw;
+  // named target
+  if (next._normalized) {
+    return next
+  } else if (next.name) {
+    next = extend({}, raw);
+    var params = next.params;
+    if (params && typeof params === 'object') {
+      next.params = extend({}, params);
+    }
+    return next
+  }
+
+  // relative params
+  if (!next.path && next.params && current) {
+    next = extend({}, next);
+    next._normalized = true;
+    var params$1 = extend(extend({}, current.params), next.params);
+    if (current.name) {
+      next.name = current.name;
+      next.params = params$1;
+    } else if (current.matched.length) {
+      var rawPath = current.matched[current.matched.length - 1].path;
+      next.path = fillParams(rawPath, params$1, ("path " + (current.path)));
+    } else if (true) {
+      warn(false, "relative params navigation requires a current route.");
+    }
+    return next
+  }
+
+  var parsedPath = parsePath(next.path || '');
+  var basePath = (current && current.path) || '/';
+  var path = parsedPath.path
+    ? resolvePath(parsedPath.path, basePath, append || next.append)
+    : basePath;
+
+  var query = resolveQuery(
+    parsedPath.query,
+    next.query,
+    router && router.options.parseQuery
+  );
+
+  var hash = next.hash || parsedPath.hash;
+  if (hash && hash.charAt(0) !== '#') {
+    hash = "#" + hash;
+  }
+
+  return {
+    _normalized: true,
+    path: path,
+    query: query,
+    hash: hash
+  }
+}
+
+/*  */
+
+// work around weird flow bug
+var toTypes = [String, Object];
+var eventTypes = [String, Array];
+
+var noop = function () {};
+
+var warnedCustomSlot;
+var warnedTagProp;
+var warnedEventProp;
+
+var Link = {
+  name: 'RouterLink',
+  props: {
+    to: {
+      type: toTypes,
+      required: true
+    },
+    tag: {
+      type: String,
+      default: 'a'
+    },
+    custom: Boolean,
+    exact: Boolean,
+    exactPath: Boolean,
+    append: Boolean,
+    replace: Boolean,
+    activeClass: String,
+    exactActiveClass: String,
+    ariaCurrentValue: {
+      type: String,
+      default: 'page'
+    },
+    event: {
+      type: eventTypes,
+      default: 'click'
+    }
+  },
+  render: function render (h) {
+    var this$1$1 = this;
+
+    var router = this.$router;
+    var current = this.$route;
+    var ref = router.resolve(
+      this.to,
+      current,
+      this.append
+    );
+    var location = ref.location;
+    var route = ref.route;
+    var href = ref.href;
+
+    var classes = {};
+    var globalActiveClass = router.options.linkActiveClass;
+    var globalExactActiveClass = router.options.linkExactActiveClass;
+    // Support global empty active class
+    var activeClassFallback =
+      globalActiveClass == null ? 'router-link-active' : globalActiveClass;
+    var exactActiveClassFallback =
+      globalExactActiveClass == null
+        ? 'router-link-exact-active'
+        : globalExactActiveClass;
+    var activeClass =
+      this.activeClass == null ? activeClassFallback : this.activeClass;
+    var exactActiveClass =
+      this.exactActiveClass == null
+        ? exactActiveClassFallback
+        : this.exactActiveClass;
+
+    var compareTarget = route.redirectedFrom
+      ? createRoute(null, normalizeLocation(route.redirectedFrom), null, router)
+      : route;
+
+    classes[exactActiveClass] = isSameRoute(current, compareTarget, this.exactPath);
+    classes[activeClass] = this.exact || this.exactPath
+      ? classes[exactActiveClass]
+      : isIncludedRoute(current, compareTarget);
+
+    var ariaCurrentValue = classes[exactActiveClass] ? this.ariaCurrentValue : null;
+
+    var handler = function (e) {
+      if (guardEvent(e)) {
+        if (this$1$1.replace) {
+          router.replace(location, noop);
+        } else {
+          router.push(location, noop);
+        }
+      }
+    };
+
+    var on = { click: guardEvent };
+    if (Array.isArray(this.event)) {
+      this.event.forEach(function (e) {
+        on[e] = handler;
+      });
+    } else {
+      on[this.event] = handler;
+    }
+
+    var data = { class: classes };
+
+    var scopedSlot =
+      !this.$scopedSlots.$hasNormal &&
+      this.$scopedSlots.default &&
+      this.$scopedSlots.default({
+        href: href,
+        route: route,
+        navigate: handler,
+        isActive: classes[activeClass],
+        isExactActive: classes[exactActiveClass]
+      });
+
+    if (scopedSlot) {
+      if ( true && !this.custom) {
+        !warnedCustomSlot && warn(false, 'In Vue Router 4, the v-slot API will by default wrap its content with an <a> element. Use the custom prop to remove this warning:\n<router-link v-slot="{ navigate, href }" custom></router-link>\n');
+        warnedCustomSlot = true;
+      }
+      if (scopedSlot.length === 1) {
+        return scopedSlot[0]
+      } else if (scopedSlot.length > 1 || !scopedSlot.length) {
+        if (true) {
+          warn(
+            false,
+            ("<router-link> with to=\"" + (this.to) + "\" is trying to use a scoped slot but it didn't provide exactly one child. Wrapping the content with a span element.")
+          );
+        }
+        return scopedSlot.length === 0 ? h() : h('span', {}, scopedSlot)
+      }
+    }
+
+    if (true) {
+      if ('tag' in this.$options.propsData && !warnedTagProp) {
+        warn(
+          false,
+          "<router-link>'s tag prop is deprecated and has been removed in Vue Router 4. Use the v-slot API to remove this warning: https://next.router.vuejs.org/guide/migration/#removal-of-event-and-tag-props-in-router-link."
+        );
+        warnedTagProp = true;
+      }
+      if ('event' in this.$options.propsData && !warnedEventProp) {
+        warn(
+          false,
+          "<router-link>'s event prop is deprecated and has been removed in Vue Router 4. Use the v-slot API to remove this warning: https://next.router.vuejs.org/guide/migration/#removal-of-event-and-tag-props-in-router-link."
+        );
+        warnedEventProp = true;
+      }
+    }
+
+    if (this.tag === 'a') {
+      data.on = on;
+      data.attrs = { href: href, 'aria-current': ariaCurrentValue };
+    } else {
+      // find the first <a> child and apply listener and href
+      var a = findAnchor(this.$slots.default);
+      if (a) {
+        // in case the <a> is a static node
+        a.isStatic = false;
+        var aData = (a.data = extend({}, a.data));
+        aData.on = aData.on || {};
+        // transform existing events in both objects into arrays so we can push later
+        for (var event in aData.on) {
+          var handler$1 = aData.on[event];
+          if (event in on) {
+            aData.on[event] = Array.isArray(handler$1) ? handler$1 : [handler$1];
+          }
+        }
+        // append new listeners for router-link
+        for (var event$1 in on) {
+          if (event$1 in aData.on) {
+            // on[event] is always a function
+            aData.on[event$1].push(on[event$1]);
+          } else {
+            aData.on[event$1] = handler;
+          }
+        }
+
+        var aAttrs = (a.data.attrs = extend({}, a.data.attrs));
+        aAttrs.href = href;
+        aAttrs['aria-current'] = ariaCurrentValue;
+      } else {
+        // doesn't have <a> child, apply listener to self
+        data.on = on;
+      }
+    }
+
+    return h(this.tag, data, this.$slots.default)
+  }
+};
+
+function guardEvent (e) {
+  // don't redirect with control keys
+  if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) { return }
+  // don't redirect when preventDefault called
+  if (e.defaultPrevented) { return }
+  // don't redirect on right click
+  if (e.button !== undefined && e.button !== 0) { return }
+  // don't redirect if `target="_blank"`
+  if (e.currentTarget && e.currentTarget.getAttribute) {
+    var target = e.currentTarget.getAttribute('target');
+    if (/\b_blank\b/i.test(target)) { return }
+  }
+  // this may be a Weex event which doesn't have this method
+  if (e.preventDefault) {
+    e.preventDefault();
+  }
+  return true
+}
+
+function findAnchor (children) {
+  if (children) {
+    var child;
+    for (var i = 0; i < children.length; i++) {
+      child = children[i];
+      if (child.tag === 'a') {
+        return child
+      }
+      if (child.children && (child = findAnchor(child.children))) {
+        return child
+      }
+    }
+  }
+}
+
+var _Vue;
+
+function install (Vue) {
+  if (install.installed && _Vue === Vue) { return }
+  install.installed = true;
+
+  _Vue = Vue;
+
+  var isDef = function (v) { return v !== undefined; };
+
+  var registerInstance = function (vm, callVal) {
+    var i = vm.$options._parentVnode;
+    if (isDef(i) && isDef(i = i.data) && isDef(i = i.registerRouteInstance)) {
+      i(vm, callVal);
+    }
+  };
+
+  Vue.mixin({
+    beforeCreate: function beforeCreate () {
+      if (isDef(this.$options.router)) {
+        this._routerRoot = this;
+        this._router = this.$options.router;
+        this._router.init(this);
+        Vue.util.defineReactive(this, '_route', this._router.history.current);
+      } else {
+        this._routerRoot = (this.$parent && this.$parent._routerRoot) || this;
+      }
+      registerInstance(this, this);
+    },
+    destroyed: function destroyed () {
+      registerInstance(this);
+    }
+  });
+
+  Object.defineProperty(Vue.prototype, '$router', {
+    get: function get () { return this._routerRoot._router }
+  });
+
+  Object.defineProperty(Vue.prototype, '$route', {
+    get: function get () { return this._routerRoot._route }
+  });
+
+  Vue.component('RouterView', View);
+  Vue.component('RouterLink', Link);
+
+  var strats = Vue.config.optionMergeStrategies;
+  // use the same hook merging strategy for route hooks
+  strats.beforeRouteEnter = strats.beforeRouteLeave = strats.beforeRouteUpdate = strats.created;
+}
+
+/*  */
+
+var inBrowser = typeof window !== 'undefined';
+
+/*  */
+
+function createRouteMap (
+  routes,
+  oldPathList,
+  oldPathMap,
+  oldNameMap,
+  parentRoute
+) {
+  // the path list is used to control path matching priority
+  var pathList = oldPathList || [];
+  // $flow-disable-line
+  var pathMap = oldPathMap || Object.create(null);
+  // $flow-disable-line
+  var nameMap = oldNameMap || Object.create(null);
+
+  routes.forEach(function (route) {
+    addRouteRecord(pathList, pathMap, nameMap, route, parentRoute);
+  });
+
+  // ensure wildcard routes are always at the end
+  for (var i = 0, l = pathList.length; i < l; i++) {
+    if (pathList[i] === '*') {
+      pathList.push(pathList.splice(i, 1)[0]);
+      l--;
+      i--;
+    }
+  }
+
+  if (true) {
+    // warn if routes do not include leading slashes
+    var found = pathList
+    // check for missing leading slash
+      .filter(function (path) { return path && path.charAt(0) !== '*' && path.charAt(0) !== '/'; });
+
+    if (found.length > 0) {
+      var pathNames = found.map(function (path) { return ("- " + path); }).join('\n');
+      warn(false, ("Non-nested routes must include a leading slash character. Fix the following routes: \n" + pathNames));
+    }
+  }
+
+  return {
+    pathList: pathList,
+    pathMap: pathMap,
+    nameMap: nameMap
+  }
+}
+
+function addRouteRecord (
+  pathList,
+  pathMap,
+  nameMap,
+  route,
+  parent,
+  matchAs
+) {
+  var path = route.path;
+  var name = route.name;
+  if (true) {
+    assert(path != null, "\"path\" is required in a route configuration.");
+    assert(
+      typeof route.component !== 'string',
+      "route config \"component\" for path: " + (String(
+        path || name
+      )) + " cannot be a " + "string id. Use an actual component instead."
+    );
+
+    warn(
+      // eslint-disable-next-line no-control-regex
+      !/[^\u0000-\u007F]+/.test(path),
+      "Route with path \"" + path + "\" contains unencoded characters, make sure " +
+        "your path is correctly encoded before passing it to the router. Use " +
+        "encodeURI to encode static segments of your path."
+    );
+  }
+
+  var pathToRegexpOptions =
+    route.pathToRegexpOptions || {};
+  var normalizedPath = normalizePath(path, parent, pathToRegexpOptions.strict);
+
+  if (typeof route.caseSensitive === 'boolean') {
+    pathToRegexpOptions.sensitive = route.caseSensitive;
+  }
+
+  var record = {
+    path: normalizedPath,
+    regex: compileRouteRegex(normalizedPath, pathToRegexpOptions),
+    components: route.components || { default: route.component },
+    alias: route.alias
+      ? typeof route.alias === 'string'
+        ? [route.alias]
+        : route.alias
+      : [],
+    instances: {},
+    enteredCbs: {},
+    name: name,
+    parent: parent,
+    matchAs: matchAs,
+    redirect: route.redirect,
+    beforeEnter: route.beforeEnter,
+    meta: route.meta || {},
+    props:
+      route.props == null
+        ? {}
+        : route.components
+          ? route.props
+          : { default: route.props }
+  };
+
+  if (route.children) {
+    // Warn if route is named, does not redirect and has a default child route.
+    // If users navigate to this route by name, the default child will
+    // not be rendered (GH Issue #629)
+    if (true) {
+      if (
+        route.name &&
+        !route.redirect &&
+        route.children.some(function (child) { return /^\/?$/.test(child.path); })
+      ) {
+        warn(
+          false,
+          "Named Route '" + (route.name) + "' has a default child route. " +
+            "When navigating to this named route (:to=\"{name: '" + (route.name) + "'}\"), " +
+            "the default child route will not be rendered. Remove the name from " +
+            "this route and use the name of the default child route for named " +
+            "links instead."
+        );
+      }
+    }
+    route.children.forEach(function (child) {
+      var childMatchAs = matchAs
+        ? cleanPath((matchAs + "/" + (child.path)))
+        : undefined;
+      addRouteRecord(pathList, pathMap, nameMap, child, record, childMatchAs);
+    });
+  }
+
+  if (!pathMap[record.path]) {
+    pathList.push(record.path);
+    pathMap[record.path] = record;
+  }
+
+  if (route.alias !== undefined) {
+    var aliases = Array.isArray(route.alias) ? route.alias : [route.alias];
+    for (var i = 0; i < aliases.length; ++i) {
+      var alias = aliases[i];
+      if ( true && alias === path) {
+        warn(
+          false,
+          ("Found an alias with the same value as the path: \"" + path + "\". You have to remove that alias. It will be ignored in development.")
+        );
+        // skip in dev to make it work
+        continue
+      }
+
+      var aliasRoute = {
+        path: alias,
+        children: route.children
+      };
+      addRouteRecord(
+        pathList,
+        pathMap,
+        nameMap,
+        aliasRoute,
+        parent,
+        record.path || '/' // matchAs
+      );
+    }
+  }
+
+  if (name) {
+    if (!nameMap[name]) {
+      nameMap[name] = record;
+    } else if ( true && !matchAs) {
+      warn(
+        false,
+        "Duplicate named routes definition: " +
+          "{ name: \"" + name + "\", path: \"" + (record.path) + "\" }"
+      );
+    }
+  }
+}
+
+function compileRouteRegex (
+  path,
+  pathToRegexpOptions
+) {
+  var regex = pathToRegexp_1(path, [], pathToRegexpOptions);
+  if (true) {
+    var keys = Object.create(null);
+    regex.keys.forEach(function (key) {
+      warn(
+        !keys[key.name],
+        ("Duplicate param keys in route with path: \"" + path + "\"")
+      );
+      keys[key.name] = true;
+    });
+  }
+  return regex
+}
+
+function normalizePath (
+  path,
+  parent,
+  strict
+) {
+  if (!strict) { path = path.replace(/\/$/, ''); }
+  if (path[0] === '/') { return path }
+  if (parent == null) { return path }
+  return cleanPath(((parent.path) + "/" + path))
+}
+
+/*  */
+
+
+
+function createMatcher (
+  routes,
+  router
+) {
+  var ref = createRouteMap(routes);
+  var pathList = ref.pathList;
+  var pathMap = ref.pathMap;
+  var nameMap = ref.nameMap;
+
+  function addRoutes (routes) {
+    createRouteMap(routes, pathList, pathMap, nameMap);
+  }
+
+  function addRoute (parentOrRoute, route) {
+    var parent = (typeof parentOrRoute !== 'object') ? nameMap[parentOrRoute] : undefined;
+    // $flow-disable-line
+    createRouteMap([route || parentOrRoute], pathList, pathMap, nameMap, parent);
+
+    // add aliases of parent
+    if (parent && parent.alias.length) {
+      createRouteMap(
+        // $flow-disable-line route is defined if parent is
+        parent.alias.map(function (alias) { return ({ path: alias, children: [route] }); }),
+        pathList,
+        pathMap,
+        nameMap,
+        parent
+      );
+    }
+  }
+
+  function getRoutes () {
+    return pathList.map(function (path) { return pathMap[path]; })
+  }
+
+  function match (
+    raw,
+    currentRoute,
+    redirectedFrom
+  ) {
+    var location = normalizeLocation(raw, currentRoute, false, router);
+    var name = location.name;
+
+    if (name) {
+      var record = nameMap[name];
+      if (true) {
+        warn(record, ("Route with name '" + name + "' does not exist"));
+      }
+      if (!record) { return _createRoute(null, location) }
+      var paramNames = record.regex.keys
+        .filter(function (key) { return !key.optional; })
+        .map(function (key) { return key.name; });
+
+      if (typeof location.params !== 'object') {
+        location.params = {};
+      }
+
+      if (currentRoute && typeof currentRoute.params === 'object') {
+        for (var key in currentRoute.params) {
+          if (!(key in location.params) && paramNames.indexOf(key) > -1) {
+            location.params[key] = currentRoute.params[key];
+          }
+        }
+      }
+
+      location.path = fillParams(record.path, location.params, ("named route \"" + name + "\""));
+      return _createRoute(record, location, redirectedFrom)
+    } else if (location.path) {
+      location.params = {};
+      for (var i = 0; i < pathList.length; i++) {
+        var path = pathList[i];
+        var record$1 = pathMap[path];
+        if (matchRoute(record$1.regex, location.path, location.params)) {
+          return _createRoute(record$1, location, redirectedFrom)
+        }
+      }
+    }
+    // no match
+    return _createRoute(null, location)
+  }
+
+  function redirect (
+    record,
+    location
+  ) {
+    var originalRedirect = record.redirect;
+    var redirect = typeof originalRedirect === 'function'
+      ? originalRedirect(createRoute(record, location, null, router))
+      : originalRedirect;
+
+    if (typeof redirect === 'string') {
+      redirect = { path: redirect };
+    }
+
+    if (!redirect || typeof redirect !== 'object') {
+      if (true) {
+        warn(
+          false, ("invalid redirect option: " + (JSON.stringify(redirect)))
+        );
+      }
+      return _createRoute(null, location)
+    }
+
+    var re = redirect;
+    var name = re.name;
+    var path = re.path;
+    var query = location.query;
+    var hash = location.hash;
+    var params = location.params;
+    query = re.hasOwnProperty('query') ? re.query : query;
+    hash = re.hasOwnProperty('hash') ? re.hash : hash;
+    params = re.hasOwnProperty('params') ? re.params : params;
+
+    if (name) {
+      // resolved named direct
+      var targetRecord = nameMap[name];
+      if (true) {
+        assert(targetRecord, ("redirect failed: named route \"" + name + "\" not found."));
+      }
+      return match({
+        _normalized: true,
+        name: name,
+        query: query,
+        hash: hash,
+        params: params
+      }, undefined, location)
+    } else if (path) {
+      // 1. resolve relative redirect
+      var rawPath = resolveRecordPath(path, record);
+      // 2. resolve params
+      var resolvedPath = fillParams(rawPath, params, ("redirect route with path \"" + rawPath + "\""));
+      // 3. rematch with existing query and hash
+      return match({
+        _normalized: true,
+        path: resolvedPath,
+        query: query,
+        hash: hash
+      }, undefined, location)
+    } else {
+      if (true) {
+        warn(false, ("invalid redirect option: " + (JSON.stringify(redirect))));
+      }
+      return _createRoute(null, location)
+    }
+  }
+
+  function alias (
+    record,
+    location,
+    matchAs
+  ) {
+    var aliasedPath = fillParams(matchAs, location.params, ("aliased route with path \"" + matchAs + "\""));
+    var aliasedMatch = match({
+      _normalized: true,
+      path: aliasedPath
+    });
+    if (aliasedMatch) {
+      var matched = aliasedMatch.matched;
+      var aliasedRecord = matched[matched.length - 1];
+      location.params = aliasedMatch.params;
+      return _createRoute(aliasedRecord, location)
+    }
+    return _createRoute(null, location)
+  }
+
+  function _createRoute (
+    record,
+    location,
+    redirectedFrom
+  ) {
+    if (record && record.redirect) {
+      return redirect(record, redirectedFrom || location)
+    }
+    if (record && record.matchAs) {
+      return alias(record, location, record.matchAs)
+    }
+    return createRoute(record, location, redirectedFrom, router)
+  }
+
+  return {
+    match: match,
+    addRoute: addRoute,
+    getRoutes: getRoutes,
+    addRoutes: addRoutes
+  }
+}
+
+function matchRoute (
+  regex,
+  path,
+  params
+) {
+  var m = path.match(regex);
+
+  if (!m) {
+    return false
+  } else if (!params) {
+    return true
+  }
+
+  for (var i = 1, len = m.length; i < len; ++i) {
+    var key = regex.keys[i - 1];
+    if (key) {
+      // Fix #1994: using * with props: true generates a param named 0
+      params[key.name || 'pathMatch'] = typeof m[i] === 'string' ? decode(m[i]) : m[i];
+    }
+  }
+
+  return true
+}
+
+function resolveRecordPath (path, record) {
+  return resolvePath(path, record.parent ? record.parent.path : '/', true)
+}
+
+/*  */
+
+// use User Timing api (if present) for more accurate key precision
+var Time =
+  inBrowser && window.performance && window.performance.now
+    ? window.performance
+    : Date;
+
+function genStateKey () {
+  return Time.now().toFixed(3)
+}
+
+var _key = genStateKey();
+
+function getStateKey () {
+  return _key
+}
+
+function setStateKey (key) {
+  return (_key = key)
+}
+
+/*  */
+
+var positionStore = Object.create(null);
+
+function setupScroll () {
+  // Prevent browser scroll behavior on History popstate
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+  }
+  // Fix for #1585 for Firefox
+  // Fix for #2195 Add optional third attribute to workaround a bug in safari https://bugs.webkit.org/show_bug.cgi?id=182678
+  // Fix for #2774 Support for apps loaded from Windows file shares not mapped to network drives: replaced location.origin with
+  // window.location.protocol + '//' + window.location.host
+  // location.host contains the port and location.hostname doesn't
+  var protocolAndPath = window.location.protocol + '//' + window.location.host;
+  var absolutePath = window.location.href.replace(protocolAndPath, '');
+  // preserve existing history state as it could be overriden by the user
+  var stateCopy = extend({}, window.history.state);
+  stateCopy.key = getStateKey();
+  window.history.replaceState(stateCopy, '', absolutePath);
+  window.addEventListener('popstate', handlePopState);
+  return function () {
+    window.removeEventListener('popstate', handlePopState);
+  }
+}
+
+function handleScroll (
+  router,
+  to,
+  from,
+  isPop
+) {
+  if (!router.app) {
+    return
+  }
+
+  var behavior = router.options.scrollBehavior;
+  if (!behavior) {
+    return
+  }
+
+  if (true) {
+    assert(typeof behavior === 'function', "scrollBehavior must be a function");
+  }
+
+  // wait until re-render finishes before scrolling
+  router.app.$nextTick(function () {
+    var position = getScrollPosition();
+    var shouldScroll = behavior.call(
+      router,
+      to,
+      from,
+      isPop ? position : null
+    );
+
+    if (!shouldScroll) {
+      return
+    }
+
+    if (typeof shouldScroll.then === 'function') {
+      shouldScroll
+        .then(function (shouldScroll) {
+          scrollToPosition((shouldScroll), position);
+        })
+        .catch(function (err) {
+          if (true) {
+            assert(false, err.toString());
+          }
+        });
+    } else {
+      scrollToPosition(shouldScroll, position);
+    }
+  });
+}
+
+function saveScrollPosition () {
+  var key = getStateKey();
+  if (key) {
+    positionStore[key] = {
+      x: window.pageXOffset,
+      y: window.pageYOffset
+    };
+  }
+}
+
+function handlePopState (e) {
+  saveScrollPosition();
+  if (e.state && e.state.key) {
+    setStateKey(e.state.key);
+  }
+}
+
+function getScrollPosition () {
+  var key = getStateKey();
+  if (key) {
+    return positionStore[key]
+  }
+}
+
+function getElementPosition (el, offset) {
+  var docEl = document.documentElement;
+  var docRect = docEl.getBoundingClientRect();
+  var elRect = el.getBoundingClientRect();
+  return {
+    x: elRect.left - docRect.left - offset.x,
+    y: elRect.top - docRect.top - offset.y
+  }
+}
+
+function isValidPosition (obj) {
+  return isNumber(obj.x) || isNumber(obj.y)
+}
+
+function normalizePosition (obj) {
+  return {
+    x: isNumber(obj.x) ? obj.x : window.pageXOffset,
+    y: isNumber(obj.y) ? obj.y : window.pageYOffset
+  }
+}
+
+function normalizeOffset (obj) {
+  return {
+    x: isNumber(obj.x) ? obj.x : 0,
+    y: isNumber(obj.y) ? obj.y : 0
+  }
+}
+
+function isNumber (v) {
+  return typeof v === 'number'
+}
+
+var hashStartsWithNumberRE = /^#\d/;
+
+function scrollToPosition (shouldScroll, position) {
+  var isObject = typeof shouldScroll === 'object';
+  if (isObject && typeof shouldScroll.selector === 'string') {
+    // getElementById would still fail if the selector contains a more complicated query like #main[data-attr]
+    // but at the same time, it doesn't make much sense to select an element with an id and an extra selector
+    var el = hashStartsWithNumberRE.test(shouldScroll.selector) // $flow-disable-line
+      ? document.getElementById(shouldScroll.selector.slice(1)) // $flow-disable-line
+      : document.querySelector(shouldScroll.selector);
+
+    if (el) {
+      var offset =
+        shouldScroll.offset && typeof shouldScroll.offset === 'object'
+          ? shouldScroll.offset
+          : {};
+      offset = normalizeOffset(offset);
+      position = getElementPosition(el, offset);
+    } else if (isValidPosition(shouldScroll)) {
+      position = normalizePosition(shouldScroll);
+    }
+  } else if (isObject && isValidPosition(shouldScroll)) {
+    position = normalizePosition(shouldScroll);
+  }
+
+  if (position) {
+    // $flow-disable-line
+    if ('scrollBehavior' in document.documentElement.style) {
+      window.scrollTo({
+        left: position.x,
+        top: position.y,
+        // $flow-disable-line
+        behavior: shouldScroll.behavior
+      });
+    } else {
+      window.scrollTo(position.x, position.y);
+    }
+  }
+}
+
+/*  */
+
+var supportsPushState =
+  inBrowser &&
+  (function () {
+    var ua = window.navigator.userAgent;
+
+    if (
+      (ua.indexOf('Android 2.') !== -1 || ua.indexOf('Android 4.0') !== -1) &&
+      ua.indexOf('Mobile Safari') !== -1 &&
+      ua.indexOf('Chrome') === -1 &&
+      ua.indexOf('Windows Phone') === -1
+    ) {
+      return false
+    }
+
+    return window.history && typeof window.history.pushState === 'function'
+  })();
+
+function pushState (url, replace) {
+  saveScrollPosition();
+  // try...catch the pushState call to get around Safari
+  // DOM Exception 18 where it limits to 100 pushState calls
+  var history = window.history;
+  try {
+    if (replace) {
+      // preserve existing history state as it could be overriden by the user
+      var stateCopy = extend({}, history.state);
+      stateCopy.key = getStateKey();
+      history.replaceState(stateCopy, '', url);
+    } else {
+      history.pushState({ key: setStateKey(genStateKey()) }, '', url);
+    }
+  } catch (e) {
+    window.location[replace ? 'replace' : 'assign'](url);
+  }
+}
+
+function replaceState (url) {
+  pushState(url, true);
+}
+
+// When changing thing, also edit router.d.ts
+var NavigationFailureType = {
+  redirected: 2,
+  aborted: 4,
+  cancelled: 8,
+  duplicated: 16
+};
+
+function createNavigationRedirectedError (from, to) {
+  return createRouterError(
+    from,
+    to,
+    NavigationFailureType.redirected,
+    ("Redirected when going from \"" + (from.fullPath) + "\" to \"" + (stringifyRoute(
+      to
+    )) + "\" via a navigation guard.")
+  )
+}
+
+function createNavigationDuplicatedError (from, to) {
+  var error = createRouterError(
+    from,
+    to,
+    NavigationFailureType.duplicated,
+    ("Avoided redundant navigation to current location: \"" + (from.fullPath) + "\".")
+  );
+  // backwards compatible with the first introduction of Errors
+  error.name = 'NavigationDuplicated';
+  return error
+}
+
+function createNavigationCancelledError (from, to) {
+  return createRouterError(
+    from,
+    to,
+    NavigationFailureType.cancelled,
+    ("Navigation cancelled from \"" + (from.fullPath) + "\" to \"" + (to.fullPath) + "\" with a new navigation.")
+  )
+}
+
+function createNavigationAbortedError (from, to) {
+  return createRouterError(
+    from,
+    to,
+    NavigationFailureType.aborted,
+    ("Navigation aborted from \"" + (from.fullPath) + "\" to \"" + (to.fullPath) + "\" via a navigation guard.")
+  )
+}
+
+function createRouterError (from, to, type, message) {
+  var error = new Error(message);
+  error._isRouter = true;
+  error.from = from;
+  error.to = to;
+  error.type = type;
+
+  return error
+}
+
+var propertiesToLog = ['params', 'query', 'hash'];
+
+function stringifyRoute (to) {
+  if (typeof to === 'string') { return to }
+  if ('path' in to) { return to.path }
+  var location = {};
+  propertiesToLog.forEach(function (key) {
+    if (key in to) { location[key] = to[key]; }
+  });
+  return JSON.stringify(location, null, 2)
+}
+
+function isError (err) {
+  return Object.prototype.toString.call(err).indexOf('Error') > -1
+}
+
+function isNavigationFailure (err, errorType) {
+  return (
+    isError(err) &&
+    err._isRouter &&
+    (errorType == null || err.type === errorType)
+  )
+}
+
+/*  */
+
+function runQueue (queue, fn, cb) {
+  var step = function (index) {
+    if (index >= queue.length) {
+      cb();
+    } else {
+      if (queue[index]) {
+        fn(queue[index], function () {
+          step(index + 1);
+        });
+      } else {
+        step(index + 1);
+      }
+    }
+  };
+  step(0);
+}
+
+/*  */
+
+function resolveAsyncComponents (matched) {
+  return function (to, from, next) {
+    var hasAsync = false;
+    var pending = 0;
+    var error = null;
+
+    flatMapComponents(matched, function (def, _, match, key) {
+      // if it's a function and doesn't have cid attached,
+      // assume it's an async component resolve function.
+      // we are not using Vue's default async resolving mechanism because
+      // we want to halt the navigation until the incoming component has been
+      // resolved.
+      if (typeof def === 'function' && def.cid === undefined) {
+        hasAsync = true;
+        pending++;
+
+        var resolve = once(function (resolvedDef) {
+          if (isESModule(resolvedDef)) {
+            resolvedDef = resolvedDef.default;
+          }
+          // save resolved on async factory in case it's used elsewhere
+          def.resolved = typeof resolvedDef === 'function'
+            ? resolvedDef
+            : _Vue.extend(resolvedDef);
+          match.components[key] = resolvedDef;
+          pending--;
+          if (pending <= 0) {
+            next();
+          }
+        });
+
+        var reject = once(function (reason) {
+          var msg = "Failed to resolve async component " + key + ": " + reason;
+           true && warn(false, msg);
+          if (!error) {
+            error = isError(reason)
+              ? reason
+              : new Error(msg);
+            next(error);
+          }
+        });
+
+        var res;
+        try {
+          res = def(resolve, reject);
+        } catch (e) {
+          reject(e);
+        }
+        if (res) {
+          if (typeof res.then === 'function') {
+            res.then(resolve, reject);
+          } else {
+            // new syntax in Vue 2.3
+            var comp = res.component;
+            if (comp && typeof comp.then === 'function') {
+              comp.then(resolve, reject);
+            }
+          }
+        }
+      }
+    });
+
+    if (!hasAsync) { next(); }
+  }
+}
+
+function flatMapComponents (
+  matched,
+  fn
+) {
+  return flatten(matched.map(function (m) {
+    return Object.keys(m.components).map(function (key) { return fn(
+      m.components[key],
+      m.instances[key],
+      m, key
+    ); })
+  }))
+}
+
+function flatten (arr) {
+  return Array.prototype.concat.apply([], arr)
+}
+
+var hasSymbol =
+  typeof Symbol === 'function' &&
+  typeof Symbol.toStringTag === 'symbol';
+
+function isESModule (obj) {
+  return obj.__esModule || (hasSymbol && obj[Symbol.toStringTag] === 'Module')
+}
+
+// in Webpack 2, require.ensure now also returns a Promise
+// so the resolve/reject functions may get called an extra time
+// if the user uses an arrow function shorthand that happens to
+// return that Promise.
+function once (fn) {
+  var called = false;
+  return function () {
+    var args = [], len = arguments.length;
+    while ( len-- ) args[ len ] = arguments[ len ];
+
+    if (called) { return }
+    called = true;
+    return fn.apply(this, args)
+  }
+}
+
+/*  */
+
+var History = function History (router, base) {
+  this.router = router;
+  this.base = normalizeBase(base);
+  // start with a route object that stands for "nowhere"
+  this.current = START;
+  this.pending = null;
+  this.ready = false;
+  this.readyCbs = [];
+  this.readyErrorCbs = [];
+  this.errorCbs = [];
+  this.listeners = [];
+};
+
+History.prototype.listen = function listen (cb) {
+  this.cb = cb;
+};
+
+History.prototype.onReady = function onReady (cb, errorCb) {
+  if (this.ready) {
+    cb();
+  } else {
+    this.readyCbs.push(cb);
+    if (errorCb) {
+      this.readyErrorCbs.push(errorCb);
+    }
+  }
+};
+
+History.prototype.onError = function onError (errorCb) {
+  this.errorCbs.push(errorCb);
+};
+
+History.prototype.transitionTo = function transitionTo (
+  location,
+  onComplete,
+  onAbort
+) {
+    var this$1$1 = this;
+
+  var route;
+  // catch redirect option https://github.com/vuejs/vue-router/issues/3201
+  try {
+    route = this.router.match(location, this.current);
+  } catch (e) {
+    this.errorCbs.forEach(function (cb) {
+      cb(e);
+    });
+    // Exception should still be thrown
+    throw e
+  }
+  var prev = this.current;
+  this.confirmTransition(
+    route,
+    function () {
+      this$1$1.updateRoute(route);
+      onComplete && onComplete(route);
+      this$1$1.ensureURL();
+      this$1$1.router.afterHooks.forEach(function (hook) {
+        hook && hook(route, prev);
+      });
+
+      // fire ready cbs once
+      if (!this$1$1.ready) {
+        this$1$1.ready = true;
+        this$1$1.readyCbs.forEach(function (cb) {
+          cb(route);
+        });
+      }
+    },
+    function (err) {
+      if (onAbort) {
+        onAbort(err);
+      }
+      if (err && !this$1$1.ready) {
+        // Initial redirection should not mark the history as ready yet
+        // because it's triggered by the redirection instead
+        // https://github.com/vuejs/vue-router/issues/3225
+        // https://github.com/vuejs/vue-router/issues/3331
+        if (!isNavigationFailure(err, NavigationFailureType.redirected) || prev !== START) {
+          this$1$1.ready = true;
+          this$1$1.readyErrorCbs.forEach(function (cb) {
+            cb(err);
+          });
+        }
+      }
+    }
+  );
+};
+
+History.prototype.confirmTransition = function confirmTransition (route, onComplete, onAbort) {
+    var this$1$1 = this;
+
+  var current = this.current;
+  this.pending = route;
+  var abort = function (err) {
+    // changed after adding errors with
+    // https://github.com/vuejs/vue-router/pull/3047 before that change,
+    // redirect and aborted navigation would produce an err == null
+    if (!isNavigationFailure(err) && isError(err)) {
+      if (this$1$1.errorCbs.length) {
+        this$1$1.errorCbs.forEach(function (cb) {
+          cb(err);
+        });
+      } else {
+        if (true) {
+          warn(false, 'uncaught error during route navigation:');
+        }
+        console.error(err);
+      }
+    }
+    onAbort && onAbort(err);
+  };
+  var lastRouteIndex = route.matched.length - 1;
+  var lastCurrentIndex = current.matched.length - 1;
+  if (
+    isSameRoute(route, current) &&
+    // in the case the route map has been dynamically appended to
+    lastRouteIndex === lastCurrentIndex &&
+    route.matched[lastRouteIndex] === current.matched[lastCurrentIndex]
+  ) {
+    this.ensureURL();
+    if (route.hash) {
+      handleScroll(this.router, current, route, false);
+    }
+    return abort(createNavigationDuplicatedError(current, route))
+  }
+
+  var ref = resolveQueue(
+    this.current.matched,
+    route.matched
+  );
+    var updated = ref.updated;
+    var deactivated = ref.deactivated;
+    var activated = ref.activated;
+
+  var queue = [].concat(
+    // in-component leave guards
+    extractLeaveGuards(deactivated),
+    // global before hooks
+    this.router.beforeHooks,
+    // in-component update hooks
+    extractUpdateHooks(updated),
+    // in-config enter guards
+    activated.map(function (m) { return m.beforeEnter; }),
+    // async components
+    resolveAsyncComponents(activated)
+  );
+
+  var iterator = function (hook, next) {
+    if (this$1$1.pending !== route) {
+      return abort(createNavigationCancelledError(current, route))
+    }
+    try {
+      hook(route, current, function (to) {
+        if (to === false) {
+          // next(false) -> abort navigation, ensure current URL
+          this$1$1.ensureURL(true);
+          abort(createNavigationAbortedError(current, route));
+        } else if (isError(to)) {
+          this$1$1.ensureURL(true);
+          abort(to);
+        } else if (
+          typeof to === 'string' ||
+          (typeof to === 'object' &&
+            (typeof to.path === 'string' || typeof to.name === 'string'))
+        ) {
+          // next('/') or next({ path: '/' }) -> redirect
+          abort(createNavigationRedirectedError(current, route));
+          if (typeof to === 'object' && to.replace) {
+            this$1$1.replace(to);
+          } else {
+            this$1$1.push(to);
+          }
+        } else {
+          // confirm transition and pass on the value
+          next(to);
+        }
+      });
+    } catch (e) {
+      abort(e);
+    }
+  };
+
+  runQueue(queue, iterator, function () {
+    // wait until async components are resolved before
+    // extracting in-component enter guards
+    var enterGuards = extractEnterGuards(activated);
+    var queue = enterGuards.concat(this$1$1.router.resolveHooks);
+    runQueue(queue, iterator, function () {
+      if (this$1$1.pending !== route) {
+        return abort(createNavigationCancelledError(current, route))
+      }
+      this$1$1.pending = null;
+      onComplete(route);
+      if (this$1$1.router.app) {
+        this$1$1.router.app.$nextTick(function () {
+          handleRouteEntered(route);
+        });
+      }
+    });
+  });
+};
+
+History.prototype.updateRoute = function updateRoute (route) {
+  this.current = route;
+  this.cb && this.cb(route);
+};
+
+History.prototype.setupListeners = function setupListeners () {
+  // Default implementation is empty
+};
+
+History.prototype.teardown = function teardown () {
+  // clean up event listeners
+  // https://github.com/vuejs/vue-router/issues/2341
+  this.listeners.forEach(function (cleanupListener) {
+    cleanupListener();
+  });
+  this.listeners = [];
+
+  // reset current history route
+  // https://github.com/vuejs/vue-router/issues/3294
+  this.current = START;
+  this.pending = null;
+};
+
+function normalizeBase (base) {
+  if (!base) {
+    if (inBrowser) {
+      // respect <base> tag
+      var baseEl = document.querySelector('base');
+      base = (baseEl && baseEl.getAttribute('href')) || '/';
+      // strip full URL origin
+      base = base.replace(/^https?:\/\/[^\/]+/, '');
+    } else {
+      base = '/';
+    }
+  }
+  // make sure there's the starting slash
+  if (base.charAt(0) !== '/') {
+    base = '/' + base;
+  }
+  // remove trailing slash
+  return base.replace(/\/$/, '')
+}
+
+function resolveQueue (
+  current,
+  next
+) {
+  var i;
+  var max = Math.max(current.length, next.length);
+  for (i = 0; i < max; i++) {
+    if (current[i] !== next[i]) {
+      break
+    }
+  }
+  return {
+    updated: next.slice(0, i),
+    activated: next.slice(i),
+    deactivated: current.slice(i)
+  }
+}
+
+function extractGuards (
+  records,
+  name,
+  bind,
+  reverse
+) {
+  var guards = flatMapComponents(records, function (def, instance, match, key) {
+    var guard = extractGuard(def, name);
+    if (guard) {
+      return Array.isArray(guard)
+        ? guard.map(function (guard) { return bind(guard, instance, match, key); })
+        : bind(guard, instance, match, key)
+    }
+  });
+  return flatten(reverse ? guards.reverse() : guards)
+}
+
+function extractGuard (
+  def,
+  key
+) {
+  if (typeof def !== 'function') {
+    // extend now so that global mixins are applied.
+    def = _Vue.extend(def);
+  }
+  return def.options[key]
+}
+
+function extractLeaveGuards (deactivated) {
+  return extractGuards(deactivated, 'beforeRouteLeave', bindGuard, true)
+}
+
+function extractUpdateHooks (updated) {
+  return extractGuards(updated, 'beforeRouteUpdate', bindGuard)
+}
+
+function bindGuard (guard, instance) {
+  if (instance) {
+    return function boundRouteGuard () {
+      return guard.apply(instance, arguments)
+    }
+  }
+}
+
+function extractEnterGuards (
+  activated
+) {
+  return extractGuards(
+    activated,
+    'beforeRouteEnter',
+    function (guard, _, match, key) {
+      return bindEnterGuard(guard, match, key)
+    }
+  )
+}
+
+function bindEnterGuard (
+  guard,
+  match,
+  key
+) {
+  return function routeEnterGuard (to, from, next) {
+    return guard(to, from, function (cb) {
+      if (typeof cb === 'function') {
+        if (!match.enteredCbs[key]) {
+          match.enteredCbs[key] = [];
+        }
+        match.enteredCbs[key].push(cb);
+      }
+      next(cb);
+    })
+  }
+}
+
+/*  */
+
+var HTML5History = /*@__PURE__*/(function (History) {
+  function HTML5History (router, base) {
+    History.call(this, router, base);
+
+    this._startLocation = getLocation(this.base);
+  }
+
+  if ( History ) HTML5History.__proto__ = History;
+  HTML5History.prototype = Object.create( History && History.prototype );
+  HTML5History.prototype.constructor = HTML5History;
+
+  HTML5History.prototype.setupListeners = function setupListeners () {
+    var this$1$1 = this;
+
+    if (this.listeners.length > 0) {
+      return
+    }
+
+    var router = this.router;
+    var expectScroll = router.options.scrollBehavior;
+    var supportsScroll = supportsPushState && expectScroll;
+
+    if (supportsScroll) {
+      this.listeners.push(setupScroll());
+    }
+
+    var handleRoutingEvent = function () {
+      var current = this$1$1.current;
+
+      // Avoiding first `popstate` event dispatched in some browsers but first
+      // history route not updated since async guard at the same time.
+      var location = getLocation(this$1$1.base);
+      if (this$1$1.current === START && location === this$1$1._startLocation) {
+        return
+      }
+
+      this$1$1.transitionTo(location, function (route) {
+        if (supportsScroll) {
+          handleScroll(router, route, current, true);
+        }
+      });
+    };
+    window.addEventListener('popstate', handleRoutingEvent);
+    this.listeners.push(function () {
+      window.removeEventListener('popstate', handleRoutingEvent);
+    });
+  };
+
+  HTML5History.prototype.go = function go (n) {
+    window.history.go(n);
+  };
+
+  HTML5History.prototype.push = function push (location, onComplete, onAbort) {
+    var this$1$1 = this;
+
+    var ref = this;
+    var fromRoute = ref.current;
+    this.transitionTo(location, function (route) {
+      pushState(cleanPath(this$1$1.base + route.fullPath));
+      handleScroll(this$1$1.router, route, fromRoute, false);
+      onComplete && onComplete(route);
+    }, onAbort);
+  };
+
+  HTML5History.prototype.replace = function replace (location, onComplete, onAbort) {
+    var this$1$1 = this;
+
+    var ref = this;
+    var fromRoute = ref.current;
+    this.transitionTo(location, function (route) {
+      replaceState(cleanPath(this$1$1.base + route.fullPath));
+      handleScroll(this$1$1.router, route, fromRoute, false);
+      onComplete && onComplete(route);
+    }, onAbort);
+  };
+
+  HTML5History.prototype.ensureURL = function ensureURL (push) {
+    if (getLocation(this.base) !== this.current.fullPath) {
+      var current = cleanPath(this.base + this.current.fullPath);
+      push ? pushState(current) : replaceState(current);
+    }
+  };
+
+  HTML5History.prototype.getCurrentLocation = function getCurrentLocation () {
+    return getLocation(this.base)
+  };
+
+  return HTML5History;
+}(History));
+
+function getLocation (base) {
+  var path = window.location.pathname;
+  var pathLowerCase = path.toLowerCase();
+  var baseLowerCase = base.toLowerCase();
+  // base="/a" shouldn't turn path="/app" into "/a/pp"
+  // https://github.com/vuejs/vue-router/issues/3555
+  // so we ensure the trailing slash in the base
+  if (base && ((pathLowerCase === baseLowerCase) ||
+    (pathLowerCase.indexOf(cleanPath(baseLowerCase + '/')) === 0))) {
+    path = path.slice(base.length);
+  }
+  return (path || '/') + window.location.search + window.location.hash
+}
+
+/*  */
+
+var HashHistory = /*@__PURE__*/(function (History) {
+  function HashHistory (router, base, fallback) {
+    History.call(this, router, base);
+    // check history fallback deeplinking
+    if (fallback && checkFallback(this.base)) {
+      return
+    }
+    ensureSlash();
+  }
+
+  if ( History ) HashHistory.__proto__ = History;
+  HashHistory.prototype = Object.create( History && History.prototype );
+  HashHistory.prototype.constructor = HashHistory;
+
+  // this is delayed until the app mounts
+  // to avoid the hashchange listener being fired too early
+  HashHistory.prototype.setupListeners = function setupListeners () {
+    var this$1$1 = this;
+
+    if (this.listeners.length > 0) {
+      return
+    }
+
+    var router = this.router;
+    var expectScroll = router.options.scrollBehavior;
+    var supportsScroll = supportsPushState && expectScroll;
+
+    if (supportsScroll) {
+      this.listeners.push(setupScroll());
+    }
+
+    var handleRoutingEvent = function () {
+      var current = this$1$1.current;
+      if (!ensureSlash()) {
+        return
+      }
+      this$1$1.transitionTo(getHash(), function (route) {
+        if (supportsScroll) {
+          handleScroll(this$1$1.router, route, current, true);
+        }
+        if (!supportsPushState) {
+          replaceHash(route.fullPath);
+        }
+      });
+    };
+    var eventType = supportsPushState ? 'popstate' : 'hashchange';
+    window.addEventListener(
+      eventType,
+      handleRoutingEvent
+    );
+    this.listeners.push(function () {
+      window.removeEventListener(eventType, handleRoutingEvent);
+    });
+  };
+
+  HashHistory.prototype.push = function push (location, onComplete, onAbort) {
+    var this$1$1 = this;
+
+    var ref = this;
+    var fromRoute = ref.current;
+    this.transitionTo(
+      location,
+      function (route) {
+        pushHash(route.fullPath);
+        handleScroll(this$1$1.router, route, fromRoute, false);
+        onComplete && onComplete(route);
+      },
+      onAbort
+    );
+  };
+
+  HashHistory.prototype.replace = function replace (location, onComplete, onAbort) {
+    var this$1$1 = this;
+
+    var ref = this;
+    var fromRoute = ref.current;
+    this.transitionTo(
+      location,
+      function (route) {
+        replaceHash(route.fullPath);
+        handleScroll(this$1$1.router, route, fromRoute, false);
+        onComplete && onComplete(route);
+      },
+      onAbort
+    );
+  };
+
+  HashHistory.prototype.go = function go (n) {
+    window.history.go(n);
+  };
+
+  HashHistory.prototype.ensureURL = function ensureURL (push) {
+    var current = this.current.fullPath;
+    if (getHash() !== current) {
+      push ? pushHash(current) : replaceHash(current);
+    }
+  };
+
+  HashHistory.prototype.getCurrentLocation = function getCurrentLocation () {
+    return getHash()
+  };
+
+  return HashHistory;
+}(History));
+
+function checkFallback (base) {
+  var location = getLocation(base);
+  if (!/^\/#/.test(location)) {
+    window.location.replace(cleanPath(base + '/#' + location));
+    return true
+  }
+}
+
+function ensureSlash () {
+  var path = getHash();
+  if (path.charAt(0) === '/') {
+    return true
+  }
+  replaceHash('/' + path);
+  return false
+}
+
+function getHash () {
+  // We can't use window.location.hash here because it's not
+  // consistent across browsers - Firefox will pre-decode it!
+  var href = window.location.href;
+  var index = href.indexOf('#');
+  // empty path
+  if (index < 0) { return '' }
+
+  href = href.slice(index + 1);
+
+  return href
+}
+
+function getUrl (path) {
+  var href = window.location.href;
+  var i = href.indexOf('#');
+  var base = i >= 0 ? href.slice(0, i) : href;
+  return (base + "#" + path)
+}
+
+function pushHash (path) {
+  if (supportsPushState) {
+    pushState(getUrl(path));
+  } else {
+    window.location.hash = path;
+  }
+}
+
+function replaceHash (path) {
+  if (supportsPushState) {
+    replaceState(getUrl(path));
+  } else {
+    window.location.replace(getUrl(path));
+  }
+}
+
+/*  */
+
+var AbstractHistory = /*@__PURE__*/(function (History) {
+  function AbstractHistory (router, base) {
+    History.call(this, router, base);
+    this.stack = [];
+    this.index = -1;
+  }
+
+  if ( History ) AbstractHistory.__proto__ = History;
+  AbstractHistory.prototype = Object.create( History && History.prototype );
+  AbstractHistory.prototype.constructor = AbstractHistory;
+
+  AbstractHistory.prototype.push = function push (location, onComplete, onAbort) {
+    var this$1$1 = this;
+
+    this.transitionTo(
+      location,
+      function (route) {
+        this$1$1.stack = this$1$1.stack.slice(0, this$1$1.index + 1).concat(route);
+        this$1$1.index++;
+        onComplete && onComplete(route);
+      },
+      onAbort
+    );
+  };
+
+  AbstractHistory.prototype.replace = function replace (location, onComplete, onAbort) {
+    var this$1$1 = this;
+
+    this.transitionTo(
+      location,
+      function (route) {
+        this$1$1.stack = this$1$1.stack.slice(0, this$1$1.index).concat(route);
+        onComplete && onComplete(route);
+      },
+      onAbort
+    );
+  };
+
+  AbstractHistory.prototype.go = function go (n) {
+    var this$1$1 = this;
+
+    var targetIndex = this.index + n;
+    if (targetIndex < 0 || targetIndex >= this.stack.length) {
+      return
+    }
+    var route = this.stack[targetIndex];
+    this.confirmTransition(
+      route,
+      function () {
+        var prev = this$1$1.current;
+        this$1$1.index = targetIndex;
+        this$1$1.updateRoute(route);
+        this$1$1.router.afterHooks.forEach(function (hook) {
+          hook && hook(route, prev);
+        });
+      },
+      function (err) {
+        if (isNavigationFailure(err, NavigationFailureType.duplicated)) {
+          this$1$1.index = targetIndex;
+        }
+      }
+    );
+  };
+
+  AbstractHistory.prototype.getCurrentLocation = function getCurrentLocation () {
+    var current = this.stack[this.stack.length - 1];
+    return current ? current.fullPath : '/'
+  };
+
+  AbstractHistory.prototype.ensureURL = function ensureURL () {
+    // noop
+  };
+
+  return AbstractHistory;
+}(History));
+
+/*  */
+
+
+
+var VueRouter = function VueRouter (options) {
+  if ( options === void 0 ) options = {};
+
+  if (true) {
+    warn(this instanceof VueRouter, "Router must be called with the new operator.");
+  }
+  this.app = null;
+  this.apps = [];
+  this.options = options;
+  this.beforeHooks = [];
+  this.resolveHooks = [];
+  this.afterHooks = [];
+  this.matcher = createMatcher(options.routes || [], this);
+
+  var mode = options.mode || 'hash';
+  this.fallback =
+    mode === 'history' && !supportsPushState && options.fallback !== false;
+  if (this.fallback) {
+    mode = 'hash';
+  }
+  if (!inBrowser) {
+    mode = 'abstract';
+  }
+  this.mode = mode;
+
+  switch (mode) {
+    case 'history':
+      this.history = new HTML5History(this, options.base);
+      break
+    case 'hash':
+      this.history = new HashHistory(this, options.base, this.fallback);
+      break
+    case 'abstract':
+      this.history = new AbstractHistory(this, options.base);
+      break
+    default:
+      if (true) {
+        assert(false, ("invalid mode: " + mode));
+      }
+  }
+};
+
+var prototypeAccessors = { currentRoute: { configurable: true } };
+
+VueRouter.prototype.match = function match (raw, current, redirectedFrom) {
+  return this.matcher.match(raw, current, redirectedFrom)
+};
+
+prototypeAccessors.currentRoute.get = function () {
+  return this.history && this.history.current
+};
+
+VueRouter.prototype.init = function init (app /* Vue component instance */) {
+    var this$1$1 = this;
+
+   true &&
+    assert(
+      install.installed,
+      "not installed. Make sure to call `Vue.use(VueRouter)` " +
+        "before creating root instance."
+    );
+
+  this.apps.push(app);
+
+  // set up app destroyed handler
+  // https://github.com/vuejs/vue-router/issues/2639
+  app.$once('hook:destroyed', function () {
+    // clean out app from this.apps array once destroyed
+    var index = this$1$1.apps.indexOf(app);
+    if (index > -1) { this$1$1.apps.splice(index, 1); }
+    // ensure we still have a main app or null if no apps
+    // we do not release the router so it can be reused
+    if (this$1$1.app === app) { this$1$1.app = this$1$1.apps[0] || null; }
+
+    if (!this$1$1.app) { this$1$1.history.teardown(); }
+  });
+
+  // main app previously initialized
+  // return as we don't need to set up new history listener
+  if (this.app) {
+    return
+  }
+
+  this.app = app;
+
+  var history = this.history;
+
+  if (history instanceof HTML5History || history instanceof HashHistory) {
+    var handleInitialScroll = function (routeOrError) {
+      var from = history.current;
+      var expectScroll = this$1$1.options.scrollBehavior;
+      var supportsScroll = supportsPushState && expectScroll;
+
+      if (supportsScroll && 'fullPath' in routeOrError) {
+        handleScroll(this$1$1, routeOrError, from, false);
+      }
+    };
+    var setupListeners = function (routeOrError) {
+      history.setupListeners();
+      handleInitialScroll(routeOrError);
+    };
+    history.transitionTo(
+      history.getCurrentLocation(),
+      setupListeners,
+      setupListeners
+    );
+  }
+
+  history.listen(function (route) {
+    this$1$1.apps.forEach(function (app) {
+      app._route = route;
+    });
+  });
+};
+
+VueRouter.prototype.beforeEach = function beforeEach (fn) {
+  return registerHook(this.beforeHooks, fn)
+};
+
+VueRouter.prototype.beforeResolve = function beforeResolve (fn) {
+  return registerHook(this.resolveHooks, fn)
+};
+
+VueRouter.prototype.afterEach = function afterEach (fn) {
+  return registerHook(this.afterHooks, fn)
+};
+
+VueRouter.prototype.onReady = function onReady (cb, errorCb) {
+  this.history.onReady(cb, errorCb);
+};
+
+VueRouter.prototype.onError = function onError (errorCb) {
+  this.history.onError(errorCb);
+};
+
+VueRouter.prototype.push = function push (location, onComplete, onAbort) {
+    var this$1$1 = this;
+
+  // $flow-disable-line
+  if (!onComplete && !onAbort && typeof Promise !== 'undefined') {
+    return new Promise(function (resolve, reject) {
+      this$1$1.history.push(location, resolve, reject);
+    })
+  } else {
+    this.history.push(location, onComplete, onAbort);
+  }
+};
+
+VueRouter.prototype.replace = function replace (location, onComplete, onAbort) {
+    var this$1$1 = this;
+
+  // $flow-disable-line
+  if (!onComplete && !onAbort && typeof Promise !== 'undefined') {
+    return new Promise(function (resolve, reject) {
+      this$1$1.history.replace(location, resolve, reject);
+    })
+  } else {
+    this.history.replace(location, onComplete, onAbort);
+  }
+};
+
+VueRouter.prototype.go = function go (n) {
+  this.history.go(n);
+};
+
+VueRouter.prototype.back = function back () {
+  this.go(-1);
+};
+
+VueRouter.prototype.forward = function forward () {
+  this.go(1);
+};
+
+VueRouter.prototype.getMatchedComponents = function getMatchedComponents (to) {
+  var route = to
+    ? to.matched
+      ? to
+      : this.resolve(to).route
+    : this.currentRoute;
+  if (!route) {
+    return []
+  }
+  return [].concat.apply(
+    [],
+    route.matched.map(function (m) {
+      return Object.keys(m.components).map(function (key) {
+        return m.components[key]
+      })
+    })
+  )
+};
+
+VueRouter.prototype.resolve = function resolve (
+  to,
+  current,
+  append
+) {
+  current = current || this.history.current;
+  var location = normalizeLocation(to, current, append, this);
+  var route = this.match(location, current);
+  var fullPath = route.redirectedFrom || route.fullPath;
+  var base = this.history.base;
+  var href = createHref(base, fullPath, this.mode);
+  return {
+    location: location,
+    route: route,
+    href: href,
+    // for backwards compat
+    normalizedTo: location,
+    resolved: route
+  }
+};
+
+VueRouter.prototype.getRoutes = function getRoutes () {
+  return this.matcher.getRoutes()
+};
+
+VueRouter.prototype.addRoute = function addRoute (parentOrRoute, route) {
+  this.matcher.addRoute(parentOrRoute, route);
+  if (this.history.current !== START) {
+    this.history.transitionTo(this.history.getCurrentLocation());
+  }
+};
+
+VueRouter.prototype.addRoutes = function addRoutes (routes) {
+  if (true) {
+    warn(false, 'router.addRoutes() is deprecated and has been removed in Vue Router 4. Use router.addRoute() instead.');
+  }
+  this.matcher.addRoutes(routes);
+  if (this.history.current !== START) {
+    this.history.transitionTo(this.history.getCurrentLocation());
+  }
+};
+
+Object.defineProperties( VueRouter.prototype, prototypeAccessors );
+
+var VueRouter$1 = VueRouter;
+
+function registerHook (list, fn) {
+  list.push(fn);
+  return function () {
+    var i = list.indexOf(fn);
+    if (i > -1) { list.splice(i, 1); }
+  }
+}
+
+function createHref (base, fullPath, mode) {
+  var path = mode === 'hash' ? '#' + fullPath : fullPath;
+  return base ? cleanPath(base + '/' + path) : path
+}
+
+// We cannot remove this as it would be a breaking change
+VueRouter.install = install;
+VueRouter.version = '3.6.5';
+VueRouter.isNavigationFailure = isNavigationFailure;
+VueRouter.NavigationFailureType = NavigationFailureType;
+VueRouter.START_LOCATION = START;
+
+if (inBrowser && window.Vue) {
+  window.Vue.use(VueRouter);
+}
+
+var version = '3.6.5';
+
+
+
+
+/***/ }),
+
+/***/ "./node_modules/vuex-router-sync/index.js":
+/*!************************************************!*\
+  !*** ./node_modules/vuex-router-sync/index.js ***!
+  \************************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+exports.sync = function (store, router, options) {
+  var moduleName = (options || {}).moduleName || 'route'
+
+  store.registerModule(moduleName, {
+    namespaced: true,
+    state: cloneRoute(router.currentRoute),
+    mutations: {
+      'ROUTE_CHANGED': function ROUTE_CHANGED (state, transition) {
+        store.state[moduleName] = cloneRoute(transition.to, transition.from)
+      }
+    }
+  })
+
+  var isTimeTraveling = false
+  var currentPath
+
+  // sync router on store change
+  var storeUnwatch = store.watch(
+    function (state) { return state[moduleName]; },
+    function (route) {
+      var fullPath = route.fullPath;
+      if (fullPath === currentPath) {
+        return
+      }
+      if (currentPath != null) {
+        isTimeTraveling = true
+        router.push(route)
+      }
+      currentPath = fullPath
+    },
+    { sync: true }
+  )
+
+  // sync store on router navigation
+  var afterEachUnHook = router.afterEach(function (to, from) {
+    if (isTimeTraveling) {
+      isTimeTraveling = false
+      return
+    }
+    currentPath = to.fullPath
+    store.commit(moduleName + '/ROUTE_CHANGED', { to: to, from: from })
+  })
+
+  return function unsync () {
+    // On unsync, remove router hook
+    if (afterEachUnHook != null) {
+      afterEachUnHook()
+    }
+
+    // On unsync, remove store watch
+    if (storeUnwatch != null) {
+      storeUnwatch()
+    }
+
+    // On unsync, unregister Module with store
+    store.unregisterModule(moduleName)
+  }
+}
+
+function cloneRoute (to, from) {
+  var clone = {
+    name: to.name,
+    path: to.path,
+    hash: to.hash,
+    query: to.query,
+    params: to.params,
+    fullPath: to.fullPath,
+    meta: to.meta
+  }
+  if (from) {
+    clone.from = cloneRoute(from)
+  }
+  return Object.freeze(clone)
+}
+
+
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			id: moduleId,
+/******/ 			loaded: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = __webpack_modules__;
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/chunk loaded */
+/******/ 	(() => {
+/******/ 		var deferred = [];
+/******/ 		__webpack_require__.O = (result, chunkIds, fn, priority) => {
+/******/ 			if(chunkIds) {
+/******/ 				priority = priority || 0;
+/******/ 				for(var i = deferred.length; i > 0 && deferred[i - 1][2] > priority; i--) deferred[i] = deferred[i - 1];
+/******/ 				deferred[i] = [chunkIds, fn, priority];
+/******/ 				return;
+/******/ 			}
+/******/ 			var notFulfilled = Infinity;
+/******/ 			for (var i = 0; i < deferred.length; i++) {
+/******/ 				var chunkIds = deferred[i][0];
+/******/ 				var fn = deferred[i][1];
+/******/ 				var priority = deferred[i][2];
+/******/ 				var fulfilled = true;
+/******/ 				for (var j = 0; j < chunkIds.length; j++) {
+/******/ 					if ((priority & 1 === 0 || notFulfilled >= priority) && Object.keys(__webpack_require__.O).every((key) => (__webpack_require__.O[key](chunkIds[j])))) {
+/******/ 						chunkIds.splice(j--, 1);
+/******/ 					} else {
+/******/ 						fulfilled = false;
+/******/ 						if(priority < notFulfilled) notFulfilled = priority;
+/******/ 					}
+/******/ 				}
+/******/ 				if(fulfilled) {
+/******/ 					deferred.splice(i--, 1)
+/******/ 					var r = fn();
+/******/ 					if (r !== undefined) result = r;
+/******/ 				}
+/******/ 			}
+/******/ 			return result;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__webpack_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__webpack_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/ensure chunk */
+/******/ 	(() => {
+/******/ 		__webpack_require__.f = {};
+/******/ 		// This file contains only the entry chunk.
+/******/ 		// The chunk loading function for additional chunks
+/******/ 		__webpack_require__.e = (chunkId) => {
+/******/ 			return Promise.all(Object.keys(__webpack_require__.f).reduce((promises, key) => {
+/******/ 				__webpack_require__.f[key](chunkId, promises);
+/******/ 				return promises;
+/******/ 			}, []));
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/get javascript chunk filename */
+/******/ 	(() => {
+/******/ 		// This function allow to reference async chunks
+/******/ 		__webpack_require__.u = (chunkId) => {
+/******/ 			// return url for filenames based on template
+/******/ 			return "" + chunkId + "-" + chunkId + ".js?v=" + {"node_modules_nextcloud_dialogs_dist_chunks_index-RkOaxczZ_mjs":"bd4543eedef900694c93","settings-apps-view":"d769387582c5c6d8a95a","settings-users":"4100c74518080eb03282","data_image_svg_xml_3csvg_20xmlns_27http_www_w3_org_2000_svg_27_20width_2724_27_20height_2724_-28884d":"5e4ceb7fd9d03ea20c8b","apps_settings_src_components_AppStoreDiscover_PostType_vue":"ad1f96c92560e66fe53f","apps_settings_src_components_AppStoreDiscover_CarouselType_vue":"e3496713091384ec77bc","apps_settings_src_components_AppStoreDiscover_ShowcaseType_vue":"995d84ab30abc25387a3"}[chunkId] + "";
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/global */
+/******/ 	(() => {
+/******/ 		__webpack_require__.g = (function() {
+/******/ 			if (typeof globalThis === 'object') return globalThis;
+/******/ 			try {
+/******/ 				return this || new Function('return this')();
+/******/ 			} catch (e) {
+/******/ 				if (typeof window === 'object') return window;
+/******/ 			}
+/******/ 		})();
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/load script */
+/******/ 	(() => {
+/******/ 		var inProgress = {};
+/******/ 		var dataWebpackPrefix = "nextcloud:";
+/******/ 		// loadScript function to load a script via script tag
+/******/ 		__webpack_require__.l = (url, done, key, chunkId) => {
+/******/ 			if(inProgress[url]) { inProgress[url].push(done); return; }
+/******/ 			var script, needAttach;
+/******/ 			if(key !== undefined) {
+/******/ 				var scripts = document.getElementsByTagName("script");
+/******/ 				for(var i = 0; i < scripts.length; i++) {
+/******/ 					var s = scripts[i];
+/******/ 					if(s.getAttribute("src") == url || s.getAttribute("data-webpack") == dataWebpackPrefix + key) { script = s; break; }
+/******/ 				}
+/******/ 			}
+/******/ 			if(!script) {
+/******/ 				needAttach = true;
+/******/ 				script = document.createElement('script');
+/******/ 		
+/******/ 				script.charset = 'utf-8';
+/******/ 				script.timeout = 120;
+/******/ 				if (__webpack_require__.nc) {
+/******/ 					script.setAttribute("nonce", __webpack_require__.nc);
+/******/ 				}
+/******/ 				script.setAttribute("data-webpack", dataWebpackPrefix + key);
+/******/ 		
+/******/ 				script.src = url;
+/******/ 			}
+/******/ 			inProgress[url] = [done];
+/******/ 			var onScriptComplete = (prev, event) => {
+/******/ 				// avoid mem leaks in IE.
+/******/ 				script.onerror = script.onload = null;
+/******/ 				clearTimeout(timeout);
+/******/ 				var doneFns = inProgress[url];
+/******/ 				delete inProgress[url];
+/******/ 				script.parentNode && script.parentNode.removeChild(script);
+/******/ 				doneFns && doneFns.forEach((fn) => (fn(event)));
+/******/ 				if(prev) return prev(event);
+/******/ 			}
+/******/ 			var timeout = setTimeout(onScriptComplete.bind(null, undefined, { type: 'timeout', target: script }), 120000);
+/******/ 			script.onerror = onScriptComplete.bind(null, script.onerror);
+/******/ 			script.onload = onScriptComplete.bind(null, script.onload);
+/******/ 			needAttach && document.head.appendChild(script);
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/node module decorator */
+/******/ 	(() => {
+/******/ 		__webpack_require__.nmd = (module) => {
+/******/ 			module.paths = [];
+/******/ 			if (!module.children) module.children = [];
+/******/ 			return module;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/publicPath */
+/******/ 	(() => {
+/******/ 		var scriptUrl;
+/******/ 		if (__webpack_require__.g.importScripts) scriptUrl = __webpack_require__.g.location + "";
+/******/ 		var document = __webpack_require__.g.document;
+/******/ 		if (!scriptUrl && document) {
+/******/ 			if (document.currentScript)
+/******/ 				scriptUrl = document.currentScript.src;
+/******/ 			if (!scriptUrl) {
+/******/ 				var scripts = document.getElementsByTagName("script");
+/******/ 				if(scripts.length) {
+/******/ 					var i = scripts.length - 1;
+/******/ 					while (i > -1 && (!scriptUrl || !/^http(s?):/.test(scriptUrl))) scriptUrl = scripts[i--].src;
+/******/ 				}
+/******/ 			}
+/******/ 		}
+/******/ 		// When supporting browsers where an automatic publicPath is not supported you must specify an output.publicPath manually via configuration
+/******/ 		// or pass an empty string ("") and set the __webpack_public_path__ variable from your code to use your own logic.
+/******/ 		if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");
+/******/ 		scriptUrl = scriptUrl.replace(/#.*$/, "").replace(/\?.*$/, "").replace(/\/[^\/]+$/, "/");
+/******/ 		__webpack_require__.p = scriptUrl;
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/jsonp chunk loading */
+/******/ 	(() => {
+/******/ 		__webpack_require__.b = document.baseURI || self.location.href;
+/******/ 		
+/******/ 		// object to store loaded and loading chunks
+/******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
+/******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
+/******/ 		var installedChunks = {
+/******/ 			"settings-vue-settings-apps-users-management": 0
+/******/ 		};
+/******/ 		
+/******/ 		__webpack_require__.f.j = (chunkId, promises) => {
+/******/ 				// JSONP chunk loading for javascript
+/******/ 				var installedChunkData = __webpack_require__.o(installedChunks, chunkId) ? installedChunks[chunkId] : undefined;
+/******/ 				if(installedChunkData !== 0) { // 0 means "already installed".
+/******/ 		
+/******/ 					// a Promise means "currently loading".
+/******/ 					if(installedChunkData) {
+/******/ 						promises.push(installedChunkData[2]);
+/******/ 					} else {
+/******/ 						if(true) { // all chunks have JS
+/******/ 							// setup Promise in chunk cache
+/******/ 							var promise = new Promise((resolve, reject) => (installedChunkData = installedChunks[chunkId] = [resolve, reject]));
+/******/ 							promises.push(installedChunkData[2] = promise);
+/******/ 		
+/******/ 							// start chunk loading
+/******/ 							var url = __webpack_require__.p + __webpack_require__.u(chunkId);
+/******/ 							// create error before stack unwound to get useful stacktrace later
+/******/ 							var error = new Error();
+/******/ 							var loadingEnded = (event) => {
+/******/ 								if(__webpack_require__.o(installedChunks, chunkId)) {
+/******/ 									installedChunkData = installedChunks[chunkId];
+/******/ 									if(installedChunkData !== 0) installedChunks[chunkId] = undefined;
+/******/ 									if(installedChunkData) {
+/******/ 										var errorType = event && (event.type === 'load' ? 'missing' : event.type);
+/******/ 										var realSrc = event && event.target && event.target.src;
+/******/ 										error.message = 'Loading chunk ' + chunkId + ' failed.\n(' + errorType + ': ' + realSrc + ')';
+/******/ 										error.name = 'ChunkLoadError';
+/******/ 										error.type = errorType;
+/******/ 										error.request = realSrc;
+/******/ 										installedChunkData[1](error);
+/******/ 									}
+/******/ 								}
+/******/ 							};
+/******/ 							__webpack_require__.l(url, loadingEnded, "chunk-" + chunkId, chunkId);
+/******/ 						}
+/******/ 					}
+/******/ 				}
+/******/ 		};
+/******/ 		
+/******/ 		// no prefetching
+/******/ 		
+/******/ 		// no preloaded
+/******/ 		
+/******/ 		// no HMR
+/******/ 		
+/******/ 		// no HMR manifest
+/******/ 		
+/******/ 		__webpack_require__.O.j = (chunkId) => (installedChunks[chunkId] === 0);
+/******/ 		
+/******/ 		// install a JSONP callback for chunk loading
+/******/ 		var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
+/******/ 			var chunkIds = data[0];
+/******/ 			var moreModules = data[1];
+/******/ 			var runtime = data[2];
+/******/ 			// add "moreModules" to the modules object,
+/******/ 			// then flag all "chunkIds" as loaded and fire callback
+/******/ 			var moduleId, chunkId, i = 0;
+/******/ 			if(chunkIds.some((id) => (installedChunks[id] !== 0))) {
+/******/ 				for(moduleId in moreModules) {
+/******/ 					if(__webpack_require__.o(moreModules, moduleId)) {
+/******/ 						__webpack_require__.m[moduleId] = moreModules[moduleId];
+/******/ 					}
+/******/ 				}
+/******/ 				if(runtime) var result = runtime(__webpack_require__);
+/******/ 			}
+/******/ 			if(parentChunkLoadingFunction) parentChunkLoadingFunction(data);
+/******/ 			for(;i < chunkIds.length; i++) {
+/******/ 				chunkId = chunkIds[i];
+/******/ 				if(__webpack_require__.o(installedChunks, chunkId) && installedChunks[chunkId]) {
+/******/ 					installedChunks[chunkId][0]();
+/******/ 				}
+/******/ 				installedChunks[chunkId] = 0;
+/******/ 			}
+/******/ 			return __webpack_require__.O(result);
+/******/ 		}
+/******/ 		
+/******/ 		var chunkLoadingGlobal = self["webpackChunknextcloud"] = self["webpackChunknextcloud"] || [];
+/******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
+/******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/nonce */
+/******/ 	(() => {
+/******/ 		__webpack_require__.nc = undefined;
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
+/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["core-common"], () => (__webpack_require__("./apps/settings/src/main-apps-users-management.ts")))
+/******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
+/******/ 	
+/******/ })()
+;
+//# sourceMappingURL=settings-vue-settings-apps-users-management.js.map?v=3da9435dc70f18ea29a5

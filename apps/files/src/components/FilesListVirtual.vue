@@ -411,7 +411,7 @@ export default defineComponent({
 			// Pinned on top when scrolling
 			position: sticky;
 			z-index: 10;
-			top: 0;
+			top: -1px;
 		}
 
 		// Table footer

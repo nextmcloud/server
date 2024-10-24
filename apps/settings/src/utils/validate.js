@@ -39,6 +39,11 @@ import { VALIDATE_EMAIL_REGEX } from '../constants/AccountPropertyConstants.js'
  * @return {boolean}
  */
 export function validateEmail(input) {
+	console.log('evaluate email', typeof input === 'string'
+		&& VALIDATE_EMAIL_REGEX.test(input)
+		&& input.slice(-1) !== '\n'
+		&& input.length <= 320
+		&& encodeURIComponent(input).replace(/%../g, 'x').length <= 320)
 	return typeof input === 'string'
 		&& VALIDATE_EMAIL_REGEX.test(input)
 		&& input.slice(-1) !== '\n'

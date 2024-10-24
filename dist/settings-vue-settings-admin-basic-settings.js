@@ -1,3 +1,1462 @@
-/*! For license information please see settings-vue-settings-admin-basic-settings.js.LICENSE.txt */
-(()=>{"use strict";var e,n,o,r={9165:(e,t,n)=>{n.d(t,{NZC:()=>a,ZL5:()=>l,fEr:()=>i,kHm:()=>s,n7C:()=>o,vrq:()=>r,zY6:()=>c});var o="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z",r="M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z",a="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z",i="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z",s="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z",l="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z",c="M16.36,14C16.44,13.34 16.5,12.68 16.5,12C16.5,11.32 16.44,10.66 16.36,10H19.74C19.9,10.64 20,11.31 20,12C20,12.69 19.9,13.36 19.74,14M14.59,19.56C15.19,18.45 15.65,17.25 15.97,16H18.92C17.96,17.65 16.43,18.93 14.59,19.56M14.34,14H9.66C9.56,13.34 9.5,12.68 9.5,12C9.5,11.32 9.56,10.65 9.66,10H14.34C14.43,10.65 14.5,11.32 14.5,12C14.5,12.68 14.43,13.34 14.34,14M12,19.96C11.17,18.76 10.5,17.43 10.09,16H13.91C13.5,17.43 12.83,18.76 12,19.96M8,8H5.08C6.03,6.34 7.57,5.06 9.4,4.44C8.8,5.55 8.35,6.75 8,8M5.08,16H8C8.35,17.25 8.8,18.45 9.4,19.56C7.57,18.93 6.03,17.65 5.08,16M4.26,14C4.1,13.36 4,12.69 4,12C4,11.31 4.1,10.64 4.26,10H7.64C7.56,10.66 7.5,11.32 7.5,12C7.5,12.68 7.56,13.34 7.64,14M12,4.03C12.83,5.23 13.5,6.57 13.91,8H10.09C10.5,6.57 11.17,5.23 12,4.03M18.92,8H15.97C15.65,6.75 15.19,5.55 14.59,4.44C16.43,5.07 17.96,6.34 18.92,8M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"},30029:(e,n,o)=>{var r=o(85471),a=o(21777),i=o(38613),s=o(53334);const l=(0,o(53529).YK)().setApp("settings").detectUser().build();var c=o(85168),d=o(26287),A=o(63814),u=o(56760);o(51257);var g=o(9165);const p=Object.freeze({ADDRESS:"address",AVATAR:"avatar",BIOGRAPHY:"biography",DISPLAYNAME:"displayname",EMAIL_COLLECTION:"additional_mail",EMAIL:"email",HEADLINE:"headline",NOTIFICATION_EMAIL:"notify_email",FEDIVERSE:"fediverse",ORGANISATION:"organisation",PHONE:"phone",PROFILE_ENABLED:"profile_enabled",ROLE:"role",TWITTER:"twitter",WEBSITE:"website"}),E=Object.freeze({ADDRESS:(0,s.Tl)("settings","Location"),AVATAR:(0,s.Tl)("settings","Profile picture"),BIOGRAPHY:(0,s.Tl)("settings","About"),DISPLAYNAME:(0,s.Tl)("settings","Full name"),EMAIL_COLLECTION:(0,s.Tl)("settings","Additional email"),EMAIL:(0,s.Tl)("settings","Email"),HEADLINE:(0,s.Tl)("settings","Headline"),ORGANISATION:(0,s.Tl)("settings","Organisation"),PHONE:(0,s.Tl)("settings","Phone number"),PROFILE_ENABLED:(0,s.Tl)("settings","Profile"),ROLE:(0,s.Tl)("settings","Role"),TWITTER:(0,s.Tl)("settings","X (formerly Twitter)"),FEDIVERSE:(0,s.Tl)("settings","Fediverse (e.g. Mastodon)"),WEBSITE:(0,s.Tl)("settings","Website")}),b=(Object.freeze({[p.ADDRESS]:E.ADDRESS,[p.AVATAR]:E.AVATAR,[p.BIOGRAPHY]:E.BIOGRAPHY,[p.DISPLAYNAME]:E.DISPLAYNAME,[p.EMAIL_COLLECTION]:E.EMAIL_COLLECTION,[p.EMAIL]:E.EMAIL,[p.HEADLINE]:E.HEADLINE,[p.ORGANISATION]:E.ORGANISATION,[p.PHONE]:E.PHONE,[p.PROFILE_ENABLED]:E.PROFILE_ENABLED,[p.ROLE]:E.ROLE,[p.TWITTER]:E.TWITTER,[p.FEDIVERSE]:E.FEDIVERSE,[p.WEBSITE]:E.WEBSITE}),Object.freeze({PROFILE_VISIBILITY:(0,s.Tl)("settings","Profile visibility")}),Object.freeze({[E.ADDRESS]:p.ADDRESS,[E.AVATAR]:p.AVATAR,[E.BIOGRAPHY]:p.BIOGRAPHY,[E.DISPLAYNAME]:p.DISPLAYNAME,[E.EMAIL_COLLECTION]:p.EMAIL_COLLECTION,[E.EMAIL]:p.EMAIL,[E.HEADLINE]:p.HEADLINE,[E.ORGANISATION]:p.ORGANISATION,[E.PHONE]:p.PHONE,[E.PROFILE_ENABLED]:p.PROFILE_ENABLED,[E.ROLE]:p.ROLE,[E.TWITTER]:p.TWITTER,[E.FEDIVERSE]:p.FEDIVERSE,[E.WEBSITE]:p.WEBSITE}),Object.freeze({LANGUAGE:"language",LOCALE:"locale"}),Object.freeze({LANGUAGE:(0,s.Tl)("settings","Language"),LOCALE:(0,s.Tl)("settings","Locale")}),Object.freeze({PRIVATE:"v2-private",LOCAL:"v2-local",FEDERATED:"v2-federated",PUBLISHED:"v2-published"}));Object.freeze({[E.ADDRESS]:[b.LOCAL,b.PRIVATE],[E.AVATAR]:[b.LOCAL,b.PRIVATE],[E.BIOGRAPHY]:[b.LOCAL,b.PRIVATE],[E.DISPLAYNAME]:[b.LOCAL],[E.EMAIL_COLLECTION]:[b.LOCAL],[E.EMAIL]:[b.LOCAL],[E.HEADLINE]:[b.LOCAL,b.PRIVATE],[E.ORGANISATION]:[b.LOCAL,b.PRIVATE],[E.PHONE]:[b.LOCAL,b.PRIVATE],[E.PROFILE_ENABLED]:[b.LOCAL,b.PRIVATE],[E.ROLE]:[b.LOCAL,b.PRIVATE],[E.TWITTER]:[b.LOCAL,b.PRIVATE],[E.FEDIVERSE]:[b.LOCAL,b.PRIVATE],[E.WEBSITE]:[b.LOCAL,b.PRIVATE]}),Object.freeze([E.BIOGRAPHY,E.HEADLINE,E.ORGANISATION,E.ROLE]),Object.freeze({[b.PRIVATE]:{name:b.PRIVATE,displayName:(0,s.Tl)("settings","Private"),tooltip:(0,s.Tl)("settings","Only visible to people matched via phone number integration through Talk on mobile"),tooltipDisabled:(0,s.Tl)("settings","Not available as this property is required for core functionality including file sharing and calendar invitations"),icon:g.vrq},[b.LOCAL]:{name:b.LOCAL,displayName:(0,s.Tl)("settings","Local"),tooltip:(0,s.Tl)("settings","Only visible to people on this instance and guests"),icon:g.kHm},[b.FEDERATED]:{name:b.FEDERATED,displayName:(0,s.Tl)("settings","Federated"),tooltip:(0,s.Tl)("settings","Only synchronize to trusted servers"),tooltipDisabled:(0,s.Tl)("settings","Not available as federation has been disabled for your account, contact your system administration if you have any questions"),icon:g.n7C},[b.PUBLISHED]:{name:b.PUBLISHED,displayName:(0,s.Tl)("settings","Published"),tooltip:(0,s.Tl)("settings","Synchronize to trusted servers and the global and public address book"),tooltipDisabled:(0,s.Tl)("settings","Not available as publishing account specific data to the lookup server is not allowed, contact your system administration if you have any questions"),icon:g.zY6}}),b.LOCAL,Object.freeze({NOT_VERIFIED:0,VERIFICATION_IN_PROGRESS:1,VERIFIED:2});var C=o(32073);const v=(0,i.C)("settings","profileEnabledByDefault",!0),m={name:"ProfileSettings",components:{NcCheckboxRadioSwitch:C.A},data:()=>({initialProfileEnabledByDefault:v}),methods:{async onProfileDefaultChange(e){"boolean"==typeof e&&await this.updateProfileDefault(e)},async updateProfileDefault(e){try{var n;const t=await(async e=>{e=e?"1":"0";const t=(0,A.KT)("/apps/provisioning_api/api/v1/config/apps/{appId}/{key}",{appId:"settings",key:"profile_enabled_by_default"});return await(0,u.C)(),(await d.A.post(t,{value:e})).data})(e);this.handleResponse({isEnabled:e,status:null===(n=t.ocs)||void 0===n||null===(n=n.meta)||void 0===n?void 0:n.status})}catch(e){this.handleResponse({errorMessage:t("settings","Unable to update profile default setting"),error:e})}},handleResponse(e){let{isEnabled:t,status:n,errorMessage:o,error:r}=e;"ok"===n?this.initialProfileEnabledByDefault=t:((0,c.Qg)(o),l.error(o,r))}}};var h=o(14486);const L=(0,h.A)(m,(function(){var e=this,t=e._self._c;return t("div",{staticClass:"section",attrs:{id:"profile-settings"}},[t("h2",{staticClass:"inlineblock"},[e._v("\n\t\t"+e._s(e.t("settings","Profile"))+"\n\t")]),e._v(" "),t("p",{staticClass:"settings-hint"},[e._v("\n\t\t"+e._s(e.t("settings","Enable or disable profile by default for new accounts."))+"\n\t")]),e._v(" "),t("NcCheckboxRadioSwitch",{attrs:{type:"switch",checked:e.initialProfileEnabledByDefault},on:{"update:checked":[function(t){e.initialProfileEnabledByDefault=t},e.onProfileDefaultChange]}},[e._v("\n\t\t"+e._s(e.t("settings","Enable"))+"\n\t")])],1)}),[],!1,null,"7490d12a",null).exports;var f=o(88837),T=o(48934),I=o(51651),O=o(96763);const R=(0,i.C)("settings","lastCron"),y=(0,i.C)("settings","cronMaxAge",""),N=(0,i.C)("settings","backgroundJobsMode","cron"),P=(0,i.C)("settings","cliBasedCronPossible",!0),k=(0,i.C)("settings","cliBasedCronUser","www-data"),S=(0,i.C)("settings","backgroundJobsDocUrl"),M={name:"BackgroundJob",components:{NcCheckboxRadioSwitch:C.A,NcSettingsSection:f.A,NcNoteCard:T.A},data:()=>({lastCron:R,cronMaxAge:y,backgroundJobsMode:N,cliBasedCronPossible:P,cliBasedCronUser:k,backgroundJobsDocUrl:S,relativeTime:(0,I.A)(1e3*R).fromNow(),maxAgeRelativeTime:(0,I.A)(1e3*y).fromNow()}),computed:{cronLabel(){let e=t("settings","Use system cron service to call the cron.php file every 5 minutes.");return this.cliBasedCronPossible?e+="<br>"+t("settings",'The cron.php needs to be executed by the system account "{user}".',{user:this.cliBasedCronUser}):e+="<br>"+t("settings","The PHP POSIX extension is required. See {linkstart}PHP documentation{linkend} for more details.",{linkstart:'<a target="_blank" rel="noreferrer nofollow" class="external" href="https://www.php.net/manual/en/book.posix.php">',linkend:"</a>"},void 0,{escape:!1,sanitize:!1}),e},oldExecution(){return Date.now()/1e3-this.lastCron>600},longExecutionNotCron(){return Date.now()/1e3-this.cronMaxAge>43200&&"cron"!==this.backgroundJobsMode},longExecutionCron(){return Date.now()/1e3-this.cronMaxAge>86400&&"cron"===this.backgroundJobsMode}},methods:{async onBackgroundJobModeChanged(e){const n=(0,A.KT)("/apps/provisioning_api/api/v1/config/apps/{appId}/{key}",{appId:"core",key:"backgroundjobs_mode"});await(0,u.C)();try{var o;const{data:t}=await d.A.post(n,{value:e});this.handleResponse({status:null===(o=t.ocs)||void 0===o||null===(o=o.meta)||void 0===o?void 0:o.status})}catch(e){this.handleResponse({errorMessage:t("settings","Unable to update background job mode"),error:e})}},async handleResponse(e){let{status:t,errorMessage:n,error:o}=e;"ok"===t?await this.deleteError():((0,c.Qg)(n),O.error(n,o))},async deleteError(){const e=(0,A.KT)("/apps/provisioning_api/api/v1/config/apps/{appId}/{key}",{appId:"core",key:"cronErrors"});await(0,u.C)();try{await d.A.delete(e)}catch(e){O.error(e)}}}},D=M;var _=o(85072),w=o.n(_),x=o(97825),H=o.n(x),B=o(77659),V=o.n(B),j=o(55056),F=o.n(j),J=o(10540),G=o.n(J),Y=o(41113),U=o.n(Y),W=o(46683),z={};z.styleTagTransform=U(),z.setAttributes=F(),z.insert=V().bind(null,"head"),z.domAPI=H(),z.insertStyleElement=G(),w()(W.A,z),W.A&&W.A.locals&&W.A.locals;const q=(0,h.A)(D,(function(){var e=this,t=e._self._c;return t("NcSettingsSection",{attrs:{name:e.t("settings","Background jobs"),description:e.t("settings","For the server to work properly, it's important to configure background jobs correctly. Cron is the recommended setting. Please see the documentation for more information."),"doc-url":e.backgroundJobsDocUrl}},[0!==e.lastCron?[e.oldExecution?t("NcNoteCard",{attrs:{type:"error"}},[e._v("\n\t\t\t"+e._s(e.t("settings","Last job execution ran {time}. Something seems wrong.",{time:e.relativeTime}))+"\n\t\t")]):e.longExecutionCron?t("NcNoteCard",{attrs:{type:"warning"}},[e._v("\n\t\t\t"+e._s(e.t("settings","Some jobs have not been executed since {maxAgeRelativeTime}. Please consider increasing the execution frequency.",{maxAgeRelativeTime:e.maxAgeRelativeTime}))+"\n\t\t")]):e.longExecutionNotCron?t("NcNoteCard",{attrs:{type:"warning"}},[e._v("\n\t\t\t"+e._s(e.t("settings","Some jobs have not been executed since {maxAgeRelativeTime}. Please consider switching to system cron.",{maxAgeRelativeTime:e.maxAgeRelativeTime}))+"\n\t\t")]):t("NcNoteCard",{attrs:{type:"success"}},[e._v("\n\t\t\t"+e._s(e.t("settings","Last job ran {relativeTime}.",{relativeTime:e.relativeTime}))+"\n\t\t")])]:t("NcNoteCard",{attrs:{type:"error"}},[e._v("\n\t\t"+e._s(e.t("settings","Background job did not run yet!"))+"\n\t")]),e._v(" "),t("NcCheckboxRadioSwitch",{staticClass:"ajaxSwitch",attrs:{type:"radio",checked:e.backgroundJobsMode,name:"backgroundJobsMode",value:"ajax"},on:{"update:checked":[function(t){e.backgroundJobsMode=t},e.onBackgroundJobModeChanged]}},[e._v("\n\t\t"+e._s(e.t("settings","AJAX"))+"\n\t")]),e._v(" "),t("em",[e._v(e._s(e.t("settings","Execute one task with each page loaded. Use case: Single account instance.")))]),e._v(" "),t("NcCheckboxRadioSwitch",{attrs:{type:"radio",checked:e.backgroundJobsMode,name:"backgroundJobsMode",value:"webcron"},on:{"update:checked":[function(t){e.backgroundJobsMode=t},e.onBackgroundJobModeChanged]}},[e._v("\n\t\t"+e._s(e.t("settings","Webcron"))+"\n\t")]),e._v(" "),t("em",[e._v(e._s(e.t("settings","cron.php is registered at a webcron service to call cron.php every 5 minutes over HTTP. Use case: Very small instance (1–5 accounts depending on the usage).")))]),e._v(" "),t("NcCheckboxRadioSwitch",{attrs:{type:"radio",disabled:!e.cliBasedCronPossible,checked:e.backgroundJobsMode,value:"cron",name:"backgroundJobsMode"},on:{"update:checked":[function(t){e.backgroundJobsMode=t},e.onBackgroundJobModeChanged]}},[e._v("\n\t\t"+e._s(e.t("settings","Cron (Recommended)"))+"\n\t")]),e._v(" "),t("em",{domProps:{innerHTML:e._s(e.cronLabel)}})],2)}),[],!1,null,"0875cbc5",null).exports;o.nc=btoa((0,a.do)());const Z=(0,i.C)("settings","profileEnabledGlobally",!0);r.Ay.mixin({props:{logger:l},methods:{t:s.Tl}}),(new(r.Ay.extend(q))).$mount("#vue-admin-background-job"),Z&&(new(r.Ay.extend(L))).$mount("#vue-admin-profile-settings")},46683:(e,t,n)=>{n.d(t,{A:()=>s});var o=n(71354),r=n.n(o),a=n(76314),i=n.n(a)()(r());i.push([e.id,".error[data-v-0875cbc5]{margin-top:8px;padding:5px;border-radius:var(--border-radius);color:var(--color-primary-element-text);background-color:var(--color-error);width:initial}.warning[data-v-0875cbc5]{margin-top:8px;padding:5px;border-radius:var(--border-radius);color:var(--color-primary-element-text);background-color:var(--color-warning);width:initial}.ajaxSwitch[data-v-0875cbc5]{margin-top:1rem}","",{version:3,sources:["webpack://./apps/settings/src/components/BasicSettings/BackgroundJob.vue"],names:[],mappings:"AACA,wBACC,cAAA,CACA,WAAA,CACA,kCAAA,CACA,uCAAA,CACA,mCAAA,CACA,aAAA,CAED,0BACC,cAAA,CACA,WAAA,CACA,kCAAA,CACA,uCAAA,CACA,qCAAA,CACA,aAAA,CAED,6BACC,eAAA",sourcesContent:["\n.error {\n\tmargin-top: 8px;\n\tpadding: 5px;\n\tborder-radius: var(--border-radius);\n\tcolor: var(--color-primary-element-text);\n\tbackground-color: var(--color-error);\n\twidth: initial;\n}\n.warning {\n\tmargin-top: 8px;\n\tpadding: 5px;\n\tborder-radius: var(--border-radius);\n\tcolor: var(--color-primary-element-text);\n\tbackground-color: var(--color-warning);\n\twidth: initial;\n}\n.ajaxSwitch {\n\tmargin-top: 1rem;\n}\n"],sourceRoot:""}]);const s=i}},a={};function i(e){var t=a[e];if(void 0!==t)return t.exports;var n=a[e]={id:e,loaded:!1,exports:{}};return r[e].call(n.exports,n,n.exports,i),n.loaded=!0,n.exports}i.m=r,e=[],i.O=(t,n,o,r)=>{if(!n){var a=1/0;for(d=0;d<e.length;d++){n=e[d][0],o=e[d][1],r=e[d][2];for(var s=!0,l=0;l<n.length;l++)(!1&r||a>=r)&&Object.keys(i.O).every((e=>i.O[e](n[l])))?n.splice(l--,1):(s=!1,r<a&&(a=r));if(s){e.splice(d--,1);var c=o();void 0!==c&&(t=c)}}return t}r=r||0;for(var d=e.length;d>0&&e[d-1][2]>r;d--)e[d]=e[d-1];e[d]=[n,o,r]},i.n=e=>{var t=e&&e.__esModule?()=>e.default:()=>e;return i.d(t,{a:t}),t},i.d=(e,t)=>{for(var n in t)i.o(t,n)&&!i.o(e,n)&&Object.defineProperty(e,n,{enumerable:!0,get:t[n]})},i.f={},i.e=e=>Promise.all(Object.keys(i.f).reduce(((t,n)=>(i.f[n](e,t),t)),[])),i.u=e=>e+"-"+e+".js?v="+{7560:"8bb59db6d769c5865c25",8618:"d30d39583cd1936d2676"}[e],i.g=function(){if("object"==typeof globalThis)return globalThis;try{return this||new Function("return this")()}catch(e){if("object"==typeof window)return window}}(),i.o=(e,t)=>Object.prototype.hasOwnProperty.call(e,t),n={},o="nextcloud:",i.l=(e,t,r,a)=>{if(n[e])n[e].push(t);else{var s,l;if(void 0!==r)for(var c=document.getElementsByTagName("script"),d=0;d<c.length;d++){var A=c[d];if(A.getAttribute("src")==e||A.getAttribute("data-webpack")==o+r){s=A;break}}s||(l=!0,(s=document.createElement("script")).charset="utf-8",s.timeout=120,i.nc&&s.setAttribute("nonce",i.nc),s.setAttribute("data-webpack",o+r),s.src=e),n[e]=[t];var u=(t,o)=>{s.onerror=s.onload=null,clearTimeout(g);var r=n[e];if(delete n[e],s.parentNode&&s.parentNode.removeChild(s),r&&r.forEach((e=>e(o))),t)return t(o)},g=setTimeout(u.bind(null,void 0,{type:"timeout",target:s}),12e4);s.onerror=u.bind(null,s.onerror),s.onload=u.bind(null,s.onload),l&&document.head.appendChild(s)}},i.r=e=>{"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},i.nmd=e=>(e.paths=[],e.children||(e.children=[]),e),i.j=6282,(()=>{var e;i.g.importScripts&&(e=i.g.location+"");var t=i.g.document;if(!e&&t&&(t.currentScript&&(e=t.currentScript.src),!e)){var n=t.getElementsByTagName("script");if(n.length)for(var o=n.length-1;o>-1&&(!e||!/^http(s?):/.test(e));)e=n[o--].src}if(!e)throw new Error("Automatic publicPath is not supported in this browser");e=e.replace(/#.*$/,"").replace(/\?.*$/,"").replace(/\/[^\/]+$/,"/"),i.p=e})(),(()=>{i.b=document.baseURI||self.location.href;var e={6282:0};i.f.j=(t,n)=>{var o=i.o(e,t)?e[t]:void 0;if(0!==o)if(o)n.push(o[2]);else{var r=new Promise(((n,r)=>o=e[t]=[n,r]));n.push(o[2]=r);var a=i.p+i.u(t),s=new Error;i.l(a,(n=>{if(i.o(e,t)&&(0!==(o=e[t])&&(e[t]=void 0),o)){var r=n&&("load"===n.type?"missing":n.type),a=n&&n.target&&n.target.src;s.message="Loading chunk "+t+" failed.\n("+r+": "+a+")",s.name="ChunkLoadError",s.type=r,s.request=a,o[1](s)}}),"chunk-"+t,t)}},i.O.j=t=>0===e[t];var t=(t,n)=>{var o,r,a=n[0],s=n[1],l=n[2],c=0;if(a.some((t=>0!==e[t]))){for(o in s)i.o(s,o)&&(i.m[o]=s[o]);if(l)var d=l(i)}for(t&&t(n);c<a.length;c++)r=a[c],i.o(e,r)&&e[r]&&e[r][0](),e[r]=0;return i.O(d)},n=self.webpackChunknextcloud=self.webpackChunknextcloud||[];n.forEach(t.bind(null,0)),n.push=t.bind(null,n.push.bind(n))})(),i.nc=void 0;var s=i.O(void 0,[4208],(()=>i(30029)));s=i.O(s)})();
-//# sourceMappingURL=settings-vue-settings-admin-basic-settings.js.map?v=54d35240ee0bf932cc80
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./apps/settings/src/constants/AccountPropertyConstants.js":
+/*!*****************************************************************!*\
+  !*** ./apps/settings/src/constants/AccountPropertyConstants.js ***!
+  \*****************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ACCOUNT_PROPERTY_ENUM: () => (/* binding */ ACCOUNT_PROPERTY_ENUM),
+/* harmony export */   ACCOUNT_PROPERTY_READABLE_ENUM: () => (/* binding */ ACCOUNT_PROPERTY_READABLE_ENUM),
+/* harmony export */   ACCOUNT_SETTING_PROPERTY_ENUM: () => (/* binding */ ACCOUNT_SETTING_PROPERTY_ENUM),
+/* harmony export */   ACCOUNT_SETTING_PROPERTY_READABLE_ENUM: () => (/* binding */ ACCOUNT_SETTING_PROPERTY_READABLE_ENUM),
+/* harmony export */   DEFAULT_ADDITIONAL_EMAIL_SCOPE: () => (/* binding */ DEFAULT_ADDITIONAL_EMAIL_SCOPE),
+/* harmony export */   NAME_READABLE_ENUM: () => (/* binding */ NAME_READABLE_ENUM),
+/* harmony export */   PROFILE_READABLE_ENUM: () => (/* binding */ PROFILE_READABLE_ENUM),
+/* harmony export */   PROPERTY_READABLE_KEYS_ENUM: () => (/* binding */ PROPERTY_READABLE_KEYS_ENUM),
+/* harmony export */   PROPERTY_READABLE_SUPPORTED_SCOPES_ENUM: () => (/* binding */ PROPERTY_READABLE_SUPPORTED_SCOPES_ENUM),
+/* harmony export */   SCOPE_ENUM: () => (/* binding */ SCOPE_ENUM),
+/* harmony export */   SCOPE_PROPERTY_ENUM: () => (/* binding */ SCOPE_PROPERTY_ENUM),
+/* harmony export */   SCOPE_SUFFIX: () => (/* binding */ SCOPE_SUFFIX),
+/* harmony export */   UNPUBLISHED_READABLE_PROPERTIES: () => (/* binding */ UNPUBLISHED_READABLE_PROPERTIES),
+/* harmony export */   VALIDATE_EMAIL_REGEX: () => (/* binding */ VALIDATE_EMAIL_REGEX),
+/* harmony export */   VERIFICATION_ENUM: () => (/* binding */ VERIFICATION_ENUM)
+/* harmony export */ });
+/* harmony import */ var _mdi_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @mdi/js */ "./node_modules/@mdi/js/mdi.js");
+/* harmony import */ var _nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @nextcloud/l10n */ "./node_modules/@nextcloud/l10n/dist/index.mjs");
+/**
+ * @copyright 2021, Christopher Ng <chrng8@gmail.com>
+ *
+ * @author Christopher Ng <chrng8@gmail.com>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+/*
+ * SYNC to be kept in sync with `lib/public/Accounts/IAccountManager.php`
+ */
+
+
+
+
+/** Enum of account properties */
+const ACCOUNT_PROPERTY_ENUM = Object.freeze({
+  ADDRESS: 'address',
+  AVATAR: 'avatar',
+  BIOGRAPHY: 'biography',
+  DISPLAYNAME: 'displayname',
+  EMAIL_COLLECTION: 'additional_mail',
+  EMAIL: 'email',
+  HEADLINE: 'headline',
+  NOTIFICATION_EMAIL: 'notify_email',
+  FEDIVERSE: 'fediverse',
+  ORGANISATION: 'organisation',
+  PHONE: 'phone',
+  PROFILE_ENABLED: 'profile_enabled',
+  ROLE: 'role',
+  TWITTER: 'twitter',
+  WEBSITE: 'website'
+});
+
+/** Enum of account properties to human readable account property names */
+const ACCOUNT_PROPERTY_READABLE_ENUM = Object.freeze({
+  ADDRESS: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Location'),
+  AVATAR: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Profile picture'),
+  BIOGRAPHY: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'About'),
+  DISPLAYNAME: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Full name'),
+  EMAIL_COLLECTION: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Additional email'),
+  EMAIL: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Email'),
+  HEADLINE: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Headline'),
+  ORGANISATION: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Organisation'),
+  PHONE: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Phone number'),
+  PROFILE_ENABLED: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Profile'),
+  ROLE: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Role'),
+  TWITTER: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'X (formerly Twitter)'),
+  FEDIVERSE: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Fediverse (e.g. Mastodon)'),
+  WEBSITE: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Website')
+});
+const NAME_READABLE_ENUM = Object.freeze({
+  [ACCOUNT_PROPERTY_ENUM.ADDRESS]: ACCOUNT_PROPERTY_READABLE_ENUM.ADDRESS,
+  [ACCOUNT_PROPERTY_ENUM.AVATAR]: ACCOUNT_PROPERTY_READABLE_ENUM.AVATAR,
+  [ACCOUNT_PROPERTY_ENUM.BIOGRAPHY]: ACCOUNT_PROPERTY_READABLE_ENUM.BIOGRAPHY,
+  [ACCOUNT_PROPERTY_ENUM.DISPLAYNAME]: ACCOUNT_PROPERTY_READABLE_ENUM.DISPLAYNAME,
+  [ACCOUNT_PROPERTY_ENUM.EMAIL_COLLECTION]: ACCOUNT_PROPERTY_READABLE_ENUM.EMAIL_COLLECTION,
+  [ACCOUNT_PROPERTY_ENUM.EMAIL]: ACCOUNT_PROPERTY_READABLE_ENUM.EMAIL,
+  [ACCOUNT_PROPERTY_ENUM.HEADLINE]: ACCOUNT_PROPERTY_READABLE_ENUM.HEADLINE,
+  [ACCOUNT_PROPERTY_ENUM.ORGANISATION]: ACCOUNT_PROPERTY_READABLE_ENUM.ORGANISATION,
+  [ACCOUNT_PROPERTY_ENUM.PHONE]: ACCOUNT_PROPERTY_READABLE_ENUM.PHONE,
+  [ACCOUNT_PROPERTY_ENUM.PROFILE_ENABLED]: ACCOUNT_PROPERTY_READABLE_ENUM.PROFILE_ENABLED,
+  [ACCOUNT_PROPERTY_ENUM.ROLE]: ACCOUNT_PROPERTY_READABLE_ENUM.ROLE,
+  [ACCOUNT_PROPERTY_ENUM.TWITTER]: ACCOUNT_PROPERTY_READABLE_ENUM.TWITTER,
+  [ACCOUNT_PROPERTY_ENUM.FEDIVERSE]: ACCOUNT_PROPERTY_READABLE_ENUM.FEDIVERSE,
+  [ACCOUNT_PROPERTY_ENUM.WEBSITE]: ACCOUNT_PROPERTY_READABLE_ENUM.WEBSITE
+});
+
+/** Enum of profile specific sections to human readable names */
+const PROFILE_READABLE_ENUM = Object.freeze({
+  PROFILE_VISIBILITY: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Profile visibility')
+});
+
+/** Enum of readable account properties to account property keys used by the server */
+const PROPERTY_READABLE_KEYS_ENUM = Object.freeze({
+  [ACCOUNT_PROPERTY_READABLE_ENUM.ADDRESS]: ACCOUNT_PROPERTY_ENUM.ADDRESS,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.AVATAR]: ACCOUNT_PROPERTY_ENUM.AVATAR,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.BIOGRAPHY]: ACCOUNT_PROPERTY_ENUM.BIOGRAPHY,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.DISPLAYNAME]: ACCOUNT_PROPERTY_ENUM.DISPLAYNAME,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.EMAIL_COLLECTION]: ACCOUNT_PROPERTY_ENUM.EMAIL_COLLECTION,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.EMAIL]: ACCOUNT_PROPERTY_ENUM.EMAIL,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.HEADLINE]: ACCOUNT_PROPERTY_ENUM.HEADLINE,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.ORGANISATION]: ACCOUNT_PROPERTY_ENUM.ORGANISATION,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.PHONE]: ACCOUNT_PROPERTY_ENUM.PHONE,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.PROFILE_ENABLED]: ACCOUNT_PROPERTY_ENUM.PROFILE_ENABLED,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.ROLE]: ACCOUNT_PROPERTY_ENUM.ROLE,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.TWITTER]: ACCOUNT_PROPERTY_ENUM.TWITTER,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.FEDIVERSE]: ACCOUNT_PROPERTY_ENUM.FEDIVERSE,
+  [ACCOUNT_PROPERTY_READABLE_ENUM.WEBSITE]: ACCOUNT_PROPERTY_ENUM.WEBSITE
+});
+
+/**
+ * Enum of account setting properties
+ *
+ * Account setting properties unlike account properties do not support scopes*
+ */
+const ACCOUNT_SETTING_PROPERTY_ENUM = Object.freeze({
+  LANGUAGE: 'language',
+  LOCALE: 'locale'
+});
+
+/** Enum of account setting properties to human readable setting properties */
+const ACCOUNT_SETTING_PROPERTY_READABLE_ENUM = Object.freeze({
+  LANGUAGE: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Language'),
+  LOCALE: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Locale')
+});
+
+/** Enum of scopes */
+const SCOPE_ENUM = Object.freeze({
+  PRIVATE: 'v2-private',
+  LOCAL: 'v2-local',
+  FEDERATED: 'v2-federated',
+  PUBLISHED: 'v2-published'
+});
+
+/** Enum of readable account properties to supported scopes */
+const PROPERTY_READABLE_SUPPORTED_SCOPES_ENUM = Object.freeze({
+  [ACCOUNT_PROPERTY_READABLE_ENUM.ADDRESS]: [SCOPE_ENUM.LOCAL, SCOPE_ENUM.PRIVATE],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.AVATAR]: [SCOPE_ENUM.LOCAL, SCOPE_ENUM.PRIVATE],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.BIOGRAPHY]: [SCOPE_ENUM.LOCAL, SCOPE_ENUM.PRIVATE],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.DISPLAYNAME]: [SCOPE_ENUM.LOCAL],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.EMAIL_COLLECTION]: [SCOPE_ENUM.LOCAL],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.EMAIL]: [SCOPE_ENUM.LOCAL],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.HEADLINE]: [SCOPE_ENUM.LOCAL, SCOPE_ENUM.PRIVATE],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.ORGANISATION]: [SCOPE_ENUM.LOCAL, SCOPE_ENUM.PRIVATE],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.PHONE]: [SCOPE_ENUM.LOCAL, SCOPE_ENUM.PRIVATE],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.PROFILE_ENABLED]: [SCOPE_ENUM.LOCAL, SCOPE_ENUM.PRIVATE],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.ROLE]: [SCOPE_ENUM.LOCAL, SCOPE_ENUM.PRIVATE],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.TWITTER]: [SCOPE_ENUM.LOCAL, SCOPE_ENUM.PRIVATE],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.FEDIVERSE]: [SCOPE_ENUM.LOCAL, SCOPE_ENUM.PRIVATE],
+  [ACCOUNT_PROPERTY_READABLE_ENUM.WEBSITE]: [SCOPE_ENUM.LOCAL, SCOPE_ENUM.PRIVATE]
+});
+
+/** List of readable account properties which aren't published to the lookup server */
+const UNPUBLISHED_READABLE_PROPERTIES = Object.freeze([ACCOUNT_PROPERTY_READABLE_ENUM.BIOGRAPHY, ACCOUNT_PROPERTY_READABLE_ENUM.HEADLINE, ACCOUNT_PROPERTY_READABLE_ENUM.ORGANISATION, ACCOUNT_PROPERTY_READABLE_ENUM.ROLE]);
+
+/** Scope suffix */
+const SCOPE_SUFFIX = 'Scope';
+
+/**
+ * Enum of scope names to properties
+ *
+ * Used for federation control*
+ */
+const SCOPE_PROPERTY_ENUM = Object.freeze({
+  [SCOPE_ENUM.PRIVATE]: {
+    name: SCOPE_ENUM.PRIVATE,
+    displayName: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Private'),
+    tooltip: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Only visible to people matched via phone number integration through Talk on mobile'),
+    tooltipDisabled: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Not available as this property is required for core functionality including file sharing and calendar invitations'),
+    icon: _mdi_js__WEBPACK_IMPORTED_MODULE_1__.mdiCellphone
+  },
+  [SCOPE_ENUM.LOCAL]: {
+    name: SCOPE_ENUM.LOCAL,
+    displayName: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Local'),
+    tooltip: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Only visible to people on this instance and guests'),
+    // tooltipDisabled is not required here as this scope is supported by all account properties
+    icon: _mdi_js__WEBPACK_IMPORTED_MODULE_1__.mdiLock
+  },
+  [SCOPE_ENUM.FEDERATED]: {
+    name: SCOPE_ENUM.FEDERATED,
+    displayName: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Federated'),
+    tooltip: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Only synchronize to trusted servers'),
+    tooltipDisabled: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Not available as federation has been disabled for your account, contact your system administration if you have any questions'),
+    icon: _mdi_js__WEBPACK_IMPORTED_MODULE_1__.mdiAccountGroup
+  },
+  [SCOPE_ENUM.PUBLISHED]: {
+    name: SCOPE_ENUM.PUBLISHED,
+    displayName: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Published'),
+    tooltip: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Synchronize to trusted servers and the global and public address book'),
+    tooltipDisabled: (0,_nextcloud_l10n__WEBPACK_IMPORTED_MODULE_0__.translate)('settings', 'Not available as publishing account specific data to the lookup server is not allowed, contact your system administration if you have any questions'),
+    icon: _mdi_js__WEBPACK_IMPORTED_MODULE_1__.mdiWeb
+  }
+});
+
+/** Default additional email scope */
+const DEFAULT_ADDITIONAL_EMAIL_SCOPE = SCOPE_ENUM.LOCAL;
+
+/** Enum of verification constants, according to IAccountManager */
+const VERIFICATION_ENUM = Object.freeze({
+  NOT_VERIFIED: 0,
+  VERIFICATION_IN_PROGRESS: 1,
+  VERIFIED: 2
+});
+
+/**
+ * Email validation regex
+ *
+ * Sourced from https://github.com/mpyw/FILTER_VALIDATE_EMAIL.js/blob/71e62ca48841d2246a1b531e7e84f5a01f15e615/src/regexp/ascii.ts*
+ */
+// eslint-disable-next-line no-control-regex
+const VALIDATE_EMAIL_REGEX = /^(?!(?:(?:\x22?\x5C[\x00-\x7E]\x22?)|(?:\x22?[^\x5C\x22]\x22?)){255,})(?!(?:(?:\x22?\x5C[\x00-\x7E]\x22?)|(?:\x22?[^\x5C\x22]\x22?)){65,}@)(?:(?:[\x21\x23-\x27\x2A\x2B\x2D\x2F-\x39\x3D\x3F\x5E-\x7E]+)|(?:\x22(?:[\x01-\x08\x0B\x0C\x0E-\x1F\x21\x23-\x5B\x5D-\x7F]|(?:\x5C[\x00-\x7F]))*\x22))(?:\.(?:(?:[\x21\x23-\x27\x2A\x2B\x2D\x2F-\x39\x3D\x3F\x5E-\x7E]+)|(?:\x22(?:[\x01-\x08\x0B\x0C\x0E-\x1F\x21\x23-\x5B\x5D-\x7F]|(?:\x5C[\x00-\x7F]))*\x22)))*@(?:(?:(?!.*[^.]{64,})(?:(?:(?:xn--)?[a-z0-9]+(?:-+[a-z0-9]+)*\.){1,126}){1,}(?:(?:[a-z][a-z0-9]*)|(?:(?:xn--)[a-z0-9]+))(?:-+[a-z0-9]+)*)|(?:\[(?:(?:IPv6:(?:(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){7})|(?:(?!(?:.*[a-f0-9][:\]]){7,})(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,5})?::(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,5})?)))|(?:(?:IPv6:(?:(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){5}:)|(?:(?!(?:.*[a-f0-9]:){5,})(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,3})?::(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,3}:)?)))?(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9]{2})|(?:[1-9]?[0-9]))(?:\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9]{2})|(?:[1-9]?[0-9]))){3}))\]))$/i;
+// export const VALIDATE_EMAIL_REGEX = /^(?!(?:(?:\x22?\x5C[\x00-\x7E]\x22?)|(?:\x22?[^\x5C\x22]\x22?)){255,})(?!(?:(?:\x22?\x5C[\x00-\x7E]\x22?)|(?:\x22?[^\x5C\x22]\x22?)){65,}@)(?:(?:[\x21\x23-\x27\x2A\x2B\x2D\x2F-\x39\x3D\x3F\x5E-\x7E]+)|(?:\x22(?:[\x01-\x08\x0B\x0C\x0E-\x1F\x21\x23-\x5B\x5D-\x7F]|(?:\x5C[\x00-\x7F]))*\x22))(?:\.(?:(?:[\x21\x23-\x27\x2A\x2B\x2D\x2F-\x39\x3D\x3F\x5E-\x7E]+)|(?:\x22(?:[\x01-\x08\x0B\x0C\x0E-\x1F\x21\x23-\x5B\x5D-\x7F]|(?:\x5C[\x00-\x7F]))*\x22)))*@(?:(?:(?!.*[^.]{64,})(?:(?:(?:xn--)?[a-z0-9]+(?:-+[a-z0-9]+)*\.){1,126}){1,}(?:(?:[a-z][a-z0-9]*)|(?:(?:xn--)[a-z0-9]+))(?:-+[a-z0-9]+)*)|(?:\[(?:(?:IPv6:(?:(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){7})|(?:(?!(?:.*[a-f0-9][:\]]){7,})(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,5})?::(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,5})?)))|(?:(?:IPv6:(?:(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){5}:)|(?:(?!(?:.*[a-f0-9]:){5,})(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,3})?::(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,3}:)?)))?(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9]{2})|(?:[1-9]?[0-9]))(?:\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9]{2})|(?:[1-9]?[0-9]))){3}))\]))$|^(?=.*\.[a-z]{2,})/i
+
+/***/ }),
+
+/***/ "./apps/settings/src/main-admin-basic-settings.js":
+/*!********************************************************!*\
+  !*** ./apps/settings/src/main-admin-basic-settings.js ***!
+  \********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.runtime.esm.js");
+/* harmony import */ var _nextcloud_auth__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @nextcloud/auth */ "./node_modules/@nextcloud/auth/dist/index.mjs");
+/* harmony import */ var _nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @nextcloud/initial-state */ "./node_modules/@nextcloud/initial-state/dist/index.es.mjs");
+/* harmony import */ var _nextcloud_l10n__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @nextcloud/l10n */ "./node_modules/@nextcloud/l10n/dist/index.mjs");
+/* harmony import */ var _logger_ts__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./logger.ts */ "./apps/settings/src/logger.ts");
+/* harmony import */ var _components_BasicSettings_ProfileSettings_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./components/BasicSettings/ProfileSettings.vue */ "./apps/settings/src/components/BasicSettings/ProfileSettings.vue");
+/* harmony import */ var _components_BasicSettings_BackgroundJob_vue__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./components/BasicSettings/BackgroundJob.vue */ "./apps/settings/src/components/BasicSettings/BackgroundJob.vue");
+/**
+ * @copyright 2022 Christopher Ng <chrng8@gmail.com>
+ *
+ * @author Christopher Ng <chrng8@gmail.com>
+ *
+ * @license GNU AGPL version 3 or any later version
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+
+
+
+
+
+
+__webpack_require__.nc = btoa((0,_nextcloud_auth__WEBPACK_IMPORTED_MODULE_0__.getRequestToken)());
+const profileEnabledGlobally = (0,_nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_1__.loadState)('settings', 'profileEnabledGlobally', true);
+vue__WEBPACK_IMPORTED_MODULE_6__["default"].mixin({
+  props: {
+    logger: _logger_ts__WEBPACK_IMPORTED_MODULE_3__["default"]
+  },
+  methods: {
+    t: _nextcloud_l10n__WEBPACK_IMPORTED_MODULE_2__.translate
+  }
+});
+const BackgroundJobView = vue__WEBPACK_IMPORTED_MODULE_6__["default"].extend(_components_BasicSettings_BackgroundJob_vue__WEBPACK_IMPORTED_MODULE_5__["default"]);
+new BackgroundJobView().$mount('#vue-admin-background-job');
+if (profileEnabledGlobally) {
+  const ProfileSettingsView = vue__WEBPACK_IMPORTED_MODULE_6__["default"].extend(_components_BasicSettings_ProfileSettings_vue__WEBPACK_IMPORTED_MODULE_4__["default"]);
+  new ProfileSettingsView().$mount('#vue-admin-profile-settings');
+}
+
+/***/ }),
+
+/***/ "./apps/settings/src/service/ProfileService.js":
+/*!*****************************************************!*\
+  !*** ./apps/settings/src/service/ProfileService.js ***!
+  \*****************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   saveProfileDefault: () => (/* binding */ saveProfileDefault),
+/* harmony export */   saveProfileParameterVisibility: () => (/* binding */ saveProfileParameterVisibility)
+/* harmony export */ });
+/* harmony import */ var _nextcloud_axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @nextcloud/axios */ "./node_modules/@nextcloud/axios/dist/index.es.mjs");
+/* harmony import */ var _nextcloud_auth__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @nextcloud/auth */ "./node_modules/@nextcloud/auth/dist/index.mjs");
+/* harmony import */ var _nextcloud_router__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @nextcloud/router */ "./node_modules/@nextcloud/router/dist/index.mjs");
+/* harmony import */ var _nextcloud_password_confirmation__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @nextcloud/password-confirmation */ "./node_modules/@nextcloud/password-confirmation/dist/index.mjs");
+/* harmony import */ var _nextcloud_password_confirmation_dist_style_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @nextcloud/password-confirmation/dist/style.css */ "./node_modules/@nextcloud/password-confirmation/dist/style.css");
+/**
+ * @copyright 2021 Christopher Ng <chrng8@gmail.com>
+ *
+ * @author Christopher Ng <chrng8@gmail.com>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+
+
+
+
+
+
+/**
+ * Save the visibility of the profile parameter
+ *
+ * @param {string} paramId the profile parameter ID
+ * @param {string} visibility the visibility
+ * @return {object}
+ */
+const saveProfileParameterVisibility = async (paramId, visibility) => {
+  const userId = (0,_nextcloud_auth__WEBPACK_IMPORTED_MODULE_1__.getCurrentUser)().uid;
+  const url = (0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_2__.generateOcsUrl)('/profile/{userId}', {
+    userId
+  });
+  await (0,_nextcloud_password_confirmation__WEBPACK_IMPORTED_MODULE_3__.confirmPassword)();
+  const res = await _nextcloud_axios__WEBPACK_IMPORTED_MODULE_0__["default"].put(url, {
+    paramId,
+    visibility
+  });
+  return res.data;
+};
+
+/**
+ * Save profile default
+ *
+ * @param {boolean} isEnabled the default
+ * @return {object}
+ */
+const saveProfileDefault = async isEnabled => {
+  // Convert to string for compatibility
+  isEnabled = isEnabled ? '1' : '0';
+  const url = (0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_2__.generateOcsUrl)('/apps/provisioning_api/api/v1/config/apps/{appId}/{key}', {
+    appId: 'settings',
+    key: 'profile_enabled_by_default'
+  });
+  await (0,_nextcloud_password_confirmation__WEBPACK_IMPORTED_MODULE_3__.confirmPassword)();
+  const res = await _nextcloud_axios__WEBPACK_IMPORTED_MODULE_0__["default"].post(url, {
+    value: isEnabled
+  });
+  return res.data;
+};
+
+/***/ }),
+
+/***/ "./apps/settings/src/utils/validate.js":
+/*!*********************************************!*\
+  !*** ./apps/settings/src/utils/validate.js ***!
+  \*********************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   validateBoolean: () => (/* binding */ validateBoolean),
+/* harmony export */   validateEmail: () => (/* binding */ validateEmail),
+/* harmony export */   validateLanguage: () => (/* binding */ validateLanguage),
+/* harmony export */   validateLocale: () => (/* binding */ validateLocale),
+/* harmony export */   validateUrl: () => (/* binding */ validateUrl)
+/* harmony export */ });
+/* harmony import */ var _constants_AccountPropertyConstants_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../constants/AccountPropertyConstants.js */ "./apps/settings/src/constants/AccountPropertyConstants.js");
+/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
+/**
+ * @copyright 2021, Christopher Ng <chrng8@gmail.com>
+ *
+ * @author Christopher Ng <chrng8@gmail.com>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+/*
+ * Frontend validators, less strict than backend validators
+ *
+ * TODO add nice validation errors for Profile page settings modal
+ */
+
+
+
+/**
+ * Validate the email input
+ *
+ * Compliant with PHP core FILTER_VALIDATE_EMAIL validator*
+ *
+ * Reference implementation https://github.com/mpyw/FILTER_VALIDATE_EMAIL.js/blob/71e62ca48841d2246a1b531e7e84f5a01f15e615/src/index.ts*
+ *
+ * @param {string} input the input
+ * @return {boolean}
+ */
+function validateEmail(input) {
+  console.log('evaluate email', typeof input === 'string' && _constants_AccountPropertyConstants_js__WEBPACK_IMPORTED_MODULE_0__.VALIDATE_EMAIL_REGEX.test(input) && input.slice(-1) !== '\n' && input.length <= 320 && encodeURIComponent(input).replace(/%../g, 'x').length <= 320);
+  return typeof input === 'string' && _constants_AccountPropertyConstants_js__WEBPACK_IMPORTED_MODULE_0__.VALIDATE_EMAIL_REGEX.test(input) && input.slice(-1) !== '\n' && input.length <= 320 && encodeURIComponent(input).replace(/%../g, 'x').length <= 320;
+}
+
+/**
+ * Validate the URL input
+ *
+ * @param {string} input the input
+ * @return {boolean}
+ */
+function validateUrl(input) {
+  try {
+    // eslint-disable-next-line no-new
+    new URL(input);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Validate the language input
+ *
+ * @param {object} input the input
+ * @return {boolean}
+ */
+function validateLanguage(input) {
+  return input.code !== '' && input.name !== '' && input.name !== undefined;
+}
+
+/**
+ * Validate the locale input
+ *
+ * @param {object} input the input
+ * @return {boolean}
+ */
+function validateLocale(input) {
+  return input.code !== '' && input.name !== '' && input.name !== undefined;
+}
+
+/**
+ * Validate boolean input
+ *
+ * @param {boolean} input the input
+ * @return {boolean}
+ */
+function validateBoolean(input) {
+  return typeof input === 'boolean';
+}
+
+/***/ }),
+
+/***/ "./apps/settings/src/logger.ts":
+/*!*************************************!*\
+  !*** ./apps/settings/src/logger.ts ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _nextcloud_logger__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @nextcloud/logger */ "./node_modules/@nextcloud/logger/dist/index.js");
+/**
+ * @copyright 2020 Christoph Wurst <christoph@winzerhof-wurst.at>
+ *
+ * @author Christoph Wurst <christoph@winzerhof-wurst.at>
+ *
+ * @license AGPL-3.0-or-later
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ((0,_nextcloud_logger__WEBPACK_IMPORTED_MODULE_0__.getLoggerBuilder)().setApp('settings').detectUser().build());
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=script&lang=js":
+/*!**************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=script&lang=js ***!
+  \**************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @nextcloud/initial-state */ "./node_modules/@nextcloud/initial-state/dist/index.es.mjs");
+/* harmony import */ var _nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @nextcloud/dialogs */ "./node_modules/@nextcloud/dialogs/dist/index.mjs");
+/* harmony import */ var _nextcloud_vue_dist_Components_NcCheckboxRadioSwitch_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js */ "./node_modules/@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.mjs");
+/* harmony import */ var _nextcloud_vue_dist_Components_NcSettingsSection_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @nextcloud/vue/dist/Components/NcSettingsSection.js */ "./node_modules/@nextcloud/vue/dist/Components/NcSettingsSection.mjs");
+/* harmony import */ var _nextcloud_vue_dist_Components_NcNoteCard_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @nextcloud/vue/dist/Components/NcNoteCard.js */ "./node_modules/@nextcloud/vue/dist/Components/NcNoteCard.mjs");
+/* harmony import */ var _nextcloud_moment__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @nextcloud/moment */ "./node_modules/@nextcloud/moment/dist/index.mjs");
+/* harmony import */ var _nextcloud_axios__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @nextcloud/axios */ "./node_modules/@nextcloud/axios/dist/index.es.mjs");
+/* harmony import */ var _nextcloud_router__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @nextcloud/router */ "./node_modules/@nextcloud/router/dist/index.mjs");
+/* harmony import */ var _nextcloud_password_confirmation__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @nextcloud/password-confirmation */ "./node_modules/@nextcloud/password-confirmation/dist/index.mjs");
+/* harmony import */ var _nextcloud_password_confirmation_dist_style_css__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @nextcloud/password-confirmation/dist/style.css */ "./node_modules/@nextcloud/password-confirmation/dist/style.css");
+/* provided dependency */ var console = __webpack_require__(/*! ./node_modules/console-browserify/index.js */ "./node_modules/console-browserify/index.js");
+
+
+
+
+
+
+
+
+
+
+const lastCron = (0,_nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_0__.loadState)('settings', 'lastCron');
+const cronMaxAge = (0,_nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_0__.loadState)('settings', 'cronMaxAge', '');
+const backgroundJobsMode = (0,_nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_0__.loadState)('settings', 'backgroundJobsMode', 'cron');
+const cliBasedCronPossible = (0,_nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_0__.loadState)('settings', 'cliBasedCronPossible', true);
+const cliBasedCronUser = (0,_nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_0__.loadState)('settings', 'cliBasedCronUser', 'www-data');
+const backgroundJobsDocUrl = (0,_nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_0__.loadState)('settings', 'backgroundJobsDocUrl');
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: 'BackgroundJob',
+  components: {
+    NcCheckboxRadioSwitch: _nextcloud_vue_dist_Components_NcCheckboxRadioSwitch_js__WEBPACK_IMPORTED_MODULE_2__["default"],
+    NcSettingsSection: _nextcloud_vue_dist_Components_NcSettingsSection_js__WEBPACK_IMPORTED_MODULE_3__["default"],
+    NcNoteCard: _nextcloud_vue_dist_Components_NcNoteCard_js__WEBPACK_IMPORTED_MODULE_4__["default"]
+  },
+  data() {
+    return {
+      lastCron,
+      cronMaxAge,
+      backgroundJobsMode,
+      cliBasedCronPossible,
+      cliBasedCronUser,
+      backgroundJobsDocUrl,
+      relativeTime: (0,_nextcloud_moment__WEBPACK_IMPORTED_MODULE_5__["default"])(lastCron * 1000).fromNow(),
+      maxAgeRelativeTime: (0,_nextcloud_moment__WEBPACK_IMPORTED_MODULE_5__["default"])(cronMaxAge * 1000).fromNow()
+    };
+  },
+  computed: {
+    cronLabel() {
+      let desc = t('settings', 'Use system cron service to call the cron.php file every 5 minutes.');
+      if (this.cliBasedCronPossible) {
+        desc += '<br>' + t('settings', 'The cron.php needs to be executed by the system account "{user}".', {
+          user: this.cliBasedCronUser
+        });
+      } else {
+        desc += '<br>' + t('settings', 'The PHP POSIX extension is required. See {linkstart}PHP documentation{linkend} for more details.', {
+          linkstart: '<a target="_blank" rel="noreferrer nofollow" class="external" href="https://www.php.net/manual/en/book.posix.php">',
+          linkend: '</a>'
+        }, undefined, {
+          escape: false,
+          sanitize: false
+        });
+      }
+      return desc;
+    },
+    oldExecution() {
+      return Date.now() / 1000 - this.lastCron > 600;
+    },
+    longExecutionNotCron() {
+      return Date.now() / 1000 - this.cronMaxAge > 12 * 3600 && this.backgroundJobsMode !== 'cron';
+    },
+    longExecutionCron() {
+      return Date.now() / 1000 - this.cronMaxAge > 24 * 3600 && this.backgroundJobsMode === 'cron';
+    }
+  },
+  methods: {
+    async onBackgroundJobModeChanged(backgroundJobsMode) {
+      const url = (0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_7__.generateOcsUrl)('/apps/provisioning_api/api/v1/config/apps/{appId}/{key}', {
+        appId: 'core',
+        key: 'backgroundjobs_mode'
+      });
+      await (0,_nextcloud_password_confirmation__WEBPACK_IMPORTED_MODULE_8__.confirmPassword)();
+      try {
+        var _data$ocs;
+        const {
+          data
+        } = await _nextcloud_axios__WEBPACK_IMPORTED_MODULE_6__["default"].post(url, {
+          value: backgroundJobsMode
+        });
+        this.handleResponse({
+          status: (_data$ocs = data.ocs) === null || _data$ocs === void 0 || (_data$ocs = _data$ocs.meta) === null || _data$ocs === void 0 ? void 0 : _data$ocs.status
+        });
+      } catch (e) {
+        this.handleResponse({
+          errorMessage: t('settings', 'Unable to update background job mode'),
+          error: e
+        });
+      }
+    },
+    async handleResponse(_ref) {
+      let {
+        status,
+        errorMessage,
+        error
+      } = _ref;
+      if (status === 'ok') {
+        await this.deleteError();
+      } else {
+        (0,_nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_1__.showError)(errorMessage);
+        console.error(errorMessage, error);
+      }
+    },
+    async deleteError() {
+      // clear cron errors on background job mode change
+      const url = (0,_nextcloud_router__WEBPACK_IMPORTED_MODULE_7__.generateOcsUrl)('/apps/provisioning_api/api/v1/config/apps/{appId}/{key}', {
+        appId: 'core',
+        key: 'cronErrors'
+      });
+      await (0,_nextcloud_password_confirmation__WEBPACK_IMPORTED_MODULE_8__.confirmPassword)();
+      try {
+        await _nextcloud_axios__WEBPACK_IMPORTED_MODULE_6__["default"].delete(url);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/ProfileSettings.vue?vue&type=script&lang=js":
+/*!****************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/ProfileSettings.vue?vue&type=script&lang=js ***!
+  \****************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @nextcloud/initial-state */ "./node_modules/@nextcloud/initial-state/dist/index.es.mjs");
+/* harmony import */ var _nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @nextcloud/dialogs */ "./node_modules/@nextcloud/dialogs/dist/index.mjs");
+/* harmony import */ var _service_ProfileService_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../service/ProfileService.js */ "./apps/settings/src/service/ProfileService.js");
+/* harmony import */ var _utils_validate_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../utils/validate.js */ "./apps/settings/src/utils/validate.js");
+/* harmony import */ var _logger_ts__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../logger.ts */ "./apps/settings/src/logger.ts");
+/* harmony import */ var _nextcloud_vue_dist_Components_NcCheckboxRadioSwitch_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js */ "./node_modules/@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.mjs");
+
+
+
+
+
+
+const profileEnabledByDefault = (0,_nextcloud_initial_state__WEBPACK_IMPORTED_MODULE_0__.loadState)('settings', 'profileEnabledByDefault', true);
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  name: 'ProfileSettings',
+  components: {
+    NcCheckboxRadioSwitch: _nextcloud_vue_dist_Components_NcCheckboxRadioSwitch_js__WEBPACK_IMPORTED_MODULE_5__["default"]
+  },
+  data() {
+    return {
+      initialProfileEnabledByDefault: profileEnabledByDefault
+    };
+  },
+  methods: {
+    async onProfileDefaultChange(isEnabled) {
+      if ((0,_utils_validate_js__WEBPACK_IMPORTED_MODULE_3__.validateBoolean)(isEnabled)) {
+        await this.updateProfileDefault(isEnabled);
+      }
+    },
+    async updateProfileDefault(isEnabled) {
+      try {
+        var _responseData$ocs;
+        const responseData = await (0,_service_ProfileService_js__WEBPACK_IMPORTED_MODULE_2__.saveProfileDefault)(isEnabled);
+        this.handleResponse({
+          isEnabled,
+          status: (_responseData$ocs = responseData.ocs) === null || _responseData$ocs === void 0 || (_responseData$ocs = _responseData$ocs.meta) === null || _responseData$ocs === void 0 ? void 0 : _responseData$ocs.status
+        });
+      } catch (e) {
+        this.handleResponse({
+          errorMessage: t('settings', 'Unable to update profile default setting'),
+          error: e
+        });
+      }
+    },
+    handleResponse(_ref) {
+      let {
+        isEnabled,
+        status,
+        errorMessage,
+        error
+      } = _ref;
+      if (status === 'ok') {
+        this.initialProfileEnabledByDefault = isEnabled;
+      } else {
+        (0,_nextcloud_dialogs__WEBPACK_IMPORTED_MODULE_1__.showError)(errorMessage);
+        _logger_ts__WEBPACK_IMPORTED_MODULE_4__["default"].error(errorMessage, error);
+      }
+    }
+  }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=template&id=09f7e380&scoped=true":
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=template&id=09f7e380&scoped=true ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* binding */ render),
+/* harmony export */   staticRenderFns: () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("NcSettingsSection", {
+    attrs: {
+      name: _vm.t("settings", "Background jobs"),
+      description: _vm.t("settings", "For the server to work properly, it's important to configure background jobs correctly. Cron is the recommended setting. Please see the documentation for more information."),
+      "doc-url": _vm.backgroundJobsDocUrl
+    }
+  }, [_vm.lastCron !== 0 ? [_vm.oldExecution ? _c("NcNoteCard", {
+    attrs: {
+      type: "error"
+    }
+  }, [_vm._v("\n\t\t\t" + _vm._s(_vm.t("settings", "Last job execution ran {time}. Something seems wrong.", {
+    time: _vm.relativeTime
+  })) + "\n\t\t")]) : _vm.longExecutionCron ? _c("NcNoteCard", {
+    attrs: {
+      type: "warning"
+    }
+  }, [_vm._v("\n\t\t\t" + _vm._s(_vm.t("settings", "Some jobs have not been executed since {maxAgeRelativeTime}. Please consider increasing the execution frequency.", {
+    maxAgeRelativeTime: _vm.maxAgeRelativeTime
+  })) + "\n\t\t")]) : _vm.longExecutionNotCron ? _c("NcNoteCard", {
+    attrs: {
+      type: "warning"
+    }
+  }, [_vm._v("\n\t\t\t" + _vm._s(_vm.t("settings", "Some jobs have not been executed since {maxAgeRelativeTime}. Please consider switching to system cron.", {
+    maxAgeRelativeTime: _vm.maxAgeRelativeTime
+  })) + "\n\t\t")]) : _c("NcNoteCard", {
+    attrs: {
+      type: "success"
+    }
+  }, [_vm._v("\n\t\t\t" + _vm._s(_vm.t("settings", "Last job ran {relativeTime}.", {
+    relativeTime: _vm.relativeTime
+  })) + "\n\t\t")])] : _c("NcNoteCard", {
+    attrs: {
+      type: "error"
+    }
+  }, [_vm._v("\n\t\t" + _vm._s(_vm.t("settings", "Background job did not run yet!")) + "\n\t")]), _vm._v(" "), _c("NcCheckboxRadioSwitch", {
+    staticClass: "ajaxSwitch",
+    attrs: {
+      type: "radio",
+      checked: _vm.backgroundJobsMode,
+      name: "backgroundJobsMode",
+      value: "ajax"
+    },
+    on: {
+      "update:checked": [function ($event) {
+        _vm.backgroundJobsMode = $event;
+      }, _vm.onBackgroundJobModeChanged]
+    }
+  }, [_vm._v("\n\t\t" + _vm._s(_vm.t("settings", "AJAX")) + "\n\t")]), _vm._v(" "), _c("em", [_vm._v(_vm._s(_vm.t("settings", "Execute one task with each page loaded. Use case: Single account instance.")))]), _vm._v(" "), _c("NcCheckboxRadioSwitch", {
+    attrs: {
+      type: "radio",
+      checked: _vm.backgroundJobsMode,
+      name: "backgroundJobsMode",
+      value: "webcron"
+    },
+    on: {
+      "update:checked": [function ($event) {
+        _vm.backgroundJobsMode = $event;
+      }, _vm.onBackgroundJobModeChanged]
+    }
+  }, [_vm._v("\n\t\t" + _vm._s(_vm.t("settings", "Webcron")) + "\n\t")]), _vm._v(" "), _c("em", [_vm._v(_vm._s(_vm.t("settings", "cron.php is registered at a webcron service to call cron.php every 5 minutes over HTTP. Use case: Very small instance (1–5 accounts depending on the usage).")))]), _vm._v(" "), _c("NcCheckboxRadioSwitch", {
+    attrs: {
+      type: "radio",
+      disabled: !_vm.cliBasedCronPossible,
+      checked: _vm.backgroundJobsMode,
+      value: "cron",
+      name: "backgroundJobsMode"
+    },
+    on: {
+      "update:checked": [function ($event) {
+        _vm.backgroundJobsMode = $event;
+      }, _vm.onBackgroundJobModeChanged]
+    }
+  }, [_vm._v("\n\t\t" + _vm._s(_vm.t("settings", "Cron (Recommended)")) + "\n\t")]), _vm._v(" "), _c("em", {
+    domProps: {
+      innerHTML: _vm._s(_vm.cronLabel)
+    }
+  })], 2);
+};
+var staticRenderFns = [];
+render._withStripped = true;
+
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/ProfileSettings.vue?vue&type=template&id=5d2af286&scoped=true":
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/ProfileSettings.vue?vue&type=template&id=5d2af286&scoped=true ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* binding */ render),
+/* harmony export */   staticRenderFns: () => (/* binding */ staticRenderFns)
+/* harmony export */ });
+var render = function render() {
+  var _vm = this,
+    _c = _vm._self._c;
+  return _c("div", {
+    staticClass: "section",
+    attrs: {
+      id: "profile-settings"
+    }
+  }, [_c("h2", {
+    staticClass: "inlineblock"
+  }, [_vm._v("\n\t\t" + _vm._s(_vm.t("settings", "Profile")) + "\n\t")]), _vm._v(" "), _c("p", {
+    staticClass: "settings-hint"
+  }, [_vm._v("\n\t\t" + _vm._s(_vm.t("settings", "Enable or disable profile by default for new accounts.")) + "\n\t")]), _vm._v(" "), _c("NcCheckboxRadioSwitch", {
+    attrs: {
+      type: "switch",
+      checked: _vm.initialProfileEnabledByDefault
+    },
+    on: {
+      "update:checked": [function ($event) {
+        _vm.initialProfileEnabledByDefault = $event;
+      }, _vm.onProfileDefaultChange]
+    }
+  }, [_vm._v("\n\t\t" + _vm._s(_vm.t("settings", "Enable")) + "\n\t")])], 1);
+};
+var staticRenderFns = [];
+render._withStripped = true;
+
+
+/***/ }),
+
+/***/ "./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=style&index=0&id=09f7e380&lang=scss&scoped=true":
+/*!********************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=style&index=0&id=09f7e380&lang=scss&scoped=true ***!
+  \********************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../../../node_modules/css-loader/dist/runtime/noSourceMaps.js */ "./node_modules/css-loader/dist/runtime/noSourceMaps.js");
+/* harmony import */ var _node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../../../../node_modules/css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js");
+/* harmony import */ var _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_noSourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `.error[data-v-09f7e380] {
+  margin-top: 8px;
+  padding: 5px;
+  border-radius: var(--border-radius);
+  color: var(--color-primary-element-text);
+  background-color: var(--color-error);
+  width: initial;
+}
+.warning[data-v-09f7e380] {
+  margin-top: 8px;
+  padding: 5px;
+  border-radius: var(--border-radius);
+  color: var(--color-primary-element-text);
+  background-color: var(--color-warning);
+  width: initial;
+}
+.ajaxSwitch[data-v-09f7e380] {
+  margin-top: 1rem;
+}`, ""]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
+
+/***/ }),
+
+/***/ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=style&index=0&id=09f7e380&lang=scss&scoped=true":
+/*!************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=style&index=0&id=09f7e380&lang=scss&scoped=true ***!
+  \************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! !../../../../../node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js */ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js");
+/* harmony import */ var _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _node_modules_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !../../../../../node_modules/style-loader/dist/runtime/styleDomAPI.js */ "./node_modules/style-loader/dist/runtime/styleDomAPI.js");
+/* harmony import */ var _node_modules_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _node_modules_style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../node_modules/style-loader/dist/runtime/insertBySelector.js */ "./node_modules/style-loader/dist/runtime/insertBySelector.js");
+/* harmony import */ var _node_modules_style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _node_modules_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../../../../node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js */ "./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js");
+/* harmony import */ var _node_modules_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _node_modules_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! !../../../../../node_modules/style-loader/dist/runtime/insertStyleElement.js */ "./node_modules/style-loader/dist/runtime/insertStyleElement.js");
+/* harmony import */ var _node_modules_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _node_modules_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! !../../../../../node_modules/style-loader/dist/runtime/styleTagTransform.js */ "./node_modules/style-loader/dist/runtime/styleTagTransform.js");
+/* harmony import */ var _node_modules_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var _node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_sass_loader_dist_cjs_js_node_modules_vue_loader_lib_index_js_vue_loader_options_BackgroundJob_vue_vue_type_style_index_0_id_09f7e380_lang_scss_scoped_true__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! !!../../../../../node_modules/css-loader/dist/cjs.js!../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../node_modules/sass-loader/dist/cjs.js!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./BackgroundJob.vue?vue&type=style&index=0&id=09f7e380&lang=scss&scoped=true */ "./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=style&index=0&id=09f7e380&lang=scss&scoped=true");
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var options = {};
+
+options.styleTagTransform = (_node_modules_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5___default());
+options.setAttributes = (_node_modules_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3___default());
+
+      options.insert = _node_modules_style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2___default().bind(null, "head");
+    
+options.domAPI = (_node_modules_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1___default());
+options.insertStyleElement = (_node_modules_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4___default());
+
+var update = _node_modules_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default()(_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_sass_loader_dist_cjs_js_node_modules_vue_loader_lib_index_js_vue_loader_options_BackgroundJob_vue_vue_type_style_index_0_id_09f7e380_lang_scss_scoped_true__WEBPACK_IMPORTED_MODULE_6__["default"], options);
+
+
+
+
+       /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_sass_loader_dist_cjs_js_node_modules_vue_loader_lib_index_js_vue_loader_options_BackgroundJob_vue_vue_type_style_index_0_id_09f7e380_lang_scss_scoped_true__WEBPACK_IMPORTED_MODULE_6__["default"] && _node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_sass_loader_dist_cjs_js_node_modules_vue_loader_lib_index_js_vue_loader_options_BackgroundJob_vue_vue_type_style_index_0_id_09f7e380_lang_scss_scoped_true__WEBPACK_IMPORTED_MODULE_6__["default"].locals ? _node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_sass_loader_dist_cjs_js_node_modules_vue_loader_lib_index_js_vue_loader_options_BackgroundJob_vue_vue_type_style_index_0_id_09f7e380_lang_scss_scoped_true__WEBPACK_IMPORTED_MODULE_6__["default"].locals : undefined);
+
+
+/***/ }),
+
+/***/ "./apps/settings/src/components/BasicSettings/BackgroundJob.vue":
+/*!**********************************************************************!*\
+  !*** ./apps/settings/src/components/BasicSettings/BackgroundJob.vue ***!
+  \**********************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _BackgroundJob_vue_vue_type_template_id_09f7e380_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./BackgroundJob.vue?vue&type=template&id=09f7e380&scoped=true */ "./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=template&id=09f7e380&scoped=true");
+/* harmony import */ var _BackgroundJob_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./BackgroundJob.vue?vue&type=script&lang=js */ "./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=script&lang=js");
+/* harmony import */ var _BackgroundJob_vue_vue_type_style_index_0_id_09f7e380_lang_scss_scoped_true__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./BackgroundJob.vue?vue&type=style&index=0&id=09f7e380&lang=scss&scoped=true */ "./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=style&index=0&id=09f7e380&lang=scss&scoped=true");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+;
+
+
+/* normalize component */
+
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
+  _BackgroundJob_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _BackgroundJob_vue_vue_type_template_id_09f7e380_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render,
+  _BackgroundJob_vue_vue_type_template_id_09f7e380_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  "09f7e380",
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "apps/settings/src/components/BasicSettings/BackgroundJob.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
+/***/ "./apps/settings/src/components/BasicSettings/ProfileSettings.vue":
+/*!************************************************************************!*\
+  !*** ./apps/settings/src/components/BasicSettings/ProfileSettings.vue ***!
+  \************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _ProfileSettings_vue_vue_type_template_id_5d2af286_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ProfileSettings.vue?vue&type=template&id=5d2af286&scoped=true */ "./apps/settings/src/components/BasicSettings/ProfileSettings.vue?vue&type=template&id=5d2af286&scoped=true");
+/* harmony import */ var _ProfileSettings_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ProfileSettings.vue?vue&type=script&lang=js */ "./apps/settings/src/components/BasicSettings/ProfileSettings.vue?vue&type=script&lang=js");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+/* normalize component */
+;
+var component = (0,_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_2__["default"])(
+  _ProfileSettings_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"],
+  _ProfileSettings_vue_vue_type_template_id_5d2af286_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render,
+  _ProfileSettings_vue_vue_type_template_id_5d2af286_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns,
+  false,
+  null,
+  "5d2af286",
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "apps/settings/src/components/BasicSettings/ProfileSettings.vue"
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (component.exports);
+
+/***/ }),
+
+/***/ "./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=script&lang=js":
+/*!**********************************************************************************************!*\
+  !*** ./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=script&lang=js ***!
+  \**********************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_index_js_vue_loader_options_BackgroundJob_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/babel-loader/lib/index.js!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./BackgroundJob.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_index_js_vue_loader_options_BackgroundJob_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./apps/settings/src/components/BasicSettings/ProfileSettings.vue?vue&type=script&lang=js":
+/*!************************************************************************************************!*\
+  !*** ./apps/settings/src/components/BasicSettings/ProfileSettings.vue?vue&type=script&lang=js ***!
+  \************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ProfileSettings_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/babel-loader/lib/index.js!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./ProfileSettings.vue?vue&type=script&lang=js */ "./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/ProfileSettings.vue?vue&type=script&lang=js");
+ /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ProfileSettings_vue_vue_type_script_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=template&id=09f7e380&scoped=true":
+/*!****************************************************************************************************************!*\
+  !*** ./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=template&id=09f7e380&scoped=true ***!
+  \****************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_3_node_modules_vue_loader_lib_index_js_vue_loader_options_BackgroundJob_vue_vue_type_template_id_09f7e380_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   staticRenderFns: () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_3_node_modules_vue_loader_lib_index_js_vue_loader_options_BackgroundJob_vue_vue_type_template_id_09f7e380_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_3_node_modules_vue_loader_lib_index_js_vue_loader_options_BackgroundJob_vue_vue_type_template_id_09f7e380_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/babel-loader/lib/index.js!../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./BackgroundJob.vue?vue&type=template&id=09f7e380&scoped=true */ "./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=template&id=09f7e380&scoped=true");
+
+
+/***/ }),
+
+/***/ "./apps/settings/src/components/BasicSettings/ProfileSettings.vue?vue&type=template&id=5d2af286&scoped=true":
+/*!******************************************************************************************************************!*\
+  !*** ./apps/settings/src/components/BasicSettings/ProfileSettings.vue?vue&type=template&id=5d2af286&scoped=true ***!
+  \******************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_3_node_modules_vue_loader_lib_index_js_vue_loader_options_ProfileSettings_vue_vue_type_template_id_5d2af286_scoped_true__WEBPACK_IMPORTED_MODULE_0__.render),
+/* harmony export */   staticRenderFns: () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_3_node_modules_vue_loader_lib_index_js_vue_loader_options_ProfileSettings_vue_vue_type_template_id_5d2af286_scoped_true__WEBPACK_IMPORTED_MODULE_0__.staticRenderFns)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_node_modules_vue_loader_lib_loaders_templateLoader_js_ruleSet_1_rules_3_node_modules_vue_loader_lib_index_js_vue_loader_options_ProfileSettings_vue_vue_type_template_id_5d2af286_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/babel-loader/lib/index.js!../../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./ProfileSettings.vue?vue&type=template&id=5d2af286&scoped=true */ "./node_modules/babel-loader/lib/index.js!./node_modules/vue-loader/lib/loaders/templateLoader.js??ruleSet[1].rules[3]!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/ProfileSettings.vue?vue&type=template&id=5d2af286&scoped=true");
+
+
+/***/ }),
+
+/***/ "./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=style&index=0&id=09f7e380&lang=scss&scoped=true":
+/*!*******************************************************************************************************************************!*\
+  !*** ./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=style&index=0&id=09f7e380&lang=scss&scoped=true ***!
+  \*******************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_style_loader_dist_cjs_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_sass_loader_dist_cjs_js_node_modules_vue_loader_lib_index_js_vue_loader_options_BackgroundJob_vue_vue_type_style_index_0_id_09f7e380_lang_scss_scoped_true__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/style-loader/dist/cjs.js!../../../../../node_modules/css-loader/dist/cjs.js!../../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../../node_modules/sass-loader/dist/cjs.js!../../../../../node_modules/vue-loader/lib/index.js??vue-loader-options!./BackgroundJob.vue?vue&type=style&index=0&id=09f7e380&lang=scss&scoped=true */ "./node_modules/style-loader/dist/cjs.js!./node_modules/css-loader/dist/cjs.js!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/sass-loader/dist/cjs.js!./node_modules/vue-loader/lib/index.js??vue-loader-options!./apps/settings/src/components/BasicSettings/BackgroundJob.vue?vue&type=style&index=0&id=09f7e380&lang=scss&scoped=true");
+
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			id: moduleId,
+/******/ 			loaded: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = __webpack_modules__;
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/chunk loaded */
+/******/ 	(() => {
+/******/ 		var deferred = [];
+/******/ 		__webpack_require__.O = (result, chunkIds, fn, priority) => {
+/******/ 			if(chunkIds) {
+/******/ 				priority = priority || 0;
+/******/ 				for(var i = deferred.length; i > 0 && deferred[i - 1][2] > priority; i--) deferred[i] = deferred[i - 1];
+/******/ 				deferred[i] = [chunkIds, fn, priority];
+/******/ 				return;
+/******/ 			}
+/******/ 			var notFulfilled = Infinity;
+/******/ 			for (var i = 0; i < deferred.length; i++) {
+/******/ 				var chunkIds = deferred[i][0];
+/******/ 				var fn = deferred[i][1];
+/******/ 				var priority = deferred[i][2];
+/******/ 				var fulfilled = true;
+/******/ 				for (var j = 0; j < chunkIds.length; j++) {
+/******/ 					if ((priority & 1 === 0 || notFulfilled >= priority) && Object.keys(__webpack_require__.O).every((key) => (__webpack_require__.O[key](chunkIds[j])))) {
+/******/ 						chunkIds.splice(j--, 1);
+/******/ 					} else {
+/******/ 						fulfilled = false;
+/******/ 						if(priority < notFulfilled) notFulfilled = priority;
+/******/ 					}
+/******/ 				}
+/******/ 				if(fulfilled) {
+/******/ 					deferred.splice(i--, 1)
+/******/ 					var r = fn();
+/******/ 					if (r !== undefined) result = r;
+/******/ 				}
+/******/ 			}
+/******/ 			return result;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__webpack_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__webpack_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/ensure chunk */
+/******/ 	(() => {
+/******/ 		__webpack_require__.f = {};
+/******/ 		// This file contains only the entry chunk.
+/******/ 		// The chunk loading function for additional chunks
+/******/ 		__webpack_require__.e = (chunkId) => {
+/******/ 			return Promise.all(Object.keys(__webpack_require__.f).reduce((promises, key) => {
+/******/ 				__webpack_require__.f[key](chunkId, promises);
+/******/ 				return promises;
+/******/ 			}, []));
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/get javascript chunk filename */
+/******/ 	(() => {
+/******/ 		// This function allow to reference async chunks
+/******/ 		__webpack_require__.u = (chunkId) => {
+/******/ 			// return url for filenames based on template
+/******/ 			return "" + chunkId + "-" + chunkId + ".js?v=" + {"node_modules_nextcloud_dialogs_dist_chunks_index-RkOaxczZ_mjs":"bd4543eedef900694c93","data_image_svg_xml_3csvg_20xmlns_27http_www_w3_org_2000_svg_27_20width_2724_27_20height_2724_-28884d":"5e4ceb7fd9d03ea20c8b"}[chunkId] + "";
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/global */
+/******/ 	(() => {
+/******/ 		__webpack_require__.g = (function() {
+/******/ 			if (typeof globalThis === 'object') return globalThis;
+/******/ 			try {
+/******/ 				return this || new Function('return this')();
+/******/ 			} catch (e) {
+/******/ 				if (typeof window === 'object') return window;
+/******/ 			}
+/******/ 		})();
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/load script */
+/******/ 	(() => {
+/******/ 		var inProgress = {};
+/******/ 		var dataWebpackPrefix = "nextcloud:";
+/******/ 		// loadScript function to load a script via script tag
+/******/ 		__webpack_require__.l = (url, done, key, chunkId) => {
+/******/ 			if(inProgress[url]) { inProgress[url].push(done); return; }
+/******/ 			var script, needAttach;
+/******/ 			if(key !== undefined) {
+/******/ 				var scripts = document.getElementsByTagName("script");
+/******/ 				for(var i = 0; i < scripts.length; i++) {
+/******/ 					var s = scripts[i];
+/******/ 					if(s.getAttribute("src") == url || s.getAttribute("data-webpack") == dataWebpackPrefix + key) { script = s; break; }
+/******/ 				}
+/******/ 			}
+/******/ 			if(!script) {
+/******/ 				needAttach = true;
+/******/ 				script = document.createElement('script');
+/******/ 		
+/******/ 				script.charset = 'utf-8';
+/******/ 				script.timeout = 120;
+/******/ 				if (__webpack_require__.nc) {
+/******/ 					script.setAttribute("nonce", __webpack_require__.nc);
+/******/ 				}
+/******/ 				script.setAttribute("data-webpack", dataWebpackPrefix + key);
+/******/ 		
+/******/ 				script.src = url;
+/******/ 			}
+/******/ 			inProgress[url] = [done];
+/******/ 			var onScriptComplete = (prev, event) => {
+/******/ 				// avoid mem leaks in IE.
+/******/ 				script.onerror = script.onload = null;
+/******/ 				clearTimeout(timeout);
+/******/ 				var doneFns = inProgress[url];
+/******/ 				delete inProgress[url];
+/******/ 				script.parentNode && script.parentNode.removeChild(script);
+/******/ 				doneFns && doneFns.forEach((fn) => (fn(event)));
+/******/ 				if(prev) return prev(event);
+/******/ 			}
+/******/ 			var timeout = setTimeout(onScriptComplete.bind(null, undefined, { type: 'timeout', target: script }), 120000);
+/******/ 			script.onerror = onScriptComplete.bind(null, script.onerror);
+/******/ 			script.onload = onScriptComplete.bind(null, script.onload);
+/******/ 			needAttach && document.head.appendChild(script);
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/node module decorator */
+/******/ 	(() => {
+/******/ 		__webpack_require__.nmd = (module) => {
+/******/ 			module.paths = [];
+/******/ 			if (!module.children) module.children = [];
+/******/ 			return module;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/publicPath */
+/******/ 	(() => {
+/******/ 		var scriptUrl;
+/******/ 		if (__webpack_require__.g.importScripts) scriptUrl = __webpack_require__.g.location + "";
+/******/ 		var document = __webpack_require__.g.document;
+/******/ 		if (!scriptUrl && document) {
+/******/ 			if (document.currentScript)
+/******/ 				scriptUrl = document.currentScript.src;
+/******/ 			if (!scriptUrl) {
+/******/ 				var scripts = document.getElementsByTagName("script");
+/******/ 				if(scripts.length) {
+/******/ 					var i = scripts.length - 1;
+/******/ 					while (i > -1 && (!scriptUrl || !/^http(s?):/.test(scriptUrl))) scriptUrl = scripts[i--].src;
+/******/ 				}
+/******/ 			}
+/******/ 		}
+/******/ 		// When supporting browsers where an automatic publicPath is not supported you must specify an output.publicPath manually via configuration
+/******/ 		// or pass an empty string ("") and set the __webpack_public_path__ variable from your code to use your own logic.
+/******/ 		if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");
+/******/ 		scriptUrl = scriptUrl.replace(/#.*$/, "").replace(/\?.*$/, "").replace(/\/[^\/]+$/, "/");
+/******/ 		__webpack_require__.p = scriptUrl;
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/jsonp chunk loading */
+/******/ 	(() => {
+/******/ 		__webpack_require__.b = document.baseURI || self.location.href;
+/******/ 		
+/******/ 		// object to store loaded and loading chunks
+/******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
+/******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
+/******/ 		var installedChunks = {
+/******/ 			"settings-vue-settings-admin-basic-settings": 0
+/******/ 		};
+/******/ 		
+/******/ 		__webpack_require__.f.j = (chunkId, promises) => {
+/******/ 				// JSONP chunk loading for javascript
+/******/ 				var installedChunkData = __webpack_require__.o(installedChunks, chunkId) ? installedChunks[chunkId] : undefined;
+/******/ 				if(installedChunkData !== 0) { // 0 means "already installed".
+/******/ 		
+/******/ 					// a Promise means "currently loading".
+/******/ 					if(installedChunkData) {
+/******/ 						promises.push(installedChunkData[2]);
+/******/ 					} else {
+/******/ 						if(true) { // all chunks have JS
+/******/ 							// setup Promise in chunk cache
+/******/ 							var promise = new Promise((resolve, reject) => (installedChunkData = installedChunks[chunkId] = [resolve, reject]));
+/******/ 							promises.push(installedChunkData[2] = promise);
+/******/ 		
+/******/ 							// start chunk loading
+/******/ 							var url = __webpack_require__.p + __webpack_require__.u(chunkId);
+/******/ 							// create error before stack unwound to get useful stacktrace later
+/******/ 							var error = new Error();
+/******/ 							var loadingEnded = (event) => {
+/******/ 								if(__webpack_require__.o(installedChunks, chunkId)) {
+/******/ 									installedChunkData = installedChunks[chunkId];
+/******/ 									if(installedChunkData !== 0) installedChunks[chunkId] = undefined;
+/******/ 									if(installedChunkData) {
+/******/ 										var errorType = event && (event.type === 'load' ? 'missing' : event.type);
+/******/ 										var realSrc = event && event.target && event.target.src;
+/******/ 										error.message = 'Loading chunk ' + chunkId + ' failed.\n(' + errorType + ': ' + realSrc + ')';
+/******/ 										error.name = 'ChunkLoadError';
+/******/ 										error.type = errorType;
+/******/ 										error.request = realSrc;
+/******/ 										installedChunkData[1](error);
+/******/ 									}
+/******/ 								}
+/******/ 							};
+/******/ 							__webpack_require__.l(url, loadingEnded, "chunk-" + chunkId, chunkId);
+/******/ 						}
+/******/ 					}
+/******/ 				}
+/******/ 		};
+/******/ 		
+/******/ 		// no prefetching
+/******/ 		
+/******/ 		// no preloaded
+/******/ 		
+/******/ 		// no HMR
+/******/ 		
+/******/ 		// no HMR manifest
+/******/ 		
+/******/ 		__webpack_require__.O.j = (chunkId) => (installedChunks[chunkId] === 0);
+/******/ 		
+/******/ 		// install a JSONP callback for chunk loading
+/******/ 		var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
+/******/ 			var chunkIds = data[0];
+/******/ 			var moreModules = data[1];
+/******/ 			var runtime = data[2];
+/******/ 			// add "moreModules" to the modules object,
+/******/ 			// then flag all "chunkIds" as loaded and fire callback
+/******/ 			var moduleId, chunkId, i = 0;
+/******/ 			if(chunkIds.some((id) => (installedChunks[id] !== 0))) {
+/******/ 				for(moduleId in moreModules) {
+/******/ 					if(__webpack_require__.o(moreModules, moduleId)) {
+/******/ 						__webpack_require__.m[moduleId] = moreModules[moduleId];
+/******/ 					}
+/******/ 				}
+/******/ 				if(runtime) var result = runtime(__webpack_require__);
+/******/ 			}
+/******/ 			if(parentChunkLoadingFunction) parentChunkLoadingFunction(data);
+/******/ 			for(;i < chunkIds.length; i++) {
+/******/ 				chunkId = chunkIds[i];
+/******/ 				if(__webpack_require__.o(installedChunks, chunkId) && installedChunks[chunkId]) {
+/******/ 					installedChunks[chunkId][0]();
+/******/ 				}
+/******/ 				installedChunks[chunkId] = 0;
+/******/ 			}
+/******/ 			return __webpack_require__.O(result);
+/******/ 		}
+/******/ 		
+/******/ 		var chunkLoadingGlobal = self["webpackChunknextcloud"] = self["webpackChunknextcloud"] || [];
+/******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
+/******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/nonce */
+/******/ 	(() => {
+/******/ 		__webpack_require__.nc = undefined;
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
+/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["core-common"], () => (__webpack_require__("./apps/settings/src/main-admin-basic-settings.js")))
+/******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
+/******/ 	
+/******/ })()
+;
+//# sourceMappingURL=settings-vue-settings-admin-basic-settings.js.map?v=83316b811f8ae644f32f
