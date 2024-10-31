@@ -10,17 +10,20 @@ namespace OCA\DAV\Tests\unit\Connector\Sabre;
 
 use OC\Files\FileInfo;
 use OC\Files\Mount\MountPoint;
+use OC\Files\Node\Folder;
 use OC\Files\View;
 use OC\Share20\ShareAttributes;
+use OCA\DAV\Connector\Sabre\File;
 use OCA\Files_Sharing\SharedMount;
 use OCA\Files_Sharing\SharedStorage;
 use OCP\Constants;
 use OCP\Files\Cache\ICacheEntry;
 use OCP\Files\Mount\IMountPoint;
-use OCP\Files\Storage;
+use OCP\Files\Storage\IStorage;
 use OCP\ICache;
 use OCP\Share\IManager;
 use OCP\Share\IShare;
+use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Class NodeTest
@@ -73,7 +76,7 @@ class NodeTest extends \Test\TestCase {
 					return $this->createMock(MountPoint::class);
 				}
 			});
-		$storage = $this->createMock(Storage\IStorage::class);
+		$storage = $this->createMock(IStorage::class);
 		if ($shared) {
 			$storage->method('instanceOfStorage')
 				->willReturn(true);
@@ -95,7 +98,7 @@ class NodeTest extends \Test\TestCase {
 			->disableOriginalConstructor()
 			->getMock();
 
-		$node = new  \OCA\DAV\Connector\Sabre\File($view, $info);
+		$node = new  File($view, $info);
 		$this->assertEquals($expected, $node->getDavPermissions());
 	}
 
@@ -143,7 +146,7 @@ class NodeTest extends \Test\TestCase {
 	 * @dataProvider sharePermissionsProvider
 	 */
 	public function testSharePermissions($type, $user, $permissions, $expected): void {
-		$storage = $this->getMockBuilder(Storage::class)
+		$storage = $this->getMockBuilder(IStorage::class)
 			->disableOriginalConstructor()
 			->getMock();
 		$storage->method('getPermissions')->willReturn($permissions);
@@ -178,7 +181,7 @@ class NodeTest extends \Test\TestCase {
 			->disableOriginalConstructor()
 			->getMock();
 
-		$node = new \OCA\DAV\Connector\Sabre\File($view, $info);
+		$node = new File($view, $info);
 		$this->invokePrivate($node, 'shareManager', [$shareManager]);
 		$this->assertEquals($expected, $node->getSharePermissions($user));
 	}
@@ -201,43 +204,47 @@ class NodeTest extends \Test\TestCase {
 
 		$share->expects($this->once())->method('getAttributes')->willReturn($attributes);
 
-		$info = $this->getMockBuilder(FileInfo::class)
+		/** @var Folder&MockObject $info */
+		$info = $this->getMockBuilder(Folder::class)
 			->disableOriginalConstructor()
-			->setMethods(['getStorage', 'getType'])
+			->onlyMethods(['getStorage', 'getType'])
 			->getMock();
 
 		$info->method('getStorage')->willReturn($storage);
 		$info->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
 
+		/** @var View&MockObject $view */
 		$view = $this->getMockBuilder(View::class)
 			->disableOriginalConstructor()
 			->getMock();
 
-		$node = new \OCA\DAV\Connector\Sabre\File($view, $info);
+		$node = new File($view, $info);
 		$this->invokePrivate($node, 'shareManager', [$shareManager]);
 		$this->assertEquals($attributes->toArray(), $node->getShareAttributes());
 	}
 
 	public function testShareAttributesNonShare(): void {
-		$storage = $this->getMockBuilder(Storage::class)
+		$storage = $this->getMockBuilder(IStorage::class)
 			->disableOriginalConstructor()
 			->getMock();
 
 		$shareManager = $this->getMockBuilder(IManager::class)->disableOriginalConstructor()->getMock();
 
-		$info = $this->getMockBuilder(FileInfo::class)
+		/** @var Folder&MockObject */
+		$info = $this->getMockBuilder(Folder::class)
 			->disableOriginalConstructor()
-			->setMethods(['getStorage', 'getType'])
+			->onlyMethods(['getStorage', 'getType'])
 			->getMock();
 
 		$info->method('getStorage')->willReturn($storage);
 		$info->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
 
+		/** @var View&MockObject */
 		$view = $this->getMockBuilder(View::class)
 			->disableOriginalConstructor()
 			->getMock();
 
-		$node = new \OCA\DAV\Connector\Sabre\File($view, $info);
+		$node = new File($view, $info);
 		$this->invokePrivate($node, 'shareManager', [$shareManager]);
 		$this->assertEquals([], $node->getShareAttributes());
 	}
@@ -260,7 +267,7 @@ class NodeTest extends \Test\TestCase {
 			->disableOriginalConstructor()
 			->getMock();
 
-		$node = new \OCA\DAV\Connector\Sabre\File($view, $info);
+		$node = new File($view, $info);
 		$result = $this->invokePrivate($node, 'sanitizeMtime', [$mtime]);
 		$this->assertEquals($expected, $result);
 	}
@@ -284,7 +291,7 @@ class NodeTest extends \Test\TestCase {
 			->disableOriginalConstructor()
 			->getMock();
 
-		$node = new \OCA\DAV\Connector\Sabre\File($view, $info);
+		$node = new File($view, $info);
 		$result = $this->invokePrivate($node, 'sanitizeMtime', [$mtime]);
 	}
 }

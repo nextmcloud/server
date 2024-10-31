@@ -21,13 +21,13 @@ class Azure implements IObjectStore {
 	private $blobClient = null;
 	/** @var string|null */
 	private $endpoint = null;
-	/** @var bool  */
+	/** @var bool */
 	private $autoCreate = false;
 
 	/**
 	 * @param array $parameters
 	 */
-	public function __construct($parameters) {
+	public function __construct(array $parameters) {
 		$this->containerName = $parameters['container'];
 		$this->accountName = $parameters['account_name'];
 		$this->accountKey = $parameters['account_key'];
@@ -45,7 +45,7 @@ class Azure implements IObjectStore {
 	private function getBlobClient() {
 		if (!$this->blobClient) {
 			$protocol = $this->endpoint ? substr($this->endpoint, 0, strpos($this->endpoint, ':')) : 'https';
-			$connectionString = "DefaultEndpointsProtocol=" . $protocol . ";AccountName=" . $this->accountName . ";AccountKey=" . $this->accountKey;
+			$connectionString = 'DefaultEndpointsProtocol=' . $protocol . ';AccountName=' . $this->accountName . ';AccountKey=' . $this->accountKey;
 			if ($this->endpoint) {
 				$connectionString .= ';BlobEndpoint=' . $this->endpoint;
 			}

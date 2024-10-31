@@ -1,7 +1,6 @@
 OC.L10N.register(
     "updatenotification",
     {
-    "{version} is available. Get more information on how to update." : "Η έκδοση {version} είναι διαθέσιμη. Δείτε περισσότερες πληροφορίες για το πως να κάνετε την ενημέρωση.",
     "Channel updated" : "Ενημερωμένο κανάλι",
     "Web updater is disabled" : "Η ενημερώσεις μέσω ιστού έχουν απενεργοποιηθεί",
     "Update notifications" : "Ειδοποιήσεις ενημέρωσης",
@@ -38,13 +37,11 @@ OC.L10N.register(
     "Beta" : "Δοκιμαστικό",
     "A pre-release version only for testing new features, not for production environments." : "Μια προηγούμενη έκδοση μόνο για τη δοκιμή νέων λειτουργιών, όχι για περιβάλλοντα παραγωγής.",
     "_<strong>%n</strong> app has no compatible version for this Nextcloud version available._::_<strong>%n</strong> apps have no compatible version for this Nextcloud version available._" : ["<strong>%n</strong> εφαρμογή δεν έχει διαθέσιμη συμβατή έκδοση για αυτήν την έκδοση Nextcloud.","<strong>%n</strong> εφαρμογές δεν έχουν διαθέσιμη συμβατή έκδοση για αυτήν την έκδοση Nextcloud."],
+    "{version} is available. Get more information on how to update." : "Η έκδοση {version} είναι διαθέσιμη. Δείτε περισσότερες πληροφορίες για το πως να κάνετε την ενημέρωση.",
     "Update to %1$s is available." : "Είναι διαθέσιμη η ενημέρωση σε %1$s.",
     "Displays update notifications for Nextcloud and provides the SSO for the updater." : "Εμφανίζει ειδοποιήσεις ενημέρωσης για το Nextcloud και παρέχει το SSO για την εφαρμογή ενημέρωσης.",
     "Please note that the web updater is not recommended with more than 100 users! Please use the command line updater instead!" : "Παρακαλούμε λάβετε υπόψη ότι ο web updater δεν συνιστάται για περισσότερους από 100 χρήστες! Παρακαλούμε χρησιμοποιήστε αντ' αυτού το πρόγραμμα ενημέρωσης γραμμής εντολών!",
     "Please use the command line updater to update." : "Παρακαλούμε κάντε ενημέρωση μέσω γραμμής εντολών.",
-    "You can change the update channel below which also affects the apps management page. E.g. after switching to the beta channel, beta app updates will be offered to you in the apps management page." : "Μπορείτε να αλλάξετε το κανάλι ενημέρωσης παρακάτω, το οποίο επηρεάζει επίσης τη σελίδα διαχείρισης εφαρμογών. Π.χ. μετά την αλλαγή στο κανάλι beta, θα σας προσφέρονται ενημερώσεις εφαρμογών beta στη σελίδα διαχείρισης εφαρμογών.",
-    "Update channel:" : "Ενημέρωση καναλιού:",
-    "Note that after a new release the update only shows up after the first minor release or later. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found. Learn more about updates and release channels at {link}" : "Σημειώστε ότι μετά από μια νέα έκδοση, η ενημέρωση εμφανίζεται μόνο μετά την πρώτη υποέκδοση ή αργότερα. Κυκλοφορούμε νέες εκδόσεις που διαμοιράζονται με την πάροδο του χρόνου στους χρήστες μας και μερικές φορές παραλείπουμε μια έκδοση όταν εντοπίζονται προβλήματα. Μάθετε περισσότερα σχετικά με τις ενημερώσεις και τα κανάλια κυκλοφορίας στη διεύθυνση {link}",
-    "Checked on {lastCheckedDate}" : "Έγινε έλεγχος στις {lastCheckedDate}"
+    "Note that after a new release the update only shows up after the first minor release or later. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found. Learn more about updates and release channels at {link}" : "Σημειώστε ότι μετά από μια νέα έκδοση, η ενημέρωση εμφανίζεται μόνο μετά την πρώτη υποέκδοση ή αργότερα. Κυκλοφορούμε νέες εκδόσεις που διαμοιράζονται με την πάροδο του χρόνου στους χρήστες μας και μερικές φορές παραλείπουμε μια έκδοση όταν εντοπίζονται προβλήματα. Μάθετε περισσότερα σχετικά με τις ενημερώσεις και τα κανάλια κυκλοφορίας στη διεύθυνση {link}"
 },
 "nplurals=2; plural=(n != 1);");

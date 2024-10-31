@@ -11,11 +11,13 @@ namespace OCA\Files_Sharing\Controller;
 use OCA\Files_Sharing\ResponseDefinitions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCS\OCSException;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 use OCP\AppFramework\OCSController;
 use OCP\AppFramework\QueryException;
+use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IGroupManager;
@@ -32,45 +34,18 @@ use OCP\Share\IShare;
  */
 class DeletedShareAPIController extends OCSController {
 
-	/** @var ShareManager */
-	private $shareManager;
-
-	/** @var string */
-	private $userId;
-
-	/** @var IUserManager */
-	private $userManager;
-
-	/** @var IGroupManager */
-	private $groupManager;
-
-	/** @var IRootFolder */
-	private $rootFolder;
-
-	/** @var IAppManager */
-	private $appManager;
-
-	/** @var IServerContainer */
-	private $serverContainer;
-
-	public function __construct(string $appName,
+	public function __construct(
+		string $appName,
 		IRequest $request,
-		ShareManager $shareManager,
-		string $UserId,
-		IUserManager $userManager,
-		IGroupManager $groupManager,
-		IRootFolder $rootFolder,
-		IAppManager $appManager,
-		IServerContainer $serverContainer) {
+		private ShareManager $shareManager,
+		private string $userId,
+		private IUserManager $userManager,
+		private IGroupManager $groupManager,
+		private IRootFolder $rootFolder,
+		private IAppManager $appManager,
+		private IServerContainer $serverContainer,
+	) {
 		parent::__construct($appName, $request);
-
-		$this->shareManager = $shareManager;
-		$this->userId = $UserId;
-		$this->userManager = $userManager;
-		$this->groupManager = $groupManager;
-		$this->rootFolder = $rootFolder;
-		$this->appManager = $appManager;
-		$this->serverContainer = $serverContainer;
 	}
 
 	/**
@@ -104,7 +79,7 @@ class DeletedShareAPIController extends OCSController {
 		}
 
 		$result['path'] = $userFolder->getRelativePath($node->getPath());
-		if ($node instanceof \OCP\Files\Folder) {
+		if ($node instanceof Folder) {
 			$result['item_type'] = 'folder';
 		} else {
 			$result['item_type'] = 'file';
@@ -158,14 +133,13 @@ class DeletedShareAPIController extends OCSController {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * Get a list of all deleted shares
 	 *
 	 * @return DataResponse<Http::STATUS_OK, Files_SharingDeletedShare[], array{}>
 	 *
 	 * 200: Deleted shares returned
 	 */
+	#[NoAdminRequired]
 	public function index(): DataResponse {
 		$groupShares = $this->shareManager->getDeletedSharedWith($this->userId, IShare::TYPE_GROUP, null, -1, 0);
 		$roomShares = $this->shareManager->getDeletedSharedWith($this->userId, IShare::TYPE_ROOM, null, -1, 0);
@@ -182,8 +156,6 @@ class DeletedShareAPIController extends OCSController {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * Undelete a deleted share
 	 *
 	 * @param string $id ID of the share
@@ -193,6 +165,7 @@ class DeletedShareAPIController extends OCSController {
 	 *
 	 * 200: Share undeleted successfully
 	 */
+	#[NoAdminRequired]
 	public function undelete(string $id): DataResponse {
 		try {
 			$share = $this->shareManager->getShareById($id, $this->userId);

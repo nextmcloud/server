@@ -44,6 +44,9 @@ script('settings', [
 		<div id="vue-displayname-section"></div>
 	</div>
 	<div class="personal-settings-setting-box">
+		<div id="vue-pronouns-section"></div>
+	</div>
+	<div class="personal-settings-setting-box">
 		<div id="vue-email-section"></div>
 	</div>
 	<div class="personal-settings-setting-box">
@@ -60,6 +63,9 @@ script('settings', [
 	</div>
 	<div class="personal-settings-setting-box personal-settings-locale-box">
 		<div id="vue-locale-section"></div>
+	</div>
+	<div class="personal-settings-setting-box">
+		<div id="vue-fdow-section"></div>
 	</div>
 	<div class="personal-settings-setting-box">
 		<div id="vue-website-section"></div>

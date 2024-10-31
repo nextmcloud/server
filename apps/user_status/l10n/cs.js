@@ -20,6 +20,8 @@ OC.L10N.register(
     "Set status" : "Nastavit stav",
     "Online status" : "Stav online",
     "Status message" : "Stavová zpráva",
+    "Set absence period" : "Nastavit období nepřítomnosti",
+    "Set absence period and replacement" : "Nastavit období nepřítomnosti a zástup",
     "Your status was set automatically" : "Váš stav byl nastaven automaticky",
     "Clear status message" : "Vyčistit stavovou zprávu",
     "Set status message" : "Nastavit stavovou zprávu",
@@ -42,7 +44,6 @@ OC.L10N.register(
     "1 hour" : "1 hodina",
     "4 hours" : "4 hodiny",
     "Mute all notifications" : "Ztlumit veškerá upozornění",
-    "Appear offline" : "Jevit se offline",
-    "View profile" : "Zobrazit profil "
+    "Appear offline" : "Jevit se offline"
 },
 "nplurals=4; plural=(n == 1 && n % 1 == 0) ? 0 : (n >= 2 && n <= 4 && n % 1 == 0) ? 1: (n % 1 != 0 ) ? 2 : 3;");

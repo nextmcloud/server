@@ -1,7 +1,6 @@
 OC.L10N.register(
     "updatenotification",
     {
-    "{version} is available. Get more information on how to update." : "{version} ist verfügbar. Weitere Informationen zur Aktualisierung.",
     "Channel updated" : "Kanal aktualisiert",
     "Web updater is disabled" : "Der Web-Updater ist deaktiviert",
     "App updated" : "App aktualisiert",
@@ -57,13 +56,11 @@ OC.L10N.register(
     "_<strong>%n</strong> app has no compatible version for this Nextcloud version available._::_<strong>%n</strong> apps have no compatible version for this Nextcloud version available._" : ["Für <strong>%n</strong> App steht keine kompatible Version zur Verfügung.","Für <strong>%n</strong> Apps steht keine kompatible Version zur Verfügung."],
     "Changelog for app {app}" : "Änderungsübersicht für App {app}",
     "What's new in {app} version {version}" : "Neuigkeiten in {app} Version {version}",
+    "{version} is available. Get more information on how to update." : "{version} ist verfügbar. Weitere Informationen zur Aktualisierung.",
     "Update to %1$s is available." : "Eine Aktualisierung für Nextcloud auf Version %1$s ist verfügbar.",
     "Displays update notifications for Nextcloud and provides the SSO for the updater." : "Zeigt Benachrichtigungen für Aktualisierungen von Nextcloud an und bietet SSO für den Aktualisierer.",
     "Please note that the web updater is not recommended with more than 100 users! Please use the command line updater instead!" : "Bitte beachten Sie, dass der Web Updater bei mehr als 100 Benutzern nicht empfohlen wird! Bitte verwenden Sie stattdessen den Befehlszeilen-Updater!",
     "Please use the command line updater to update." : "Verwenden Sie zum Aktualisieren den Befehlszeilen-Updater.",
-    "You can change the update channel below which also affects the apps management page. E.g. after switching to the beta channel, beta app updates will be offered to you in the apps management page." : "Sie können den Update-Kanal unten ändern, was sich auch auf die Verwaltungsseite der Apps auswirkt. Wenn Sie z. B. zum Beta-Kanal wechseln, werden Ihnen Beta-App-Updates auf der App-Verwaltungsseite angeboten.",
-    "Update channel:" : "Update-Kanal:",
-    "Note that after a new release the update only shows up after the first minor release or later. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found. Learn more about updates and release channels at {link}" : "Beachten Sie, dass die Aktualisierung nach einer neuen Version erst nach der ersten Unterversion (minor release) oder später angezeigt wird. Wir stellen unseren Benutzern im Laufe der Zeit neue Versionen zur Verfügung und überspringen manchmal eine Version, wenn Probleme auftreten. Weitere Informationen zu Update- und Release-Kanälen finden Sie unter {link}",
-    "Checked on {lastCheckedDate}" : "Geprüft am {lastCheckedDate}"
+    "Note that after a new release the update only shows up after the first minor release or later. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found. Learn more about updates and release channels at {link}" : "Beachten Sie, dass die Aktualisierung nach einer neuen Version erst nach der ersten Unterversion (minor release) oder später angezeigt wird. Wir stellen unseren Benutzern im Laufe der Zeit neue Versionen zur Verfügung und überspringen manchmal eine Version, wenn Probleme auftreten. Weitere Informationen zu Update- und Release-Kanälen finden Sie unter {link}"
 },
 "nplurals=2; plural=(n != 1);");

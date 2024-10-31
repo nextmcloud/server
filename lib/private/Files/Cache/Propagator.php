@@ -45,7 +45,6 @@ class Propagator implements IPropagator {
 		$this->ignore = $ignore;
 	}
 
-
 	/**
 	 * @param string $internalPath
 	 * @param int $time
@@ -186,27 +185,27 @@ class Propagator implements IPropagator {
 		$query->update('filecache')
 			->set('mtime', $query->func()->greatest('mtime', $query->createParameter('time')))
 			->set('etag', $query->expr()->literal(uniqid()))
-			->where($query->expr()->eq('storage', $query->expr()->literal($storageId, IQueryBuilder::PARAM_INT)))
+			->where($query->expr()->eq('storage', $query->createNamedParameter($storageId, IQueryBuilder::PARAM_INT)))
 			->andWhere($query->expr()->eq('path_hash', $query->createParameter('hash')));
 
 		$sizeQuery = $this->connection->getQueryBuilder();
 		$sizeQuery->update('filecache')
 			->set('size', $sizeQuery->func()->add('size', $sizeQuery->createParameter('size')))
-			->where($query->expr()->eq('storage', $query->expr()->literal($storageId, IQueryBuilder::PARAM_INT)))
-			->andWhere($query->expr()->eq('path_hash', $query->createParameter('hash')))
-			->andWhere($sizeQuery->expr()->gt('size', $sizeQuery->expr()->literal(-1, IQueryBuilder::PARAM_INT)));
+			->where($query->expr()->eq('storage', $sizeQuery->createNamedParameter($storageId, IQueryBuilder::PARAM_INT)))
+			->andWhere($query->expr()->eq('path_hash', $sizeQuery->createParameter('hash')))
+			->andWhere($sizeQuery->expr()->gt('size', $sizeQuery->createNamedParameter(-1, IQueryBuilder::PARAM_INT)));
 
 		foreach ($this->batch as $item) {
 			$query->setParameter('time', $item['time'], IQueryBuilder::PARAM_INT);
 			$query->setParameter('hash', $item['hash']);
 
-			$query->execute();
+			$query->executeStatement();
 
 			if ($item['size']) {
 				$sizeQuery->setParameter('size', $item['size'], IQueryBuilder::PARAM_INT);
 				$sizeQuery->setParameter('hash', $item['hash']);
 
-				$sizeQuery->execute();
+				$sizeQuery->executeStatement();
 			}
 		}
 

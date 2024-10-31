@@ -16,6 +16,10 @@
 		}"
 		:scroll-to-index="scrollToIndex"
 		:caption="caption">
+		<template #filters>
+			<FileListFilters />
+		</template>
+
 		<template v-if="!isNoneSelected" #header-overlay>
 			<span class="files-list__selected">{{ t('files', '{count} selected', { count: selectedNodes.length }) }}</span>
 			<FilesListTableHeaderActions :current-view="currentView"
@@ -60,11 +64,12 @@ import type { UserConfig } from '../types'
 
 import { getFileListHeaders, Folder, View, getFileActions, FileType } from '@nextcloud/files'
 import { showError } from '@nextcloud/dialogs'
-import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
+import { subscribe, unsubscribe } from '@nextcloud/event-bus'
 import { defineComponent } from 'vue'
 
 import { action as sidebarAction } from '../actions/sidebarAction.ts'
+import { useRouteParameters } from '../composables/useRouteParameters.ts'
 import { getSummaryFor } from '../utils/fileUtils'
 import { useSelectionStore } from '../store/selection.js'
 import { useUserConfigStore } from '../store/userconfig.ts'
@@ -76,13 +81,15 @@ import FilesListTableFooter from './FilesListTableFooter.vue'
 import FilesListTableHeader from './FilesListTableHeader.vue'
 import filesListWidthMixin from '../mixins/filesListWidth.ts'
 import VirtualList from './VirtualList.vue'
-import logger from '../logger.js'
+import logger from '../logger.ts'
 import FilesListTableHeaderActions from './FilesListTableHeaderActions.vue'
+import FileListFilters from './FileListFilters.vue'
 
 export default defineComponent({
 	name: 'FilesListVirtual',
 
 	components: {
+		FileListFilters,
 		FilesListHeader,
 		FilesListTableFooter,
 		FilesListTableHeader,
@@ -112,7 +119,12 @@ export default defineComponent({
 	setup() {
 		const userConfigStore = useUserConfigStore()
 		const selectionStore = useSelectionStore()
+		const { fileId, openFile } = useRouteParameters()
+
 		return {
+			fileId,
+			openFile,
+
 			userConfigStore,
 			selectionStore,
 		}
@@ -131,18 +143,6 @@ export default defineComponent({
 	computed: {
 		userConfig(): UserConfig {
 			return this.userConfigStore.userConfig
-		},
-
-		fileId() {
-			return parseInt(this.$route.params.fileid) || null
-		},
-
-		/**
-		 * If the current `fileId` should be opened
-		 * The state of the `openfile` query param
-		 */
-		openFile() {
-			return !!this.$route.query.openfile
 		},
 
 		summary() {
@@ -190,14 +190,27 @@ export default defineComponent({
 	},
 
 	watch: {
-		fileId(fileId) {
-			this.scrollToFile(fileId, false)
+		fileId: {
+			handler(fileId) {
+				this.scrollToFile(fileId, false)
+			},
+			immediate: true,
 		},
 
-		openFile(open: boolean) {
-			if (open) {
-				this.$nextTick(() => this.handleOpenFile(this.fileId))
-			}
+		openFile: {
+			handler() {
+				// wait for scrolling and updating the actions to settle
+				this.$nextTick(() => {
+					if (this.fileId) {
+						if (this.openFile) {
+							this.handleOpenFile(this.fileId)
+						} else {
+							this.unselectFile()
+						}
+					}
+				})
+			},
+			immediate: true,
 		},
 	},
 
@@ -206,15 +219,20 @@ export default defineComponent({
 		const mainContent = window.document.querySelector('main.app-content') as HTMLElement
 		mainContent.addEventListener('dragover', this.onDragOver)
 
-		const { id } = loadState<{ id?: number }>('files', 'fileInfo', {})
-		this.scrollToFile(id ?? this.fileId)
-		this.openSidebarForFile(id ?? this.fileId)
-		this.handleOpenFile(id ?? null)
+		subscribe('files:sidebar:closed', this.unselectFile)
+
+		// If the file list is mounted with a fileId specified
+		// then we need to open the sidebar initially
+		if (this.fileId) {
+			this.openSidebarForFile(this.fileId)
+		}
 	},
 
 	beforeDestroy() {
 		const mainContent = window.document.querySelector('main.app-content') as HTMLElement
 		mainContent.removeEventListener('dragover', this.onDragOver)
+
+		unsubscribe('files:sidebar:closed', this.unselectFile)
 	},
 
 	methods: {
@@ -234,6 +252,11 @@ export default defineComponent({
 
 		scrollToFile(fileId: number|null, warn = true) {
 			if (fileId) {
+				// Do not uselessly scroll to the top of the list.
+				if (fileId === this.currentFolder.fileid) {
+					return
+				}
+
 				const index = this.nodes.findIndex(node => node.fileid === fileId)
 				if (warn && index === -1 && fileId !== this.currentFolder.fileid) {
 					showError(this.t('files', 'File not found'))
@@ -242,15 +265,22 @@ export default defineComponent({
 			}
 		},
 
+		unselectFile() {
+			// If the Sidebar is closed and if openFile is false, remove the file id from the URL
+			if (!this.openFile && OCA.Files.Sidebar.file === '') {
+				window.OCP.Files.Router.goToRoute(
+					null,
+					{ ...this.$route.params, fileid: String(this.currentFolder.fileid ?? '') },
+					this.$route.query,
+				)
+			}
+		},
+
 		/**
 		 * Handle opening a file (e.g. by ?openfile=true)
 		 * @param fileId File to open
 		 */
 		handleOpenFile(fileId: number|null) {
-			if (!this.openFile) {
-				return
-			}
-
 			if (fileId === null || this.openFileId === fileId) {
 				return
 			}
@@ -316,12 +346,18 @@ export default defineComponent({
 
 	--checkbox-padding: calc((var(--row-height) - var(--checkbox-size)) / 2);
 	--checkbox-size: 24px;
-	--clickable-area: 44px;
+	--clickable-area: var(--default-clickable-area);
 	--icon-preview-size: 32px;
+
+	--fixed-block-start-position: var(--default-clickable-area);
 
 	overflow: auto;
 	height: 100%;
 	will-change: scroll-position;
+
+	&:has(.file-list-filters__active) {
+		--fixed-block-start-position: calc(var(--default-clickable-area) + var(--default-grid-baseline) + var(--clickable-area-small));
+	}
 
 	& :deep() {
 		// Table head, body and footer
@@ -351,7 +387,7 @@ export default defineComponent({
 		}
 
 		.files-list__selected {
-			padding-right: 12px;
+			padding-inline-end: 12px;
 			white-space: nowrap;
 		}
 
@@ -360,16 +396,29 @@ export default defineComponent({
 
 			&.files-list__table--with-thead-overlay {
 				// Hide the table header below the overlay
-				margin-top: calc(-1 * var(--row-height));
+				margin-block-start: calc(-1 * var(--row-height));
 			}
+		}
+
+		.files-list__filters {
+			// Pinned on top when scrolling above table header
+			position: sticky;
+			top: 0;
+			// ensure there is a background to hide the file list on scroll
+			background-color: var(--color-main-background);
+			z-index: 10;
+			// fixed the size
+			padding-inline: var(--row-height) var(--default-grid-baseline, 4px);
+			height: var(--fixed-block-start-position);
+			width: 100%;
 		}
 
 		.files-list__thead-overlay {
 			// Pinned on top when scrolling
 			position: sticky;
-			top: 0;
+			top: var(--fixed-block-start-position);
 			// Save space for a row checkbox
-			margin-left: var(--row-height);
+			margin-inline-start: var(--row-height);
 			// More than .files-list__thead
 			z-index: 20;
 
@@ -378,7 +427,7 @@ export default defineComponent({
 
 			// Reuse row styles
 			background-color: var(--color-main-background);
-			border-bottom: 1px solid var(--color-border);
+			border-block-end: 1px solid var(--color-border);
 			height: var(--row-height);
 		}
 
@@ -396,12 +445,7 @@ export default defineComponent({
 			// Pinned on top when scrolling
 			position: sticky;
 			z-index: 10;
-			top: 0;
-		}
-
-		// Table footer
-		.files-list__tfoot {
-			min-height: 300px;
+			top: var(--fixed-block-start-position);
 		}
 
 		tr {
@@ -410,7 +454,7 @@ export default defineComponent({
 			align-items: center;
 			width: 100%;
 			user-select: none;
-			border-bottom: 1px solid var(--color-border);
+			border-block-end: 1px solid var(--color-border);
 			box-sizing: border-box;
 			user-select: none;
 			height: var(--row-height);
@@ -420,7 +464,7 @@ export default defineComponent({
 			display: flex;
 			align-items: center;
 			flex: 0 0 auto;
-			justify-content: left;
+			justify-content: start;
 			width: var(--row-height);
 			height: var(--row-height);
 			margin: 0;
@@ -442,8 +486,7 @@ export default defineComponent({
 			position: absolute;
 			display: block;
 			top: 0;
-			left: 0;
-			right: 0;
+			inset-inline: 0;
 			bottom: 0;
 			opacity: .1;
 			z-index: -1;
@@ -507,7 +550,7 @@ export default defineComponent({
 			width: var(--icon-preview-size);
 			height: 100%;
 			// Show same padding as the checkbox right padding for visual balance
-			margin-right: var(--checkbox-padding);
+			margin-inline-end: var(--checkbox-padding);
 			color: var(--color-primary-element);
 
 			// Icon is also clickable
@@ -534,14 +577,30 @@ export default defineComponent({
 				}
 			}
 
-			&-preview {
+			&-preview-container {
+				position: relative; // Needed for the blurshash to be positioned correctly
 				overflow: hidden;
 				width: var(--icon-preview-size);
 				height: var(--icon-preview-size);
 				border-radius: var(--border-radius);
+			}
+
+			&-blurhash {
+				position: absolute;
+				inset-block-start: 0;
+				inset-inline-start: 0;
+				height: 100%;
+				width: 100%;
+				object-fit: cover;
+			}
+
+			&-preview {
 				// Center and contain the preview
 				object-fit: contain;
 				object-position: center;
+
+				height: 100%;
+				width: 100%;
 
 				/* Preview not loaded animation effect */
 				&:not(.files-list__row-icon-preview--loaded) {
@@ -553,7 +612,7 @@ export default defineComponent({
 			&-favorite {
 				position: absolute;
 				top: 0px;
-				right: -10px;
+				inset-inline-end: -10px;
 			}
 
 			// File and folder overlay
@@ -563,7 +622,7 @@ export default defineComponent({
 				max-width: calc(var(--icon-preview-size) * 0.5);
 				color: var(--color-primary-element-text);
 				// better alignment with the folder icon
-				margin-top: 2px;
+				margin-block-start: 2px;
 
 				// Improve icon contrast with a background for files
 				&--file {
@@ -581,24 +640,27 @@ export default defineComponent({
 			// Take as much space as possible
 			flex: 1 1 auto;
 
-			a {
+			button.files-list__row-name-link {
 				display: flex;
 				align-items: center;
+				text-align: start;
 				// Fill cell height and width
 				width: 100%;
 				height: 100%;
 				// Necessary for flex grow to work
 				min-width: 0;
+				margin: 0;
+				padding: 0;
 
 				// Already added to the inner text, see rule below
 				&:focus-visible {
-					outline: none;
+					outline: none !important;
 				}
 
 				// Keyboard indicator a11y
 				&:focus .files-list__row-name-text {
-					outline: 2px solid var(--color-main-text) !important;
-					border-radius: 20px;
+					outline: var(--border-width-input-focused) solid var(--color-main-text) !important;
+					border-radius: var(--border-radius-element);
 				}
 				&:focus:not(:focus-visible) .files-list__row-name-text {
 					outline: none !important;
@@ -608,8 +670,8 @@ export default defineComponent({
 			.files-list__row-name-text {
 				color: var(--color-main-text);
 				// Make some space for the outline
-				padding: 5px 10px;
-				margin-left: -10px;
+				padding: var(--default-grid-baseline) calc(2 * var(--default-grid-baseline));
+				padding-inline-start: -10px;
 				// Align two name and ext
 				display: inline-flex;
 			}
@@ -628,7 +690,7 @@ export default defineComponent({
 			input {
 				width: 100%;
 				// Align with text, 0 - padding - border
-				margin-left: -8px;
+				margin-inline-start: -8px;
 				padding: 2px 6px;
 				border-width: 2px;
 
@@ -659,7 +721,7 @@ export default defineComponent({
 		}
 
 		.files-list__row-action--inline {
-			margin-right: 7px;
+			margin-inline-end: 7px;
 		}
 
 		.files-list__row-mtime,
@@ -681,22 +743,30 @@ export default defineComponent({
 		}
 	}
 }
+
+@media screen and (max-width: 512px) {
+	.files-list :deep(.files-list__filters) {
+		// Reduce padding on mobile
+		padding-inline: var(--default-grid-baseline, 4px);
+	}
+}
+
 </style>
 
 <style lang="scss">
 // Grid mode
 tbody.files-list__tbody.files-list__tbody--grid {
 	--half-clickable-area: calc(var(--clickable-area) / 2);
-	--row-width: 160px;
-	// We use half of the clickable area as visual balance margin
-	--row-height: calc(var(--row-width) - var(--half-clickable-area));
-	--icon-preview-size: calc(var(--row-width) - var(--clickable-area));
+	--item-padding: 16px;
+	--icon-preview-size: 166px;
+	--name-height: 32px;
+	--mtime-height: 16px;
+	--row-width: calc(var(--icon-preview-size) + var(--item-padding) * 2);
+	--row-height: calc(var(--icon-preview-size) + var(--name-height) + var(--mtime-height) + var(--item-padding) * 2);
 	--checkbox-padding: 0px;
 
 	display: grid;
 	grid-template-columns: repeat(auto-fill, var(--row-width));
-	grid-gap: 15px;
-	row-gap: 15px;
 
 	align-content: center;
 	align-items: center;
@@ -704,29 +774,44 @@ tbody.files-list__tbody.files-list__tbody--grid {
 	justify-items: center;
 
 	tr {
+		display: flex;
+		flex-direction: column;
 		width: var(--row-width);
-		height: calc(var(--row-height) + var(--clickable-area));
+		height: var(--row-height);
 		border: none;
-		border-radius: var(--border-radius);
+		border-radius: var(--border-radius-large);
+		padding: var(--item-padding);
 	}
 
 	// Checkbox in the top left
 	.files-list__row-checkbox {
 		position: absolute;
 		z-index: 9;
-		top: 0;
-		left: 0;
+		top: calc(var(--item-padding)/2);
+		inset-inline-start: calc(var(--item-padding)/2);
 		overflow: hidden;
-		width: var(--clickable-area);
-		height: var(--clickable-area);
-		border-radius: var(--half-clickable-area);
+		--checkbox-container-size: 44px;
+		width: var(--checkbox-container-size);
+		height: var(--checkbox-container-size);
+
+		// Add a background to the checkbox so we do not see the image through it.
+		.checkbox-radio-switch__content::after {
+			content: '';
+			width: 16px;
+			height: 16px;
+			position: absolute;
+			inset-inline-start: 50%;
+			margin-inline-start: -8px;
+			z-index: -1;
+			background: var(--color-main-background);
+		}
 	}
 
 	// Star icon in the top right
 	.files-list__row-icon-favorite {
 		position: absolute;
 		top: 0;
-		right: 0;
+		inset-inline-end: 0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -735,36 +820,36 @@ tbody.files-list__tbody.files-list__tbody--grid {
 	}
 
 	.files-list__row-name {
-		display: grid;
-		justify-content: stretch;
-		width: 100%;
-		height: 100%;
-		grid-auto-rows: var(--row-height) var(--clickable-area);
+		display: flex;
+		flex-direction: column;
+		width: var(--icon-preview-size);
+		height: calc(var(--icon-preview-size) + var(--name-height));
+		// Ensure that the name outline is visible.
+		overflow: visible;
 
 		span.files-list__row-icon {
-			width: 100%;
-			height: 100%;
-			// Visual balance, we use half of the clickable area
-			// as a margin around the preview
-			padding-top: var(--half-clickable-area);
-		}
-
-		a.files-list__row-name-link {
-			// Minus action menu
-			width: calc(100% - var(--clickable-area));
-			height: var(--clickable-area);
+			width: var(--icon-preview-size);
+			height: var(--icon-preview-size);
 		}
 
 		.files-list__row-name-text {
 			margin: 0;
-			padding-right: 0;
+			// Ensure that the outline is not too close to the text.
+			margin-inline-start: -4px;
+			padding: 0px 4px;
 		}
+	}
+
+	.files-list__row-mtime {
+		width: var(--icon-preview-size);
+		height: var(--mtime-height);
+		font-size: calc(var(--default-font-size) - 4px);
 	}
 
 	.files-list__row-actions {
 		position: absolute;
-		right: 0;
-		bottom: 0;
+		inset-inline-end: calc(var(--half-clickable-area) / 2);
+		inset-block-end: calc(var(--mtime-height) / 2);
 		width: var(--clickable-area);
 		height: var(--clickable-area);
 	}

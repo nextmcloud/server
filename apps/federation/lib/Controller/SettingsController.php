@@ -7,34 +7,32 @@
  */
 namespace OCA\Federation\Controller;
 
+use OCA\Federation\Settings\Admin;
 use OCA\Federation\TrustedServers;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\HintException;
 use OCP\IL10N;
 use OCP\IRequest;
 
 class SettingsController extends Controller {
-	private IL10N $l;
-	private TrustedServers $trustedServers;
-
-	public function __construct(string $AppName,
+	public function __construct(
+		string $AppName,
 		IRequest $request,
-		IL10N $l10n,
-		TrustedServers $trustedServers
+		private IL10N $l,
+		private TrustedServers $trustedServers,
 	) {
 		parent::__construct($AppName, $request);
-		$this->l = $l10n;
-		$this->trustedServers = $trustedServers;
 	}
 
 
 	/**
 	 * Add server to the list of trusted Nextclouds.
 	 *
-	 * @AuthorizedAdminSetting(settings=OCA\Federation\Settings\Admin)
 	 * @throws HintException
 	 */
+	#[AuthorizedAdminSetting(settings: Admin::class)]
 	public function addServer(string $url): DataResponse {
 		$this->checkServer($url);
 		$id = $this->trustedServers->addServer($url);
@@ -48,9 +46,8 @@ class SettingsController extends Controller {
 
 	/**
 	 * Add server to the list of trusted Nextclouds.
-	 *
-	 * @AuthorizedAdminSetting(settings=OCA\Federation\Settings\Admin)
 	 */
+	#[AuthorizedAdminSetting(settings: Admin::class)]
 	public function removeServer(int $id): DataResponse {
 		$this->trustedServers->removeServer($id);
 		return new DataResponse();
@@ -59,9 +56,9 @@ class SettingsController extends Controller {
 	/**
 	 * Check if the server should be added to the list of trusted servers or not.
 	 *
-	 * @AuthorizedAdminSetting(settings=OCA\Federation\Settings\Admin)
 	 * @throws HintException
 	 */
+	#[AuthorizedAdminSetting(settings: Admin::class)]
 	protected function checkServer(string $url): bool {
 		if ($this->trustedServers->isTrustedServer($url) === true) {
 			$message = 'Server is already in the list of trusted servers.';

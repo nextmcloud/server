@@ -9,11 +9,15 @@ use DateTimeZone;
 use OCA\DAV\CalDAV\CalDavBackend;
 use OCA\DAV\CalDAV\Calendar;
 use OCA\DAV\CalDAV\CalendarHome;
+use OCA\DAV\CalDAV\CalendarObject;
+use OCA\DAV\CalDAV\DefaultCalendarValidator;
+use OCA\DAV\CalDAV\TipBroker;
 use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 use Sabre\CalDAV\ICalendar;
 use Sabre\CalDAV\ICalendarObject;
 use Sabre\CalDAV\Schedule\ISchedulingObject;
+use Sabre\DAV\Exception as DavException;
 use Sabre\DAV\INode;
 use Sabre\DAV\IProperties;
 use Sabre\DAV\PropFind;
@@ -37,11 +41,6 @@ use function Sabre\Uri\split;
 
 class Plugin extends \Sabre\CalDAV\Schedule\Plugin {
 
-	/**
-	 * @var IConfig
-	 */
-	private $config;
-
 	/** @var ITip\Message[] */
 	private $schedulingResponses = [];
 
@@ -50,14 +49,15 @@ class Plugin extends \Sabre\CalDAV\Schedule\Plugin {
 
 	public const CALENDAR_USER_TYPE = '{' . self::NS_CALDAV . '}calendar-user-type';
 	public const SCHEDULE_DEFAULT_CALENDAR_URL = '{' . Plugin::NS_CALDAV . '}schedule-default-calendar-URL';
-	private LoggerInterface $logger;
 
 	/**
 	 * @param IConfig $config
 	 */
-	public function __construct(IConfig $config, LoggerInterface $logger) {
-		$this->config = $config;
-		$this->logger = $logger;
+	public function __construct(
+		private IConfig $config,
+		private LoggerInterface $logger,
+		private DefaultCalendarValidator $defaultCalendarValidator,
+	) {
 	}
 
 	/**
@@ -78,6 +78,13 @@ class Plugin extends \Sabre\CalDAV\Schedule\Plugin {
 			$server->protectedProperties,
 			static fn (string $property) => $property !== self::SCHEDULE_DEFAULT_CALENDAR_URL,
 		);
+	}
+
+	/**
+	 * Returns an instance of the iTip\Broker.
+	 */
+	protected function createITipBroker(): TipBroker {
+		return new TipBroker();
 	}
 
 	/**
@@ -130,6 +137,11 @@ class Plugin extends \Sabre\CalDAV\Schedule\Plugin {
 		if ($result === null) {
 			$result = [];
 		}
+		
+		// iterate through items and html decode values
+		foreach ($result as $key => $value) {
+			$result[$key] = urldecode($value);
+		}
 
 		return $result;
 	}
@@ -149,7 +161,42 @@ class Plugin extends \Sabre\CalDAV\Schedule\Plugin {
 		}
 
 		try {
-			parent::calendarObjectChange($request, $response, $vCal, $calendarPath, $modified, $isNew);
+
+			if (!$this->scheduleReply($this->server->httpRequest)) {
+				return;
+			}
+			
+			/** @var Calendar $calendarNode */
+			$calendarNode = $this->server->tree->getNodeForPath($calendarPath);
+			// extract addresses for owner
+			$addresses = $this->getAddressesForPrincipal($calendarNode->getOwner());
+			// determine if request is from a sharee
+			if ($calendarNode->isShared()) {
+				// extract addresses for sharee and add to address collection
+				$addresses = array_merge(
+					$addresses,
+					$this->getAddressesForPrincipal($calendarNode->getPrincipalURI())
+				);
+			}
+			// determine if we are updating a calendar event
+			if (!$isNew) {
+				// retrieve current calendar event node
+				/** @var CalendarObject $currentNode */
+				$currentNode = $this->server->tree->getNodeForPath($request->getPath());
+				// convert calendar event string data to VCalendar object
+				/** @var \Sabre\VObject\Component\VCalendar $currentObject */
+				$currentObject = Reader::read($currentNode->get());
+			} else {
+				$currentObject = null;
+			}
+			// process request
+			$this->processICalendarChange($currentObject, $vCal, $addresses, [], $modified);
+	
+			if ($currentObject) {
+				// Destroy circular references so PHP will GC the object.
+				$currentObject->destroy();
+			}
+			
 		} catch (SameOrganizerForAllComponentsException $e) {
 			$this->handleSameOrganizerException($e, $vCal, $calendarPath);
 		}
@@ -355,11 +402,20 @@ EOF;
 						 * - isn't a calendar subscription
 						 * - user can write to it (no virtual/3rd-party calendars)
 						 * - calendar isn't a share
+						 * - calendar supports VEVENTs
 						 */
 						foreach ($calendarHome->getChildren() as $node) {
-							if ($node instanceof Calendar && !$node->isSubscription() && $node->canWrite() && !$node->isShared() && !$node->isDeleted()) {
-								$userCalendars[] = $node;
+							if (!($node instanceof Calendar)) {
+								continue;
 							}
+
+							try {
+								$this->defaultCalendarValidator->validateScheduleDefaultCalendar($node);
+							} catch (DavException $e) {
+								continue;
+							}
+
+							$userCalendars[] = $node;
 						}
 
 						if (count($userCalendars) > 0) {
@@ -508,7 +564,9 @@ EOF;
 		$calendarTimeZone = new DateTimeZone('UTC');
 
 		$homePath = $result[0][200]['{' . self::NS_CALDAV . '}calendar-home-set']->getHref();
+		/** @var Calendar $node */
 		foreach ($this->server->tree->getNodeForPath($homePath)->getChildren() as $node) {
+			
 			if (!$node instanceof ICalendar) {
 				continue;
 			}

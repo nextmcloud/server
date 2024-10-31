@@ -10,9 +10,7 @@ namespace OCA\User_LDAP;
 use OCA\User_LDAP\User\DeletedUsersIndex;
 use OCA\User_LDAP\User\OfflineUser;
 use OCA\User_LDAP\User\User;
-use OCP\IConfig;
 use OCP\IUserBackend;
-use OCP\IUserSession;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\User\Backend\ICountMappedUsersBackend;
 use OCP\User\Backend\ICountUsersBackend;
@@ -26,33 +24,17 @@ class User_Proxy extends Proxy implements IUserBackend, UserInterface, IUserLDAP
 	private ?User_LDAP $refBackend = null;
 
 	private bool $isSetUp = false;
-	private Helper $helper;
-	private IConfig $ocConfig;
-	private INotificationManager $notificationManager;
-	private IUserSession $userSession;
-	private UserPluginManager $userPluginManager;
-	private LoggerInterface $logger;
-	private DeletedUsersIndex $deletedUsersIndex;
 
 	public function __construct(
-		Helper $helper,
+		private Helper $helper,
 		ILDAPWrapper $ldap,
 		AccessFactory $accessFactory,
-		IConfig $ocConfig,
-		INotificationManager $notificationManager,
-		IUserSession $userSession,
-		UserPluginManager $userPluginManager,
-		LoggerInterface $logger,
-		DeletedUsersIndex $deletedUsersIndex,
+		private INotificationManager $notificationManager,
+		private UserPluginManager $userPluginManager,
+		private LoggerInterface $logger,
+		private DeletedUsersIndex $deletedUsersIndex,
 	) {
 		parent::__construct($ldap, $accessFactory);
-		$this->helper = $helper;
-		$this->ocConfig = $ocConfig;
-		$this->notificationManager = $notificationManager;
-		$this->userSession = $userSession;
-		$this->userPluginManager = $userPluginManager;
-		$this->logger = $logger;
-		$this->deletedUsersIndex = $deletedUsersIndex;
 	}
 
 	protected function setup(): void {
@@ -64,9 +46,7 @@ class User_Proxy extends Proxy implements IUserBackend, UserInterface, IUserLDAP
 		foreach ($serverConfigPrefixes as $configPrefix) {
 			$this->backends[$configPrefix] = new User_LDAP(
 				$this->getAccess($configPrefix),
-				$this->ocConfig,
 				$this->notificationManager,
-				$this->userSession,
 				$this->userPluginManager,
 				$this->logger,
 				$this->deletedUsersIndex,
@@ -230,8 +210,8 @@ class User_Proxy extends Proxy implements IUserBackend, UserInterface, IUserLDAP
 	/**
 	 * check if a user exists on LDAP
 	 *
-	 * @param string|\OCA\User_LDAP\User\User $user either the Nextcloud user
-	 * name or an instance of that user
+	 * @param string|User $user either the Nextcloud user
+	 *                          name or an instance of that user
 	 */
 	public function userExistsOnLDAP($user, bool $ignoreCache = false): bool {
 		$id = ($user instanceof User) ? $user->getUsername() : $user;
@@ -305,7 +285,7 @@ class User_Proxy extends Proxy implements IUserBackend, UserInterface, IUserLDAP
 	}
 
 	/**
-	 * checks whether the user is allowed to change his avatar in Nextcloud
+	 * checks whether the user is allowed to change their avatar in Nextcloud
 	 *
 	 * @param string $uid the Nextcloud user name
 	 * @return boolean either the user can or cannot

@@ -143,6 +143,7 @@ import { subscribe, unsubscribe } from '@nextcloud/event-bus'
 import AppItem from './AppList/AppItem.vue'
 import pLimit from 'p-limit'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import { useAppApiStore } from '../store/app-api-store'
 
 export default {
 	name: 'AppList',
@@ -158,6 +159,13 @@ export default {
 		},
 	},
 
+	setup() {
+		const appApiStore = useAppApiStore()
+		return {
+			appApiStore,
+		}
+	},
+
 	data() {
 		return {
 			search: '',
@@ -168,7 +176,10 @@ export default {
 			return this.apps.filter(app => app.update).length
 		},
 		loading() {
-			return this.$store.getters.loading('list')
+			if (!this.$store.getters['appApiApps/isAppApiEnabled']) {
+				return this.$store.getters.loading('list')
+			}
+			return this.$store.getters.loading('list') || this.appApiStore.getLoading('list')
 		},
 		hasPendingUpdate() {
 			return this.apps.filter(app => app.update).length > 0
@@ -177,7 +188,9 @@ export default {
 			return this.hasPendingUpdate && this.useListView
 		},
 		apps() {
-			const apps = this.$store.getters.getAllApps
+			// Exclude ExApps from the list if AppAPI is disabled
+			const exApps = this.$store.getters.isAppApiEnabled ? this.appApiStore.getAllApps : []
+			const apps = [...this.$store.getters.getAllApps, ...exApps]
 				.filter(app => app.name.toLowerCase().search(this.search.toLowerCase()) !== -1)
 				.sort(function(a, b) {
 					const sortStringA = '' + (a.active ? 0 : 1) + (a.update ? 0 : 1) + a.name
@@ -304,8 +317,9 @@ export default {
 			const limit = pLimit(1)
 			this.apps
 				.filter(app => app.update)
-				.map(app => limit(() => this.$store.dispatch('updateApp', { appId: app.id })),
-				)
+				.map((app) => limit(() => {
+					this.update(app.id)
+				}))
 		},
 	},
 }
@@ -326,14 +340,14 @@ $toolbar-height: 44px + $toolbar-padding * 2;
 	}
 
 	#app-list-update-all {
-		margin-left: 10px;
+		margin-inline-start: 10px;
 	}
 
 	&__toolbar {
 		height: $toolbar-height;
 		padding: $toolbar-padding;
 		// Leave room for app-navigation-toggle
-		padding-left: $toolbar-height;
+		padding-inline-start: $toolbar-height;
 		width: 100%;
 		background-color: var(--color-main-background);
 		position: sticky;
@@ -361,11 +375,13 @@ $toolbar-height: 44px + $toolbar-padding * 2;
 	&__bundle-heading {
 		display: flex;
 		align-items: center;
-		margin: 20px 10px 20px 0;
+		margin-block: 20px;
+		margin-inline: 0 10px;
 	}
 
 	&__bundle-header {
-		margin: 0 10px 0 50px;
+		margin-block: 0;
+		margin-inline: 50px 10px;
 		font-weight: bold;
 		font-size: 20px;
 		line-height: 30px;

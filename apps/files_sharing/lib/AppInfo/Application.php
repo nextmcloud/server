@@ -18,6 +18,7 @@ use OCA\Files_Sharing\Helper;
 use OCA\Files_Sharing\Listener\BeforeDirectFileDownloadListener;
 use OCA\Files_Sharing\Listener\BeforeZipCreatedListener;
 use OCA\Files_Sharing\Listener\LoadAdditionalListener;
+use OCA\Files_Sharing\Listener\LoadPublicFileRequestAuthListener;
 use OCA\Files_Sharing\Listener\LoadSidebarListener;
 use OCA\Files_Sharing\Listener\ShareInteractionListener;
 use OCA\Files_Sharing\Listener\UserAddedToGroupListener;
@@ -34,6 +35,7 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCP\Collaboration\Resources\LoadAdditionalScriptsEvent as ResourcesLoadAdditionalScriptsEvent;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudIdManager;
@@ -85,7 +87,7 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(GroupChangedEvent::class, GroupDisplayNameCache::class);
 		$context->registerEventListener(GroupDeletedEvent::class, GroupDisplayNameCache::class);
 
-		// sidebar and files scripts
+		// Sidebar and files scripts
 		$context->registerEventListener(LoadAdditionalScriptsEvent::class, LoadAdditionalListener::class);
 		$context->registerEventListener(LoadSidebar::class, LoadSidebarListener::class);
 		$context->registerEventListener(ShareCreatedEvent::class, ShareInteractionListener::class);
@@ -95,6 +97,9 @@ class Application extends App implements IBootstrap {
 		// Handle download events for view only checks
 		$context->registerEventListener(BeforeZipCreatedEvent::class, BeforeZipCreatedListener::class);
 		$context->registerEventListener(BeforeDirectFileDownloadEvent::class, BeforeDirectFileDownloadListener::class);
+
+		// File request auth
+		$context->registerEventListener(BeforeTemplateRenderedEvent::class, LoadPublicFileRequestAuthListener::class);
 	}
 
 	public function boot(IBootContext $context): void {
@@ -114,10 +119,10 @@ class Application extends App implements IBootstrap {
 	}
 
 	public function registerEventsScripts(IEventDispatcher $dispatcher): void {
-		$dispatcher->addListener(ResourcesLoadAdditionalScriptsEvent::class, function () {
-			\OCP\Util::addScript('files_sharing', 'collaboration');
+		$dispatcher->addListener(ResourcesLoadAdditionalScriptsEvent::class, function (): void {
+			Util::addScript('files_sharing', 'collaboration');
 		});
-		$dispatcher->addListener(\OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent::class, function () {
+		$dispatcher->addListener(BeforeTemplateRenderedEvent::class, function (): void {
 			/**
 			 * Always add main sharing script
 			 */
@@ -125,12 +130,12 @@ class Application extends App implements IBootstrap {
 		});
 
 		// notifications api to accept incoming user shares
-		$dispatcher->addListener(ShareCreatedEvent::class, function (ShareCreatedEvent $event) {
+		$dispatcher->addListener(ShareCreatedEvent::class, function (ShareCreatedEvent $event): void {
 			/** @var Listener $listener */
 			$listener = $this->getContainer()->query(Listener::class);
 			$listener->shareNotification($event);
 		});
-		$dispatcher->addListener(IGroup::class . '::postAddUser', function ($event) {
+		$dispatcher->addListener(IGroup::class . '::postAddUser', function ($event): void {
 			if (!$event instanceof OldGenericEvent) {
 				return;
 			}

@@ -20,6 +20,7 @@ use OCP\ISession;
 use OCP\IUserSession;
 use OCP\Session\Exceptions\SessionNotAvailableException;
 use OCP\User\Backend\IPasswordConfirmationBackend;
+use Psr\Log\LoggerInterface;
 use ReflectionMethod;
 
 class PasswordConfirmationMiddleware extends Middleware {
@@ -43,11 +44,13 @@ class PasswordConfirmationMiddleware extends Middleware {
 	 * @param IUserSession $userSession
 	 * @param ITimeFactory $timeFactory
 	 */
-	public function __construct(ControllerMethodReflector $reflector,
+	public function __construct(
+		ControllerMethodReflector $reflector,
 		ISession $session,
 		IUserSession $userSession,
 		ITimeFactory $timeFactory,
 		IProvider $tokenProvider,
+		private readonly LoggerInterface $logger,
 	) {
 		$this->reflector = $reflector;
 		$this->session = $session;
@@ -91,7 +94,7 @@ class PasswordConfirmationMiddleware extends Middleware {
 				return;
 			}
 
-			$lastConfirm = (int) $this->session->get('last-password-confirm');
+			$lastConfirm = (int)$this->session->get('last-password-confirm');
 			// TODO: confirm excludedUserBackEnds can go away and remove it
 			if (!isset($this->excludedUserBackEnds[$backendClassName]) && $lastConfirm < ($this->timeFactory->getTime() - (30 * 60 + 15))) { // allow 15 seconds delay
 				throw new NotConfirmedException();
@@ -113,6 +116,7 @@ class PasswordConfirmationMiddleware extends Middleware {
 		}
 
 		if ($this->reflector->hasAnnotation($annotationName)) {
+			$this->logger->debug($reflectionMethod->getDeclaringClass()->getName() . '::' . $reflectionMethod->getName() . ' uses the @' . $annotationName . ' annotation and should use the #[' . $attributeClass . '] attribute instead');
 			return true;
 		}
 

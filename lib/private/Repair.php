@@ -11,6 +11,7 @@ use OC\DB\Connection;
 use OC\DB\ConnectionAdapter;
 use OC\Repair\AddAppConfigLazyMigration;
 use OC\Repair\AddBruteForceCleanupJob;
+use OC\Repair\AddCleanupDeletedUsersBackgroundJob;
 use OC\Repair\AddCleanupUpdaterBackupsJob;
 use OC\Repair\AddMetadataGenerationJob;
 use OC\Repair\AddRemoveOldTasksBackgroundJob;
@@ -27,7 +28,6 @@ use OC\Repair\Events\RepairStartEvent;
 use OC\Repair\Events\RepairStepEvent;
 use OC\Repair\Events\RepairWarningEvent;
 use OC\Repair\MoveUpdaterStepFile;
-use OC\Repair\NC11\FixMountStorages;
 use OC\Repair\NC13\AddLogRotateJob;
 use OC\Repair\NC14\AddPreviewBackgroundCleanupJob;
 use OC\Repair\NC16\AddClenupLoginFlowV2BackgroundJob;
@@ -42,6 +42,7 @@ use OC\Repair\NC21\ValidatePhoneNumber;
 use OC\Repair\NC22\LookupServerSendCheck;
 use OC\Repair\NC24\AddTokenCleanupJob;
 use OC\Repair\NC25\AddMissingSecretJob;
+use OC\Repair\NC30\RemoveLegacyDatadirFile;
 use OC\Repair\OldGroupMembershipShares;
 use OC\Repair\Owncloud\CleanPreviews;
 use OC\Repair\Owncloud\DropAccountTermsTable;
@@ -52,6 +53,7 @@ use OC\Repair\Owncloud\UpdateLanguageCodes;
 use OC\Repair\RemoveLinkShares;
 use OC\Repair\RepairDavShares;
 use OC\Repair\RepairInvalidShares;
+use OC\Repair\RepairLogoDimension;
 use OC\Repair\RepairMimeTypes;
 use OC\Template\JSCombiner;
 use OCA\DAV\Migration\DeleteSchedulingObjects;
@@ -59,6 +61,9 @@ use OCP\AppFramework\QueryException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Collaboration\Resources\IManager;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\IAppConfig;
+use OCP\IConfig;
+use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use OCP\Notification\IManager as INotificationManager;
@@ -73,7 +78,7 @@ class Repair implements IOutput {
 
 	public function __construct(
 		private IEventDispatcher $dispatcher,
-		private LoggerInterface $logger
+		private LoggerInterface $logger,
 	) {
 	}
 
@@ -98,7 +103,7 @@ class Repair implements IOutput {
 			try {
 				$step->run($this);
 			} catch (\Exception $e) {
-				$this->logger->error("Exception while executing repair step " . $step->getName(), ['exception' => $e]);
+				$this->logger->error('Exception while executing repair step ' . $step->getName(), ['exception' => $e]);
 				$this->dispatcher->dispatchTyped(new RepairErrorEvent($e->getMessage()));
 			}
 		}
@@ -162,7 +167,6 @@ class Repair implements IOutput {
 				\OC::$server->getConfig()
 			),
 			new MigrateOauthTables(\OC::$server->get(Connection::class)),
-			new FixMountStorages(\OC::$server->getDatabaseConnection()),
 			new UpdateLanguageCodes(\OC::$server->getDatabaseConnection(), \OC::$server->getConfig()),
 			new AddLogRotateJob(\OC::$server->getJobList()),
 			new ClearFrontendCaches(\OC::$server->getMemCacheFactory(), \OCP\Server::get(JSCombiner::class)),
@@ -187,6 +191,9 @@ class Repair implements IOutput {
 			\OCP\Server::get(AddRemoveOldTasksBackgroundJob::class),
 			\OCP\Server::get(AddMetadataGenerationJob::class),
 			\OCP\Server::get(AddAppConfigLazyMigration::class),
+			\OCP\Server::get(RepairLogoDimension::class),
+			\OCP\Server::get(RemoveLegacyDatadirFile::class),
+			\OCP\Server::get(AddCleanupDeletedUsersBackgroundJob::class),
 		];
 	}
 
@@ -199,7 +206,11 @@ class Repair implements IOutput {
 	public static function getExpensiveRepairSteps() {
 		return [
 			new OldGroupMembershipShares(\OC::$server->getDatabaseConnection(), \OC::$server->getGroupManager()),
-			new RepairMimeTypes(\OC::$server->getConfig(), \OC::$server->getDatabaseConnection()),
+			new RepairMimeTypes(
+				\OCP\Server::get(IConfig::class),
+				\OCP\Server::get(IAppConfig::class),
+				\OCP\Server::get(IDBConnection::class)
+			),
 			\OC::$server->get(ValidatePhoneNumber::class),
 			\OC::$server->get(DeleteSchedulingObjects::class),
 		];

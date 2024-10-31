@@ -8,10 +8,11 @@ declare(strict_types=1);
  */
 namespace OC\Core\Controller;
 
-use OCA\Files_Sharing\SharedStorage;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\FileDisplayResponse;
 use OCP\AppFramework\Http\RedirectResponse;
@@ -19,6 +20,7 @@ use OCP\Files\File;
 use OCP\Files\IRootFolder;
 use OCP\Files\Node;
 use OCP\Files\NotFoundException;
+use OCP\Files\Storage\ISharedStorage;
 use OCP\IPreview;
 use OCP\IRequest;
 use OCP\Preview\IMimeIconProvider;
@@ -36,9 +38,6 @@ class PreviewController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
 	 * Get a preview by file path
 	 *
 	 * @param string $file Path of the file
@@ -56,6 +55,8 @@ class PreviewController extends Controller {
 	 * 403: Getting preview is not allowed
 	 * 404: Preview not found
 	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
 	#[FrontpageRoute(verb: 'GET', url: '/core/preview.png')]
 	public function getPreview(
 		string $file = '',
@@ -80,9 +81,6 @@ class PreviewController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
 	 * Get a preview by file ID
 	 *
 	 * @param int $fileId ID of the file
@@ -100,6 +98,8 @@ class PreviewController extends Controller {
 	 * 403: Getting preview is not allowed
 	 * 404: Preview not found
 	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
 	#[FrontpageRoute(verb: 'GET', url: '/core/preview')]
 	public function getPreviewByFileId(
 		int $fileId = -1,
@@ -141,12 +141,21 @@ class PreviewController extends Controller {
 			return new DataResponse([], Http::STATUS_FORBIDDEN);
 		}
 
+		if ($node->getId() <= 0) {
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		}
+
+		// Is this header is set it means our UI is doing a preview for no-download shares
+		// we check a header so we at least prevent people from using the link directly (obfuscation)
+		$isNextcloudPreview = $this->request->getHeader('X-NC-Preview') === 'true';
 		$storage = $node->getStorage();
-		if ($storage->instanceOfStorage(SharedStorage::class)) {
-			/** @var SharedStorage $storage */
+		if ($isNextcloudPreview === false && $storage->instanceOfStorage(ISharedStorage::class)) {
+			/** @var ISharedStorage $storage */
 			$share = $storage->getShare();
 			$attributes = $share->getAttributes();
-			if ($attributes !== null && $attributes->getAttribute('permissions', 'download') === false) {
+			// No "allow preview" header set, so we must check if
+			// the share has not explicitly disabled download permissions
+			if ($attributes?->getAttribute('permissions', 'download') === false) {
 				return new DataResponse([], Http::STATUS_FORBIDDEN);
 			}
 		}

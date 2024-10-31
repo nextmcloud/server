@@ -36,7 +36,7 @@
 				@click.native="execDefaultAction" />
 
 			<FileEntryName ref="name"
-				:display-name="displayName"
+				:basename="basename"
 				:extension="extension"
 				:files-list-width="filesListWidth"
 				:grid-mode="true"
@@ -44,6 +44,15 @@
 				:source="source"
 				@auxclick.native="execDefaultAction"
 				@click.native="execDefaultAction" />
+		</td>
+
+		<!-- Mtime -->
+		<td v-if="!compact && isMtimeAvailable"
+			:style="mtimeOpacity"
+			class="files-list__row-mtime"
+			data-cy-files-list-row-mtime
+			@click="openDetailsIfAvailable">
+			<NcDateTime v-if="source.mtime" :timestamp="source.mtime" :ignore-seconds="true" />
 		</td>
 
 		<!-- Actions -->
@@ -60,7 +69,10 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 
-import { useNavigation } from '../composables/useNavigation'
+import NcDateTime from '@nextcloud/vue/dist/Components/NcDateTime.js'
+
+import { useNavigation } from '../composables/useNavigation.ts'
+import { useRouteParameters } from '../composables/useRouteParameters.ts'
 import { useActionsMenuStore } from '../store/actionsmenu.ts'
 import { useDragAndDropStore } from '../store/dragging.ts'
 import { useFilesStore } from '../store/files.ts'
@@ -80,6 +92,7 @@ export default defineComponent({
 		FileEntryCheckbox,
 		FileEntryName,
 		FileEntryPreview,
+		NcDateTime,
 	},
 
 	mixins: [
@@ -95,6 +108,10 @@ export default defineComponent({
 		const renamingStore = useRenamingStore()
 		const selectionStore = useSelectionStore()
 		const { currentView } = useNavigation()
+		const {
+			directory: currentDir,
+			fileId: currentFileId,
+		} = useRouteParameters()
 
 		return {
 			actionsMenuStore,
@@ -103,6 +120,8 @@ export default defineComponent({
 			renamingStore,
 			selectionStore,
 
+			currentDir,
+			currentFileId,
 			currentView,
 		}
 	},

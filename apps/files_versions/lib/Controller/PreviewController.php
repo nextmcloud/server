@@ -8,6 +8,8 @@ namespace OCA\Files_Versions\Controller;
 use OCA\Files_Versions\Versions\IVersionManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\FileDisplayResponse;
 use OCP\Files\IRootFolder;
@@ -18,38 +20,18 @@ use OCP\IUserSession;
 
 class PreviewController extends Controller {
 
-	/** @var IRootFolder */
-	private $rootFolder;
-
-	/** @var IUserSession */
-	private $userSession;
-
-	/** @var IVersionManager */
-	private $versionManager;
-
-	/** @var IPreview */
-	private $previewManager;
-
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		IRootFolder $rootFolder,
-		IUserSession $userSession,
-		IVersionManager $versionManager,
-		IPreview $previewManager
+		private IRootFolder $rootFolder,
+		private IUserSession $userSession,
+		private IVersionManager $versionManager,
+		private IPreview $previewManager,
 	) {
 		parent::__construct($appName, $request);
-
-		$this->rootFolder = $rootFolder;
-		$this->userSession = $userSession;
-		$this->versionManager = $versionManager;
-		$this->previewManager = $previewManager;
 	}
 
 	/**
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
 	 * Get the preview for a file version
 	 *
 	 * @param string $file Path of the file
@@ -62,11 +44,13 @@ class PreviewController extends Controller {
 	 * 400: Getting preview is not possible
 	 * 404: Preview not found
 	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
 	public function getPreview(
 		string $file = '',
 		int $x = 44,
 		int $y = 44,
-		string $version = ''
+		string $version = '',
 	) {
 		if ($file === '' || $version === '' || $x === 0 || $y === 0) {
 			return new DataResponse([], Http::STATUS_BAD_REQUEST);

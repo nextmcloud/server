@@ -17,12 +17,19 @@
 		@closing="handleClosing"
 		@closed="handleClosed">
 		<template v-if="fileInfo" #subname>
-			<NcIconSvgWrapper v-if="fileInfo.isFavourited"
-				:path="mdiStar"
-				:name="t('files', 'Favorite')"
-				inline />
-			{{ size }}
-			<NcDateTime :timestamp="fileInfo.mtime" />
+			<div class="sidebar__subname">
+				<NcIconSvgWrapper v-if="fileInfo.isFavourited"
+					:path="mdiStar"
+					:name="t('files', 'Favorite')"
+					inline />
+				<span>{{ size }}</span>
+				<span class="sidebar__subname-separator">•</span>
+				<NcDateTime :timestamp="fileInfo.mtime" />
+				<span class="sidebar__subname-separator">•</span>
+				<span>{{ t('files', 'Owner') }}</span>
+				<NcUserBubble :user="ownerId"
+					:display-name="nodeOwnerLabel" />
+			</div>
 		</template>
 
 		<!-- TODO: create a standard to allow multiple elements here? -->
@@ -30,6 +37,7 @@
 			<div class="sidebar__description">
 				<SystemTags v-if="isSystemTagsEnabled && showTagsDefault"
 					v-show="showTags"
+					:disabled="!fileInfo?.canEdit()"
 					:file-id="fileInfo.id"
 					@has-tags="value => showTags = value" />
 				<LegacyView v-for="view in views"
@@ -90,11 +98,12 @@ import { getCurrentUser } from '@nextcloud/auth'
 import { getCapabilities } from '@nextcloud/capabilities'
 import { showError } from '@nextcloud/dialogs'
 import { emit, subscribe, unsubscribe } from '@nextcloud/event-bus'
-import { File, Folder, formatFileSize } from '@nextcloud/files'
+import { File, Folder, davRemoteURL, davRootPath, formatFileSize } from '@nextcloud/files'
 import { encodePath } from '@nextcloud/paths'
-import { generateRemoteUrl, generateUrl } from '@nextcloud/router'
-import { Type as ShareTypes } from '@nextcloud/sharing'
+import { generateUrl } from '@nextcloud/router'
+import { ShareType } from '@nextcloud/sharing'
 import { mdiStar, mdiStarOutline } from '@mdi/js'
+import { fetchNode } from '../services/WebdavClient.ts'
 import axios from '@nextcloud/axios'
 import $ from 'jquery'
 
@@ -103,12 +112,13 @@ import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js'
 import NcDateTime from '@nextcloud/vue/dist/Components/NcDateTime.js'
 import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
 import NcIconSvgWrapper from '@nextcloud/vue/dist/Components/NcIconSvgWrapper.js'
+import NcUserBubble from '@nextcloud/vue/dist/Components/NcUserBubble.js'
 
 import FileInfo from '../services/FileInfo.js'
 import LegacyView from '../components/LegacyView.vue'
 import SidebarTab from '../components/SidebarTab.vue'
 import SystemTags from '../../../systemtags/src/components/SystemTags.vue'
-import logger from '../logger.js'
+import logger from '../logger.ts'
 
 export default {
 	name: 'Sidebar',
@@ -122,6 +132,7 @@ export default {
 		NcIconSvgWrapper,
 		SidebarTab,
 		SystemTags,
+		NcUserBubble,
 	},
 
 	setup() {
@@ -145,6 +156,7 @@ export default {
 			error: null,
 			loading: true,
 			fileInfo: null,
+			node: null,
 			isFullScreen: false,
 			hasLowHeight: false,
 		}
@@ -186,8 +198,7 @@ export default {
 		 * @return {string}
 		 */
 		davPath() {
-			const user = this.currentUser.uid
-			return generateRemoteUrl(`dav/files/${user}${encodePath(this.file)}`)
+			return `${davRemoteURL}/${davRootPath}${encodePath(this.file)}`
 		},
 
 		/**
@@ -287,6 +298,25 @@ export default {
 		isSystemTagsEnabled() {
 			return getCapabilities()?.systemtags?.enabled === true
 		},
+		ownerId() {
+			return this.node?.attributes?.['owner-id'] ?? this.currentUser.uid
+		},
+		currentUserIsOwner() {
+			return this.ownerId === this.currentUser.uid
+		},
+		nodeOwnerLabel() {
+			let ownerDisplayName = this.node?.attributes?.['owner-display-name']
+			if (this.currentUserIsOwner) {
+				ownerDisplayName = `${ownerDisplayName} (${t('files', 'You')})`
+			}
+			return ownerDisplayName
+		},
+		sharedMultipleTimes() {
+			if (Array.isArray(node.attributes?.['share-types']) && node.attributes?.['share-types'].length > 1) {
+				return t('files', 'Shared multiple times with different people')
+			}
+			return null
+		},
 	},
 	created() {
 		subscribe('files:node:deleted', this.onNodeDeleted)
@@ -345,8 +375,8 @@ export default {
 				} else if (fileInfo.mountType !== undefined && fileInfo.mountType !== '') {
 					return OC.MimeType.getIconUrl('dir-' + fileInfo.mountType)
 				} else if (fileInfo.shareTypes && (
-					fileInfo.shareTypes.indexOf(ShareTypes.SHARE_TYPE_LINK) > -1
-					|| fileInfo.shareTypes.indexOf(ShareTypes.SHARE_TYPE_EMAIL) > -1)
+					fileInfo.shareTypes.indexOf(ShareType.Link) > -1
+					|| fileInfo.shareTypes.indexOf(ShareType.Email) > -1)
 				) {
 					return OC.MimeType.getIconUrl('dir-public')
 				} else if (fileInfo.shareTypes && fileInfo.shareTypes.length > 0) {
@@ -460,6 +490,7 @@ export default {
 				this.fileInfo = await FileInfo(this.davPath)
 				// adding this as fallback because other apps expect it
 				this.fileInfo.dir = this.file.split('/').slice(0, -1).join('/')
+				this.node = await fetchNode({ path: (this.fileInfo.path + '/' + this.fileInfo.name).replace('//', '/') })
 
 				// DEPRECATED legacy views
 				// TODO: remove
@@ -475,7 +506,7 @@ export default {
 
 				await this.$nextTick()
 
-				if (focusTabAfterLoad) {
+				if (focusTabAfterLoad && this.$refs.sidebar) {
 					this.$refs.sidebar.focusActiveTabContent()
 				}
 			} catch (error) {
@@ -589,10 +620,25 @@ export default {
 	}
 }
 
-.sidebar__description {
-	display: flex;
-	flex-direction: column;
-	width: 100%;
-	gap: 8px 0;
+.sidebar__subname {
+  display: flex;
+  align-items: center;
+  gap: 0 8px;
+
+  &-separator {
+    display: inline-block;
+    font-weight: bold !important;
+  }
+
+  .user-bubble__wrapper {
+	display: inline-flex;
+  }
 }
+
+.sidebar__description {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		gap: 8px 0;
+	}
 </style>

@@ -6,7 +6,7 @@
 	<tr class="files-list__row-head">
 		<th class="files-list__column files-list__row-checkbox"
 			@keyup.esc.exact="resetSelection">
-			<NcCheckboxRadioSwitch v-bind="selectAllBind" @update:checked="onToggleAll" />
+			<NcCheckboxRadioSwitch v-bind="selectAllBind" data-cy-files-list-selection-checkbox @update:checked="onToggleAll" />
 		</th>
 
 		<!-- Columns display -->
@@ -68,7 +68,7 @@ import { useNavigation } from '../composables/useNavigation'
 import { useFilesStore } from '../store/files.ts'
 import { useSelectionStore } from '../store/selection.ts'
 import filesSortingMixin from '../mixins/filesSorting.ts'
-import logger from '../logger.js'
+import logger from '../logger.ts'
 
 export default defineComponent({
 	name: 'FilesListTableHeader',

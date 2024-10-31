@@ -113,6 +113,12 @@ class InfoParser {
 		if (!array_key_exists('personal-section', $array['settings'])) {
 			$array['settings']['personal-section'] = [];
 		}
+		if (!array_key_exists('dependencies', $array)) {
+			$array['dependencies'] = [];
+		}
+		if (!array_key_exists('backend', $array['dependencies'])) {
+			$array['dependencies']['backend'] = [];
+		}
 
 		if (array_key_exists('types', $array)) {
 			if (is_array($array['types'])) {
@@ -177,9 +183,22 @@ class InfoParser {
 		if (isset($array['settings']['personal-section']) && !is_array($array['settings']['personal-section'])) {
 			$array['settings']['personal-section'] = [$array['settings']['personal-section']];
 		}
-
 		if (isset($array['navigations']['navigation']) && $this->isNavigationItem($array['navigations']['navigation'])) {
 			$array['navigations']['navigation'] = [$array['navigations']['navigation']];
+		}
+		if (isset($array['dependencies']['backend']) && !is_array($array['dependencies']['backend'])) {
+			$array['dependencies']['backend'] = [$array['dependencies']['backend']];
+		}
+
+		// Ensure some fields are always arrays
+		if (isset($array['screenshot']) && !is_array($array['screenshot'])) {
+			$array['screenshot'] = [$array['screenshot']];
+		}
+		if (isset($array['author']) && !is_array($array['author'])) {
+			$array['author'] = [$array['author']];
+		}
+		if (isset($array['category']) && !is_array($array['category'])) {
+			$array['category'] = [$array['category']];
 		}
 
 		if ($this->cache !== null) {
@@ -215,7 +234,7 @@ class InfoParser {
 			$totalElement = count($xml->{$element});
 
 			if (!isset($array[$element])) {
-				$array[$element] = $totalElement > 1 ? [] : "";
+				$array[$element] = $totalElement > 1 ? [] : '';
 			}
 			/** @var \SimpleXMLElement $node */
 			// Has attributes

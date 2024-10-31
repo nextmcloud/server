@@ -18,7 +18,6 @@ use OCP\L10N\IFactory;
 use OCP\Mail\IMailer;
 use OCP\Share\IManager;
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Log\LoggerInterface;
 
 /**
  * This class provides different helper functions to make the life of a developer easier
@@ -36,9 +35,10 @@ class Util {
 	 * get the current installed version of Nextcloud
 	 * @return array
 	 * @since 4.0.0
+	 * @deprecated 31.0.0 Use \OCP\ServerVersion::getVersion
 	 */
 	public static function getVersion() {
-		return \OC_Util::getVersion();
+		return Server::get(ServerVersion::class)->getVersion();
 	}
 
 	/**
@@ -47,7 +47,7 @@ class Util {
 	public static function hasExtendedSupport(): bool {
 		try {
 			/** @var \OCP\Support\Subscription\IRegistry */
-			$subscriptionRegistry = \OCP\Server::get(\OCP\Support\Subscription\IRegistry::class);
+			$subscriptionRegistry = Server::get(\OCP\Support\Subscription\IRegistry::class);
 			return $subscriptionRegistry->delegateHasExtendedSupport();
 		} catch (ContainerExceptionInterface $e) {
 		}
@@ -67,9 +67,10 @@ class Util {
 	 * Get current update channel
 	 * @return string
 	 * @since 8.1.0
+	 * @deprecated 31.0.0 Use \OCP\ServerVersion::getChannel
 	 */
 	public static function getChannel() {
-		return \OC_Util::getChannel();
+		return \OCP\Server::get(ServerVersion::class)->getChannel();
 	}
 
 	/**
@@ -242,7 +243,7 @@ class Util {
 	 * @param string $app app
 	 * @param string $file file
 	 * @param array $args array with param=>value, will be appended to the returned url
-	 * 	The value of $args will be urlencoded
+	 *                    The value of $args will be urlencoded
 	 * @return string the url
 	 * @since 4.0.0 - parameter $args was added in 4.5.0
 	 */
@@ -303,7 +304,7 @@ class Util {
 		$user_part = $config->getSystemValueString('mail_from_address', $user_part);
 		$host_name = self::getServerHostName();
 		$host_name = $config->getSystemValueString('mail_domain', $host_name);
-		$defaultEmailAddress = $user_part.'@'.$host_name;
+		$defaultEmailAddress = $user_part . '@' . $host_name;
 
 		$mailer = \OC::$server->get(IMailer::class);
 		if ($mailer->validateMailAddress($defaultEmailAddress)) {
@@ -311,7 +312,7 @@ class Util {
 		}
 
 		// in case we cannot build a valid email address from the hostname let's fallback to 'localhost.localdomain'
-		return $user_part.'@localhost.localdomain';
+		return $user_part . '@localhost.localdomain';
 	}
 
 	/**
@@ -489,44 +490,11 @@ class Util {
 	}
 
 	/**
-	 * Get a list of characters forbidden in file names
-	 * @return string[]
-	 * @since 29.0.0
-	 */
-	public static function getForbiddenFileNameChars(): array {
-		// Get always forbidden characters
-		$invalidChars = str_split(\OCP\Constants::FILENAME_INVALID_CHARS);
-		if ($invalidChars === false) {
-			$invalidChars = [];
-		}
-
-		// Get admin defined invalid characters
-		$additionalChars = \OCP\Server::get(IConfig::class)->getSystemValue('forbidden_chars', []);
-		if (!is_array($additionalChars)) {
-			\OCP\Server::get(LoggerInterface::class)->error('Invalid system config value for "forbidden_chars" is ignored.');
-			$additionalChars = [];
-		}
-		return array_merge($invalidChars, $additionalChars);
-	}
-
-	/**
-	 * Returns whether the given file name is valid
-	 * @param string $file file name to check
-	 * @return bool true if the file name is valid, false otherwise
-	 * @deprecated 8.1.0 use OCP\Files\Storage\IStorage::verifyPath()
-	 * @since 7.0.0
-	 * @suppress PhanDeprecatedFunction
-	 */
-	public static function isValidFileName($file) {
-		return \OC_Util::isValidFileName($file);
-	}
-
-	/**
 	 * Compare two strings to provide a natural sort
 	 * @param string $a first string to compare
 	 * @param string $b second string to compare
 	 * @return int -1 if $b comes before $a, 1 if $a comes before $b
-	 * or 0 if the strings are identical
+	 *             or 0 if the strings are identical
 	 * @since 7.0.0
 	 */
 	public static function naturalSortCompare($a, $b) {
@@ -601,7 +569,7 @@ class Util {
 		if (!function_exists($functionName)) {
 			return false;
 		}
-		$ini = \OCP\Server::get(IniGetWrapper::class);
+		$ini = Server::get(IniGetWrapper::class);
 		$disabled = explode(',', $ini->get('disable_functions') ?: '');
 		$disabled = array_map('trim', $disabled);
 		if (in_array($functionName, $disabled)) {

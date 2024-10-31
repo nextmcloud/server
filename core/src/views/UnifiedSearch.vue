@@ -80,7 +80,7 @@ export default defineComponent({
 		 */
 		supportsLocalSearch() {
 			// TODO: Make this an API
-			const providerPaths = ['/settings/users', '/apps/files', '/apps/deck', '/settings/apps']
+			const providerPaths = ['/settings/users', '/apps/deck', '/settings/apps']
 			return providerPaths.some((path) => this.currentLocation.pathname?.includes?.(path))
 		},
 	},
@@ -97,7 +97,9 @@ export default defineComponent({
 
 	mounted() {
 		// register keyboard listener for search shortcut
-		window.addEventListener('keydown', this.onKeyDown)
+		if (window.OCP.Accessibility.disableKeyboardShortcuts() === false) {
+			window.addEventListener('keydown', this.onKeyDown)
+		}
 
 		// Allow external reset of the search / close local search
 		subscribe('nextcloud:unified-search:reset', () => {
@@ -131,9 +133,9 @@ export default defineComponent({
 			if (event.ctrlKey && event.code === 'KeyF') {
 				// only handle search if not already open - in this case the browser native search should be used
 				if (!this.showLocalSearch && !this.showUnifiedSearch) {
-					this.toggleUnifiedSearch()
 					event.preventDefault()
 				}
+				this.toggleUnifiedSearch()
 			}
 		},
 
@@ -142,9 +144,10 @@ export default defineComponent({
 		 */
 		toggleUnifiedSearch() {
 			if (this.supportsLocalSearch) {
-				this.showLocalSearch = true
+				this.showLocalSearch = !this.showLocalSearch
 			} else {
-				this.openModal()
+				this.showUnifiedSearch = !this.showUnifiedSearch
+				this.showLocalSearch = false
 			}
 		},
 

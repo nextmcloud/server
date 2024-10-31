@@ -15,6 +15,8 @@ use OCA\Files_External\Lib\StorageConfig;
 use OCA\Files_External\NotFoundException;
 use OCA\Files_External\Service\UserGlobalStoragesService;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\PasswordConfirmationRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\IConfig;
 use OCP\IGroupManager;
@@ -46,7 +48,7 @@ class UserGlobalStoragesController extends StoragesController {
 		LoggerInterface $logger,
 		IUserSession $userSession,
 		IGroupManager $groupManager,
-		IConfig $config
+		IConfig $config,
 	) {
 		parent::__construct(
 			$AppName,
@@ -64,9 +66,8 @@ class UserGlobalStoragesController extends StoragesController {
 	 * Get all storage entries
 	 *
 	 * @return DataResponse
-	 *
-	 * @NoAdminRequired
 	 */
+	#[NoAdminRequired]
 	public function index() {
 		/** @var UserGlobalStoragesService */
 		$service = $this->service;
@@ -97,9 +98,8 @@ class UserGlobalStoragesController extends StoragesController {
 	 * @param int $id storage id
 	 * @param bool $testOnly whether to storage should only test the connection or do more things
 	 * @return DataResponse
-	 *
-	 * @NoAdminRequired
 	 */
+	#[NoAdminRequired]
 	public function show($id, $testOnly = true) {
 		try {
 			$storage = $this->service->getStorage($id);
@@ -135,13 +135,13 @@ class UserGlobalStoragesController extends StoragesController {
 	 * @param bool $testOnly whether to storage should only test the connection or do more things
 	 *
 	 * @return DataResponse
-	 *
-	 * @NoAdminRequired
 	 */
+	#[NoAdminRequired]
+	#[PasswordConfirmationRequired]
 	public function update(
 		$id,
 		$backendOptions,
-		$testOnly = true
+		$testOnly = true,
 	) {
 		try {
 			$storage = $this->service->getStorage($id);

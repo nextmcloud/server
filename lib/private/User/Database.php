@@ -8,6 +8,7 @@ declare(strict_types=1);
  */
 namespace OC\User;
 
+use InvalidArgumentException;
 use OCP\AppFramework\Db\TTransactional;
 use OCP\Cache\CappedMemoryCache;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -21,6 +22,7 @@ use OCP\User\Backend\ICreateUserBackend;
 use OCP\User\Backend\IGetDisplayNameBackend;
 use OCP\User\Backend\IGetHomeBackend;
 use OCP\User\Backend\IGetRealUIDBackend;
+use OCP\User\Backend\IPasswordHashBackend;
 use OCP\User\Backend\ISearchKnownUsersBackend;
 use OCP\User\Backend\ISetDisplayNameBackend;
 use OCP\User\Backend\ISetPasswordBackend;
@@ -37,7 +39,8 @@ class Database extends ABackend implements
 	IGetHomeBackend,
 	ICountUsersBackend,
 	ISearchKnownUsersBackend,
-	IGetRealUIDBackend {
+	IGetRealUIDBackend,
+	IPasswordHashBackend {
 	/** @var CappedMemoryCache */
 	private $cache;
 
@@ -61,7 +64,7 @@ class Database extends ABackend implements
 	public function __construct($eventDispatcher = null, $table = 'users') {
 		$this->cache = new CappedMemoryCache();
 		$this->table = $table;
-		$this->eventDispatcher = $eventDispatcher ? $eventDispatcher : \OCP\Server::get(IEventDispatcher::class);
+		$this->eventDispatcher = $eventDispatcher ?? \OCP\Server::get(IEventDispatcher::class);
 	}
 
 	/**
@@ -94,7 +97,7 @@ class Database extends ABackend implements
 				$qb->insert($this->table)
 					->values([
 						'uid' => $qb->createNamedParameter($uid),
-						'password' => $qb->createNamedParameter(\OC::$server->get(IHasher::class)->hash($password)),
+						'password' => $qb->createNamedParameter(\OCP\Server::get(IHasher::class)->hash($password)),
 						'uid_lower' => $qb->createNamedParameter(mb_strtolower($uid)),
 					]);
 
@@ -105,7 +108,7 @@ class Database extends ABackend implements
 				// Repopulate the cache
 				$this->loadUser($uid);
 
-				return (bool) $result;
+				return (bool)$result;
 			}, $this->dbConn);
 		}
 
@@ -127,7 +130,7 @@ class Database extends ABackend implements
 		$query = $this->dbConn->getQueryBuilder();
 		$query->delete($this->table)
 			->where($query->expr()->eq('uid_lower', $query->createNamedParameter(mb_strtolower($uid))));
-		$result = $query->execute();
+		$result = $query->executeStatement();
 
 		if (isset($this->cache[$uid])) {
 			unset($this->cache[$uid]);
@@ -141,7 +144,7 @@ class Database extends ABackend implements
 		$query->update($this->table)
 			->set('password', $query->createNamedParameter($passwordHash))
 			->where($query->expr()->eq('uid_lower', $query->createNamedParameter(mb_strtolower($uid))));
-		$result = $query->execute();
+		$result = $query->executeStatement();
 
 		return $result ? true : false;
 	}
@@ -161,7 +164,7 @@ class Database extends ABackend implements
 		if ($this->userExists($uid)) {
 			$this->eventDispatcher->dispatchTyped(new ValidatePasswordPolicyEvent($password));
 
-			$hasher = \OC::$server->get(IHasher::class);
+			$hasher = \OCP\Server::get(IHasher::class);
 			$hashedPassword = $hasher->hash($password);
 
 			$return = $this->updatePassword($uid, $hashedPassword);
@@ -174,6 +177,40 @@ class Database extends ABackend implements
 		}
 
 		return false;
+	}
+
+	public function getPasswordHash(string $userId): ?string {
+		$this->fixDI();
+		if (!$this->userExists($userId)) {
+			return null;
+		}
+		if (!empty($this->cache[$userId]['password'])) {
+			return $this->cache[$userId]['password'];
+		}
+		$qb = $this->dbConn->getQueryBuilder();
+		$qb->select('password')
+			->from($this->table)
+			->where($qb->expr()->eq('uid_lower', $qb->createNamedParameter(mb_strtolower($userId))));
+		/** @var false|string $hash */
+		$hash = $qb->executeQuery()->fetchOne();
+		if ($hash === false) {
+			return null;
+		}
+		$this->cache[$userId]['password'] = $hash;
+		return $hash;
+	}
+
+	public function setPasswordHash(string $userId, string $passwordHash): bool {
+		if (!\OCP\Server::get(IHasher::class)->validate($passwordHash)) {
+			throw new InvalidArgumentException();
+		}
+		$this->fixDI();
+		$result = $this->updatePassword($userId, $passwordHash);
+		if (!$result) {
+			return false;
+		}
+		$this->cache[$userId]['password'] = $passwordHash;
+		return true;
 	}
 
 	/**
@@ -199,7 +236,7 @@ class Database extends ABackend implements
 			$query->update($this->table)
 				->set('displayname', $query->createNamedParameter($displayName))
 				->where($query->expr()->eq('uid_lower', $query->createNamedParameter(mb_strtolower($uid))));
-			$query->execute();
+			$query->executeStatement();
 
 			$this->cache[$uid]['displayname'] = $displayName;
 
@@ -292,7 +329,7 @@ class Database extends ABackend implements
 			->setMaxResults($limit)
 			->setFirstResult($offset);
 
-		$result = $query->execute();
+		$result = $query->executeQuery();
 		$displayNames = [];
 		while ($row = $result->fetch()) {
 			$displayNames[(string)$row['uid']] = (string)$row['displayname'];
@@ -317,7 +354,7 @@ class Database extends ABackend implements
 		if ($found && is_array($this->cache[$loginName])) {
 			$storedHash = $this->cache[$loginName]['password'];
 			$newHash = '';
-			if (\OC::$server->get(IHasher::class)->verify($password, $storedHash, $newHash)) {
+			if (\OCP\Server::get(IHasher::class)->verify($password, $storedHash, $newHash)) {
 				if (!empty($newHash)) {
 					$this->updatePassword($loginName, $newHash);
 				}
@@ -353,7 +390,7 @@ class Database extends ABackend implements
 						'uid_lower', $qb->createNamedParameter(mb_strtolower($uid))
 					)
 				);
-			$result = $qb->execute();
+			$result = $qb->executeQuery();
 			$row = $result->fetch();
 			$result->closeCursor();
 

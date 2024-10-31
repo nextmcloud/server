@@ -30,9 +30,9 @@ use OCP\User\IOutOfOfficeData;
  * @method string getMessage()
  * @method void setMessage(string $message)
  * @method string getReplacementUserId()
- * @method void setReplacementUserId(string $replacementUserId)
+ * @method void setReplacementUserId(?string $replacementUserId)
  * @method string getReplacementUserDisplayName()
- * @method void setReplacementUserDisplayName(string $replacementUserDisplayName)
+ * @method void setReplacementUserDisplayName(?string $replacementUserDisplayName)
  */
 class Absence extends Entity implements JsonSerializable {
 	protected string $userId = '';
@@ -47,9 +47,9 @@ class Absence extends Entity implements JsonSerializable {
 
 	protected string $message = '';
 
-	protected string $replacementUserId = '';
+	protected ?string $replacementUserId = null;
 
-	protected string $replacementUserDisplayName = '';
+	protected ?string $replacementUserDisplayName = null;
 
 	public function __construct() {
 		$this->addType('userId', 'string');
@@ -63,7 +63,7 @@ class Absence extends Entity implements JsonSerializable {
 
 	public function toOutOufOfficeData(IUser $user, string $timezone): IOutOfOfficeData {
 		if ($user->getUID() !== $this->getUserId()) {
-			throw new InvalidArgumentException("The user doesn't match the user id of this absence! Expected " . $this->getUserId() . ", got " . $user->getUID());
+			throw new InvalidArgumentException("The user doesn't match the user id of this absence! Expected " . $this->getUserId() . ', got ' . $user->getUID());
 		}
 		if ($this->getId() === null) {
 			throw new Exception('Creating out-of-office data without ID');

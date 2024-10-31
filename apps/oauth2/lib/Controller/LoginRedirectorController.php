@@ -12,6 +12,9 @@ use OCA\OAuth2\Db\ClientMapper;
 use OCA\OAuth2\Exceptions\ClientNotFoundException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
+use OCP\AppFramework\Http\Attribute\UseSession;
 use OCP\AppFramework\Http\RedirectResponse;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\IL10N;
@@ -20,15 +23,6 @@ use OCP\ISession;
 use OCP\IURLGenerator;
 
 class LoginRedirectorController extends Controller {
-	/** @var IURLGenerator */
-	private $urlGenerator;
-	/** @var ClientMapper */
-	private $clientMapper;
-	/** @var ISession */
-	private $session;
-	/** @var IL10N */
-	private $l;
-
 	/**
 	 * @param string $appName
 	 * @param IRequest $request
@@ -37,24 +31,18 @@ class LoginRedirectorController extends Controller {
 	 * @param ISession $session
 	 * @param IL10N $l
 	 */
-	public function __construct(string $appName,
+	public function __construct(
+		string $appName,
 		IRequest $request,
-		IURLGenerator $urlGenerator,
-		ClientMapper $clientMapper,
-		ISession $session,
-		IL10N $l) {
+		private IURLGenerator $urlGenerator,
+		private ClientMapper $clientMapper,
+		private ISession $session,
+		private IL10N $l,
+	) {
 		parent::__construct($appName, $request);
-		$this->urlGenerator = $urlGenerator;
-		$this->clientMapper = $clientMapper;
-		$this->session = $session;
-		$this->l = $l;
 	}
 
 	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @UseSession
-	 *
 	 * Authorize the user
 	 *
 	 * @param string $client_id Client ID
@@ -65,6 +53,9 @@ class LoginRedirectorController extends Controller {
 	 * 200: Client not found
 	 * 303: Redirect to login URL
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[UseSession]
 	public function authorize($client_id,
 		$state,
 		$response_type): TemplateResponse|RedirectResponse {

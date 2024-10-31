@@ -22,6 +22,7 @@ use OCA\Settings\Middleware\SubadminMiddleware;
 use OCA\Settings\Search\AppSearch;
 use OCA\Settings\Search\SectionSearch;
 use OCA\Settings\Search\UserSearch;
+use OCA\Settings\SetupChecks\AllowedAdminRanges;
 use OCA\Settings\SetupChecks\AppDirsWithDifferentOwner;
 use OCA\Settings\SetupChecks\BruteForceThrottler;
 use OCA\Settings\SetupChecks\CheckUserCertificates;
@@ -46,9 +47,11 @@ use OCA\Settings\SetupChecks\LegacySSEKeyFormat;
 use OCA\Settings\SetupChecks\MaintenanceWindowStart;
 use OCA\Settings\SetupChecks\MemcacheConfigured;
 use OCA\Settings\SetupChecks\MimeTypeMigrationAvailable;
+use OCA\Settings\SetupChecks\MysqlRowFormat;
 use OCA\Settings\SetupChecks\MysqlUnicodeSupport;
 use OCA\Settings\SetupChecks\OcxProviders;
 use OCA\Settings\SetupChecks\OverwriteCliUrl;
+use OCA\Settings\SetupChecks\PhpApcuConfig;
 use OCA\Settings\SetupChecks\PhpDefaultCharset;
 use OCA\Settings\SetupChecks\PhpDisabledFunctions;
 use OCA\Settings\SetupChecks\PhpFreetypeSupport;
@@ -77,6 +80,7 @@ use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\IAppContainer;
+use OCP\AppFramework\QueryException;
 use OCP\Defaults;
 use OCP\Group\Events\GroupDeletedEvent;
 use OCP\Group\Events\UserAddedEvent;
@@ -154,6 +158,7 @@ class Application extends App implements IBootstrap {
 				Util::getDefaultEmailAddress('no-reply')
 			);
 		});
+		$context->registerSetupCheck(AllowedAdminRanges::class);
 		$context->registerSetupCheck(AppDirsWithDifferentOwner::class);
 		$context->registerSetupCheck(BruteForceThrottler::class);
 		$context->registerSetupCheck(CheckUserCertificates::class);
@@ -178,12 +183,14 @@ class Application extends App implements IBootstrap {
 		$context->registerSetupCheck(MaintenanceWindowStart::class);
 		$context->registerSetupCheck(MemcacheConfigured::class);
 		$context->registerSetupCheck(MimeTypeMigrationAvailable::class);
+		$context->registerSetupCheck(MysqlRowFormat::class);
 		$context->registerSetupCheck(MysqlUnicodeSupport::class);
 		$context->registerSetupCheck(OcxProviders::class);
 		$context->registerSetupCheck(OverwriteCliUrl::class);
 		$context->registerSetupCheck(PhpDefaultCharset::class);
 		$context->registerSetupCheck(PhpDisabledFunctions::class);
 		$context->registerSetupCheck(PhpFreetypeSupport::class);
+		$context->registerSetupCheck(PhpApcuConfig::class);
 		$context->registerSetupCheck(PhpGetEnv::class);
 		$context->registerSetupCheck(PhpMemoryLimit::class);
 		$context->registerSetupCheck(PhpModules::class);
@@ -215,7 +222,7 @@ class Application extends App implements IBootstrap {
 	 * @throws \InvalidArgumentException
 	 * @throws \BadMethodCallException
 	 * @throws \Exception
-	 * @throws \OCP\AppFramework\QueryException
+	 * @throws QueryException
 	 */
 	public function onChangePassword(array $parameters) {
 		/** @var Hooks $hooks */
@@ -228,7 +235,7 @@ class Application extends App implements IBootstrap {
 	 * @throws \InvalidArgumentException
 	 * @throws \BadMethodCallException
 	 * @throws \Exception
-	 * @throws \OCP\AppFramework\QueryException
+	 * @throws QueryException
 	 */
 	public function onChangeInfo(array $parameters) {
 		if ($parameters['feature'] !== 'eMailAddress') {

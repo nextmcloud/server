@@ -9,6 +9,10 @@
 			<slot name="before" />
 		</div>
 
+		<div class="files-list__filters">
+			<slot name="filters" />
+		</div>
+
 		<div v-if="!!$scopedSlots['header-overlay']" class="files-list__thead-overlay">
 			<slot name="header-overlay" />
 		</div>
@@ -55,12 +59,16 @@ import debounce from 'debounce'
 import Vue from 'vue'
 
 import filesListWidthMixin from '../mixins/filesListWidth.ts'
-import logger from '../logger.js'
+import logger from '../logger.ts'
 
 interface RecycledPoolItem {
 	key: string,
 	item: Node,
 }
+
+type DataSource = File | Folder
+
+type DataSourceKey = keyof DataSource
 
 export default Vue.extend({
 	name: 'VirtualList',
@@ -73,11 +81,11 @@ export default Vue.extend({
 			required: true,
 		},
 		dataKey: {
-			type: String,
+			type: String as PropType<DataSourceKey>,
 			required: true,
 		},
 		dataSources: {
-			type: Array as PropType<(File | Folder)[]>,
+			type: Array as PropType<DataSource[]>,
 			required: true,
 		},
 		extraProps: {
@@ -127,13 +135,13 @@ export default Vue.extend({
 
 		itemHeight() {
 			// Align with css in FilesListVirtual
-			// 138px + 44px (name) + 15px (grid gap)
-			return this.gridMode ? (138 + 44 + 15) : 55
+			// 166px + 32px (name) + 16px (mtime) + 16px (padding)
+			return this.gridMode ? (166 + 32 + 16 + 16) : 55
 		},
 		// Grid mode only
 		itemWidth() {
-			// 160px + 15px grid gap
-			return 160 + 15
+			// 166px + 16px padding
+			return 166 + 16
 		},
 
 		rowCount() {
@@ -208,7 +216,7 @@ export default Vue.extend({
 			return {
 				paddingTop: `${Math.floor(this.startIndex / this.columnCount) * this.itemHeight}px`,
 				paddingBottom: isOverScrolled ? 0 : `${hiddenAfterItems * this.itemHeight}px`,
-				minHeight: `${this.totalRowCount * this.itemHeight + this.beforeHeight}px`,
+				minHeight: `${this.totalRowCount * this.itemHeight}px`,
 			}
 		},
 	},
@@ -260,7 +268,7 @@ export default Vue.extend({
 		// Adding scroll listener AFTER the initial scroll to index
 		this.$el.addEventListener('scroll', this.onScroll, { passive: true })
 
-		this.$_recycledPool = {} as Record<string, any>
+		this.$_recycledPool = {} as Record<string, DataSource[DataSourceKey]>
 	},
 
 	beforeDestroy() {

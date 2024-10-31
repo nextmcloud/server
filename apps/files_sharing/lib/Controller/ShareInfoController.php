@@ -9,6 +9,9 @@ use OCA\Files_External\NotFoundException;
 use OCA\Files_Sharing\ResponseDefinitions;
 use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\BruteForceProtection;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Constants;
 use OCP\Files\File;
@@ -23,9 +26,6 @@ use OCP\Share\IManager;
  */
 class ShareInfoController extends ApiController {
 
-	/** @var IManager */
-	private $shareManager;
-
 	/**
 	 * ShareInfoController constructor.
 	 *
@@ -33,19 +33,15 @@ class ShareInfoController extends ApiController {
 	 * @param IRequest $request
 	 * @param IManager $shareManager
 	 */
-	public function __construct(string $appName,
+	public function __construct(
+		string $appName,
 		IRequest $request,
-		IManager $shareManager) {
+		private IManager $shareManager,
+	) {
 		parent::__construct($appName, $request);
-
-		$this->shareManager = $shareManager;
 	}
 
 	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @BruteForceProtection(action=shareinfo)
-	 *
 	 * Get the info about a share
 	 *
 	 * @param string $t Token of the share
@@ -58,6 +54,9 @@ class ShareInfoController extends ApiController {
 	 * 403: Getting share info is not allowed
 	 * 404: Share not found
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[BruteForceProtection(action: 'shareinfo')]
 	public function info(string $t, ?string $password = null, ?string $dir = null, int $depth = -1): JSONResponse {
 		try {
 			$share = $this->shareManager->getShareByToken($t);

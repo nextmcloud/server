@@ -10,6 +10,7 @@ use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
 use OCP\Files\SimpleFS\ISimpleFile;
 use OCP\Files\SimpleFS\ISimpleFolder;
+use OCP\Image;
 use Psr\Log\LoggerInterface;
 use Sabre\CardDAV\Card;
 use Sabre\VObject\Document;
@@ -19,23 +20,22 @@ use Sabre\VObject\Reader;
 
 class PhotoCache {
 
-	/** @var array  */
+	/** @var array */
 	public const ALLOWED_CONTENT_TYPES = [
 		'image/png' => 'png',
 		'image/jpeg' => 'jpg',
 		'image/gif' => 'gif',
 		'image/vnd.microsoft.icon' => 'ico',
+		'image/webp' => 'webp',
 	];
-
-	protected IAppData $appData;
-	protected LoggerInterface $logger;
 
 	/**
 	 * PhotoCache constructor.
 	 */
-	public function __construct(IAppData $appData, LoggerInterface $logger) {
-		$this->appData = $appData;
-		$this->logger = $logger;
+	public function __construct(
+		protected IAppData $appData,
+		protected LoggerInterface $logger,
+	) {
 	}
 
 	/**
@@ -109,7 +109,7 @@ class PhotoCache {
 				throw new NotFoundException;
 			}
 
-			$photo = new \OCP\Image();
+			$photo = new Image();
 			/** @var ISimpleFile $file */
 			$file = $folder->getFile('photo.' . $ext);
 			$photo->loadFromData($file->getContent());
@@ -119,7 +119,7 @@ class PhotoCache {
 				$ratio = 1 / $ratio;
 			}
 
-			$size = (int) ($size * $ratio);
+			$size = (int)($size * $ratio);
 			if ($size !== -1) {
 				$photo->resize($size);
 			}
@@ -240,7 +240,7 @@ class PhotoCache {
 		if (isset($params['TYPE']) || isset($params['MEDIATYPE'])) {
 			/** @var Parameter $typeParam */
 			$typeParam = isset($params['TYPE']) ? $params['TYPE'] : $params['MEDIATYPE'];
-			$type = (string) $typeParam->getValue();
+			$type = (string)$typeParam->getValue();
 
 			if (str_starts_with($type, 'image/')) {
 				return $type;
