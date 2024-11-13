@@ -11,6 +11,8 @@ use OC\Files\Filesystem;
 use OC\Files\Storage\Wrapper\Encryption;
 use OC\Files\View;
 use OC\Memcache\ArrayCache;
+use OCP\Encryption\IFile;
+use OCP\Encryption\Keys\IStorage as EncryptionKeysStorage;
 use OCP\Files\Mount\IMountPoint;
 use OCP\Files\Storage\IDisableEncryptionStorage;
 use OCP\Files\Storage\IStorage;
@@ -24,10 +26,10 @@ use Psr\Log\LoggerInterface;
  * @package OC\Encryption
  */
 class EncryptionWrapper {
-	/** @var ArrayCache  */
+	/** @var ArrayCache */
 	private $arrayCache;
 
-	/** @var  Manager */
+	/** @var Manager */
 	private $manager;
 
 	private LoggerInterface $logger;
@@ -37,7 +39,7 @@ class EncryptionWrapper {
 	 */
 	public function __construct(ArrayCache $arrayCache,
 		Manager $manager,
-		LoggerInterface $logger
+		LoggerInterface $logger,
 	) {
 		$this->arrayCache = $arrayCache;
 		$this->manager = $manager;
@@ -64,8 +66,8 @@ class EncryptionWrapper {
 			$user = \OC::$server->getUserSession()->getUser();
 			$mountManager = Filesystem::getMountManager();
 			$uid = $user ? $user->getUID() : null;
-			$fileHelper = \OC::$server->getEncryptionFilesHelper();
-			$keyStorage = \OC::$server->getEncryptionKeyStorage();
+			$fileHelper = \OC::$server->get(IFile::class);
+			$keyStorage = \OC::$server->get(EncryptionKeysStorage::class);
 
 			$util = new Util(
 				new View(),

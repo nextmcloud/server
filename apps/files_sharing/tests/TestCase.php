@@ -1,43 +1,21 @@
 <?php
 /**
- * @copyright Copyright (c) 2016, ownCloud, Inc.
- *
- * @author Björn Schießle <bjoern@schiessle.org>
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Joas Schilling <coding@schilljs.com>
- * @author John Molakvoæ <skjnldsv@protonmail.com>
- * @author Jörn Friedrich Dreyer <jfd@butonic.de>
- * @author Lukas Reschke <lukas@statuscode.ch>
- * @author Morris Jobke <hey@morrisjobke.de>
- * @author Robin Appelman <robin@icewind.nl>
- * @author Robin McCorkell <robin@mccorkell.me.uk>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Vincent Petry <vincent@nextcloud.com>
- *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program. If not, see <http://www.gnu.org/licenses/>
- *
+ * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 namespace OCA\Files_Sharing\Tests;
 
+use OC\Files\Cache\Storage;
 use OC\Files\Filesystem;
+use OC\Files\View;
+use OC\Group\Database;
 use OC\User\DisplayNameCache;
 use OCA\Files_Sharing\AppInfo\Application;
 use OCA\Files_Sharing\External\MountProvider as ExternalMountProvider;
 use OCA\Files_Sharing\MountProvider;
 use OCP\Files\Config\IMountProviderCollection;
+use OCP\Files\IRootFolder;
 use OCP\Share\IShare;
 use Test\Traits\MountProviderTrait;
 
@@ -51,21 +29,21 @@ use Test\Traits\MountProviderTrait;
 abstract class TestCase extends \Test\TestCase {
 	use MountProviderTrait;
 
-	public const TEST_FILES_SHARING_API_USER1 = "test-share-user1";
-	public const TEST_FILES_SHARING_API_USER2 = "test-share-user2";
-	public const TEST_FILES_SHARING_API_USER3 = "test-share-user3";
-	public const TEST_FILES_SHARING_API_USER4 = "test-share-user4";
+	public const TEST_FILES_SHARING_API_USER1 = 'test-share-user1';
+	public const TEST_FILES_SHARING_API_USER2 = 'test-share-user2';
+	public const TEST_FILES_SHARING_API_USER3 = 'test-share-user3';
+	public const TEST_FILES_SHARING_API_USER4 = 'test-share-user4';
 
-	public const TEST_FILES_SHARING_API_GROUP1 = "test-share-group1";
+	public const TEST_FILES_SHARING_API_GROUP1 = 'test-share-group1';
 
 	public $filename;
 	public $data;
 	/**
-	 * @var \OC\Files\View
+	 * @var View
 	 */
 	public $view;
 	/**
-	 * @var \OC\Files\View
+	 * @var View
 	 */
 	public $view2;
 	public $folder;
@@ -73,7 +51,7 @@ abstract class TestCase extends \Test\TestCase {
 
 	/** @var \OCP\Share\IManager */
 	protected $shareManager;
-	/** @var \OCP\Files\IRootFolder */
+	/** @var IRootFolder */
 	protected $rootFolder;
 
 	public static function setUpBeforeClass(): void {
@@ -127,8 +105,8 @@ abstract class TestCase extends \Test\TestCase {
 		self::loginHelper(self::TEST_FILES_SHARING_API_USER1);
 
 		$this->data = 'foobar';
-		$this->view = new \OC\Files\View('/' . self::TEST_FILES_SHARING_API_USER1 . '/files');
-		$this->view2 = new \OC\Files\View('/' . self::TEST_FILES_SHARING_API_USER2 . '/files');
+		$this->view = new View('/' . self::TEST_FILES_SHARING_API_USER1 . '/files');
+		$this->view2 = new View('/' . self::TEST_FILES_SHARING_API_USER2 . '/files');
 
 		$this->shareManager = \OC::$server->getShareManager();
 		$this->rootFolder = \OC::$server->getRootFolder();
@@ -144,7 +122,7 @@ abstract class TestCase extends \Test\TestCase {
 		$qb->execute();
 
 		$qb = \OC::$server->getDatabaseConnection()->getQueryBuilder();
-		$qb->delete('filecache');
+		$qb->delete('filecache')->runAcrossAllShards();
 		$qb->execute();
 
 		parent::tearDown();
@@ -179,7 +157,7 @@ abstract class TestCase extends \Test\TestCase {
 		\OC_User::clearBackends();
 		\OC_User::useBackend('database');
 		\OC::$server->getGroupManager()->clearBackends();
-		\OC::$server->getGroupManager()->addBackend(new \OC\Group\Database());
+		\OC::$server->getGroupManager()->addBackend(new Database());
 
 		parent::tearDownAfterClass();
 	}
@@ -207,9 +185,9 @@ abstract class TestCase extends \Test\TestCase {
 		}
 
 		\OC_Util::tearDownFS();
-		\OC\Files\Cache\Storage::getGlobalCache()->clearCache();
+		Storage::getGlobalCache()->clearCache();
 		\OC::$server->getUserSession()->setUser(null);
-		\OC\Files\Filesystem::tearDown();
+		Filesystem::tearDown();
 		\OC::$server->getUserSession()->login($user, $password);
 		\OC::$server->getUserFolder($user);
 
@@ -241,7 +219,7 @@ abstract class TestCase extends \Test\TestCase {
 	 * @param string $initiator
 	 * @param string $recipient
 	 * @param int $permissions
-	 * @return \OCP\Share\IShare
+	 * @return IShare
 	 */
 	protected function share($type, $path, $initiator, $recipient, $permissions) {
 		$userFolder = $this->rootFolder->getUserFolder($initiator);

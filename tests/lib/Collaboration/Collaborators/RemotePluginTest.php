@@ -26,19 +26,19 @@ class RemotePluginTest extends TestCase {
 	/** @var IUserManager|\PHPUnit\Framework\MockObject\MockObject */
 	protected $userManager;
 
-	/** @var  IConfig|\PHPUnit\Framework\MockObject\MockObject */
+	/** @var IConfig|\PHPUnit\Framework\MockObject\MockObject */
 	protected $config;
 
-	/** @var  IManager|\PHPUnit\Framework\MockObject\MockObject */
+	/** @var IManager|\PHPUnit\Framework\MockObject\MockObject */
 	protected $contactsManager;
 
-	/** @var  ICloudIdManager|\PHPUnit\Framework\MockObject\MockObject */
+	/** @var ICloudIdManager|\PHPUnit\Framework\MockObject\MockObject */
 	protected $cloudIdManager;
 
-	/** @var  RemotePlugin */
+	/** @var RemotePlugin */
 	protected $plugin;
 
-	/** @var  SearchResult */
+	/** @var SearchResult */
 	protected $searchResult;
 
 	protected function setUp(): void {
@@ -79,7 +79,7 @@ class RemotePluginTest extends TestCase {
 	 * @param bool $exactIdMatch
 	 * @param bool $reachedEnd
 	 */
-	public function testSearch($searchTerm, array $contacts, $shareeEnumeration, array $expected, $exactIdMatch, $reachedEnd) {
+	public function testSearch($searchTerm, array $contacts, $shareeEnumeration, array $expected, $exactIdMatch, $reachedEnd): void {
 		$this->config->expects($this->any())
 			->method('getAppValue')
 			->willReturnCallback(
@@ -117,7 +117,7 @@ class RemotePluginTest extends TestCase {
 	 * @param string $expectedUser
 	 * @param string $expectedUrl
 	 */
-	public function testSplitUserRemote($remote, $expectedUser, $expectedUrl) {
+	public function testSplitUserRemote($remote, $expectedUser, $expectedUrl): void {
 		$this->instantiatePlugin();
 
 		$this->contactsManager->expects($this->any())
@@ -134,7 +134,7 @@ class RemotePluginTest extends TestCase {
 	 *
 	 * @param string $id
 	 */
-	public function testSplitUserRemoteError($id) {
+	public function testSplitUserRemoteError($id): void {
 		$this->expectException(\Exception::class);
 
 		$this->instantiatePlugin();
@@ -394,6 +394,11 @@ class RemotePluginTest extends TestCase {
 			foreach ($remotes as $remote) {
 				foreach ($protocols as $protocol) {
 					$baseUrl = $user . '@' . $protocol . $remote;
+
+					if ($protocol === 'https://') {
+						// https:// protocol is not expected in the final result
+						$protocol = '';
+					}
 
 					$testCases[] = [$baseUrl, $user, $protocol . $remote];
 					$testCases[] = [$baseUrl . '/', $user, $protocol . $remote];

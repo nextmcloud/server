@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-require_once __DIR__.'/../lib/base.php';
+require_once __DIR__ . '/../lib/base.php';
 
 function enableApp($app) {
 	try {
@@ -24,3 +24,4 @@ enableApp('provisioning_api');
 enableApp('federation');
 enableApp('federatedfilesharing');
 enableApp('admin_audit');
+enableApp('webhook_listeners');

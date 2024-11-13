@@ -32,14 +32,6 @@ use OCP\UserStatus\IUserStatus;
  * @package OCA\UserStatus
  */
 class UserStatusWidget implements IAPIWidget, IAPIWidgetV2, IIconWidget, IOptionWidget {
-	private IL10N $l10n;
-	private IDateTimeFormatter $dateTimeFormatter;
-	private IURLGenerator $urlGenerator;
-	private IInitialState $initialStateService;
-	private IUserManager $userManager;
-	private IUserSession $userSession;
-	private StatusService $service;
-
 	/**
 	 * UserStatusWidget constructor
 	 *
@@ -51,20 +43,15 @@ class UserStatusWidget implements IAPIWidget, IAPIWidgetV2, IIconWidget, IOption
 	 * @param IUserSession $userSession
 	 * @param StatusService $service
 	 */
-	public function __construct(IL10N $l10n,
-		IDateTimeFormatter $dateTimeFormatter,
-		IURLGenerator $urlGenerator,
-		IInitialState $initialStateService,
-		IUserManager $userManager,
-		IUserSession $userSession,
-		StatusService $service) {
-		$this->l10n = $l10n;
-		$this->dateTimeFormatter = $dateTimeFormatter;
-		$this->urlGenerator = $urlGenerator;
-		$this->initialStateService = $initialStateService;
-		$this->userManager = $userManager;
-		$this->userSession = $userSession;
-		$this->service = $service;
+	public function __construct(
+		private IL10N $l10n,
+		private IDateTimeFormatter $dateTimeFormatter,
+		private IURLGenerator $urlGenerator,
+		private IInitialState $initialStateService,
+		private IUserManager $userManager,
+		private IUserSession $userSession,
+		private StatusService $service,
+	) {
 	}
 
 	/**
@@ -124,7 +111,7 @@ class UserStatusWidget implements IAPIWidget, IAPIWidgetV2, IIconWidget, IOption
 				$this->service->findAllRecentStatusChanges($limit + 1, 0),
 				static function (UserStatus $status) use ($userId, $since): bool {
 					return $status->getUserId() !== $userId
-						&& ($since === null || $status->getStatusTimestamp() > (int) $since);
+						&& ($since === null || $status->getStatusTimestamp() > (int)$since);
 				}
 			),
 			0,
@@ -156,7 +143,7 @@ class UserStatusWidget implements IAPIWidget, IAPIWidgetV2, IIconWidget, IOption
 	public function getItems(string $userId, ?string $since = null, int $limit = 7): array {
 		$widgetItemsData = $this->getWidgetData($userId, $since, $limit);
 
-		return array_map(function (array $widgetData) {
+		return array_values(array_map(function (array $widgetData) {
 			$formattedDate = $this->dateTimeFormatter->formatTimeSpan($widgetData['timestamp']);
 			return new WidgetItem(
 				$widgetData['displayName'],
@@ -168,9 +155,9 @@ class UserStatusWidget implements IAPIWidget, IAPIWidgetV2, IIconWidget, IOption
 				$this->urlGenerator->getAbsoluteURL(
 					$this->urlGenerator->linkToRoute('core.avatar.getAvatar', ['userId' => $widgetData['userId'], 'size' => 44])
 				),
-				(string) $widgetData['timestamp']
+				(string)$widgetData['timestamp']
 			);
-		}, $widgetItemsData);
+		}, $widgetItemsData));
 	}
 
 	/**

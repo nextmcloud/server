@@ -32,12 +32,11 @@ class MigrateOauthTables implements IRepairStep {
 	public function run(IOutput $output) {
 		$schema = new SchemaWrapper($this->db);
 		if (!$schema->hasTable('oauth2_clients')) {
-			$output->info("oauth2_clients table does not exist.");
+			$output->info('oauth2_clients table does not exist.');
 			return;
 		}
 
-		$output->info("Update the oauth2_access_tokens table schema.");
-		$schema = new SchemaWrapper($this->db);
+		$output->info('Update the oauth2_access_tokens table schema.');
 		$table = $schema->getTable('oauth2_access_tokens');
 		if (!$table->hasColumn('hashed_code')) {
 			$table->addColumn('hashed_code', 'string', [
@@ -58,8 +57,7 @@ class MigrateOauthTables implements IRepairStep {
 			$table->addIndex(['client_id'], 'oauth2_access_client_id_idx');
 		}
 
-		$output->info("Update the oauth2_clients table schema.");
-		$schema = new SchemaWrapper($this->db);
+		$output->info('Update the oauth2_clients table schema.');
 		$table = $schema->getTable('oauth2_clients');
 		if ($table->getColumn('name')->getLength() !== 64) {
 			// shorten existing values before resizing the column
@@ -103,7 +101,8 @@ class MigrateOauthTables implements IRepairStep {
 
 		$this->db->migrateToSchema($schema->getWrappedSchema());
 
-
+		// Regenerate schema after migrating to it
+		$schema = new SchemaWrapper($this->db);
 		if ($schema->getTable('oauth2_clients')->hasColumn('identifier')) {
 			$output->info("Move identifier column's data to the new client_identifier column.");
 			// 1. Fetch all [id, identifier] couple.
@@ -114,7 +113,7 @@ class MigrateOauthTables implements IRepairStep {
 			$result->closeCursor();
 
 			// 2. Insert them into the client_identifier column.
-			foreach ($identifiers as ["id" => $id, "identifier" => $clientIdentifier]) {
+			foreach ($identifiers as ['id' => $id, 'identifier' => $clientIdentifier]) {
 				$insertQuery = $this->db->getQueryBuilder();
 				$insertQuery->update('oauth2_clients')
 					->set('client_identifier', $insertQuery->createNamedParameter($clientIdentifier, IQueryBuilder::PARAM_STR))
@@ -122,8 +121,7 @@ class MigrateOauthTables implements IRepairStep {
 					->executeStatement();
 			}
 
-			$output->info("Drop the identifier column.");
-			$schema = new SchemaWrapper($this->db);
+			$output->info('Drop the identifier column.');
 			$table = $schema->getTable('oauth2_clients');
 			$table->dropColumn('identifier');
 			$this->db->migrateToSchema($schema->getWrappedSchema());

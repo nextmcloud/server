@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 <template>
 	<div class="sharingTabDetailsView">
 		<div class="sharingTabDetailsView__header">
@@ -58,7 +62,7 @@
 						type="radio"
 						button-variant-grouped="vertical"
 						@update:checked="toggleCustomPermissions">
-						{{ t('files_sharing', 'File drop') }}
+						{{ t('files_sharing', 'File request') }}
 						<small class="subline">{{ t('files_sharing', 'Upload only') }}</small>
 						<template #icon>
 							<UploadIcon :size="20" />
@@ -112,8 +116,8 @@
 							autocomplete="new-password"
 							:value="hasUnsavedPassword ? share.newPassword : ''"
 							:error="passwordError"
-							:helper-text="errorPasswordLabel"
-							:required="isPasswordEnforced"
+							:helper-text="errorPasswordLabel || passwordHint"
+							:required="isPasswordEnforced && isNewShare"
 							:label="t('files_sharing', 'Password')"
 							@update:value="onPasswordChange" />
 
@@ -154,16 +158,15 @@
 						:disabled="!canSetDownload"
 						:checked.sync="canDownload"
 						data-cy-files-sharing-share-permissions-checkbox="download">
-						{{ t('files_sharing', 'Allow download') }}
+						{{ t('files_sharing', 'Allow download and sync') }}
 					</NcCheckboxRadioSwitch>
 					<NcCheckboxRadioSwitch :checked.sync="writeNoteToRecipientIsChecked">
 						{{ t('files_sharing', 'Note to recipient') }}
 					</NcCheckboxRadioSwitch>
 					<template v-if="writeNoteToRecipientIsChecked">
-						<label for="share-note-textarea">
-							{{ t('files_sharing', 'Enter a note for the share recipient') }}
-						</label>
-						<textarea id="share-note-textarea" :value="share.note" @input="share.note = $event.target.value" />
+						<NcTextArea :label="t('files_sharing', 'Note to recipient')"
+							:placeholder="t('files_sharing', 'Enter a note for the share recipient')"
+							:value.sync="share.note" />
 					</template>
 					<ExternalShareAction v-for="action in externalLinkActions"
 						:id="action.id"
@@ -176,7 +179,7 @@
 						{{ t('files_sharing', 'Custom permissions') }}
 					</NcCheckboxRadioSwitch>
 					<section v-if="setCustomPermissions" class="custom-permissions-group">
-						<NcCheckboxRadioSwitch :disabled="!allowsFileDrop && share.type === SHARE_TYPES.SHARE_TYPE_LINK"
+						<NcCheckboxRadioSwitch :disabled="!canRemoveReadPermission"
 							:checked.sync="hasRead"
 							data-cy-files-sharing-share-permissions-checkbox="read">
 							{{ t('files_sharing', 'Read') }}
@@ -241,16 +244,20 @@
 </template>
 
 <script>
+import { emit } from '@nextcloud/event-bus'
 import { getLanguage } from '@nextcloud/l10n'
-import { Type as ShareType } from '@nextcloud/sharing'
+import { ShareType } from '@nextcloud/sharing'
+import moment from '@nextcloud/moment'
 
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcInputField from '@nextcloud/vue/dist/Components/NcInputField.js'
-import NcPasswordField from '@nextcloud/vue/dist/Components/NcPasswordField.js'
 import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
-import NcDateTimePickerNative from '@nextcloud/vue/dist/Components/NcDateTimePickerNative.js'
+import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
+import NcDateTimePickerNative from '@nextcloud/vue/dist/Components/NcDateTimePickerNative.js'
+import NcInputField from '@nextcloud/vue/dist/Components/NcInputField.js'
 import NcLoadingIcon from '@nextcloud/vue/dist/Components/NcLoadingIcon.js'
+import NcPasswordField from '@nextcloud/vue/dist/Components/NcPasswordField.js'
+import NcTextArea from '@nextcloud/vue/dist/Components/NcTextArea.js'
+
 import CircleIcon from 'vue-material-design-icons/CircleOutline.vue'
 import CloseIcon from 'vue-material-design-icons/Close.vue'
 import EditIcon from 'vue-material-design-icons/Pencil.vue'
@@ -267,11 +274,12 @@ import DotsHorizontalIcon from 'vue-material-design-icons/DotsHorizontal.vue'
 
 import ExternalShareAction from '../components/ExternalShareAction.vue'
 
-import GeneratePassword from '../utils/GeneratePassword.js'
-import Share from '../models/Share.js'
+import GeneratePassword from '../utils/GeneratePassword.ts'
+import Share from '../models/Share.ts'
 import ShareRequests from '../mixins/ShareRequests.js'
 import ShareTypes from '../mixins/ShareTypes.js'
 import SharesMixin from '../mixins/SharesMixin.js'
+import logger from '../services/logger.ts'
 
 import {
 	ATOMIC_PERMISSIONS,
@@ -284,11 +292,12 @@ export default {
 	components: {
 		NcAvatar,
 		NcButton,
-		NcInputField,
-		NcPasswordField,
-		NcDateTimePickerNative,
 		NcCheckboxRadioSwitch,
+		NcDateTimePickerNative,
+		NcInputField,
 		NcLoadingIcon,
+		NcPasswordField,
+		NcTextArea,
 		CloseIcon,
 		CircleIcon,
 		EditIcon,
@@ -415,19 +424,28 @@ export default {
 		 */
 		canDownload: {
 			get() {
-				return this.share.attributes.find(attr => attr.key === 'download')?.enabled || false
+				return this.share.attributes?.find(attr => attr.key === 'download')?.value ?? true
 			},
 			set(checked) {
 				// Find the 'download' attribute and update its value
-				const downloadAttr = this.share.attributes.find(attr => attr.key === 'download')
+				const downloadAttr = this.share.attributes?.find(attr => attr.key === 'download')
 				if (downloadAttr) {
-					downloadAttr.enabled = checked
+					downloadAttr.value = checked
+				} else {
+					if (this.share.attributes === null) {
+						this.$set(this.share, 'attributes', [])
+					}
+					this.share.attributes.push({
+						scope: 'permissions',
+						key: 'download',
+						value: checked,
+					})
 				}
 			},
 		},
 		/**
 		 * Is this share readable
-		 * Needed for some federated shares that might have been added from file drop links
+		 * Needed for some federated shares that might have been added from file requests links
 		 */
 		hasRead: {
 			get() {
@@ -464,7 +482,7 @@ export default {
 			},
 			async set(enabled) {
 				if (enabled) {
-					this.share.password = await GeneratePassword()
+					this.share.password = await GeneratePassword(true)
 					this.$set(this.share, 'newPassword', this.share.password)
 				} else {
 					this.share.password = ''
@@ -596,6 +614,12 @@ export default {
 			// allowed to revoke it too (but not to grant it again).
 			return (this.fileInfo.canDownload() || this.canDownload)
 		},
+		canRemoveReadPermission() {
+			return this.allowsFileDrop && (
+				this.share.type === this.SHARE_TYPES.SHARE_TYPE_LINK
+					|| this.share.type === this.SHARE_TYPES.SHARE_TYPE_EMAIL
+			)
+		},
 		// if newPassword exists, but is empty, it means
 		// the user deleted the original password
 		hasUnsavedPassword() {
@@ -669,7 +693,7 @@ export default {
 			return OC.appswebroots.spreed !== undefined
 		},
 		canChangeHideDownload() {
-			const hasDisabledDownload = (shareAttribute) => shareAttribute.key === 'download' && shareAttribute.scope === 'permissions' && shareAttribute.enabled === false
+			const hasDisabledDownload = (shareAttribute) => shareAttribute.key === 'download' && shareAttribute.scope === 'permissions' && shareAttribute.value === false
 			return this.fileInfo.shareAttributes.some(hasDisabledDownload)
 		},
 		customPermissionsList() {
@@ -699,13 +723,20 @@ export default {
 			return undefined
 		},
 
+		passwordHint() {
+			if (this.isNewShare || this.hasUnsavedPassword) {
+				return undefined
+			}
+			return t('files_sharing', 'Replace current password')
+		},
+
 		/**
 		 * Additional actions for the menu
 		 *
 		 * @return {Array}
 		 */
 		externalLinkActions() {
-			const filterValidAction = (action) => (action.shareType.includes(ShareType.SHARE_TYPE_LINK) || action.shareType.includes(ShareType.SHARE_TYPE_EMAIL)) && action.advanced
+			const filterValidAction = (action) => (action.shareType.includes(ShareType.Link) || action.shareType.includes(ShareType.Email)) && action.advanced
 			// filter only the advanced registered actions for said link
 			return this.ExternalShareActions.actions
 				.filter(filterValidAction)
@@ -723,8 +754,8 @@ export default {
 	beforeMount() {
 		this.initializePermissions()
 		this.initializeAttributes()
-		console.debug('shareSentIn', this.share)
-		console.debug('config', this.config)
+		logger.debug('Share object received', { share: this.share })
+		logger.debug('Configuration object received', { config: this.config })
 	},
 
 	mounted() {
@@ -763,7 +794,7 @@ export default {
 
 			if (this.isNewShare) {
 				if (this.isPasswordEnforced && this.isPublicShare) {
-					this.$set(this.share, 'newPassword', await GeneratePassword())
+					this.$set(this.share, 'newPassword', await GeneratePassword(true))
 					this.advancedSectionAccordionExpanded = true
 				}
 				/* Set default expiration dates if configured */
@@ -796,6 +827,10 @@ export default {
 				this.advancedSectionAccordionExpanded = true
 			}
 
+			if (this.share.note) {
+				this.writeNoteToRecipientIsChecked = true
+			}
+
 		},
 		handleShareType() {
 			if ('shareType' in this.share) {
@@ -815,6 +850,10 @@ export default {
 					this.advancedSectionAccordionExpanded = true
 					this.setCustomPermissions = true
 				}
+			}
+			// Read permission required for share creation
+			if (!this.canRemoveReadPermission) {
+				this.hasRead = true
 			}
 		},
 		handleCustomPermissions() {
@@ -855,7 +894,7 @@ export default {
 				if (this.hasUnsavedPassword && this.isValidShareAttribute(this.share.newPassword)) {
 					this.share.password = this.share.newPassword
 					this.$delete(this.share, 'newPassword')
-				} else if (this.isPasswordEnforced && !this.isValidShareAttribute(this.share.password)) {
+				} else if (this.isPasswordEnforced && this.isNewShare && !this.isValidShareAttribute(this.share.password)) {
 					this.passwordError = true
 				}
 			} else {
@@ -883,13 +922,17 @@ export default {
 				}
 
 				this.creating = true
-				const share = await this.addShare(incomingShare, this.fileInfo)
+				const share = await this.addShare(incomingShare)
 				this.creating = false
 				this.share = share
 				this.$emit('add:share', this.share)
 			} else {
+				this.$emit('update:share', this.share)
 				this.queueUpdate(...permissionsAndAttributes)
 			}
+
+			await this.getNode()
+			emit('files:node:updated', this.node)
 
 			if (this.$refs.externalLinkActions?.length > 0) {
 				await Promise.allSettled(this.$refs.externalLinkActions.map((action) => {
@@ -906,12 +949,11 @@ export default {
 		 * Process the new share request
 		 *
 		 * @param {Share} share incoming share object
-		 * @param {object} fileInfo file data
 		 */
-		async addShare(share, fileInfo) {
-			console.debug('Adding a new share from the input for', share)
+		async addShare(share) {
+			logger.debug('Adding a new share from the input for', { share })
+			const path = this.path
 			try {
-				const path = (fileInfo.path + '/' + fileInfo.name).replace('//', '/')
 				const resultingShare = await this.createShare({
 					path,
 					shareType: share.shareType,
@@ -924,13 +966,15 @@ export default {
 				})
 				return resultingShare
 			} catch (error) {
-				console.error('Error while adding new share', error)
+				logger.error('Error while adding new share', { error })
 			} finally {
 				// this.loading = false // No loader here yet
 			}
 		},
 		async removeShare() {
 			await this.onDelete()
+			await this.getNode()
+			emit('files:node:updated', this.node)
 			this.$emit('close-sharing-details')
 		},
 		/**
@@ -944,6 +988,11 @@ export default {
 		 * @param {string} password the changed password
 		 */
 		onPasswordChange(password) {
+			if (password === '') {
+				this.$delete(this.share, 'newPassword')
+				this.passwordError = this.isNewShare && this.isPasswordEnforced
+				return
+			}
 			this.passwordError = !this.isValidShareAttribute(password)
 			this.$set(this.share, 'newPassword', password)
 		},
@@ -1022,7 +1071,7 @@ export default {
 
 			h1 {
 				font-size: 15px;
-				padding-left: 0.3em;
+				padding-inline-start: 0.3em;
 			}
 
 		}
@@ -1033,7 +1082,7 @@ export default {
 		overflow: scroll;
 		flex-shrink: 1;
 		padding: 4px;
-		padding-right: 12px;
+		padding-inline-end: 12px;
 	}
 
 	&__quick-permissions {
@@ -1089,8 +1138,8 @@ export default {
 	&__advanced {
 		width: 100%;
 		margin-bottom: 0.5em;
-		text-align: left;
-		padding-left: 0;
+		text-align: start;
+		padding-inline-start: 0;
 
 		section {
 
@@ -1115,14 +1164,14 @@ export default {
             */
 			span {
 				::v-deep label {
-					padding-left: 0 !important;
+					padding-inline-start: 0 !important;
 					background-color: initial !important;
 					border: none !important;
 				}
 			}
 
 			section.custom-permissions-group {
-				padding-left: 1.5em;
+				padding-inline-start: 1.5em;
 			}
 		}
 	}
@@ -1150,10 +1199,10 @@ export default {
 			margin-top: 16px;
 
 			button {
-				margin-left: 16px;
+				margin-inline-start: 16px;
 
 				&:first-child {
-					margin-left: 0;
+					margin-inline-start: 0;
 				}
 			}
 		}

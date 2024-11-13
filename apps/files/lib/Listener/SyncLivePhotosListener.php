@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace OCA\Files\Listener;
 
+use OC\FilesMetadata\Model\FilesMetadata;
 use OCA\Files\Service\LivePhotosService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -100,7 +101,7 @@ class SyncLivePhotosListener implements IEventListener {
 		$peerFileExtension = $peerFile->getExtension();
 		$targetName = $targetFile->getName();
 
-		if (!str_ends_with($targetName, "." . $sourceExtension)) {
+		if (!str_ends_with($targetName, '.' . $sourceExtension)) {
 			throw new AbortedEventException('Cannot change the extension of a Live Photo');
 		}
 
@@ -154,10 +155,14 @@ class SyncLivePhotosListener implements IEventListener {
 		 * We have everything to update metadata and keep the link between the 2 copies.
 		 */
 		$newPeerFile = $peerFile->copy($targetParent->getPath() . '/' . $peerTargetName);
+		/** @var FilesMetadata $targetMetadata */
 		$targetMetadata = $this->filesMetadataManager->getMetadata($targetFile->getId(), true);
+		$targetMetadata->setStorageId($targetFile->getStorage()->getCache()->getNumericStorageId());
 		$targetMetadata->setString('files-live-photo', (string)$newPeerFile->getId());
 		$this->filesMetadataManager->saveMetadata($targetMetadata);
+		/** @var FilesMetadata $peerMetadata */
 		$peerMetadata = $this->filesMetadataManager->getMetadata($newPeerFile->getId(), true);
+		$peerMetadata->setStorageId($newPeerFile->getStorage()->getCache()->getNumericStorageId());
 		$peerMetadata->setString('files-live-photo', (string)$targetFile->getId());
 		$this->filesMetadataManager->saveMetadata($peerMetadata);
 	}
@@ -176,7 +181,7 @@ class SyncLivePhotosListener implements IEventListener {
 				unset($this->pendingDeletion[$peerFile->getId()]);
 				return;
 			} else {
-				throw new AbortedEventException("Cannot delete the video part of a live photo");
+				throw new AbortedEventException('Cannot delete the video part of a live photo');
 			}
 		} else {
 			$this->pendingDeletion[$deletedFile->getId()] = true;

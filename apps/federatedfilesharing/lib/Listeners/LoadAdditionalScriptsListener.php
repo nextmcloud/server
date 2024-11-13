@@ -10,16 +10,22 @@ namespace OCA\FederatedFileSharing\Listeners;
 
 use OCA\FederatedFileSharing\FederatedShareProvider;
 use OCA\Files\Event\LoadAdditionalScriptsEvent;
+use OCP\App\IAppManager;
+use OCP\AppFramework\Services\IInitialState;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use OCP\Util;
 
 /** @template-implements IEventListener<LoadAdditionalScriptsEvent> */
 class LoadAdditionalScriptsListener implements IEventListener {
-	/** @var FederatedShareProvider */
-	protected $federatedShareProvider;
-
-	public function __construct(FederatedShareProvider $federatedShareProvider) {
+	public function __construct(
+		private FederatedShareProvider $federatedShareProvider,
+		private IInitialState $initialState,
+		private IAppManager $appManager,
+	) {
 		$this->federatedShareProvider = $federatedShareProvider;
+		$this->initialState = $initialState;
+		$this->appManager = $appManager;
 	}
 
 	public function handle(Event $event): void {
@@ -28,7 +34,8 @@ class LoadAdditionalScriptsListener implements IEventListener {
 		}
 
 		if ($this->federatedShareProvider->isIncomingServer2serverShareEnabled()) {
-			\OCP\Util::addScript('federatedfilesharing', 'external');
+			$this->initialState->provideInitialState('notificationsEnabled', $this->appManager->isEnabledForUser('notifications'));
+			Util::addInitScript('federatedfilesharing', 'external');
 		}
 	}
 }

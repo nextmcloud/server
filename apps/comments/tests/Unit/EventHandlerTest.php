@@ -6,14 +6,14 @@
 namespace OCA\Comments\Tests\Unit\Notification;
 
 use OCA\Comments\Activity\Listener as ActivityListener;
-use OCA\Comments\EventHandler;
+use OCA\Comments\Listener\CommentsEventListener;
 use OCA\Comments\Notification\Listener as NotificationListener;
 use OCP\Comments\CommentsEvent;
 use OCP\Comments\IComment;
 use Test\TestCase;
 
 class EventHandlerTest extends TestCase {
-	/** @var  EventHandler */
+	/** @var CommentsEventListener */
 	protected $eventHandler;
 
 	/** @var ActivityListener|\PHPUnit\Framework\MockObject\MockObject */
@@ -33,10 +33,10 @@ class EventHandlerTest extends TestCase {
 			->disableOriginalConstructor()
 			->getMock();
 
-		$this->eventHandler = new EventHandler($this->activityListener, $this->notificationListener);
+		$this->eventHandler = new CommentsEventListener($this->activityListener, $this->notificationListener);
 	}
 
-	public function testNotFiles() {
+	public function testNotFiles(): void {
 		/** @var IComment|\PHPUnit\Framework\MockObject\MockObject $comment */
 		$comment = $this->getMockBuilder(IComment::class)->getMock();
 		$comment->expects($this->once())
@@ -69,7 +69,7 @@ class EventHandlerTest extends TestCase {
 	 * @dataProvider handledProvider
 	 * @param string $eventType
 	 */
-	public function testHandled($eventType) {
+	public function testHandled($eventType): void {
 		/** @var IComment|\PHPUnit\Framework\MockObject\MockObject $comment */
 		$comment = $this->getMockBuilder(IComment::class)->getMock();
 		$comment->expects($this->once())

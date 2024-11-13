@@ -21,6 +21,7 @@ use OCP\IAppConfig;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use OCP\IConfig;
+use OCP\ServerVersion;
 use phpseclib\Crypt\RSA;
 use phpseclib\File\X509;
 
@@ -40,13 +41,14 @@ class Checker {
 	private ICache $cache;
 
 	public function __construct(
+		private ServerVersion $serverVersion,
 		private EnvironmentHelper $environmentHelper,
 		private FileAccessHelper $fileAccessHelper,
 		private AppLocator $appLocator,
 		private ?IConfig $config,
 		private ?IAppConfig $appConfig,
 		ICacheFactory $cacheFactory,
-		private ?IAppManager $appManager,
+		private IAppManager $appManager,
 		private IMimeTypeDetector $mimeTypeDetector,
 	) {
 		$this->cache = $cacheFactory->createDistributed(self::CACHE_KEY);
@@ -59,7 +61,7 @@ class Checker {
 	 */
 	public function isCodeCheckEnforced(): bool {
 		$notSignedChannels = [ '', 'git'];
-		if (\in_array($this->environmentHelper->getChannel(), $notSignedChannels, true)) {
+		if (\in_array($this->serverVersion->getChannel(), $notSignedChannels, true)) {
 			return false;
 		}
 
@@ -290,7 +292,7 @@ class Checker {
 
 		// Check if certificate is signed by Nextcloud Root Authority
 		$x509 = new \phpseclib\File\X509();
-		$rootCertificatePublicKey = $this->fileAccessHelper->file_get_contents($this->environmentHelper->getServerRoot().'/resources/codesigning/root.crt');
+		$rootCertificatePublicKey = $this->fileAccessHelper->file_get_contents($this->environmentHelper->getServerRoot() . '/resources/codesigning/root.crt');
 
 		$rootCerts = $this->splitCerts($rootCertificatePublicKey);
 		foreach ($rootCerts as $rootCert) {
@@ -373,7 +375,7 @@ class Checker {
 	 */
 	public function hasPassedCheck(): bool {
 		$results = $this->getResults();
-		if (empty($results)) {
+		if ($results !== null && empty($results)) {
 			return true;
 		}
 
@@ -381,15 +383,20 @@ class Checker {
 	}
 
 	/**
-	 * @return array
+	 * @return array|null Either the results or null if no results available
 	 */
-	public function getResults(): array {
+	public function getResults(): ?array {
 		$cachedResults = $this->cache->get(self::CACHE_KEY);
 		if (!\is_null($cachedResults) and $cachedResults !== false) {
 			return json_decode($cachedResults, true);
 		}
 
-		return $this->appConfig?->getValueArray('core', self::CACHE_KEY, lazy: true) ?? [];
+		if ($this->appConfig?->hasKey('core', self::CACHE_KEY, lazy: true)) {
+			return $this->appConfig->getValueArray('core', self::CACHE_KEY, lazy: true);
+		}
+
+		// No results available
+		return null;
 	}
 
 	/**
@@ -399,7 +406,7 @@ class Checker {
 	 * @param array $result
 	 */
 	private function storeResults(string $scope, array $result) {
-		$resultArray = $this->getResults();
+		$resultArray = $this->getResults() ?? [];
 		unset($resultArray[$scope]);
 		if (!empty($result)) {
 			$resultArray[$scope] = $result;
@@ -531,7 +538,7 @@ class Checker {
 	public function runInstanceVerification() {
 		$this->cleanResults();
 		$this->verifyCoreSignature();
-		$appIds = $this->appLocator->getAllApps();
+		$appIds = $this->appManager->getAllAppsInAppsFolders();
 		foreach ($appIds as $appId) {
 			// If an application is shipped a valid signature is required
 			$isShipped = $this->appManager->isShipped($appId);

@@ -12,6 +12,7 @@ use OC\Files\Search\SearchComparison;
 use OC\Files\Search\SearchOrder;
 use OC\Files\Search\SearchQuery;
 use OC\Files\Utils\PathHelper;
+use OC\User\LazyUser;
 use OCP\Files\Cache\ICacheEntry;
 use OCP\Files\FileInfo;
 use OCP\Files\Mount\IMountPoint;
@@ -26,6 +27,9 @@ use OCP\Files\Search\ISearchQuery;
 use OCP\IUserManager;
 
 class Folder extends Node implements \OCP\Files\Folder {
+
+	private ?IUserManager $userManager = null;
+
 	/**
 	 * Creates a Folder that represents a non-existing path
 	 *
@@ -99,26 +103,15 @@ class Folder extends Node implements \OCP\Files\Folder {
 		}
 	}
 
-	/**
-	 * Get the node at $path
-	 *
-	 * @param string $path
-	 * @return \OC\Files\Node\Node
-	 * @throws \OCP\Files\NotFoundException
-	 */
 	public function get($path) {
 		return $this->root->get($this->getFullPath($path));
 	}
 
-	/**
-	 * @param string $path
-	 * @return bool
-	 */
 	public function nodeExists($path) {
 		try {
 			$this->get($path);
 			return true;
-		} catch (NotFoundException $e) {
+		} catch (NotFoundException|NotPermittedException) {
 			return false;
 		}
 	}
@@ -218,9 +211,9 @@ class Folder extends Node implements \OCP\Files\Folder {
 		}, array_values($resultsPerCache), array_keys($resultsPerCache)));
 
 		// don't include this folder in the results
-		$files = array_filter($files, function (FileInfo $file) {
+		$files = array_values(array_filter($files, function (FileInfo $file) {
 			return $file->getPath() !== $this->getPath();
-		});
+		}));
 
 		// since results were returned per-cache, they are no longer fully sorted
 		$order = $query->getOrder();
@@ -245,7 +238,26 @@ class Folder extends Node implements \OCP\Files\Folder {
 		$cacheEntry['internalPath'] = $cacheEntry['path'];
 		$cacheEntry['path'] = rtrim($appendRoot . $cacheEntry->getPath(), '/');
 		$subPath = $cacheEntry['path'] !== '' ? '/' . $cacheEntry['path'] : '';
-		return new \OC\Files\FileInfo($this->path . $subPath, $mount->getStorage(), $cacheEntry['internalPath'], $cacheEntry, $mount);
+		$storage = $mount->getStorage();
+
+		$owner = null;
+		$ownerId = $storage->getOwner($cacheEntry['internalPath']);
+		if ($ownerId !== false) {
+			// Cache the user manager (for performance)
+			if ($this->userManager === null) {
+				$this->userManager = \OCP\Server::get(IUserManager::class);
+			}
+			$owner = new LazyUser($ownerId, $this->userManager);
+		}
+
+		return new \OC\Files\FileInfo(
+			$this->path . $subPath,
+			$storage,
+			$cacheEntry['internalPath'],
+			$cacheEntry,
+			$mount,
+			$owner,
+		);
 	}
 
 	/**
@@ -289,7 +301,7 @@ class Folder extends Node implements \OCP\Files\Folder {
 	}
 
 	public function getFirstNodeById(int $id): ?\OCP\Files\Node {
-		return current($this->getById($id)) ?: null;
+		return $this->root->getFirstNodeByIdInPath($id, $this->getPath());
 	}
 
 	public function getAppDataDirectoryName(): string {
@@ -399,7 +411,7 @@ class Folder extends Node implements \OCP\Files\Folder {
 		$filterNonRecentFiles = new SearchComparison(
 			ISearchComparison::COMPARE_GREATER_THAN,
 			'mtime',
-			strtotime("-2 week")
+			strtotime('-2 week')
 		);
 		if ($offset === 0 && $limit <= 100) {
 			$query = new SearchQuery(

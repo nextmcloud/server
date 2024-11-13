@@ -15,6 +15,7 @@ use OC\Authentication\TwoFactorAuth\MandatoryTwoFactor;
 use OC\Authentication\TwoFactorAuth\ProviderLoader;
 use OCP\Activity\IEvent;
 use OCP\Activity\IManager;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Authentication\TwoFactorAuth\IActivatableAtLogin;
 use OCP\Authentication\TwoFactorAuth\IProvider;
@@ -135,7 +136,7 @@ class ManagerTest extends TestCase {
 			]);
 	}
 
-	public function testIsTwoFactorAuthenticatedEnforced() {
+	public function testIsTwoFactorAuthenticatedEnforced(): void {
 		$this->mandatoryTwoFactor->expects($this->once())
 			->method('isEnforcedFor')
 			->with($this->user)
@@ -146,7 +147,7 @@ class ManagerTest extends TestCase {
 		$this->assertTrue($enabled);
 	}
 
-	public function testIsTwoFactorAuthenticatedNoProviders() {
+	public function testIsTwoFactorAuthenticatedNoProviders(): void {
 		$this->mandatoryTwoFactor->expects($this->once())
 			->method('isEnforcedFor')
 			->with($this->user)
@@ -161,7 +162,7 @@ class ManagerTest extends TestCase {
 		$this->assertFalse($this->manager->isTwoFactorAuthenticated($this->user));
 	}
 
-	public function testIsTwoFactorAuthenticatedOnlyBackupCodes() {
+	public function testIsTwoFactorAuthenticatedOnlyBackupCodes(): void {
 		$this->mandatoryTwoFactor->expects($this->once())
 			->method('isEnforcedFor')
 			->with($this->user)
@@ -184,7 +185,7 @@ class ManagerTest extends TestCase {
 		$this->assertFalse($this->manager->isTwoFactorAuthenticated($this->user));
 	}
 
-	public function testIsTwoFactorAuthenticatedFailingProviders() {
+	public function testIsTwoFactorAuthenticatedFailingProviders(): void {
 		$this->mandatoryTwoFactor->expects($this->once())
 			->method('isEnforcedFor')
 			->with($this->user)
@@ -219,7 +220,7 @@ class ManagerTest extends TestCase {
 	 *
 	 * @dataProvider providerStatesFixData
 	 */
-	public function testIsTwoFactorAuthenticatedFixesProviderStates(bool $providerEnabled, bool $expected) {
+	public function testIsTwoFactorAuthenticatedFixesProviderStates(bool $providerEnabled, bool $expected): void {
 		$this->providerRegistry->expects($this->once())
 			->method('getProviderStates')
 			->willReturn([]); // Nothing registered yet
@@ -251,7 +252,7 @@ class ManagerTest extends TestCase {
 		$this->assertEquals($expected, $this->manager->isTwoFactorAuthenticated($this->user));
 	}
 
-	public function testGetProvider() {
+	public function testGetProvider(): void {
 		$this->providerRegistry->expects($this->once())
 			->method('getProviderStates')
 			->with($this->user)
@@ -268,7 +269,7 @@ class ManagerTest extends TestCase {
 		$this->assertSame($this->fakeProvider, $provider);
 	}
 
-	public function testGetInvalidProvider() {
+	public function testGetInvalidProvider(): void {
 		$this->providerRegistry->expects($this->once())
 			->method('getProviderStates')
 			->with($this->user)
@@ -283,7 +284,7 @@ class ManagerTest extends TestCase {
 		$this->assertNull($provider);
 	}
 
-	public function testGetLoginSetupProviders() {
+	public function testGetLoginSetupProviders(): void {
 		$provider1 = $this->createMock(IProvider::class);
 		$provider2 = $this->createMock(IActivatableAtLogin::class);
 		$this->providerLoader->expects($this->once())
@@ -300,7 +301,7 @@ class ManagerTest extends TestCase {
 		$this->assertSame($provider2, reset($providers));
 	}
 
-	public function testGetProviders() {
+	public function testGetProviders(): void {
 		$this->providerRegistry->expects($this->once())
 			->method('getProviderStates')
 			->with($this->user)
@@ -322,7 +323,7 @@ class ManagerTest extends TestCase {
 		$this->assertFalse($providerSet->isProviderMissing());
 	}
 
-	public function testGetProvidersOneMissing() {
+	public function testGetProvidersOneMissing(): void {
 		$this->providerRegistry->expects($this->once())
 			->method('getProviderStates')
 			->with($this->user)
@@ -342,7 +343,7 @@ class ManagerTest extends TestCase {
 		$this->assertTrue($providerSet->isProviderMissing());
 	}
 
-	public function testVerifyChallenge() {
+	public function testVerifyChallenge(): void {
 		$this->prepareProviders();
 
 		$challenge = 'passme';
@@ -412,7 +413,7 @@ class ManagerTest extends TestCase {
 		$this->assertTrue($result);
 	}
 
-	public function testVerifyChallengeInvalidProviderId() {
+	public function testVerifyChallengeInvalidProviderId(): void {
 		$this->prepareProviders();
 
 		$challenge = 'passme';
@@ -425,7 +426,7 @@ class ManagerTest extends TestCase {
 		$this->assertFalse($this->manager->verifyChallenge('dontexist', $this->user, $challenge));
 	}
 
-	public function testVerifyInvalidChallenge() {
+	public function testVerifyInvalidChallenge(): void {
 		$this->prepareProviders();
 
 		$challenge = 'dontpassme';
@@ -471,7 +472,7 @@ class ManagerTest extends TestCase {
 		$this->assertFalse($this->manager->verifyChallenge('email', $this->user, $challenge));
 	}
 
-	public function testNeedsSecondFactor() {
+	public function testNeedsSecondFactor(): void {
 		$user = $this->createMock(IUser::class);
 		$this->session->expects($this->exactly(3))
 			->method('exists')
@@ -522,7 +523,7 @@ class ManagerTest extends TestCase {
 		$this->assertTrue($manager->needsSecondFactor($user));
 	}
 
-	public function testNeedsSecondFactorUserIsNull() {
+	public function testNeedsSecondFactorUserIsNull(): void {
 		$user = null;
 		$this->session->expects($this->never())
 			->method('exists');
@@ -530,7 +531,7 @@ class ManagerTest extends TestCase {
 		$this->assertFalse($this->manager->needsSecondFactor($user));
 	}
 
-	public function testNeedsSecondFactorWithNoProviderAvailableAnymore() {
+	public function testNeedsSecondFactorWithNoProviderAvailableAnymore(): void {
 		$this->prepareNoProviders();
 
 		$user = null;
@@ -545,7 +546,7 @@ class ManagerTest extends TestCase {
 		$this->assertFalse($this->manager->needsSecondFactor($user));
 	}
 
-	public function testPrepareTwoFactorLogin() {
+	public function testPrepareTwoFactorLogin(): void {
 		$this->user->method('getUID')
 			->willReturn('ferdinand');
 
@@ -575,7 +576,7 @@ class ManagerTest extends TestCase {
 		$this->manager->prepareTwoFactorLogin($this->user, true);
 	}
 
-	public function testPrepareTwoFactorLoginDontRemember() {
+	public function testPrepareTwoFactorLoginDontRemember(): void {
 		$this->user->method('getUID')
 			->willReturn('ferdinand');
 
@@ -604,7 +605,7 @@ class ManagerTest extends TestCase {
 		$this->manager->prepareTwoFactorLogin($this->user, false);
 	}
 
-	public function testNeedsSecondFactorSessionAuth() {
+	public function testNeedsSecondFactorSessionAuth(): void {
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')
 			->willReturn('user');
@@ -639,7 +640,7 @@ class ManagerTest extends TestCase {
 		$this->assertFalse($this->manager->needsSecondFactor($user));
 	}
 
-	public function testNeedsSecondFactorSessionAuthFailDBPass() {
+	public function testNeedsSecondFactorSessionAuthFailDBPass(): void {
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')
 			->willReturn('user');
@@ -670,7 +671,7 @@ class ManagerTest extends TestCase {
 		$this->assertFalse($this->manager->needsSecondFactor($user));
 	}
 
-	public function testNeedsSecondFactorInvalidToken() {
+	public function testNeedsSecondFactorInvalidToken(): void {
 		$this->prepareNoProviders();
 
 		$user = $this->createMock(IUser::class);
@@ -691,7 +692,7 @@ class ManagerTest extends TestCase {
 		$this->assertFalse($this->manager->needsSecondFactor($user));
 	}
 
-	public function testNeedsSecondFactorAppPassword() {
+	public function testNeedsSecondFactorAppPassword(): void {
 		$user = $this->createMock(IUser::class);
 		$this->session->method('exists')
 			->willReturnMap([
@@ -700,5 +701,62 @@ class ManagerTest extends TestCase {
 			]);
 
 		$this->assertFalse($this->manager->needsSecondFactor($user));
+	}
+
+	public function testClearTwoFactorPending() {
+		$this->config->method('getUserKeys')
+			->with('theUserId', 'login_token_2fa')
+			->willReturn([
+				'42', '43', '44'
+			]);
+
+		$this->config->expects($this->exactly(3))
+			->method('deleteUserValue')
+			->withConsecutive(
+				['theUserId', 'login_token_2fa', '42'],
+				['theUserId', 'login_token_2fa', '43'],
+				['theUserId', 'login_token_2fa', '44'],
+			);
+
+		$this->tokenProvider->expects($this->exactly(3))
+			->method('invalidateTokenById')
+			->withConsecutive(
+				['theUserId', 42],
+				['theUserId', 43],
+				['theUserId', 44],
+			);
+
+		$this->manager->clearTwoFactorPending('theUserId');
+	}
+
+	public function testClearTwoFactorPendingTokenDoesNotExist() {
+		$this->config->method('getUserKeys')
+			->with('theUserId', 'login_token_2fa')
+			->willReturn([
+				'42', '43', '44'
+			]);
+
+		$this->config->expects($this->exactly(3))
+			->method('deleteUserValue')
+			->withConsecutive(
+				['theUserId', 'login_token_2fa', '42'],
+				['theUserId', 'login_token_2fa', '43'],
+				['theUserId', 'login_token_2fa', '44'],
+			);
+
+		$this->tokenProvider->expects($this->exactly(3))
+			->method('invalidateTokenById')
+			->withConsecutive(
+				['theUserId', 42],
+				['theUserId', 43],
+				['theUserId', 44],
+			)
+			->willReturnCallback(function ($user, $tokenId) {
+				if ($tokenId === 43) {
+					throw new DoesNotExistException('token does not exist');
+				}
+			});
+
+		$this->manager->clearTwoFactorPending('theUserId');
 	}
 }

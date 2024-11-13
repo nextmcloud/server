@@ -42,7 +42,7 @@
 			scope="col">
 			<span>{{ t('settings', 'Groups') }}</span>
 		</th>
-		<th v-if="subAdminsGroups.length > 0 && settings.isAdmin"
+		<th v-if="subAdminsGroups.length > 0 && (settings.isAdmin || settings.isDelegatedAdmin)"
 			class="header__cell header__cell--large"
 			data-cy-user-list-header-subadmins
 			scope="col">
@@ -143,9 +143,9 @@ export default Vue.extend({
 @import './shared/styles.scss';
 
 .header {
+	border-bottom: 1px solid var(--color-border);
+
 	@include row;
 	@include cell;
-
-	border-bottom: 1px solid var(--color-border);
 }
 </style>

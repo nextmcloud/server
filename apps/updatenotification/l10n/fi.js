@@ -1,7 +1,6 @@
 OC.L10N.register(
     "updatenotification",
     {
-    "{version} is available. Get more information on how to update." : "{version} on saatavilla. Tarjolla on lisätietoja päivittämisestä.",
     "Channel updated" : "Päivityskanava päivitetty",
     "Web updater is disabled" : "Päivitys selaimen kautta on poissa käytöstä",
     "App updated" : "Sovellus päivitetty",
@@ -38,6 +37,7 @@ OC.L10N.register(
     "The selected update channel makes dedicated notifications for the server obsolete." : "Valittu päivityskanava tekee palvelimen omat ilmoitukset tarpeettomiksi.",
     "The selected update channel does not support updates of the server." : "Valittu päivityskanava ei tue palvelimen päivityksiä.",
     "A new version is available: <strong>{newVersionString}</strong>" : "Uusi versio on saatavilla: <strong>{newVersionString}</strong>",
+    "Checked on {lastCheckedDate} - Open changelog" : "Tarkistettu {lastCheckedDate} - Avaa muutosloki",
     "Checking apps for compatible versions" : "Tarkistetaan sovellusten yhteensopivat versiot ",
     "Please make sure your config.php does not set <samp>appstoreenabled</samp> to false." : "Varmista, ettei config.php-tiedosto aseta valintaa <samp>appstoreenabled</samp> arvoon false.",
     "<strong>All</strong> apps have a compatible version for this Nextcloud version available." : "<strong>Kaikilla</strong> sovelluksilla on yhteensopiva versio saatavilla tälle Nextcloud-versiolle.",
@@ -50,13 +50,11 @@ OC.L10N.register(
     "_<strong>%n</strong> app has no compatible version for this Nextcloud version available._::_<strong>%n</strong> apps have no compatible version for this Nextcloud version available._" : ["<strong>%n</strong> sovelluksella on yhteensopiva versio saatavilla tälle Nextcloud-versiolle.","<strong>%n</strong> sovelluksella on yhteensopiva versio saatavilla tälle Nextcloud-versiolle."],
     "Changelog for app {app}" : "Sovelluksen {app} muutosloki",
     "What's new in {app} version {version}" : "Katso mitä uutta sovelluksen {app} versio {version} sisältää",
+    "{version} is available. Get more information on how to update." : "{version} on saatavilla. Tarjolla on lisätietoja päivittämisestä.",
     "Update to %1$s is available." : "Kohteen %1$s päivitys on saatavilla.",
     "Displays update notifications for Nextcloud and provides the SSO for the updater." : "Näyttää Nextcloudin päivitysilmoitukset ja tarjoaa SSO:n (Single Sign-On) päivittäjälle.",
     "Please note that the web updater is not recommended with more than 100 users! Please use the command line updater instead!" : "Huomioi, ettei päivitys selaimen kautta ole suositeltu yli 100 käyttäjän instansseissa! Tee sen sijaan päivitys komentoriviltä.",
     "Please use the command line updater to update." : "Käytä komentorivipäivitintä päivittääksesi.",
-    "You can change the update channel below which also affects the apps management page. E.g. after switching to the beta channel, beta app updates will be offered to you in the apps management page." : "Voit vaihtaa päivityskanavan alapuolelta, se vaikuttaa myös sovellushallinnan sivuun. Jos vaihdat esimerkiksi beetakanavaan, sovellusten beetapäivityksiä tarjotaan sovellushallinnan sivun kautta.",
-    "Update channel:" : "Päivityskanava:",
-    "Note that after a new release the update only shows up after the first minor release or later. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found. Learn more about updates and release channels at {link}" : "Huomaa, että uuden julkaisun jälkeen päivitys näkyy vasta ensimmäisen pienemmän julkaisun jälkeen tai myöhemmin. Julkaisemme uusia versioita käyttäjillemme ajallisesti hajautetusti, ja joskus jätämme jonkin version väliin, jos ongelmia ilmenee. Lisätietoja päivityksistä ja julkaisukanavista osoitteessa {link}",
-    "Checked on {lastCheckedDate}" : "Tarkistettu {lastCheckedDate}"
+    "Note that after a new release the update only shows up after the first minor release or later. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found. Learn more about updates and release channels at {link}" : "Huomaa, että uuden julkaisun jälkeen päivitys näkyy vasta ensimmäisen pienemmän julkaisun jälkeen tai myöhemmin. Julkaisemme uusia versioita käyttäjillemme ajallisesti hajautetusti, ja joskus jätämme jonkin version väliin, jos ongelmia ilmenee. Lisätietoja päivityksistä ja julkaisukanavista osoitteessa {link}"
 },
 "nplurals=2; plural=(n != 1);");

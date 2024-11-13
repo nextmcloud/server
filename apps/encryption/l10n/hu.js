@@ -42,6 +42,7 @@ OC.L10N.register(
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "A lehetőség engedélyezésekor minden fájlt titkosít a fő tárolóban, egyébként csak a külső tárolókon lévő fájlok lesznek titkosítva",
     "Enable recovery key" : "Helyreállítási kulcs engedélyezése",
     "Disable recovery key" : "Helyreállítási kulcs letiltása",
+    "The recovery key is an additional encryption key used to encrypt files. It is used to recover files from an account if the password is forgotten." : "A helyreállítási kulcs egy további titkosítási kulcs fájlok titkosításához. Arra szolgál, hogy egy fiókból vissza lehessen állítani a fájlokat, ha a jelszót elfelejtették.",
     "Recovery key password" : "Helyreállítási kulcs jelszava",
     "Repeat recovery key password" : "Ismételje meg a heylreállítási kulcs jelszavát",
     "Change recovery key password:" : "Helyreállítási kulcs jelszavának módosítása:",
@@ -60,7 +61,6 @@ OC.L10N.register(
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "A beállítás lehetővé teszi, hogy visszanyerje a titkosított fájlok tartalmát, ha elfelejtette a jelszavát",
     "Enabled" : "Engedélyezve",
     "Disabled" : "Letiltva",
-    "Please login to the web interface, go to the \"Security\" section of your personal settings and update your encryption password by entering this password into the \"Old log-in password\" field and your current login-password." : "Jelentkezzen be a webes felületre, ugorjon a személyes beállításai „Biztonság” szakaszához, és frissítse a titkosítási jelszavát úgy, hogy megadja ezt a jelszót a „Régi bejelentkezési jelszó” mezőben, majd megadja a jelenlegi bejelentkezési jelszavát.",
     "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "A helyreállítási kulcs egy a fájlok titkosítására szolgáló további titkosítási kulcs. A segítségével vissza lehet állítani a fájlokat, ha felhasználó elfelejtette a jelszavát."
 },
 "nplurals=2; plural=(n != 1);");

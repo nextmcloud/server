@@ -5,13 +5,18 @@
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
  * SPDX-License-Identifier: AGPL-3.0-only
  */
+use OC\Authentication\Token\IProvider;
 use OC\User\LoginException;
+use OCP\Authentication\Exceptions\InvalidTokenException;
+use OCP\Authentication\Exceptions\WipeTokenException;
+use OCP\Authentication\Token\IToken;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IGroupManager;
 use OCP\ISession;
 use OCP\IUser;
 use OCP\IUserManager;
 use OCP\Server;
+use OCP\Session\Exceptions\SessionNotAvailableException;
 use OCP\User\Events\BeforeUserLoggedInEvent;
 use OCP\User\Events\UserLoggedInEvent;
 use Psr\Log\LoggerInterface;
@@ -140,7 +145,7 @@ class OC_User {
 	public static function loginWithApache(\OCP\Authentication\IApacheBackend $backend) {
 		$uid = $backend->getCurrentUserId();
 		$run = true;
-		OC_Hook::emit("OC_User", "pre_login", ["run" => &$run, "uid" => $uid, 'backend' => $backend]);
+		OC_Hook::emit('OC_User', 'pre_login', ['run' => &$run, 'uid' => $uid, 'backend' => $backend]);
 
 		if ($uid) {
 			if (self::getUser() !== $uid) {
@@ -166,6 +171,22 @@ class OC_User {
 
 				$userSession->createSessionToken($request, $uid, $uid, $password);
 				$userSession->createRememberMeToken($userSession->getUser());
+
+				if (empty($password)) {
+					$tokenProvider = \OC::$server->get(IProvider::class);
+					try {
+						$token = $tokenProvider->getToken($userSession->getSession()->getId());
+						$token->setScope([
+							IToken::SCOPE_SKIP_PASSWORD_VALIDATION => true,
+							IToken::SCOPE_FILESYSTEM => true,
+						]);
+						$tokenProvider->updateToken($token);
+					} catch (InvalidTokenException|WipeTokenException|SessionNotAvailableException) {
+						// swallow the exceptions as we do not deal with them here
+						// simply skip updating the token when is it missing
+					}
+				}
+
 				// setup the filesystem
 				OC_Util::setupFS($uid);
 				// first call the post_login hooks, the login-process needs to be
@@ -200,9 +221,9 @@ class OC_User {
 	 * Verify with Apache whether user is authenticated.
 	 *
 	 * @return boolean|null
-	 *          true: authenticated
-	 *          false: not authenticated
-	 *          null: not handled / no backend available
+	 *                      true: authenticated
+	 *                      false: not authenticated
+	 *                      null: not handled / no backend available
 	 */
 	public static function handleApacheAuth() {
 		$backend = self::findFirstActiveUsedBackend();
@@ -238,7 +259,7 @@ class OC_User {
 	/**
 	 * Check if the user is logged in, considers also the HTTP basic credentials
 	 *
-	 * @deprecated use \OC::$server->getUserSession()->isLoggedIn()
+	 * @deprecated 12.0.0 use \OC::$server->getUserSession()->isLoggedIn()
 	 * @return bool
 	 */
 	public static function isLoggedIn() {
@@ -340,7 +361,7 @@ class OC_User {
 	 * @return string
 	 *
 	 * returns the path to the users home directory
-	 * @deprecated Use \OC::$server->getUserManager->getHome()
+	 * @deprecated 12.0.0 Use \OC::$server->getUserManager->getHome()
 	 */
 	public static function getHome($uid) {
 		$user = \OC::$server->getUserManager()->get($uid);
@@ -360,7 +381,7 @@ class OC_User {
 	 * @return array associative array with all display names (value) and corresponding uids (key)
 	 *
 	 * Get a list of all display names and user ids.
-	 * @deprecated Use \OC::$server->getUserManager->searchDisplayName($search, $limit, $offset) instead.
+	 * @deprecated 12.0.0 Use \OC::$server->getUserManager->searchDisplayName($search, $limit, $offset) instead.
 	 */
 	public static function getDisplayNames($search = '', $limit = null, $offset = null) {
 		$displayNames = [];

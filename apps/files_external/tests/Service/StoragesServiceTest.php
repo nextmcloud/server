@@ -1,39 +1,20 @@
 <?php
 /**
- * @copyright Copyright (c) 2016, ownCloud, Inc.
- *
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Joas Schilling <coding@schilljs.com>
- * @author Morris Jobke <hey@morrisjobke.de>
- * @author Robin Appelman <robin@icewind.nl>
- * @author Robin McCorkell <robin@mccorkell.me.uk>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Vincent Petry <vincent@nextcloud.com>
- *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program. If not, see <http://www.gnu.org/licenses/>
- *
+ * SPDX-FileCopyrightText: 2019-2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 namespace OCA\Files_External\Tests\Service;
 
+use OC\Files\Cache\Storage;
 use OC\Files\Filesystem;
-
 use OCA\Files_External\Lib\Auth\AuthMechanism;
 use OCA\Files_External\Lib\Auth\InvalidAuth;
+
 use OCA\Files_External\Lib\Backend\Backend;
 use OCA\Files_External\Lib\Backend\InvalidBackend;
 use OCA\Files_External\Lib\StorageConfig;
+use OCA\Files_External\MountConfig;
 use OCA\Files_External\NotFoundException;
 use OCA\Files_External\Service\BackendService;
 use OCA\Files_External\Service\DBConfigService;
@@ -47,6 +28,7 @@ use OCP\Files\Storage\IStorage;
 use OCP\IDBConnection;
 use OCP\IUser;
 use OCP\Server;
+use OCP\Util;
 
 class CleaningDBConfig extends DBConfigService {
 	private $mountIds = [];
@@ -83,7 +65,7 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 	 */
 	protected $dataDir;
 
-	/** @var  CleaningDBConfig */
+	/** @var CleaningDBConfig */
 	protected $dbConfig;
 
 	/**
@@ -94,7 +76,7 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 	protected static $hookCalls;
 
 	/**
-	 * @var \PHPUnit\Framework\MockObject\MockObject|\OCP\Files\Config\IUserMountCache
+	 * @var \PHPUnit\Framework\MockObject\MockObject|IUserMountCache
 	 */
 	protected $mountCache;
 
@@ -112,7 +94,7 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 			'datadirectory',
 			\OC::$SERVERROOT . '/data/'
 		);
-		\OCA\Files_External\MountConfig::$skipTest = true;
+		MountConfig::$skipTest = true;
 
 		$this->mountCache = $this->createMock(IUserMountCache::class);
 		$this->eventDispatcher = $this->createMock(IEventDispatcher::class);
@@ -164,11 +146,11 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 			->willReturn($backends);
 		$this->overwriteService(BackendService::class, $this->backendService);
 
-		\OCP\Util::connectHook(
+		Util::connectHook(
 			Filesystem::CLASSNAME,
 			Filesystem::signal_create_mount,
 			get_class($this), 'createHookCallback');
-		\OCP\Util::connectHook(
+		Util::connectHook(
 			Filesystem::CLASSNAME,
 			Filesystem::signal_delete_mount,
 			get_class($this), 'deleteHookCallback');
@@ -183,7 +165,7 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 	}
 
 	protected function tearDown(): void {
-		\OCA\Files_External\MountConfig::$skipTest = false;
+		MountConfig::$skipTest = false;
 		self::$hookCalls = [];
 		if ($this->dbConfig) {
 			$this->dbConfig->clean();
@@ -269,8 +251,8 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 		$this->service->updateStorage($storage);
 	}
 
-	public function testNonExistingStorage() {
-		$this->expectException(\OCA\Files_External\NotFoundException::class);
+	public function testNonExistingStorage(): void {
+		$this->expectException(NotFoundException::class);
 
 		$this->ActualNonExistingStorageTest();
 	}
@@ -302,7 +284,7 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 	/**
 	 * @dataProvider deleteStorageDataProvider
 	 */
-	public function testDeleteStorage($backendOptions, $rustyStorageId) {
+	public function testDeleteStorage($backendOptions, $rustyStorageId): void {
 		$backend = $this->backendService->getBackend('identifier:\OCA\Files_External\Lib\Backend\DAV');
 		$authMechanism = $this->backendService->getAuthMechanism('identifier:\Auth\Mechanism');
 		$storage = new StorageConfig(255);
@@ -316,7 +298,7 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 
 		// manually trigger storage entry because normally it happens on first
 		// access, which isn't possible within this test
-		$storageCache = new \OC\Files\Cache\Storage($rustyStorageId, true, Server::get(IDBConnection::class));
+		$storageCache = new Storage($rustyStorageId, true, Server::get(IDBConnection::class));
 
 		/** @var IUserMountCache $mountCache */
 		$mountCache = \OC::$server->get(IUserMountCache::class);
@@ -366,20 +348,20 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 		$result = $storageCheckQuery->execute();
 		$storages = $result->fetchAll();
 		$result->closeCursor();
-		$this->assertCount(0, $storages, "expected 0 storages, got " . json_encode($storages));
+		$this->assertCount(0, $storages, 'expected 0 storages, got ' . json_encode($storages));
 	}
 
 	protected function actualDeletedUnexistingStorageTest() {
 		$this->service->removeStorage(255);
 	}
 
-	public function testDeleteUnexistingStorage() {
-		$this->expectException(\OCA\Files_External\NotFoundException::class);
+	public function testDeleteUnexistingStorage(): void {
+		$this->expectException(NotFoundException::class);
 
 		$this->actualDeletedUnexistingStorageTest();
 	}
 
-	public function testCreateStorage() {
+	public function testCreateStorage(): void {
 		$mountPoint = 'mount';
 		$backendIdentifier = 'identifier:\OCA\Files_External\Lib\Backend\SMB';
 		$authMechanismIdentifier = 'identifier:\Auth\Mechanism';
@@ -413,7 +395,7 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 		$this->assertEquals($priority, $storage->getPriority());
 	}
 
-	public function testCreateStorageInvalidClass() {
+	public function testCreateStorageInvalidClass(): void {
 		$storage = $this->service->createStorage(
 			'mount',
 			'identifier:\OC\Not\A\Backend',
@@ -423,7 +405,7 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 		$this->assertInstanceOf(InvalidBackend::class, $storage->getBackend());
 	}
 
-	public function testCreateStorageInvalidAuthMechanismClass() {
+	public function testCreateStorageInvalidAuthMechanismClass(): void {
 		$storage = $this->service->createStorage(
 			'mount',
 			'identifier:\OCA\Files_External\Lib\Backend\SMB',
@@ -433,7 +415,7 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 		$this->assertInstanceOf(InvalidAuth::class, $storage->getAuthMechanism());
 	}
 
-	public function testGetStoragesBackendNotVisible() {
+	public function testGetStoragesBackendNotVisible(): void {
 		$backend = $this->backendService->getBackend('identifier:\OCA\Files_External\Lib\Backend\SMB');
 		$backend->expects($this->once())
 			->method('isVisibleFor')
@@ -456,7 +438,7 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 		$this->assertEmpty($this->service->getStorages());
 	}
 
-	public function testGetStoragesAuthMechanismNotVisible() {
+	public function testGetStoragesAuthMechanismNotVisible(): void {
 		$backend = $this->backendService->getBackend('identifier:\OCA\Files_External\Lib\Backend\SMB');
 		$backend->method('isVisibleFor')
 			->with($this->service->getVisibilityType())
@@ -519,7 +501,7 @@ abstract class StoragesServiceTest extends \Test\TestCase {
 		);
 	}
 
-	public function testUpdateStorageMountPoint() {
+	public function testUpdateStorageMountPoint(): void {
 		$backend = $this->backendService->getBackend('identifier:\OCA\Files_External\Lib\Backend\SMB');
 		$authMechanism = $this->backendService->getAuthMechanism('identifier:\Auth\Mechanism');
 

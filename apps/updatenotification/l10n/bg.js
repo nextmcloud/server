@@ -1,7 +1,6 @@
 OC.L10N.register(
     "updatenotification",
     {
-    "{version} is available. Get more information on how to update." : "{version} е налична. Намерете допълнителна информация за това как да актуализирате.",
     "Channel updated" : "Канала е променен",
     "Web updater is disabled" : "Уеб програмата за актуализиране е деактивирана",
     "Update notifications" : "Известия за актуализации",
@@ -40,13 +39,11 @@ OC.L10N.register(
     "Beta" : "Бета",
     "A pre-release version only for testing new features, not for production environments." : "Версия само за тестване на нови функционалности, която не е подходяща за ползване в производствена среда.",
     "_<strong>%n</strong> app has no compatible version for this Nextcloud version available._::_<strong>%n</strong> apps have no compatible version for this Nextcloud version available._" : ["<strong>%n</strong> приложения нямат налична съвместима версия за тази версия на Nextcloud.","<strong>%n</strong> от приложенията нямат налична съвместима версия за тази версия на Nextcloud."],
+    "{version} is available. Get more information on how to update." : "{version} е налична. Намерете допълнителна информация за това как да актуализирате.",
     "Update to %1$s is available." : "Налична е актуализация до версия %1$s.",
     "Displays update notifications for Nextcloud and provides the SSO for the updater." : "Показва известия за актуализация за Nextcloud и предоставя SSO за програмата за актуализиране.",
     "Please note that the web updater is not recommended with more than 100 users! Please use the command line updater instead!" : "Моля, имайте предвид, че уеб актуализатора не се препоръчва за използване от повече от 100 потребители! Моля, вместо това използвайте програмата за актуализиране на командния ред!",
     "Please use the command line updater to update." : "Моля, използвайте програмата за актуализиране на командния ред, за да актуализирате.",
-    "You can change the update channel below which also affects the apps management page. E.g. after switching to the beta channel, beta app updates will be offered to you in the apps management page." : "Можете да промените канала за актуализиране по-долу, който също засяга страницата за управление на приложения. Например, след като преминете към бета канала, актуализациите на бета приложенията ще ви бъдат предложени в страницата за управление на приложенията.",
-    "Update channel:" : "Канал за актуализиране:",
-    "Note that after a new release the update only shows up after the first minor release or later. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found. Learn more about updates and release channels at {link}" : "Забележете, че след нова версия, актуализацията се показва само след първата второстепенна версия или по-късно. Ние въвеждаме нови версии, разпределени във времето за нашите потребители и понякога пропускаме версия, когато бъдат открити проблеми. Научете повече за актуализациите и каналите за пускане на адрес {link}",
-    "Checked on {lastCheckedDate}" : "Проверено на {lastCheckedDate}"
+    "Note that after a new release the update only shows up after the first minor release or later. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found. Learn more about updates and release channels at {link}" : "Забележете, че след нова версия, актуализацията се показва само след първата второстепенна версия или по-късно. Ние въвеждаме нови версии, разпределени във времето за нашите потребители и понякога пропускаме версия, когато бъдат открити проблеми. Научете повече за актуализациите и каналите за пускане на адрес {link}"
 },
 "nplurals=2; plural=(n != 1);");

@@ -19,16 +19,12 @@ class UpdateConfig extends Command {
 		'name', 'url', 'imprintUrl', 'privacyUrl', 'slogan', 'color', 'primary_color', 'disable-user-theming'
 	];
 
-	private $themingDefaults;
-	private $imageManager;
-	private $config;
-
-	public function __construct(ThemingDefaults $themingDefaults, ImageManager $imageManager, IConfig $config) {
+	public function __construct(
+		private ThemingDefaults $themingDefaults,
+		private ImageManager $imageManager,
+		private IConfig $config,
+	) {
 		parent::__construct();
-
-		$this->themingDefaults = $themingDefaults;
-		$this->imageManager = $imageManager;
-		$this->config = $config;
 	}
 
 	protected function configure() {
@@ -111,9 +107,9 @@ class UpdateConfig extends Command {
 			$value = $this->imageManager->updateImage($key, $value);
 			$key = $key . 'Mime';
 		}
-	
+
 		if ($key === 'color') {
-			$output->writeln('<warning>Using "color" is depreacted, use "primary_color" instead');
+			$output->writeln('<comment>Using "color" is deprecated, use "primary_color" instead</comment>');
 			$key = 'primary_color';
 		}
 

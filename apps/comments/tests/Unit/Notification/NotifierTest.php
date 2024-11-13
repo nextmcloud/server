@@ -16,7 +16,9 @@ use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\IUserManager;
 use OCP\L10N\IFactory;
+use OCP\Notification\AlreadyProcessedException;
 use OCP\Notification\INotification;
+use OCP\Notification\UnknownNotificationException;
 use PHPUnit\Framework\MockObject\MockObject;
 use Test\TestCase;
 
@@ -70,7 +72,7 @@ class NotifierTest extends TestCase {
 		$this->comment = $this->createMock(IComment::class);
 	}
 
-	public function testPrepareSuccess() {
+	public function testPrepareSuccess(): void {
 		$fileName = 'Gre\'thor.odp';
 		$displayName = 'Huraga';
 		$message = '@Huraga mentioned you in a comment on "Gre\'thor.odp"';
@@ -188,7 +190,7 @@ class NotifierTest extends TestCase {
 		$this->notifier->prepare($this->notification, $this->lc);
 	}
 
-	public function testPrepareSuccessDeletedUser() {
+	public function testPrepareSuccessDeletedUser(): void {
 		$fileName = 'Gre\'thor.odp';
 		$message = 'You were mentioned on "Gre\'thor.odp", in a comment by an account that has since been deleted';
 
@@ -303,8 +305,8 @@ class NotifierTest extends TestCase {
 	}
 
 
-	public function testPrepareDifferentApp() {
-		$this->expectException(\InvalidArgumentException::class);
+	public function testPrepareDifferentApp(): void {
+		$this->expectException(UnknownNotificationException::class);
 
 		$this->folder
 			->expects($this->never())
@@ -340,8 +342,8 @@ class NotifierTest extends TestCase {
 	}
 
 
-	public function testPrepareNotFound() {
-		$this->expectException(\InvalidArgumentException::class);
+	public function testPrepareNotFound(): void {
+		$this->expectException(UnknownNotificationException::class);
 
 		$this->folder
 			->expects($this->never())
@@ -378,8 +380,8 @@ class NotifierTest extends TestCase {
 	}
 
 
-	public function testPrepareDifferentSubject() {
-		$this->expectException(\InvalidArgumentException::class);
+	public function testPrepareDifferentSubject(): void {
+		$this->expectException(UnknownNotificationException::class);
 
 		$displayName = 'Huraga';
 
@@ -435,8 +437,8 @@ class NotifierTest extends TestCase {
 	}
 
 
-	public function testPrepareNotFiles() {
-		$this->expectException(\InvalidArgumentException::class);
+	public function testPrepareNotFiles(): void {
+		$this->expectException(UnknownNotificationException::class);
 
 		$displayName = 'Huraga';
 
@@ -493,8 +495,8 @@ class NotifierTest extends TestCase {
 	}
 
 
-	public function testPrepareUnresolvableFileID() {
-		$this->expectException(\OCP\Notification\AlreadyProcessedException::class);
+	public function testPrepareUnresolvableFileID(): void {
+		$this->expectException(AlreadyProcessedException::class);
 
 		$displayName = 'Huraga';
 

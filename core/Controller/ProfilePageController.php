@@ -11,14 +11,18 @@ namespace OC\Core\Controller;
 
 use OC\Profile\ProfileManager;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
+use OCP\AppFramework\Http\Attribute\BruteForceProtection;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
+use OCP\AppFramework\Http\Attribute\PublicPage;
+use OCP\AppFramework\Http\Attribute\UserRateLimit;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\INavigationManager;
 use OCP\IRequest;
-use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\Profile\BeforeTemplateRenderedEvent;
@@ -42,13 +46,12 @@ class ProfilePageController extends Controller {
 		parent::__construct($appName, $request);
 	}
 
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 * @NoAdminRequired
-	 * @NoSubAdminRequired
-	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
 	#[FrontpageRoute(verb: 'GET', url: '/u/{targetUserId}')]
+	#[BruteForceProtection(action: 'user')]
+	#[UserRateLimit(limit: 30, period: 120)]
+	#[AnonRateLimit(limit: 30, period: 120)]
 	public function index(string $targetUserId): TemplateResponse {
 		$profileNotFoundTemplate = new TemplateResponse(
 			'core',
@@ -58,7 +61,11 @@ class ProfilePageController extends Controller {
 		);
 
 		$targetUser = $this->userManager->get($targetUserId);
-		if (!($targetUser instanceof IUser) || !$targetUser->isEnabled()) {
+		if ($targetUser === null) {
+			$profileNotFoundTemplate->throttle();
+			return $profileNotFoundTemplate;
+		}
+		if (!$targetUser->isEnabled()) {
 			return $profileNotFoundTemplate;
 		}
 		$visitingUser = $this->userSession->getUser();

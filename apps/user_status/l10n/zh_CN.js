@@ -20,6 +20,8 @@ OC.L10N.register(
     "Set status" : "设定状态",
     "Online status" : "在线状态",
     "Status message" : "状态信息",
+    "Set absence period" : "设置缺勤时段",
+    "Set absence period and replacement" : "设置缺勤时段和替代人员",
     "Your status was set automatically" : "您的状态已自动设定",
     "Clear status message" : "清除状态信息",
     "Set status message" : "设定状态信息",
@@ -35,14 +37,13 @@ OC.L10N.register(
     "Online" : "在线",
     "Away" : "离开",
     "Do not disturb" : "请勿打扰",
-    "Invisible" : "不可见",
+    "Invisible" : "隐身",
     "Offline" : "离线",
     "There was an error saving the new status" : "保存新状态时出错",
     "30 minutes" : "30分钟",
     "1 hour" : "1小时",
     "4 hours" : "4小时",
     "Mute all notifications" : "静音所有通知",
-    "Appear offline" : "显示为离线",
-    "View profile" : "查看个人资料"
+    "Appear offline" : "显示为离线"
 },
 "nplurals=1; plural=0;");

@@ -4,11 +4,13 @@
  */
 
 import type { PropType } from 'vue'
+import type { FileSource } from '../types.ts'
 
 import { showError } from '@nextcloud/dialogs'
-import { FileType, Permission, Folder, File as NcFile, NodeStatus, Node, View } from '@nextcloud/files'
+import { FileType, Permission, Folder, File as NcFile, NodeStatus, Node, getFileActions } from '@nextcloud/files'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
+import { isPublicShare } from '@nextcloud/sharing/public'
 import { vOnClickOutside } from '@vueuse/components'
 import { extname } from 'path'
 import Vue, { defineComponent } from 'vue'
@@ -17,9 +19,12 @@ import { action as sidebarAction } from '../actions/sidebarAction.ts'
 import { getDragAndDropPreview } from '../utils/dragUtils.ts'
 import { hashCode } from '../utils/hashUtils.ts'
 import { dataTransferToFileTree, onDropExternalFiles, onDropInternalFiles } from '../services/DropService.ts'
-import logger from '../logger.js'
+import logger from '../logger.ts'
+import { isDownloadable } from '../utils/permissions.ts'
 
 Vue.directive('onClickOutside', vOnClickOutside)
+
+const actions = getFileActions()
 
 export default defineComponent({
 	props: {
@@ -35,6 +40,21 @@ export default defineComponent({
 			type: Number,
 			default: 0,
 		},
+		isMtimeAvailable: {
+			type: Boolean,
+			default: false,
+		},
+		compact: {
+			type: Boolean,
+			default: false,
+		},
+	},
+
+	provide() {
+		return {
+			defaultFileAction: this.defaultFileAction,
+			enabledFileActions: this.enabledFileActions,
+		}
 	},
 
 	data() {
@@ -46,51 +66,54 @@ export default defineComponent({
 	},
 
 	computed: {
-		currentView(): View {
-			return this.$navigation.active as View
-		},
-
-		currentDir() {
-			// Remove any trailing slash but leave root slash
-			return (this.$route?.query?.dir?.toString() || '/').replace(/^(.+)\/$/, '$1')
-		},
-		currentFileId() {
-			return this.$route.params?.fileid || this.$route.query?.fileid || null
-		},
-
 		fileid() {
-			return this.source?.fileid
+			return this.source.fileid ?? 0
 		},
+
 		uniqueId() {
 			return hashCode(this.source.source)
 		},
+
 		isLoading() {
-			return this.source.status === NodeStatus.LOADING
+			return this.source.status === NodeStatus.LOADING || this.loading !== ''
 		},
 
-		extension() {
-			if (this.source.attributes?.displayName) {
-				return extname(this.source.attributes.displayName)
-			}
-			return this.source.extension || ''
-		},
+		/**
+		 * The display name of the current node
+		 * Either the nodes filename or a custom display name (e.g. for shares)
+		 */
 		displayName() {
-			const ext = this.extension
-			const name = String(this.source.attributes.displayName
-				|| this.source.basename)
+			// basename fallback needed for apps using old `@nextcloud/files` prior 3.6.0
+			return this.source.displayname || this.source.basename
+		},
+		/**
+		 * The display name without extension
+		 */
+		basename() {
+			if (this.extension === '') {
+				return this.displayName
+			}
+			return this.displayName.slice(0, 0 - this.extension.length)
+		},
+		/**
+		 * The extension of the file
+		 */
+		extension() {
+			if (this.source.type === FileType.Folder) {
+				return ''
+			}
 
-			// Strip extension from name if defined
-			return !ext ? name : name.slice(0, 0 - ext.length)
+			return extname(this.displayName)
 		},
 
 		draggingFiles() {
-			return this.draggingStore.dragging
+			return this.draggingStore.dragging as FileSource[]
 		},
 		selectedFiles() {
-			return this.selectionStore.selected
+			return this.selectionStore.selected as FileSource[]
 		},
 		isSelected() {
-			return this.fileid && this.selectedFiles.includes(this.fileid)
+			return this.selectedFiles.includes(this.source.source)
 		},
 
 		isRenaming() {
@@ -104,6 +127,13 @@ export default defineComponent({
 			return String(this.fileid) === String(this.currentFileId)
 		},
 
+		/**
+		 * Check if the source is in a failed state after an API request
+		 */
+		isFailedSource() {
+			return this.source.status === NodeStatus.FAILED
+		},
+
 		canDrag() {
 			if (this.isRenaming) {
 				return false
@@ -115,7 +145,7 @@ export default defineComponent({
 
 			// If we're dragging a selection, we need to check all files
 			if (this.selectedFiles.length > 0) {
-				const nodes = this.selectedFiles.map(fileid => this.filesStore.getNode(fileid)) as Node[]
+				const nodes = this.selectedFiles.map(source => this.filesStore.getNode(source)) as Node[]
 				return nodes.every(canDrag)
 			}
 			return canDrag(this.source)
@@ -127,7 +157,7 @@ export default defineComponent({
 			}
 
 			// If the current folder is also being dragged, we can't drop it on itself
-			if (this.fileid && this.draggingFiles.includes(this.fileid)) {
+			if (this.draggingFiles.includes(this.source.source)) {
 				return false
 			}
 
@@ -139,17 +169,43 @@ export default defineComponent({
 				return this.actionsMenuStore.opened === this.uniqueId.toString()
 			},
 			set(opened) {
-				// Only reset when opening a new menu
-				if (opened) {
-					// Reset any right click position override on close
-					// Wait for css animation to be done
-					const root = this.$el?.closest('main.app-content') as HTMLElement
-					root.style.removeProperty('--mouse-pos-x')
-					root.style.removeProperty('--mouse-pos-y')
-				}
-
 				this.actionsMenuStore.opened = opened ? this.uniqueId.toString() : null
 			},
+		},
+
+		mtimeOpacity() {
+			const maxOpacityTime = 31 * 24 * 60 * 60 * 1000 // 31 days
+
+			const mtime = this.source.mtime?.getTime?.()
+			if (!mtime) {
+				return {}
+			}
+
+			// 1 = today, 0 = 31 days ago
+			const ratio = Math.round(Math.min(100, 100 * (maxOpacityTime - (Date.now() - mtime)) / maxOpacityTime))
+			if (ratio < 0) {
+				return {}
+			}
+			return {
+				color: `color-mix(in srgb, var(--color-main-text) ${ratio}%, var(--color-text-maxcontrast))`,
+			}
+		},
+
+		/**
+		 * Sorted actions that are enabled for this node
+		 */
+		enabledFileActions() {
+			if (this.source.status === NodeStatus.FAILED) {
+				return []
+			}
+
+			return actions
+				.filter(action => !action.enabled || action.enabled([this.source], this.currentView))
+				.sort((a, b) => (a.order || 0) - (b.order || 0))
+		},
+
+		defaultFileAction() {
+			return this.enabledFileActions.find((action) => action.default !== undefined)
 		},
 	},
 
@@ -157,10 +213,31 @@ export default defineComponent({
 		/**
 		 * When the source changes, reset the preview
 		 * and fetch the new one.
+		 * @param a
+		 * @param b
 		 */
 		source(a: Node, b: Node) {
 			if (a.source !== b.source) {
 				this.resetState()
+			}
+		},
+
+		openedMenu() {
+			if (this.openedMenu === false) {
+				// TODO: This timeout can be removed once `close` event only triggers after the transition
+				// ref: https://github.com/nextcloud-libraries/nextcloud-vue/pull/6065
+				window.setTimeout(() => {
+					if (this.openedMenu) {
+						// was reopened while the animation run
+						return
+					}
+					// Reset any right menu position potentially set
+					const root = document.getElementById('app-content-vue')
+					if (root !== null) {
+						root.style.removeProperty('--mouse-pos-x')
+						root.style.removeProperty('--mouse-pos-y')
+					}
+				}, 300)
 			}
 		},
 	},
@@ -198,6 +275,11 @@ export default defineComponent({
 				// 200 = max width of the menu
 				root.style.setProperty('--mouse-pos-x', Math.max(0, event.clientX - contentRect.left - 200) + 'px')
 				root.style.setProperty('--mouse-pos-y', Math.max(0, event.clientY - contentRect.top) + 'px')
+			} else {
+				// Reset any right menu position potentially set
+				const root = this.$el?.closest('main.app-content') as HTMLElement
+				root.style.removeProperty('--mouse-pos-x')
+				root.style.removeProperty('--mouse-pos-y')
 			}
 
 			// If the clicked row is in the selection, open global menu
@@ -209,14 +291,40 @@ export default defineComponent({
 			event.stopPropagation()
 		},
 
-		execDefaultAction(event) {
-			if (event.ctrlKey || event.metaKey) {
-				event.preventDefault()
-				window.open(generateUrl('/f/{fileId}', { fileId: this.fileid }))
-				return false
+		execDefaultAction(event: MouseEvent) {
+			// Ignore click if we are renaming
+			if (this.isRenaming) {
+				return
 			}
 
-			this.$refs.actions.execDefaultAction(event)
+			// Ignore right click (button & 2) and any auxillary button expect mouse-wheel (button & 4)
+			if (Boolean(event.button & 2) || event.button > 4) {
+				return
+			}
+
+			// if ctrl+click / cmd+click (MacOS uses the meta key) or middle mouse button (button & 4), open in new tab
+			// also if there is no default action use this as a fallback
+			const metaKeyPressed = event.ctrlKey || event.metaKey || Boolean(event.button & 4)
+			if (metaKeyPressed || !this.defaultFileAction) {
+				// If no download permission, then we can not allow to download (direct link) the files
+				if (isPublicShare() && !isDownloadable(this.source)) {
+					return
+				}
+
+				const url = isPublicShare()
+					? this.source.encodedSource
+					: generateUrl('/f/{fileId}', { fileId: this.fileid })
+				event.preventDefault()
+				event.stopPropagation()
+				window.open(url, metaKeyPressed ? '_self' : undefined)
+				return
+			}
+
+			// every special case handled so just execute the default action
+			event.preventDefault()
+			event.stopPropagation()
+			// Execute the first default action if any
+			this.defaultFileAction.exec(this.source, this.currentView, this.currentDir)
 		},
 
 		openDetailsIfAvailable(event) {
@@ -270,14 +378,14 @@ export default defineComponent({
 
 			// Dragging set of files, if we're dragging a file
 			// that is already selected, we use the entire selection
-			if (this.selectedFiles.includes(this.fileid)) {
+			if (this.selectedFiles.includes(this.source.source)) {
 				this.draggingStore.set(this.selectedFiles)
 			} else {
-				this.draggingStore.set([this.fileid])
+				this.draggingStore.set([this.source.source])
 			}
 
 			const nodes = this.draggingStore.dragging
-				.map(fileid => this.filesStore.getNode(fileid)) as Node[]
+				.map(source => this.filesStore.getNode(source)) as Node[]
 
 			const image = await getDragAndDropPreview(nodes)
 			event.dataTransfer?.setDragImage(image, -10, -10)
@@ -331,12 +439,12 @@ export default defineComponent({
 			}
 
 			// Else we're moving/copying files
-			const nodes = selection.map(fileid => this.filesStore.getNode(fileid)) as Node[]
+			const nodes = selection.map(source => this.filesStore.getNode(source)) as Node[]
 			await onDropInternalFiles(nodes, folder, contents.contents, isCopy)
 
 			// Reset selection after we dropped the files
 			// if the dropped files are within the selection
-			if (selection.some(fileid => this.selectedFiles.includes(fileid))) {
+			if (selection.some(source => this.selectedFiles.includes(source))) {
 				logger.debug('Dropped selection, resetting select store...')
 				this.selectionStore.reset()
 			}

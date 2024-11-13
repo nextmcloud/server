@@ -17,6 +17,7 @@ use OCP\Collaboration\Reference\IReferenceProvider;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\Template\ICustomTemplateProvider;
 use OCP\IContainer;
+use OCP\Mail\Provider\IProvider as IMailProvider;
 use OCP\Notification\INotifier;
 use OCP\Preview\IProviderV2;
 use OCP\SpeechToText\ISpeechToTextProvider;
@@ -68,7 +69,7 @@ interface IRegistrationContext {
 	 * @param string $name
 	 * @param callable $factory
 	 * @psalm-param callable(\Psr\Container\ContainerInterface): mixed $factory
-	 * @param bool $shared
+	 * @param bool $shared If set to true the factory result will be cached otherwise every query will call the factory again
 	 *
 	 * @return void
 	 * @see IContainer::registerService()
@@ -412,4 +413,14 @@ interface IRegistrationContext {
 	 * @since 30.0.0
 	 */
 	public function registerTaskProcessingTaskType(string $taskProcessingTaskTypeClass): void;
+
+	/**
+	 * Register a mail provider
+	 *
+	 * @param string $class
+	 * @psalm-param class-string<IMailProvider> $class
+	 * @since 30.0.0
+	 */
+	public function registerMailProvider(string $class): void;
+
 }

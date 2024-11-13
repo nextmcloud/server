@@ -28,13 +28,9 @@ class TrashbinPlugin extends ServerPlugin {
 	/** @var Server */
 	private $server;
 
-	/** @var IPreview */
-	private $previewManager;
-
 	public function __construct(
-		IPreview $previewManager
+		private IPreview $previewManager,
 	) {
-		$this->previewManager = $previewManager;
 	}
 
 	public function initialize(Server $server) {
@@ -72,6 +68,11 @@ class TrashbinPlugin extends ServerPlugin {
 
 		$propFind->handle(self::TRASHBIN_DELETED_BY_DISPLAY_NAME, function () use ($node) {
 			return $node->getDeletedBy()?->getDisplayName();
+		});
+
+		// Pass the real filename as the DAV display name
+		$propFind->handle(FilesPlugin::DISPLAYNAME_PROPERTYNAME, function () use ($node) {
+			return $node->getFilename();
 		});
 
 		$propFind->handle(FilesPlugin::SIZE_PROPERTYNAME, function () use ($node) {

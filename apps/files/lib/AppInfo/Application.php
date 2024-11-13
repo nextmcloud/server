@@ -9,7 +9,6 @@ declare(strict_types=1);
 namespace OCA\Files\AppInfo;
 
 use Closure;
-use OC\Search\Provider\File;
 use OCA\Files\Capabilities;
 use OCA\Files\Collaboration\Resources\Listener;
 use OCA\Files\Collaboration\Resources\ResourceProvider;
@@ -26,6 +25,7 @@ use OCA\Files\Search\FilesSearchProvider;
 use OCA\Files\Service\TagService;
 use OCA\Files\Service\UserConfig;
 use OCA\Files\Service\ViewConfig;
+use OCA\Files\Settings\DeclarativeAdminSettings;
 use OCP\Activity\IManager as IActivityManager;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -39,16 +39,18 @@ use OCP\Files\Events\Node\BeforeNodeCopiedEvent;
 use OCP\Files\Events\Node\BeforeNodeDeletedEvent;
 use OCP\Files\Events\Node\BeforeNodeRenamedEvent;
 use OCP\Files\Events\Node\NodeCopiedEvent;
+use OCP\Files\IRootFolder;
 use OCP\IConfig;
+use OCP\IL10N;
 use OCP\IPreview;
 use OCP\IRequest;
-use OCP\ISearch;
 use OCP\IServerContainer;
 use OCP\ITagManager;
 use OCP\IUserSession;
 use OCP\Share\IManager as IShareManager;
 use OCP\Util;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 class Application extends App implements IBootstrap {
 	public const APP_ID = 'files';
@@ -76,6 +78,9 @@ class Application extends App implements IBootstrap {
 				$server->getUserFolder(),
 				$c->get(UserConfig::class),
 				$c->get(ViewConfig::class),
+				$c->get(IL10N::class),
+				$c->get(IRootFolder::class),
+				$c->get(LoggerInterface::class),
 			);
 		});
 
@@ -101,6 +106,8 @@ class Application extends App implements IBootstrap {
 		$context->registerCapability(Capabilities::class);
 		$context->registerCapability(DirectEditingCapabilities::class);
 
+		$context->registerDeclarativeSettings(DeclarativeAdminSettings::class);
+
 		$context->registerEventListener(LoadSidebar::class, LoadSidebarListener::class);
 		$context->registerEventListener(RenderReferenceEvent::class, RenderReferenceEventListener::class);
 		$context->registerEventListener(BeforeNodeRenamedEvent::class, SyncLivePhotosListener::class);
@@ -118,17 +125,12 @@ class Application extends App implements IBootstrap {
 	public function boot(IBootContext $context): void {
 		$context->injectFn(Closure::fromCallable([$this, 'registerCollaboration']));
 		$context->injectFn([Listener::class, 'register']);
-		$context->injectFn(Closure::fromCallable([$this, 'registerSearchProvider']));
 		$this->registerTemplates();
 		$this->registerHooks();
 	}
 
 	private function registerCollaboration(IProviderManager $providerManager): void {
 		$providerManager->registerResourceProvider(ResourceProvider::class);
-	}
-
-	private function registerSearchProvider(ISearch $search): void {
-		$search->registerProvider(File::class, ['apps' => ['files']]);
 	}
 
 	private function registerTemplates(): void {

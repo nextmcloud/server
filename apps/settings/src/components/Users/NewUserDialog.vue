@@ -61,7 +61,7 @@
 				:required="newUser.password === '' || settings.newUserRequireEmail" />
 			<div class="dialog__item">
 				<NcSelect class="dialog__select"
-					:input-label="!settings.isAdmin ? t('settings', 'Groups (required)') : t('settings', 'Groups')"
+					:input-label="!settings.isAdmin && !settings.isDelegatedAdmin ? t('settings', 'Member of the following groups (required)') : t('settings', 'Member of the following groups')"
 					:placeholder="t('settings', 'Set account groups')"
 					:disabled="loading.groups || loading.all"
 					:options="canAddGroups"
@@ -70,10 +70,10 @@
 					:close-on-select="false"
 					:multiple="true"
 					:taggable="true"
-					:required="!settings.isAdmin"
+					:required="!settings.isAdmin && !settings.isDelegatedAdmin"
 					@input="handleGroupInput"
 					@option:created="createGroup" />
-					<!-- If user is not admin, he is a subadmin.
+					<!-- If user is not admin, they are a subadmin.
 						Subadmins can't create users outside their groups
 						Therefore, empty select is forbidden -->
 			</div>
@@ -81,7 +81,7 @@
 				class="dialog__item">
 				<NcSelect v-model="newUser.subAdminsGroups"
 					class="dialog__select"
-					:input-label="t('settings', 'Administered groups')"
+					:input-label="t('settings', 'Admin of the following groups')"
 					:placeholder="t('settings', 'Set account as admin for …')"
 					:options="subAdminsGroups"
 					:close-on-select="false"
@@ -100,7 +100,7 @@
 			</div>
 			<div v-if="showConfig.showLanguages"
 				class="dialog__item">
-				<NcSelect	v-model="newUser.language"
+				<NcSelect v-model="newUser.language"
 					class="dialog__select"
 					:input-label="t('settings', 'Language')"
 					:placeholder="t('settings', 'Set default language')"
@@ -135,6 +135,7 @@
 </template>
 
 <script>
+import { formatFileSize, parseFileSize } from '@nextcloud/files'
 import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
 import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
 import NcPasswordField from '@nextcloud/vue/dist/Components/NcPasswordField.js'
@@ -175,7 +176,7 @@ export default {
 			// TRANSLATORS This string describes a manager in the context of an organization
 			managerInputLabel: t('settings', 'Manager'),
 			// TRANSLATORS This string describes a manager in the context of an organization
-			managerLabel: t('settings', 'Set account manager'),
+			managerLabel: t('settings', 'Set line manager'),
 		}
 	},
 
@@ -200,9 +201,9 @@ export default {
 		},
 
 		groups() {
-			// data provided php side + remove the disabled group
+			// data provided php side + remove the recent and disabled groups
 			return this.$store.getters.getGroups
-				.filter(group => group.id !== 'disabled')
+				.filter(group => group.id !== '__nc_internal_recent' && group.id !== 'disabled')
 				.sort((a, b) => a.name.localeCompare(b.name))
 		},
 
@@ -317,7 +318,7 @@ export default {
 			const validQuota = OC.Util.computerFileSize(quota)
 			if (validQuota !== null && validQuota >= 0) {
 				// unify format output
-				quota = OC.Util.humanFileSize(OC.Util.computerFileSize(quota))
+				quota = formatFileSize(parseFileSize(quota))
 				this.newUser.quota = { id: quota, label: quota }
 				return this.newUser.quota
 			}

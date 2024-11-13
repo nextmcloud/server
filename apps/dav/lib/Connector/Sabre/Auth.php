@@ -13,6 +13,7 @@ use OC\Authentication\TwoFactorAuth\Manager;
 use OC\User\Session;
 use OCA\DAV\Connector\Sabre\Exception\PasswordLoginForbidden;
 use OCA\DAV\Connector\Sabre\Exception\TooManyRequests;
+use OCP\Defaults;
 use OCP\IRequest;
 use OCP\ISession;
 use OCP\Security\Bruteforce\IThrottler;
@@ -26,29 +27,24 @@ use Sabre\HTTP\ResponseInterface;
 
 class Auth extends AbstractBasic {
 	public const DAV_AUTHENTICATED = 'AUTHENTICATED_TO_DAV_BACKEND';
-
-	private ISession $session;
 	private Session $userSession;
-	private IRequest $request;
 	private ?string $currentUser = null;
 	private Manager $twoFactorManager;
-	private IThrottler $throttler;
 
-	public function __construct(ISession $session,
+	public function __construct(
+		private ISession $session,
 		Session $userSession,
-		IRequest $request,
+		private IRequest $request,
 		Manager $twoFactorManager,
-		IThrottler $throttler,
-		string $principalPrefix = 'principals/users/') {
-		$this->session = $session;
+		private IThrottler $throttler,
+		string $principalPrefix = 'principals/users/',
+	) {
 		$this->userSession = $userSession;
 		$this->twoFactorManager = $twoFactorManager;
-		$this->request = $request;
-		$this->throttler = $throttler;
 		$this->principalPrefix = $principalPrefix;
 
 		// setup realm
-		$defaults = new \OCP\Defaults();
+		$defaults = new Defaults();
 		$this->realm = $defaults->getName() ?: 'Nextcloud';
 	}
 
@@ -185,7 +181,7 @@ class Auth extends AbstractBasic {
 				//Fix for broken webdav clients
 				($this->userSession->isLoggedIn() && is_null($this->session->get(self::DAV_AUTHENTICATED))) ||
 				//Well behaved clients that only send the cookie are allowed
-				($this->userSession->isLoggedIn() && $this->session->get(self::DAV_AUTHENTICATED) === $this->userSession->getUser()->getUID() && $request->getHeader('Authorization') === null) ||
+				($this->userSession->isLoggedIn() && $this->session->get(self::DAV_AUTHENTICATED) === $this->userSession->getUser()->getUID() && empty($request->getHeader('Authorization'))) ||
 				\OC_User::handleApacheAuth()
 			) {
 				$user = $this->userSession->getUser()->getUID();
@@ -195,18 +191,16 @@ class Auth extends AbstractBasic {
 			}
 		}
 
-		if (!$this->userSession->isLoggedIn() && in_array('XMLHttpRequest', explode(',', $request->getHeader('X-Requested-With') ?? ''))) {
-			// do not re-authenticate over ajax, use dummy auth name to prevent browser popup
-			$response->addHeader('WWW-Authenticate', 'DummyBasic realm="' . $this->realm . '"');
-			$response->setStatus(401);
-			throw new \Sabre\DAV\Exception\NotAuthenticated('Cannot authenticate over ajax calls');
-		}
-
 		$data = parent::check($request, $response);
 		if ($data[0] === true) {
 			$startPos = strrpos($data[1], '/') + 1;
 			$user = $this->userSession->getUser()->getUID();
 			$data[1] = substr_replace($data[1], $user, $startPos);
+		} elseif (in_array('XMLHttpRequest', explode(',', $request->getHeader('X-Requested-With') ?? ''))) {
+			// For ajax requests use dummy auth name to prevent browser popup in case of invalid creditials
+			$response->addHeader('WWW-Authenticate', 'DummyBasic realm="' . $this->realm . '"');
+			$response->setStatus(401);
+			throw new \Sabre\DAV\Exception\NotAuthenticated('Cannot authenticate over ajax calls');
 		}
 		return $data;
 	}

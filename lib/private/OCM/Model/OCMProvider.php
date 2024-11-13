@@ -163,8 +163,8 @@ class OCMProvider implements IOCMProvider {
 	 */
 	public function import(array $data): static {
 		$this->setEnabled(is_bool($data['enabled'] ?? '') ? $data['enabled'] : false)
-			 ->setApiVersion((string)($data['apiVersion'] ?? ''))
-			 ->setEndPoint($data['endPoint'] ?? '');
+			->setApiVersion((string)($data['apiVersion'] ?? ''))
+			->setEndPoint($data['endPoint'] ?? '');
 
 		$resources = [];
 		foreach (($data['resourceTypes'] ?? []) as $resourceData) {
@@ -194,12 +194,12 @@ class OCMProvider implements IOCMProvider {
 	 *     enabled: bool,
 	 *     apiVersion: string,
 	 *     endPoint: string,
-	 *     resourceTypes: array{
-	 *              name: string,
-	 *              shareTypes: string[],
-	 *              protocols: array<string, string>
-	 *            }[]
-	 *   }
+	 *     resourceTypes: list<array{
+	 *         name: string,
+	 *         shareTypes: list<string>,
+	 *         protocols: array<string, string>
+	 *     }>,
+	 * }
 	 */
 	public function jsonSerialize(): array {
 		$resourceTypes = [];

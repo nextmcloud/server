@@ -44,7 +44,7 @@ interface ICalendar {
 	 * @param string $pattern which should match within the $searchProperties
 	 * @param array $searchProperties defines the properties within the query pattern should match
 	 * @param array $options - optional parameters:
-	 * 	['timerange' => ['start' => new DateTime(...), 'end' => new DateTime(...)]]
+	 *                       ['timerange' => ['start' => new DateTime(...), 'end' => new DateTime(...)]]
 	 * @param int|null $limit - limit number of search results
 	 * @param int|null $offset - offset for paging of search results
 	 * @return array an array of events/journals/todos which are arrays of key-value-pairs. the events are sorted by start date (closest first, furthest last)
@@ -59,7 +59,8 @@ interface ICalendar {
 	public function getPermissions(): int;
 
 	/**
-	 * Whether the calendar is deleted
+	 * Indicates whether the calendar is in the trash bin
+	 *
 	 * @since 26.0.0
 	 */
 	public function isDeleted(): bool;

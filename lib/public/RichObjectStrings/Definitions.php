@@ -344,6 +344,36 @@ class Definitions {
 					'description' => 'The mtime of the file/folder as unix timestamp',
 					'example' => '1661854213',
 				],
+				'etag' => [
+					'since' => '25.0.0',
+					'required' => false,
+					'description' => 'The ETag of the file/folder',
+					'example' => 'abcdefghi',
+				],
+				'permissions' => [
+					'since' => '25.0.0',
+					'required' => false,
+					'description' => 'The permissions on the file/folder',
+					'example' => '3',
+				],
+				'width' => [
+					'since' => '29.0.0',
+					'required' => false,
+					'description' => 'The width in pixels if the file is an image',
+					'example' => '1920',
+				],
+				'height' => [
+					'since' => '29.0.0',
+					'required' => false,
+					'description' => 'The height in pixels if the file is an image',
+					'example' => '1080',
+				],
+				'blurhash' => [
+					'since' => '30.0.0',
+					'required' => false,
+					'description' => 'The blurhash of the image',
+					'example' => 'LEHV9uae2yk8pyo0adR*.7kCMdnj',
+				],
 			],
 		],
 		'forms-form' => [

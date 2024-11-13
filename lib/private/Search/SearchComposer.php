@@ -10,6 +10,7 @@ namespace OC\Search;
 
 use InvalidArgumentException;
 use OC\AppFramework\Bootstrap\Coordinator;
+use OC\Core\ResponseDefinitions;
 use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\Search\FilterDefinition;
@@ -43,6 +44,7 @@ use function array_map;
  * results are awaited or shown as they come in.
  *
  * @see IProvider::search() for the arguments of the individual search requests
+ * @psalm-import-type CoreUnifiedSearchProvider from ResponseDefinitions
  */
 class SearchComposer {
 	/**
@@ -59,7 +61,7 @@ class SearchComposer {
 		private Coordinator $bootstrapCoordinator,
 		private ContainerInterface $container,
 		private IURLGenerator $urlGenerator,
-		private LoggerInterface $logger
+		private LoggerInterface $logger,
 	) {
 		$this->commonFilters = [
 			IFilter::BUILTIN_TERM => new FilterDefinition(IFilter::BUILTIN_TERM, FilterDefinition::TYPE_STRING),
@@ -130,7 +132,7 @@ class SearchComposer {
 			}
 			foreach ($provider->getSupportedFilters() as $filterName) {
 				if ($this->getFilterDefinition($filterName, $providerId) === null) {
-					throw new InvalidArgumentException('Invalid filter '. $filterName);
+					throw new InvalidArgumentException('Invalid filter ' . $filterName);
 				}
 			}
 		}
@@ -156,7 +158,7 @@ class SearchComposer {
 	 * @param string $route the route the user is currently at
 	 * @param array $routeParameters the parameters of the route the user is currently at
 	 *
-	 * @return array
+	 * @return list<CoreUnifiedSearchProvider>
 	 */
 	public function getProviders(string $route, array $routeParameters): array {
 		$this->loadLazyProviders();
@@ -183,7 +185,7 @@ class SearchComposer {
 					'name' => $provider->getName(),
 					'icon' => $this->fetchIcon($appId, $provider->getId()),
 					'order' => $order,
-					'triggers' => $triggers,
+					'triggers' => array_values($triggers),
 					'filters' => $this->getFiltersType($filters, $provider->getId()),
 					'inAppSearch' => $provider instanceof IInAppSearch,
 				];
@@ -202,10 +204,10 @@ class SearchComposer {
 
 	private function fetchIcon(string $appId, string $providerId): string {
 		$icons = [
-			[$providerId, $providerId.'.svg'],
+			[$providerId, $providerId . '.svg'],
 			[$providerId, 'app.svg'],
-			[$appId, $providerId.'.svg'],
-			[$appId, $appId.'.svg'],
+			[$appId, $providerId . '.svg'],
+			[$appId, $appId . '.svg'],
 			[$appId, 'app.svg'],
 			['core', 'places/default-app-icon.svg'],
 		];

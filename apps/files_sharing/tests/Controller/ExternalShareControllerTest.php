@@ -1,25 +1,8 @@
 <?php
 /**
- * @copyright Copyright (c) 2016, ownCloud, Inc.
- *
- * @author Joas Schilling <coding@schilljs.com>
- * @author Lukas Reschke <lukas@statuscode.ch>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program. If not, see <http://www.gnu.org/licenses/>
- *
+ * SPDX-FileCopyrightText: 2019-2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 namespace OCA\Files_Sharing\Tests\Controllers;
 
@@ -70,7 +53,7 @@ class ExternalShareControllerTest extends \Test\TestCase {
 		);
 	}
 
-	public function testIndex() {
+	public function testIndex(): void {
 		$this->externalManager
 			->expects($this->once())
 			->method('getOpenShares')
@@ -79,7 +62,7 @@ class ExternalShareControllerTest extends \Test\TestCase {
 		$this->assertEquals(new JSONResponse(['MyDummyArray']), $this->getExternalShareController()->index());
 	}
 
-	public function testCreate() {
+	public function testCreate(): void {
 		$this->externalManager
 			->expects($this->once())
 			->method('acceptShare')
@@ -88,7 +71,7 @@ class ExternalShareControllerTest extends \Test\TestCase {
 		$this->assertEquals(new JSONResponse(), $this->getExternalShareController()->create(4));
 	}
 
-	public function testDestroy() {
+	public function testDestroy(): void {
 		$this->externalManager
 			->expects($this->once())
 			->method('declineShare')
@@ -97,7 +80,7 @@ class ExternalShareControllerTest extends \Test\TestCase {
 		$this->assertEquals(new JSONResponse(), $this->getExternalShareController()->destroy(4));
 	}
 
-	public function testRemoteWithValidHttps() {
+	public function testRemoteWithValidHttps(): void {
 		$client = $this->createMock(IClient::class);
 		$response = $this->createMock(IResponse::class);
 		$response
@@ -120,7 +103,7 @@ class ExternalShareControllerTest extends \Test\TestCase {
 		$this->assertEquals(new DataResponse('https'), $this->getExternalShareController()->testRemote('nextcloud.com'));
 	}
 
-	public function testRemoteWithWorkingHttp() {
+	public function testRemoteWithWorkingHttp(): void {
 		$client = $this->createMock(IClient::class);
 		$response = $this->createMock(IResponse::class);
 		$client
@@ -144,7 +127,7 @@ class ExternalShareControllerTest extends \Test\TestCase {
 		$this->assertEquals(new DataResponse('http'), $this->getExternalShareController()->testRemote('nextcloud.com'));
 	}
 
-	public function testRemoteWithInvalidRemote() {
+	public function testRemoteWithInvalidRemote(): void {
 		$client = $this->createMock(IClient::class);
 		$response = $this->createMock(IResponse::class);
 		$client
@@ -175,7 +158,7 @@ class ExternalShareControllerTest extends \Test\TestCase {
 	 * @dataProvider dataRemoteWithInvalidRemoteURLs
 	 * @param string $remote
 	 */
-	public function testRemoteWithInvalidRemoteURLs(string $remote) {
+	public function testRemoteWithInvalidRemoteURLs(string $remote): void {
 		$this->clientService
 			->expects($this->never())
 			->method('newClient');

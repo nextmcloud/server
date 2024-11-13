@@ -18,6 +18,7 @@ use OCA\DAV\Connector\Sabre\Exception\EntityTooLarge;
 use OCA\DAV\Connector\Sabre\Exception\FileLocked;
 use OCA\DAV\Connector\Sabre\Exception\Forbidden as DAVForbiddenException;
 use OCA\DAV\Connector\Sabre\Exception\UnsupportedMediaType;
+use OCP\App\IAppManager;
 use OCP\Encryption\Exceptions\GenericEncryptionException;
 use OCP\Files\EntityTooLargeException;
 use OCP\Files\FileInfo;
@@ -28,20 +29,20 @@ use OCP\Files\InvalidPathException;
 use OCP\Files\LockNotAcquiredException;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
-use OCP\Files\Storage;
+use OCP\Files\Storage\IWriteStreamStorage;
 use OCP\Files\StorageNotAvailableException;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\L10N\IFactory as IL10NFactory;
 use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
+use OCP\Server;
 use OCP\Share\IManager;
 use Psr\Log\LoggerInterface;
 use Sabre\DAV\Exception;
 use Sabre\DAV\Exception\BadRequest;
 use Sabre\DAV\Exception\Forbidden;
 use Sabre\DAV\Exception\NotFound;
-use Sabre\DAV\Exception\NotImplemented;
 use Sabre\DAV\Exception\ServiceUnavailable;
 use Sabre\DAV\IFile;
 
@@ -52,8 +53,8 @@ class File extends Node implements IFile {
 	/**
 	 * Sets up the node, expects a full path name
 	 *
-	 * @param \OC\Files\View $view
-	 * @param \OCP\Files\FileInfo $info
+	 * @param View $view
+	 * @param FileInfo $info
 	 * @param ?\OCP\Share\IManager $shareManager
 	 * @param ?IRequest $request
 	 * @param ?IL10N $l10n
@@ -118,21 +119,13 @@ class File extends Node implements IFile {
 		// verify path of the target
 		$this->verifyPath();
 
-		// chunked handling
-		$chunkedHeader = $this->request->getHeader('oc-chunked');
-		if ($chunkedHeader) {
-			try {
-				return $this->createFileChunked($data);
-			} catch (\Exception $e) {
-				$this->convertToSabreException($e);
-			}
-		}
-
-		/** @var Storage $partStorage */
 		[$partStorage] = $this->fileView->resolvePath($this->path);
+		if ($partStorage === null) {
+			throw new ServiceUnavailable($this->l10n->t('Failed to get storage for file'));
+		}
 		$needsPartFile = $partStorage->needsPartFile() && (strlen($this->path) > 1);
 
-		$view = \OC\Files\Filesystem::getView();
+		$view = Filesystem::getView();
 
 		if ($needsPartFile) {
 			// mark file as partial while uploading (ignored by the scanner)
@@ -152,10 +145,11 @@ class File extends Node implements IFile {
 		}
 
 		// the part file and target file might be on a different storage in case of a single file storage (e.g. single file share)
-		/** @var \OC\Files\Storage\Storage $partStorage */
 		[$partStorage, $internalPartPath] = $this->fileView->resolvePath($partFilePath);
-		/** @var \OC\Files\Storage\Storage $storage */
 		[$storage, $internalPath] = $this->fileView->resolvePath($this->path);
+		if ($partStorage === null || $storage === null) {
+			throw new ServiceUnavailable($this->l10n->t('Failed to get storage for file'));
+		}
 		try {
 			if (!$needsPartFile) {
 				try {
@@ -189,27 +183,27 @@ class File extends Node implements IFile {
 			if ($this->request->getHeader('X-HASH') !== '') {
 				$hash = $this->request->getHeader('X-HASH');
 				if ($hash === 'all' || $hash === 'md5') {
-					$data = HashWrapper::wrap($data, 'md5', function ($hash) {
+					$data = HashWrapper::wrap($data, 'md5', function ($hash): void {
 						$this->header('X-Hash-MD5: ' . $hash);
 					});
 				}
 
 				if ($hash === 'all' || $hash === 'sha1') {
-					$data = HashWrapper::wrap($data, 'sha1', function ($hash) {
+					$data = HashWrapper::wrap($data, 'sha1', function ($hash): void {
 						$this->header('X-Hash-SHA1: ' . $hash);
 					});
 				}
 
 				if ($hash === 'all' || $hash === 'sha256') {
-					$data = HashWrapper::wrap($data, 'sha256', function ($hash) {
+					$data = HashWrapper::wrap($data, 'sha256', function ($hash): void {
 						$this->header('X-Hash-SHA256: ' . $hash);
 					});
 				}
 			}
 
-			if ($partStorage->instanceOfStorage(Storage\IWriteStreamStorage::class)) {
+			if ($partStorage->instanceOfStorage(IWriteStreamStorage::class)) {
 				$isEOF = false;
-				$wrappedData = CallbackWrapper::wrap($data, null, null, null, null, function ($stream) use (&$isEOF) {
+				$wrappedData = CallbackWrapper::wrap($data, null, null, null, null, function ($stream) use (&$isEOF): void {
 					$isEOF = feof($stream);
 				});
 
@@ -410,19 +404,19 @@ class File extends Node implements IFile {
 		$run = true;
 
 		if (!$exists) {
-			\OC_Hook::emit(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_create, [
-				\OC\Files\Filesystem::signal_param_path => $hookPath,
-				\OC\Files\Filesystem::signal_param_run => &$run,
+			\OC_Hook::emit(Filesystem::CLASSNAME, Filesystem::signal_create, [
+				Filesystem::signal_param_path => $hookPath,
+				Filesystem::signal_param_run => &$run,
 			]);
 		} else {
-			\OC_Hook::emit(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_update, [
-				\OC\Files\Filesystem::signal_param_path => $hookPath,
-				\OC\Files\Filesystem::signal_param_run => &$run,
+			\OC_Hook::emit(Filesystem::CLASSNAME, Filesystem::signal_update, [
+				Filesystem::signal_param_path => $hookPath,
+				Filesystem::signal_param_run => &$run,
 			]);
 		}
-		\OC_Hook::emit(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_write, [
-			\OC\Files\Filesystem::signal_param_path => $hookPath,
-			\OC\Files\Filesystem::signal_param_run => &$run,
+		\OC_Hook::emit(Filesystem::CLASSNAME, Filesystem::signal_write, [
+			Filesystem::signal_param_path => $hookPath,
+			Filesystem::signal_param_run => &$run,
 		]);
 		return $run;
 	}
@@ -437,16 +431,16 @@ class File extends Node implements IFile {
 			return;
 		}
 		if (!$exists) {
-			\OC_Hook::emit(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_post_create, [
-				\OC\Files\Filesystem::signal_param_path => $hookPath
+			\OC_Hook::emit(Filesystem::CLASSNAME, Filesystem::signal_post_create, [
+				Filesystem::signal_param_path => $hookPath
 			]);
 		} else {
-			\OC_Hook::emit(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_post_update, [
-				\OC\Files\Filesystem::signal_param_path => $hookPath
+			\OC_Hook::emit(Filesystem::CLASSNAME, Filesystem::signal_post_update, [
+				Filesystem::signal_param_path => $hookPath
 			]);
 		}
-		\OC_Hook::emit(\OC\Files\Filesystem::CLASSNAME, \OC\Files\Filesystem::signal_post_write, [
-			\OC\Files\Filesystem::signal_param_path => $hookPath
+		\OC_Hook::emit(Filesystem::CLASSNAME, Filesystem::signal_post_write, [
+			Filesystem::signal_param_path => $hookPath
 		]);
 	}
 
@@ -543,145 +537,15 @@ class File extends Node implements IFile {
 	 * @return array|bool
 	 */
 	public function getDirectDownload() {
-		if (\OCP\Server::get(\OCP\App\IAppManager::class)->isEnabledForUser('encryption')) {
+		if (Server::get(IAppManager::class)->isEnabledForUser('encryption')) {
 			return [];
 		}
-		/** @var \OCP\Files\Storage $storage */
 		[$storage, $internalPath] = $this->fileView->resolvePath($this->path);
 		if (is_null($storage)) {
 			return [];
 		}
 
 		return $storage->getDirectDownload($internalPath);
-	}
-
-	/**
-	 * @param resource $data
-	 * @return null|string
-	 * @throws Exception
-	 * @throws BadRequest
-	 * @throws NotImplemented
-	 * @throws ServiceUnavailable
-	 */
-	private function createFileChunked($data) {
-		[$path, $name] = \Sabre\Uri\split($this->path);
-
-		$info = \OC_FileChunking::decodeName($name);
-		if (empty($info)) {
-			throw new NotImplemented($this->l10n->t('Invalid chunk name'));
-		}
-
-		$chunk_handler = new \OC_FileChunking($info);
-		$bytesWritten = $chunk_handler->store($info['index'], $data);
-
-		//detect aborted upload
-		if ($this->request->getMethod() === 'PUT') {
-			$lengthHeader = $this->request->getHeader('content-length');
-			if ($lengthHeader) {
-				$expected = (int)$lengthHeader;
-				if ($bytesWritten !== $expected) {
-					$chunk_handler->remove($info['index']);
-					throw new BadRequest(
-						$this->l10n->t(
-							'Expected filesize of %1$s but read (from Nextcloud client) and wrote (to Nextcloud storage) %2$s. Could either be a network problem on the sending side or a problem writing to the storage on the server side.',
-							[
-								$this->l10n->n('%n byte', '%n bytes', $expected),
-								$this->l10n->n('%n byte', '%n bytes', $bytesWritten),
-							],
-						)
-					);
-				}
-			}
-		}
-
-		if ($chunk_handler->isComplete()) {
-			/** @var Storage $storage */
-			[$storage,] = $this->fileView->resolvePath($path);
-			$needsPartFile = $storage->needsPartFile();
-			$partFile = null;
-
-			$targetPath = $path . '/' . $info['name'];
-			/** @var \OC\Files\Storage\Storage $targetStorage */
-			[$targetStorage, $targetInternalPath] = $this->fileView->resolvePath($targetPath);
-
-			$exists = $this->fileView->file_exists($targetPath);
-
-			try {
-				$this->fileView->lockFile($targetPath, ILockingProvider::LOCK_SHARED);
-
-				$this->emitPreHooks($exists, $targetPath);
-				$this->fileView->changeLock($targetPath, ILockingProvider::LOCK_EXCLUSIVE);
-				/** @var \OC\Files\Storage\Storage $targetStorage */
-				[$targetStorage, $targetInternalPath] = $this->fileView->resolvePath($targetPath);
-
-				if ($needsPartFile) {
-					// we first assembly the target file as a part file
-					$partFile = $this->getPartFileBasePath($path . '/' . $info['name']) . '.ocTransferId' . $info['transferid'] . '.part';
-					/** @var \OC\Files\Storage\Storage $targetStorage */
-					[$partStorage, $partInternalPath] = $this->fileView->resolvePath($partFile);
-
-
-					$chunk_handler->file_assemble($partStorage, $partInternalPath);
-
-					// here is the final atomic rename
-					$renameOkay = $targetStorage->moveFromStorage($partStorage, $partInternalPath, $targetInternalPath);
-					$fileExists = $targetStorage->file_exists($targetInternalPath);
-					if ($renameOkay === false || $fileExists === false) {
-						\OC::$server->get(LoggerInterface::class)->error('\OC\Files\Filesystem::rename() failed', ['app' => 'webdav']);
-						// only delete if an error occurred and the target file was already created
-						if ($fileExists) {
-							// set to null to avoid double-deletion when handling exception
-							// stray part file
-							$partFile = null;
-							$targetStorage->unlink($targetInternalPath);
-						}
-						$this->fileView->changeLock($targetPath, ILockingProvider::LOCK_SHARED);
-						throw new Exception($this->l10n->t('Could not rename part file assembled from chunks'));
-					}
-				} else {
-					// assemble directly into the final file
-					$chunk_handler->file_assemble($targetStorage, $targetInternalPath);
-				}
-
-				// allow sync clients to send the mtime along in a header
-				$mtimeHeader = $this->request->getHeader('x-oc-mtime');
-				if ($mtimeHeader !== '') {
-					$mtime = $this->sanitizeMtime($mtimeHeader);
-					if ($targetStorage->touch($targetInternalPath, $mtime)) {
-						$this->header('X-OC-MTime: accepted');
-					}
-				}
-
-				// since we skipped the view we need to scan and emit the hooks ourselves
-				$targetStorage->getUpdater()->update($targetInternalPath);
-
-				$this->fileView->changeLock($targetPath, ILockingProvider::LOCK_SHARED);
-
-				$this->emitPostHooks($exists, $targetPath);
-
-				// FIXME: should call refreshInfo but can't because $this->path is not the of the final file
-				$info = $this->fileView->getFileInfo($targetPath);
-
-				$checksumHeader = $this->request->getHeader('oc-checksum');
-				if ($checksumHeader) {
-					$checksum = trim($checksumHeader);
-					$this->fileView->putFileInfo($targetPath, ['checksum' => $checksum]);
-				} elseif ($info->getChecksum() !== null && $info->getChecksum() !== '') {
-					$this->fileView->putFileInfo($this->path, ['checksum' => '']);
-				}
-
-				$this->fileView->unlockFile($targetPath, ILockingProvider::LOCK_SHARED);
-
-				return $info->getEtag();
-			} catch (\Exception $e) {
-				if ($partFile !== null) {
-					$targetStorage->unlink($targetInternalPath);
-				}
-				$this->convertToSabreException($e);
-			}
-		}
-
-		return null;
 	}
 
 	/**

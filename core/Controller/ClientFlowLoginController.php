@@ -15,7 +15,10 @@ use OCA\OAuth2\Db\ClientMapper;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\Attribute\UseSession;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\StandaloneTemplateResponse;
@@ -82,10 +85,8 @@ class ClientFlowLoginController extends Controller {
 		return $response;
 	}
 
-	/**
-	 * @PublicPage
-	 * @NoCSRFRequired
-	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
 	#[UseSession]
 	#[FrontpageRoute(verb: 'GET', url: '/login/flow')]
 	public function showAuthPickerPage(string $clientIdentifier = '', string $user = '', int $direct = 0): StandaloneTemplateResponse {
@@ -117,7 +118,7 @@ class ClientFlowLoginController extends Controller {
 
 		$stateToken = $this->random->generate(
 			64,
-			ISecureRandom::CHAR_LOWER.ISecureRandom::CHAR_UPPER.ISecureRandom::CHAR_DIGITS
+			ISecureRandom::CHAR_LOWER . ISecureRandom::CHAR_UPPER . ISecureRandom::CHAR_DIGITS
 		);
 		$this->session->set(self::STATE_NAME, $stateToken);
 
@@ -150,10 +151,10 @@ class ClientFlowLoginController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
 	 * @NoSameSiteCookieRequired
 	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
 	#[UseSession]
 	#[FrontpageRoute(verb: 'GET', url: '/login/flow/grant')]
 	public function grantPage(string $stateToken = '',
@@ -203,10 +204,9 @@ class ClientFlowLoginController extends Controller {
 	}
 
 	/**
-	 * @NoAdminRequired
-	 *
 	 * @return Http\RedirectResponse|Response
 	 */
+	#[NoAdminRequired]
 	#[UseSession]
 	#[FrontpageRoute(verb: 'POST', url: '/login/flow')]
 	public function generateAppPassword(string $stateToken,
@@ -247,7 +247,7 @@ class ClientFlowLoginController extends Controller {
 			$clientName = $client->getName();
 		}
 
-		$token = $this->random->generate(72, ISecureRandom::CHAR_UPPER.ISecureRandom::CHAR_LOWER.ISecureRandom::CHAR_DIGITS);
+		$token = $this->random->generate(72, ISecureRandom::CHAR_UPPER . ISecureRandom::CHAR_LOWER . ISecureRandom::CHAR_DIGITS);
 		$uid = $this->userSession->getUser()->getUID();
 		$generatedToken = $this->tokenProvider->generateToken(
 			$token,
@@ -260,7 +260,7 @@ class ClientFlowLoginController extends Controller {
 		);
 
 		if ($client) {
-			$code = $this->random->generate(128, ISecureRandom::CHAR_UPPER.ISecureRandom::CHAR_LOWER.ISecureRandom::CHAR_DIGITS);
+			$code = $this->random->generate(128, ISecureRandom::CHAR_UPPER . ISecureRandom::CHAR_LOWER . ISecureRandom::CHAR_DIGITS);
 			$accessToken = new AccessToken();
 			$accessToken->setClientId($client->getId());
 			$accessToken->setEncryptedToken($this->crypto->encrypt($token, $code));
@@ -297,9 +297,7 @@ class ClientFlowLoginController extends Controller {
 		return new Http\RedirectResponse($redirectUri);
 	}
 
-	/**
-	 * @PublicPage
-	 */
+	#[PublicPage]
 	#[FrontpageRoute(verb: 'POST', url: '/login/flow/apptoken')]
 	public function apptokenRedirect(string $stateToken, string $user, string $password): Response {
 		if (!$this->isValidToken($stateToken)) {
@@ -339,7 +337,7 @@ class ClientFlowLoginController extends Controller {
 
 		$protocol = $this->request->getServerProtocol();
 
-		if ($protocol !== "https") {
+		if ($protocol !== 'https') {
 			$xForwardedProto = $this->request->getHeader('X-Forwarded-Proto');
 			$xForwardedSSL = $this->request->getHeader('X-Forwarded-Ssl');
 			if ($xForwardedProto === 'https' || $xForwardedSSL === 'on') {
@@ -347,6 +345,6 @@ class ClientFlowLoginController extends Controller {
 			}
 		}
 
-		return $protocol . "://" . $this->request->getServerHost() . $serverPostfix;
+		return $protocol . '://' . $this->request->getServerHost() . $serverPostfix;
 	}
 }

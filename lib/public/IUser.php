@@ -77,6 +77,23 @@ interface IUser {
 	public function setPassword($password, $recoveryPassword = null);
 
 	/**
+	 * Get the password hash of the user
+	 *
+	 * @return ?string the password hash hashed by `\OCP\Security\IHasher::hash()`
+	 * @since 30.0.0
+	 */
+	public function getPasswordHash(): ?string;
+
+	/**
+	 * Set the password hash of the user
+	 *
+	 * @param string $passwordHash the password hash hashed by `\OCP\Security\IHasher::hash()`
+	 * @throws InvalidArgumentException when `$passwordHash` is not a valid hash
+	 * @since 30.0.0
+	 */
+	public function setPasswordHash(string $passwordHash): bool;
+
+	/**
 	 * get the users home folder to mount
 	 *
 	 * @return string
@@ -100,7 +117,7 @@ interface IUser {
 	public function getBackend();
 
 	/**
-	 * check if the backend allows the user to change his avatar on Personal page
+	 * check if the backend allows the user to change their avatar on Personal page
 	 *
 	 * @return bool
 	 * @since 8.0.0

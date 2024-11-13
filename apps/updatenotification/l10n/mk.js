@@ -1,7 +1,6 @@
 OC.L10N.register(
     "updatenotification",
     {
-    "{version} is available. Get more information on how to update." : "Достапна е нова верзија {version}. Видете ги информациите како да ја ажурирате.",
     "Channel updated" : "Каналот е ажуриран",
     "Web updater is disabled" : "Оневозможено е WEB ажурирање",
     "Update notifications" : "Известувања за ажурирање",
@@ -39,13 +38,11 @@ OC.L10N.register(
     "Beta" : "Бета",
     "A pre-release version only for testing new features, not for production environments." : "Неиздадена верзија само за тестирање на новите можности, не е за редовна употреба.",
     "_<strong>%n</strong> app has no compatible version for this Nextcloud version available._::_<strong>%n</strong> apps have no compatible version for this Nextcloud version available._" : ["1 апликација нема компатибилност со оваа веријза","<strong>%n</strong> апликации немаат компатибилност со оваа веријза"],
+    "{version} is available. Get more information on how to update." : "Достапна е нова верзија {version}. Видете ги информациите како да ја ажурирате.",
     "Update to %1$s is available." : "Достапно е аурирање во верзија %1$s.",
     "Displays update notifications for Nextcloud and provides the SSO for the updater." : "Прикажува известувања за ажурирање на Nextcloud и овозможува SSO за надградувачот.",
     "Please note that the web updater is not recommended with more than 100 users! Please use the command line updater instead!" : "Имајте на ум дека веб ажурирачот не го препорачуваат повеќе од 100 корисници! Наместо тоа, користете го ажурирачот на командната линија!",
     "Please use the command line updater to update." : "Користете ја командната линија за ажурирање.",
-    "You can change the update channel below which also affects the apps management page. E.g. after switching to the beta channel, beta app updates will be offered to you in the apps management page." : "Може да го промените каналот за ажурирање подолу, што исто така влијае на страницата за управување со апликации. На пр. откако ќе се префрлите на бета каналот, ќе ви бидат понудени ажурирања на бета апликации на страницата за управување со апликации.",
-    "Update channel:" : "Канал за ажурирање:",
-    "Note that after a new release the update only shows up after the first minor release or later. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found. Learn more about updates and release channels at {link}" : "Можно е да треба некое време додека новата верзија се прикаже овде. Ние испорачуваме нови до нашите корисници но од време на време некој верзии ги прескокнуваме поради пројандени проблеми во истите. Повеќе информации може да се пронајдат на {link}",
-    "Checked on {lastCheckedDate}" : "Проверено на {lastCheckedDate}"
+    "Note that after a new release the update only shows up after the first minor release or later. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found. Learn more about updates and release channels at {link}" : "Можно е да треба некое време додека новата верзија се прикаже овде. Ние испорачуваме нови до нашите корисници но од време на време некој верзии ги прескокнуваме поради пројандени проблеми во истите. Повеќе информации може да се пронајдат на {link}"
 },
 "nplurals=2; plural=(n % 10 == 1 && n % 100 != 11) ? 0 : 1;");

@@ -50,6 +50,7 @@ class SystemConfig {
 		'github.client_secret' => true,
 		'log.condition' => [
 			'shared_secret' => true,
+			'matches' => true,
 		],
 		'license-key' => true,
 		'redis' => [
@@ -106,11 +107,30 @@ class SystemConfig {
 		'onlyoffice' => [
 			'jwt_secret' => true,
 		],
+		'PASS' => true,
 	];
 
 	public function __construct(
 		private Config $config,
 	) {
+	}
+
+	/**
+	 * Since system config is admin controlled, we can tell psalm to ignore any taint
+	 *
+	 * @psalm-taint-escape sql
+	 * @psalm-taint-escape html
+	 * @psalm-taint-escape ldap
+	 * @psalm-taint-escape callable
+	 * @psalm-taint-escape file
+	 * @psalm-taint-escape ssrf
+	 * @psalm-taint-escape cookie
+	 * @psalm-taint-escape header
+	 * @psalm-taint-escape has_quotes
+	 * @psalm-pure
+	 */
+	public static function trustSystemConfig(mixed $value): mixed {
+		return $value;
 	}
 
 	/**
@@ -149,7 +169,7 @@ class SystemConfig {
 	 * @return mixed the value or $default
 	 */
 	public function getValue($key, $default = '') {
-		return $this->config->getValue($key, $default);
+		return $this->trustSystemConfig($this->config->getValue($key, $default));
 	}
 
 	/**

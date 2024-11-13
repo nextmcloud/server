@@ -24,16 +24,18 @@ use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IConfig;
 use OCP\IL10N;
+use OCP\INavigationManager;
 use OCP\IURLGenerator;
 use OCP\IUserSession;
+use PHPUnit\Framework\MockObject\MockObject;
 use Test\TestCase;
 
 class PersonalTest extends TestCase {
-	private IConfig $config;
-	private ThemesService $themesService;
-	private IInitialState $initialStateService;
-	private ThemingDefaults $themingDefaults;
-	private IAppManager $appManager;
+	private IConfig&MockObject $config;
+	private ThemesService&MockObject $themesService;
+	private IInitialState&MockObject $initialStateService;
+	private ThemingDefaults&MockObject $themingDefaults;
+	private INavigationManager&MockObject $navigationManager;
 	private Personal $admin;
 
 	/** @var ITheme[] */
@@ -45,7 +47,7 @@ class PersonalTest extends TestCase {
 		$this->themesService = $this->createMock(ThemesService::class);
 		$this->initialStateService = $this->createMock(IInitialState::class);
 		$this->themingDefaults = $this->createMock(ThemingDefaults::class);
-		$this->appManager = $this->createMock(IAppManager::class);
+		$this->navigationManager = $this->createMock(INavigationManager::class);
 
 		$this->initThemes();
 
@@ -61,7 +63,7 @@ class PersonalTest extends TestCase {
 			$this->themesService,
 			$this->initialStateService,
 			$this->themingDefaults,
-			$this->appManager,
+			$this->navigationManager,
 		);
 	}
 
@@ -89,7 +91,7 @@ class PersonalTest extends TestCase {
 	 * @param string $toEnable
 	 * @param string[] $enabledThemes
 	 */
-	public function testGetForm(string $enforcedTheme, $themesState) {
+	public function testGetForm(string $enforcedTheme, $themesState): void {
 		$this->config->expects($this->once())
 			->method('getSystemValueString')
 			->with('enforce_theme', '')
@@ -102,31 +104,32 @@ class PersonalTest extends TestCase {
 				['admin', 'theming', 'background_image', BackgroundService::BACKGROUND_DEFAULT],
 			]);
 
-		$this->appManager->expects($this->once())
-			->method('getDefaultAppForUser')
-			->willReturn('forcedapp');
+		$this->navigationManager->expects($this->once())
+			->method('getDefaultEntryIdForUser')
+			->willReturn('forced_id');
 
-		$this->initialStateService->expects($this->exactly(7))
+		$this->initialStateService->expects($this->exactly(8))
 			->method('provideInitialState')
-			->withConsecutive(
+			->willReturnMap([
 				['shippedBackgrounds', BackgroundService::SHIPPED_BACKGROUNDS],
 				['themingDefaults'],
+				['enableBlurFilter', ''],
 				['userBackgroundImage'],
 				['themes', $themesState],
 				['enforceTheme', $enforcedTheme],
 				['isUserThemingDisabled', false],
-				['navigationBar', ['userAppOrder' => [], 'enforcedDefaultApp' => 'forcedapp']],
-			);
+				['navigationBar', ['userAppOrder' => [], 'enforcedDefaultApp' => 'forced_id']],
+			]);
 
 		$expected = new TemplateResponse('theming', 'settings-personal');
 		$this->assertEquals($expected, $this->admin->getForm());
 	}
 
-	public function testGetSection() {
+	public function testGetSection(): void {
 		$this->assertSame('theming', $this->admin->getSection());
 	}
 
-	public function testGetPriority() {
+	public function testGetPriority(): void {
 		$this->assertSame(40, $this->admin->getPriority());
 	}
 
@@ -158,6 +161,7 @@ class PersonalTest extends TestCase {
 				$config,
 				$l10n,
 				$appManager,
+				null,
 			),
 			'light' => new LightTheme(
 				$util,
@@ -168,6 +172,7 @@ class PersonalTest extends TestCase {
 				$config,
 				$l10n,
 				$appManager,
+				null,
 			),
 			'dark' => new DarkTheme(
 				$util,
@@ -178,6 +183,7 @@ class PersonalTest extends TestCase {
 				$config,
 				$l10n,
 				$appManager,
+				null,
 			),
 			'light-highcontrast' => new HighContrastTheme(
 				$util,
@@ -188,6 +194,7 @@ class PersonalTest extends TestCase {
 				$config,
 				$l10n,
 				$appManager,
+				null,
 			),
 			'dark-highcontrast' => new DarkHighContrastTheme(
 				$util,
@@ -198,6 +205,7 @@ class PersonalTest extends TestCase {
 				$config,
 				$l10n,
 				$appManager,
+				null,
 			),
 			'opendyslexic' => new DyslexiaFont(
 				$util,
@@ -208,6 +216,7 @@ class PersonalTest extends TestCase {
 				$config,
 				$l10n,
 				$appManager,
+				null,
 			),
 		];
 	}

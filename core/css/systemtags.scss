@@ -1,4 +1,4 @@
-/**
+/*!
  * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -8,8 +8,7 @@
 	.select2-result-label {
 		.checkmark {
 			visibility: hidden;
-			margin-left: -5px;
-			margin-right: 5px;
+			margin-inline: -5px 5px;
 			padding: 4px;
 		}
 		.new-item .systemtags-actions {
@@ -28,7 +27,7 @@
 	}
 	.systemtags-actions {
 		position: absolute;
-		right: 5px;
+		inset-inline-end: 5px;
 	}
 	.systemtags-rename-form {
 		display: inline-block;

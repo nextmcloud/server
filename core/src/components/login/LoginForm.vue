@@ -101,7 +101,7 @@
 import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl, imagePath } from '@nextcloud/router'
-import { debounce } from 'debounce'
+import debounce from 'debounce'
 
 import NcPasswordField from '@nextcloud/vue/dist/Components/NcPasswordField.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
@@ -274,7 +274,13 @@ export default {
 		updateUsername() {
 			this.$emit('update:username', this.user)
 		},
-		submit() {
+		submit(event) {
+			if (this.loading) {
+				// Prevent the form from being submitted twice
+				event.preventDefault()
+				return
+			}
+
 			this.loading = true
 			this.$emit('submit')
 		},
@@ -284,7 +290,7 @@ export default {
 
 <style lang="scss" scoped>
 .login-form {
-	text-align: left;
+	text-align: start;
 	font-size: 1rem;
 
 	&__fieldset {

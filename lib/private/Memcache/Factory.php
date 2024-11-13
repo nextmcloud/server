@@ -6,6 +6,7 @@
  */
 namespace OC\Memcache;
 
+use Closure;
 use OCP\Cache\CappedMemoryCache;
 use OCP\ICache;
 use OCP\ICacheFactory;
@@ -16,7 +17,7 @@ use Psr\Log\LoggerInterface;
 class Factory implements ICacheFactory {
 	public const NULL_CACHE = NullCache::class;
 
-	private string $globalPrefix;
+	private ?string $globalPrefix = null;
 
 	private LoggerInterface $logger;
 
@@ -40,17 +41,23 @@ class Factory implements ICacheFactory {
 	private IProfiler $profiler;
 
 	/**
-	 * @param string $globalPrefix
+	 * @param Closure $globalPrefixClosure
 	 * @param LoggerInterface $logger
 	 * @param ?class-string<ICache> $localCacheClass
 	 * @param ?class-string<ICache> $distributedCacheClass
 	 * @param ?class-string<IMemcache> $lockingCacheClass
 	 * @param string $logFile
 	 */
-	public function __construct(string $globalPrefix, LoggerInterface $logger, IProfiler $profiler,
-		?string $localCacheClass = null, ?string $distributedCacheClass = null, ?string $lockingCacheClass = null, string $logFile = '') {
+	public function __construct(
+		private Closure $globalPrefixClosure,
+		LoggerInterface $logger,
+		IProfiler $profiler,
+		?string $localCacheClass = null,
+		?string $distributedCacheClass = null,
+		?string $lockingCacheClass = null,
+		string $logFile = '',
+	) {
 		$this->logFile = $logFile;
-		$this->globalPrefix = $globalPrefix;
 
 		if (!$localCacheClass) {
 			$localCacheClass = self::NULL_CACHE;
@@ -59,19 +66,34 @@ class Factory implements ICacheFactory {
 		if (!$distributedCacheClass) {
 			$distributedCacheClass = $localCacheClass;
 		}
+
 		$distributedCacheClass = ltrim($distributedCacheClass, '\\');
 
 		$missingCacheMessage = 'Memcache {class} not available for {use} cache';
 		$missingCacheHint = 'Is the matching PHP module installed and enabled?';
 		if (!class_exists($localCacheClass) || !$localCacheClass::isAvailable()) {
-			throw new \OCP\HintException(strtr($missingCacheMessage, [
-				'{class}' => $localCacheClass, '{use}' => 'local'
-			]), $missingCacheHint);
+			if (\OC::$CLI && !defined('PHPUNIT_RUN') && $localCacheClass === APCu::class) {
+				// CLI should not fail if APCu is not available but fallback to NullCache.
+				// This can be the case if APCu is used without apc.enable_cli=1.
+				// APCu however cannot be shared between PHP instances (CLI and web) anyway.
+				$localCacheClass = self::NULL_CACHE;
+			} else {
+				throw new \OCP\HintException(strtr($missingCacheMessage, [
+					'{class}' => $localCacheClass, '{use}' => 'local'
+				]), $missingCacheHint);
+			}
 		}
 		if (!class_exists($distributedCacheClass) || !$distributedCacheClass::isAvailable()) {
-			throw new \OCP\HintException(strtr($missingCacheMessage, [
-				'{class}' => $distributedCacheClass, '{use}' => 'distributed'
-			]), $missingCacheHint);
+			if (\OC::$CLI && !defined('PHPUNIT_RUN') && $distributedCacheClass === APCu::class) {
+				// CLI should not fail if APCu is not available but fallback to NullCache.
+				// This can be the case if APCu is used without apc.enable_cli=1.
+				// APCu however cannot be shared between Nextcloud (PHP) instances anyway.
+				$distributedCacheClass = self::NULL_CACHE;
+			} else {
+				throw new \OCP\HintException(strtr($missingCacheMessage, [
+					'{class}' => $distributedCacheClass, '{use}' => 'distributed'
+				]), $missingCacheHint);
+			}
 		}
 		if (!($lockingCacheClass && class_exists($lockingCacheClass) && $lockingCacheClass::isAvailable())) {
 			// don't fall back since the fallback might not be suitable for storing lock
@@ -85,6 +107,13 @@ class Factory implements ICacheFactory {
 		$this->profiler = $profiler;
 	}
 
+	private function getGlobalPrefix(): ?string {
+		if (is_null($this->globalPrefix)) {
+			$this->globalPrefix = ($this->globalPrefixClosure)();
+		}
+		return $this->globalPrefix;
+	}
+
 	/**
 	 * create a cache instance for storing locks
 	 *
@@ -92,8 +121,13 @@ class Factory implements ICacheFactory {
 	 * @return IMemcache
 	 */
 	public function createLocking(string $prefix = ''): IMemcache {
+		$globalPrefix = $this->getGlobalPrefix();
+		if (is_null($globalPrefix)) {
+			return new ArrayCache($prefix);
+		}
+
 		assert($this->lockingCacheClass !== null);
-		$cache = new $this->lockingCacheClass($this->globalPrefix . '/' . $prefix);
+		$cache = new $this->lockingCacheClass($globalPrefix . '/' . $prefix);
 		if ($this->lockingCacheClass === Redis::class && $this->profiler->isEnabled()) {
 			// We only support the profiler with Redis
 			$cache = new ProfilerWrapperCache($cache, 'Locking');
@@ -114,8 +148,13 @@ class Factory implements ICacheFactory {
 	 * @return ICache
 	 */
 	public function createDistributed(string $prefix = ''): ICache {
+		$globalPrefix = $this->getGlobalPrefix();
+		if (is_null($globalPrefix)) {
+			return new ArrayCache($prefix);
+		}
+
 		assert($this->distributedCacheClass !== null);
-		$cache = new $this->distributedCacheClass($this->globalPrefix . '/' . $prefix);
+		$cache = new $this->distributedCacheClass($globalPrefix . '/' . $prefix);
 		if ($this->distributedCacheClass === Redis::class && $this->profiler->isEnabled()) {
 			// We only support the profiler with Redis
 			$cache = new ProfilerWrapperCache($cache, 'Distributed');
@@ -136,8 +175,13 @@ class Factory implements ICacheFactory {
 	 * @return ICache
 	 */
 	public function createLocal(string $prefix = ''): ICache {
+		$globalPrefix = $this->getGlobalPrefix();
+		if (is_null($globalPrefix)) {
+			return new ArrayCache($prefix);
+		}
+
 		assert($this->localCacheClass !== null);
-		$cache = new $this->localCacheClass($this->globalPrefix . '/' . $prefix);
+		$cache = new $this->localCacheClass($globalPrefix . '/' . $prefix);
 		if ($this->localCacheClass === Redis::class && $this->profiler->isEnabled()) {
 			// We only support the profiler with Redis
 			$cache = new ProfilerWrapperCache($cache, 'Local');

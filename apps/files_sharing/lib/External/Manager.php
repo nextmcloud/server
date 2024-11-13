@@ -1,35 +1,8 @@
 <?php
 /**
- * @copyright Copyright (c) 2016, ownCloud, Inc.
- *
- * @author Bjoern Schiessle <bjoern@schiessle.org>
- * @author Björn Schießle <bjoern@schiessle.org>
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Daniel Hansson <daniel@techandme.se>
- * @author Joas Schilling <coding@schilljs.com>
- * @author Jörn Friedrich Dreyer <jfd@butonic.de>
- * @author Julius Härtl <jus@bitgrid.net>
- * @author Lukas Reschke <lukas@statuscode.ch>
- * @author Morris Jobke <hey@morrisjobke.de>
- * @author Robin Appelman <robin@icewind.nl>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Stefan Weil <sw@weilnetz.de>
- * @author Vincent Petry <vincent@nextcloud.com>
- *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program. If not, see <http://www.gnu.org/licenses/>
- *
+ * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 namespace OCA\Files_Sharing\External;
@@ -38,11 +11,13 @@ use Doctrine\DBAL\Driver\Exception;
 use OC\Files\Filesystem;
 use OCA\FederatedFileSharing\Events\FederatedShareAddedEvent;
 use OCA\Files_Sharing\Helper;
+use OCA\Files_Sharing\ResponseDefinitions;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudFederationFactory;
 use OCP\Federation\ICloudFederationProviderManager;
 use OCP\Files;
+use OCP\Files\Events\InvalidateMountCacheEvent;
 use OCP\Files\NotFoundException;
 use OCP\Files\Storage\IStorageFactory;
 use OCP\Http\Client\IClientService;
@@ -56,77 +31,36 @@ use OCP\Share;
 use OCP\Share\IShare;
 use Psr\Log\LoggerInterface;
 
+/**
+ * @psalm-import-type Files_SharingRemoteShare from ResponseDefinitions
+ */
 class Manager {
 	public const STORAGE = '\OCA\Files_Sharing\External\Storage';
 
 	/** @var string|null */
 	private $uid;
 
-	/** @var IDBConnection */
-	private $connection;
-
 	/** @var \OC\Files\Mount\Manager */
 	private $mountManager;
 
-	/** @var IStorageFactory */
-	private $storageLoader;
-
-	/** @var IClientService */
-	private $clientService;
-
-	/** @var IManager */
-	private $notificationManager;
-
-	/** @var IDiscoveryService */
-	private $discoveryService;
-
-	/** @var ICloudFederationProviderManager */
-	private $cloudFederationProviderManager;
-
-	/** @var ICloudFederationFactory */
-	private $cloudFederationFactory;
-
-	/** @var IGroupManager */
-	private $groupManager;
-
-	/** @var IUserManager */
-	private $userManager;
-
-	/** @var IEventDispatcher */
-	private $eventDispatcher;
-
-	/** @var LoggerInterface */
-	private $logger;
-
 	public function __construct(
-		IDBConnection                   $connection,
-		\OC\Files\Mount\Manager         $mountManager,
-		IStorageFactory                 $storageLoader,
-		IClientService                  $clientService,
-		IManager                        $notificationManager,
-		IDiscoveryService               $discoveryService,
-		ICloudFederationProviderManager $cloudFederationProviderManager,
-		ICloudFederationFactory         $cloudFederationFactory,
-		IGroupManager                   $groupManager,
-		IUserManager                    $userManager,
-		IUserSession                    $userSession,
-		IEventDispatcher                $eventDispatcher,
-		LoggerInterface                 $logger
+		private IDBConnection $connection,
+		\OC\Files\Mount\Manager $mountManager,
+		private IStorageFactory $storageLoader,
+		private IClientService $clientService,
+		private IManager $notificationManager,
+		private IDiscoveryService $discoveryService,
+		private ICloudFederationProviderManager $cloudFederationProviderManager,
+		private ICloudFederationFactory $cloudFederationFactory,
+		private IGroupManager $groupManager,
+		private IUserManager $userManager,
+		IUserSession $userSession,
+		private IEventDispatcher $eventDispatcher,
+		private LoggerInterface $logger,
 	) {
 		$user = $userSession->getUser();
-		$this->connection = $connection;
 		$this->mountManager = $mountManager;
-		$this->storageLoader = $storageLoader;
-		$this->clientService = $clientService;
 		$this->uid = $user ? $user->getUID() : null;
-		$this->notificationManager = $notificationManager;
-		$this->discoveryService = $discoveryService;
-		$this->cloudFederationProviderManager = $cloudFederationProviderManager;
-		$this->cloudFederationFactory = $cloudFederationFactory;
-		$this->groupManager = $groupManager;
-		$this->userManager = $userManager;
-		$this->eventDispatcher = $eventDispatcher;
-		$this->logger = $logger;
 	}
 
 	/**
@@ -146,7 +80,7 @@ class Manager {
 	 * @throws \Doctrine\DBAL\Exception
 	 */
 	public function addShare($remote, $token, $password, $name, $owner, $shareType, $accepted = false, $user = null, $remoteId = '', $parent = -1) {
-		$user = $user ? $user : $this->uid;
+		$user = $user ?? $this->uid;
 		$accepted = $accepted ? IShare::STATUS_ACCEPTED : IShare::STATUS_PENDING;
 		$name = Filesystem::normalizePath('/' . $name);
 
@@ -374,7 +308,7 @@ class Manager {
 				$this->sendFeedbackToRemote($share['remote'], $share['share_token'], $share['remote_id'], 'accept');
 				$event = new FederatedShareAddedEvent($share['remote']);
 				$this->eventDispatcher->dispatchTyped($event);
-				$this->eventDispatcher->dispatchTyped(new Files\Events\InvalidateMountCacheEvent($this->userManager->get($this->uid)));
+				$this->eventDispatcher->dispatchTyped(new InvalidateMountCacheEvent($this->userManager->get($this->uid)));
 				$result = true;
 			}
 		}
@@ -594,7 +528,7 @@ class Manager {
 		');
 		$result = (bool)$query->execute([$target, $targetHash, $sourceHash, $this->uid]);
 
-		$this->eventDispatcher->dispatchTyped(new Files\Events\InvalidateMountCacheEvent($this->userManager->get($this->uid)));
+		$this->eventDispatcher->dispatchTyped(new InvalidateMountCacheEvent($this->userManager->get($this->uid)));
 
 		return $result;
 	}
@@ -733,12 +667,12 @@ class Manager {
 			$qb = $this->connection->getQueryBuilder();
 			// delete group share entry and matching sub-entries
 			$qb->delete('share_external')
-			   ->where(
-			   	$qb->expr()->orX(
-			   		$qb->expr()->eq('id', $qb->createParameter('share_id')),
-			   		$qb->expr()->eq('parent', $qb->createParameter('share_parent_id'))
-			   	)
-			   );
+				->where(
+					$qb->expr()->orX(
+						$qb->expr()->eq('id', $qb->createParameter('share_id')),
+						$qb->expr()->eq('parent', $qb->createParameter('share_parent_id'))
+					)
+				);
 
 			foreach ($shares as $share) {
 				$qb->setParameter('share_id', $share['id']);
@@ -756,7 +690,7 @@ class Manager {
 	/**
 	 * return a list of shares which are not yet accepted by the user
 	 *
-	 * @return array list of open server-to-server shares
+	 * @return list<Files_SharingRemoteShare> list of open server-to-server shares
 	 */
 	public function getOpenShares() {
 		return $this->getShares(false);
@@ -765,7 +699,7 @@ class Manager {
 	/**
 	 * return a list of shares which are accepted by the user
 	 *
-	 * @return array list of accepted server-to-server shares
+	 * @return list<Files_SharingRemoteShare> list of accepted server-to-server shares
 	 */
 	public function getAcceptedShares() {
 		return $this->getShares(true);
@@ -777,7 +711,7 @@ class Manager {
 	 * @param bool|null $accepted True for accepted only,
 	 *                            false for not accepted,
 	 *                            null for all shares of the user
-	 * @return array list of open server-to-server shares
+	 * @return list<Files_SharingRemoteShare> list of open server-to-server shares
 	 */
 	private function getShares($accepted) {
 		$user = $this->userManager->get($this->uid);

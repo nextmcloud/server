@@ -37,17 +37,19 @@ class Base extends Command implements CompletionAwareInterface {
 		;
 	}
 
-	protected function writeArrayInOutputFormat(InputInterface $input, OutputInterface $output, array $items, string $prefix = '  - '): void {
+	protected function writeArrayInOutputFormat(InputInterface $input, OutputInterface $output, iterable $items, string $prefix = '  - '): void {
 		switch ($input->getOption('output')) {
 			case self::OUTPUT_FORMAT_JSON:
+				$items = (is_array($items) ? $items : iterator_to_array($items));
 				$output->writeln(json_encode($items));
 				break;
 			case self::OUTPUT_FORMAT_JSON_PRETTY:
+				$items = (is_array($items) ? $items : iterator_to_array($items));
 				$output->writeln(json_encode($items, JSON_PRETTY_PRINT));
 				break;
 			default:
 				foreach ($items as $key => $item) {
-					if (is_array($item)) {
+					if (is_iterable($item)) {
 						$output->writeln($prefix . $key . ':');
 						$this->writeArrayInOutputFormat($input, $output, $item, '  ' . $prefix);
 						continue;
@@ -147,7 +149,7 @@ class Base extends Command implements CompletionAwareInterface {
 		$this->interrupted = true;
 	}
 
-	public function run(InputInterface $input, OutputInterface $output) {
+	public function run(InputInterface $input, OutputInterface $output): int {
 		// check if the php pcntl_signal functions are accessible
 		$this->php_pcntl_signal = function_exists('pcntl_signal');
 		if ($this->php_pcntl_signal) {

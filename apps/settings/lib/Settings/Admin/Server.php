@@ -41,7 +41,7 @@ class Server implements IDelegatedSettings {
 		$cliBasedCronUser = $cliBasedCronPossible ? (posix_getpwuid($ownerConfigFile)['name'] ?? '') : '';
 
 		// Background jobs
-		$this->initialStateService->provideInitialState('backgroundJobsMode', $this->config->getAppValue('core', 'backgroundjobs_mode', 'ajax'));
+		$this->initialStateService->provideInitialState('backgroundJobsMode', $this->appConfig->getValueString('core', 'backgroundjobs_mode', 'ajax'));
 		$this->initialStateService->provideInitialState('lastCron', $this->appConfig->getValueInt('core', 'lastcron', 0));
 		$this->initialStateService->provideInitialState('cronMaxAge', $this->cronMaxAge());
 		$this->initialStateService->provideInitialState('cronErrors', $this->config->getAppValue('core', 'cronErrors'));
@@ -67,7 +67,7 @@ class Server implements IDelegatedSettings {
 
 		$result = $query->execute();
 		if ($row = $result->fetch()) {
-			$maxAge = (int) $row['last_checked'];
+			$maxAge = (int)$row['last_checked'];
 		} else {
 			$maxAge = $this->timeFactory->getTime();
 		}
@@ -85,8 +85,8 @@ class Server implements IDelegatedSettings {
 
 	/**
 	 * @return int whether the form should be rather on the top or bottom of
-	 * the admin section. The forms are arranged in ascending order of the
-	 * priority values. It is required to return a value between 0 and 100.
+	 *             the admin section. The forms are arranged in ascending order of the
+	 *             priority values. It is required to return a value between 0 and 100.
 	 *
 	 * E.g.: 70
 	 */

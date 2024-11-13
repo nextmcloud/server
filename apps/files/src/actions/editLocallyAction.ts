@@ -6,11 +6,62 @@ import { encodePath } from '@nextcloud/paths'
 import { generateOcsUrl } from '@nextcloud/router'
 import { getCurrentUser } from '@nextcloud/auth'
 import { FileAction, Permission, type Node } from '@nextcloud/files'
-import { showError } from '@nextcloud/dialogs'
+import { showError, DialogBuilder } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
-
 import LaptopSvg from '@mdi/svg/svg/laptop.svg?raw'
+import IconWeb from '@mdi/svg/svg/web.svg?raw'
+import { isPublicShare } from '@nextcloud/sharing/public'
+
+const confirmLocalEditDialog = (
+	localEditCallback: (openingLocally: boolean) => void = () => {},
+) => {
+	let callbackCalled = false
+
+	return (new DialogBuilder())
+		.setName(t('files', 'Edit file locally'))
+		.setText(t('files', 'The file should now open on your device. If it doesn\'t, please check that you have the desktop app installed.'))
+		.setButtons([
+			{
+				label: t('files', 'Retry and close'),
+				type: 'secondary',
+				callback: () => {
+					callbackCalled = true
+					localEditCallback(true)
+				},
+			},
+			{
+				label: t('files', 'Edit online'),
+				icon: IconWeb,
+				type: 'primary',
+				callback: () => {
+					callbackCalled = true
+					localEditCallback(false)
+				},
+			},
+		])
+		.build()
+		.show()
+		.then(() => {
+			// Ensure the callback is called even if the dialog is dismissed in other ways
+			if (!callbackCalled) {
+				localEditCallback(false)
+			}
+		})
+}
+
+const attemptOpenLocalClient = async (path: string) => {
+	openLocalClient(path)
+	confirmLocalEditDialog(
+		(openLocally: boolean) => {
+			if (!openLocally) {
+				window.OCA.Viewer.open({ path })
+				return
+			}
+			openLocalClient(path)
+		},
+	)
+}
 
 const openLocalClient = async function(path: string) {
 	const link = generateOcsUrl('apps/files/api/v1') + '/openlocaleditor?format=json'
@@ -21,7 +72,7 @@ const openLocalClient = async function(path: string) {
 		let url = `nc://open/${uid}@` + window.location.host + encodePath(path)
 		url += '?token=' + result.data.ocs.data.token
 
-		window.location.href = url
+		window.open(url, '_self')
 	} catch (error) {
 		showError(t('files', 'Failed to redirect to client'))
 	}
@@ -39,11 +90,16 @@ export const action = new FileAction({
 			return false
 		}
 
+		// does not work with shares
+		if (isPublicShare()) {
+			return false
+		}
+
 		return (nodes[0].permissions & Permission.UPDATE) !== 0
 	},
 
 	async exec(node: Node) {
-		openLocalClient(node.path)
+		attemptOpenLocalClient(node.path)
 		return null
 	},
 

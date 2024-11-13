@@ -52,7 +52,7 @@ import NcTextArea from '@nextcloud/vue/dist/Components/NcTextArea.js'
 import HeaderBar from './HeaderBar.vue'
 
 import { savePrimaryAccountProperty } from '../../../service/PersonalInfo/PersonalInfoService.js'
-import { handleError } from '../../../utils/handlers.js'
+import { handleError } from '../../../utils/handlers.ts'
 
 export default {
 	name: 'AccountPropertySection',
@@ -148,7 +148,7 @@ export default {
 					return
 				}
 				await this.updateProperty(value)
-			}, 500)
+			}, 1000)
 		},
 	},
 
@@ -207,7 +207,7 @@ section {
 
 			display: flex;
 			gap: 0 2px;
-			margin-right: 5px;
+			margin-inline-end: 5px;
 			margin-bottom: 5px;
 		}
 	}
@@ -218,7 +218,7 @@ section {
 		align-items: center;
 
 		&__icon {
-			margin-right: 8px;
+			margin-inline-end: 8px;
 			align-self: start;
 			margin-top: 4px;
 		}

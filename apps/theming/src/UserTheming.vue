@@ -6,7 +6,6 @@
 <template>
 	<section>
 		<NcSettingsSection :name="t('theming', 'Appearance and accessibility settings')"
-			:limit-width="false"
 			class="theming">
 			<!-- eslint-disable-next-line vue/no-v-html -->
 			<p v-html="description" />
@@ -33,6 +32,14 @@
 					type="font"
 					@change="changeFont" />
 			</div>
+
+			<h3>{{ t('theming', 'Misc accessibility options') }}</h3>
+			<NcCheckboxRadioSwitch type="checkbox"
+				:checked="enableBlurFilter === 'yes'"
+				:indeterminate="enableBlurFilter === ''"
+				@update:checked="changeEnableBlurFilter">
+				{{ t('theming', 'Enable blur background filter (may increase GPU load)') }}
+			</NcCheckboxRadioSwitch>
 		</NcSettingsSection>
 
 		<NcSettingsSection :name="t('theming', 'Primary color')"
@@ -86,6 +93,7 @@ import UserPrimaryColor from './components/UserPrimaryColor.vue'
 const availableThemes = loadState('theming', 'themes', [])
 const enforceTheme = loadState('theming', 'enforceTheme', '')
 const shortcutsDisabled = loadState('theming', 'shortcutsDisabled', false)
+const enableBlurFilter = loadState('theming', 'enableBlurFilter', '')
 
 const isUserThemingDisabled = loadState('theming', 'isUserThemingDisabled')
 
@@ -109,6 +117,8 @@ export default {
 			enforceTheme,
 			shortcutsDisabled,
 			isUserThemingDisabled,
+
+			enableBlurFilter,
 		}
 	},
 
@@ -223,6 +233,22 @@ export default {
 			}
 		},
 
+		async changeEnableBlurFilter() {
+			this.enableBlurFilter = this.enableBlurFilter === 'no' ? 'yes' : 'no'
+			await axios({
+				url: generateOcsUrl('apps/provisioning_api/api/v1/config/users/{appId}/{configKey}', {
+					appId: 'theming',
+					configKey: 'force_enable_blur_filter',
+				}),
+				data: {
+					configValue: this.enableBlurFilter,
+				},
+				method: 'POST',
+			})
+			// Refresh the styles
+			this.$emit('update:background')
+		},
+
 		updateBodyAttributes() {
 			const enabledThemesIDs = this.themes.filter(theme => theme.enabled === true).map(theme => theme.id)
 			const enabledFontsIDs = this.fonts.filter(font => font.enabled === true).map(font => font.id)
@@ -291,7 +317,6 @@ export default {
 		margin-top: var(--gap);
 		column-gap: var(--gap);
 		row-gap: var(--gap);
-		grid-template-columns: 1fr 1fr;
 	}
 }
 

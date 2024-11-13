@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
+# SPDX-FileCopyrightText: 2015-2016 ownCloud, Inc.
+# SPDX-License-Identifier: AGPL-3.0-only
 default:
   autoload:
     '': "%paths.base%/../features/bootstrap"
@@ -58,7 +61,7 @@ default:
       paths:
         - "%paths.base%/../dav_features"
       contexts:
-        - FeatureContext:
+        - DavFeatureContext:
             baseUrl:  http://localhost:8080/ocs/
             admin:
               - admin

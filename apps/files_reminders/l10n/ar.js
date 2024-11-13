@@ -19,7 +19,7 @@ OC.L10N.register(
     "Reminder cleared for \"{fileName}\"" : "تمّ إلغاء التذكير للملف \"{fileName}\"",
     "Failed to clear reminder" : "تعذّرت إزالة التذكير",
     "Reminder set" : "تمّ وضع تذكير",
-    "Set custom reminder" : "تعيين تذكير مُخصّص",
+    "Set custom reminder" : "تعيين تذكير مخصص",
     "Later today" : "في وقت لاحقٍ اليوم",
     "Set reminder for later today" : "عيّن التذكير لوقت لاحقٍ اليوم",
     "Tomorrow" : "غدا",
@@ -27,9 +27,6 @@ OC.L10N.register(
     "This weekend" : "نهاية هذا الأسبوع",
     "Set reminder for this weekend" : "عيّن التذكير لنهاية هذا الأسبوع",
     "Next week" : "الأسبوع القادم",
-    "Set reminder for next week" : "عيّن التذكير للأسبوع القادم",
-    "Back" : "عودة",
-    "Reminder cleared" : "تمّت إزالة التذكير",
-    "Failed to load reminder" : "تعذّر تحميل التذكير"
+    "Set reminder for next week" : "عيّن التذكير للأسبوع القادم"
 },
 "nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;");

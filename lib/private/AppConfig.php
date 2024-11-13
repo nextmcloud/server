@@ -76,7 +76,7 @@ class AppConfig implements IAppConfig {
 	/**
 	 * @inheritDoc
 	 *
-	 * @return string[] list of app ids
+	 * @return list<string> list of app ids
 	 * @since 7.0.0
 	 */
 	public function getApps(): array {
@@ -92,12 +92,12 @@ class AppConfig implements IAppConfig {
 	 *
 	 * @param string $app id of the app
 	 *
-	 * @return string[] list of stored config keys
+	 * @return list<string> list of stored config keys
 	 * @since 29.0.0
 	 */
 	public function getKeys(string $app): array {
 		$this->assertParams($app);
-		$this->loadConfigAll();
+		$this->loadConfigAll($app);
 		$keys = array_merge(array_keys($this->fastCache[$app] ?? []), array_keys($this->lazyCache[$app] ?? []));
 		sort($keys);
 
@@ -117,7 +117,7 @@ class AppConfig implements IAppConfig {
 	 */
 	public function hasKey(string $app, string $key, ?bool $lazy = false): bool {
 		$this->assertParams($app, $key);
-		$this->loadConfig($lazy);
+		$this->loadConfig($app, $lazy);
 
 		if ($lazy === null) {
 			$appCache = $this->getAllValues($app);
@@ -142,7 +142,7 @@ class AppConfig implements IAppConfig {
 	 */
 	public function isSensitive(string $app, string $key, ?bool $lazy = false): bool {
 		$this->assertParams($app, $key);
-		$this->loadConfig($lazy);
+		$this->loadConfig(null, $lazy);
 
 		if (!isset($this->valueTypes[$app][$key])) {
 			throw new AppConfigUnknownKeyException('unknown config key');
@@ -190,7 +190,7 @@ class AppConfig implements IAppConfig {
 	public function getAllValues(string $app, string $prefix = '', bool $filtered = false): array {
 		$this->assertParams($app, $prefix);
 		// if we want to filter values, we need to get sensitivity
-		$this->loadConfigAll();
+		$this->loadConfigAll($app);
 		// array_merge() will remove numeric keys (here config keys), so addition arrays instead
 		$values = $this->formatAppValues($app, ($this->fastCache[$app] ?? []) + ($this->lazyCache[$app] ?? []));
 		$values = array_filter(
@@ -234,7 +234,7 @@ class AppConfig implements IAppConfig {
 	 */
 	public function searchValues(string $key, bool $lazy = false, ?int $typedAs = null): array {
 		$this->assertParams('', $key, true);
-		$this->loadConfig($lazy);
+		$this->loadConfig(null, $lazy);
 
 		/** @var array<array-key, array<array-key, mixed>> $cache */
 		if ($lazy) {
@@ -281,7 +281,7 @@ class AppConfig implements IAppConfig {
 		string $app,
 		string $key,
 		string $default = '',
-		?bool $lazy = false
+		?bool $lazy = false,
 	): string {
 		try {
 			$lazy = ($lazy === null) ? $this->isLazy($app, $key) : $lazy;
@@ -316,7 +316,7 @@ class AppConfig implements IAppConfig {
 		string $app,
 		string $key,
 		string $default = '',
-		bool $lazy = false
+		bool $lazy = false,
 	): string {
 		return $this->getTypedValue($app, $key, $default, $lazy, self::VALUE_STRING);
 	}
@@ -339,7 +339,7 @@ class AppConfig implements IAppConfig {
 		string $app,
 		string $key,
 		int $default = 0,
-		bool $lazy = false
+		bool $lazy = false,
 	): int {
 		return (int)$this->getTypedValue($app, $key, (string)$default, $lazy, self::VALUE_INT);
 	}
@@ -399,7 +399,7 @@ class AppConfig implements IAppConfig {
 		string $app,
 		string $key,
 		array $default = [],
-		bool $lazy = false
+		bool $lazy = false,
 	): array {
 		try {
 			$defaultJson = json_encode($default, JSON_THROW_ON_ERROR);
@@ -427,10 +427,10 @@ class AppConfig implements IAppConfig {
 		string $key,
 		string $default,
 		bool $lazy,
-		int $type
+		int $type,
 	): string {
 		$this->assertParams($app, $key, valueType: $type);
-		$this->loadConfig($lazy);
+		$this->loadConfig($app, $lazy);
 
 		/**
 		 * We ignore check if mixed type is requested.
@@ -487,7 +487,7 @@ class AppConfig implements IAppConfig {
 	 */
 	public function getValueType(string $app, string $key, ?bool $lazy = null): int {
 		$this->assertParams($app, $key);
-		$this->loadConfig($lazy);
+		$this->loadConfig($app, $lazy);
 
 		if (!isset($this->valueTypes[$app][$key])) {
 			throw new AppConfigUnknownKeyException('unknown config key');
@@ -526,7 +526,7 @@ class AppConfig implements IAppConfig {
 		string $key,
 		string $value,
 		bool $lazy = false,
-		bool $sensitive = false
+		bool $sensitive = false,
 	): bool {
 		return $this->setTypedValue(
 			$app,
@@ -557,7 +557,7 @@ class AppConfig implements IAppConfig {
 		string $key,
 		string $value,
 		bool $lazy = false,
-		bool $sensitive = false
+		bool $sensitive = false,
 	): bool {
 		return $this->setTypedValue(
 			$app,
@@ -587,7 +587,7 @@ class AppConfig implements IAppConfig {
 		string $key,
 		int $value,
 		bool $lazy = false,
-		bool $sensitive = false
+		bool $sensitive = false,
 	): bool {
 		if ($value > 2000000000) {
 			$this->logger->debug('You are trying to store an integer value around/above 2,147,483,647. This is a reminder that reaching this theoretical limit on 32 bits system will throw an exception.');
@@ -621,7 +621,7 @@ class AppConfig implements IAppConfig {
 		string $key,
 		float $value,
 		bool $lazy = false,
-		bool $sensitive = false
+		bool $sensitive = false,
 	): bool {
 		return $this->setTypedValue(
 			$app,
@@ -649,7 +649,7 @@ class AppConfig implements IAppConfig {
 		string $app,
 		string $key,
 		bool $value,
-		bool $lazy = false
+		bool $lazy = false,
 	): bool {
 		return $this->setTypedValue(
 			$app,
@@ -680,7 +680,7 @@ class AppConfig implements IAppConfig {
 		string $key,
 		array $value,
 		bool $lazy = false,
-		bool $sensitive = false
+		bool $sensitive = false,
 	): bool {
 		try {
 			return $this->setTypedValue(
@@ -718,10 +718,10 @@ class AppConfig implements IAppConfig {
 		string $key,
 		string $value,
 		bool $lazy,
-		int $type
+		int $type,
 	): bool {
 		$this->assertParams($app, $key);
-		$this->loadConfig($lazy);
+		$this->loadConfig(null, $lazy);
 
 		$sensitive = $this->isTyped(self::VALUE_SENSITIVE, $type);
 		$inserted = $refreshCache = false;
@@ -748,11 +748,11 @@ class AppConfig implements IAppConfig {
 			try {
 				$insert = $this->connection->getQueryBuilder();
 				$insert->insert('appconfig')
-					   ->setValue('appid', $insert->createNamedParameter($app))
-					   ->setValue('lazy', $insert->createNamedParameter(($lazy) ? 1 : 0, IQueryBuilder::PARAM_INT))
-					   ->setValue('type', $insert->createNamedParameter($type, IQueryBuilder::PARAM_INT))
-					   ->setValue('configkey', $insert->createNamedParameter($key))
-					   ->setValue('configvalue', $insert->createNamedParameter($value));
+					->setValue('appid', $insert->createNamedParameter($app))
+					->setValue('lazy', $insert->createNamedParameter(($lazy) ? 1 : 0, IQueryBuilder::PARAM_INT))
+					->setValue('type', $insert->createNamedParameter($type, IQueryBuilder::PARAM_INT))
+					->setValue('configkey', $insert->createNamedParameter($key))
+					->setValue('configvalue', $insert->createNamedParameter($value));
 				$insert->executeStatement();
 				$inserted = true;
 			} catch (DBException $e) {
@@ -807,11 +807,11 @@ class AppConfig implements IAppConfig {
 
 			$update = $this->connection->getQueryBuilder();
 			$update->update('appconfig')
-				   ->set('configvalue', $update->createNamedParameter($value))
-				   ->set('lazy', $update->createNamedParameter(($lazy) ? 1 : 0, IQueryBuilder::PARAM_INT))
-				   ->set('type', $update->createNamedParameter($type, IQueryBuilder::PARAM_INT))
-				   ->where($update->expr()->eq('appid', $update->createNamedParameter($app)))
-				   ->andWhere($update->expr()->eq('configkey', $update->createNamedParameter($key)));
+				->set('configvalue', $update->createNamedParameter($value))
+				->set('lazy', $update->createNamedParameter(($lazy) ? 1 : 0, IQueryBuilder::PARAM_INT))
+				->set('type', $update->createNamedParameter($type, IQueryBuilder::PARAM_INT))
+				->where($update->expr()->eq('appid', $update->createNamedParameter($app)))
+				->andWhere($update->expr()->eq('configkey', $update->createNamedParameter($key)));
 
 			$update->executeStatement();
 		}
@@ -869,9 +869,9 @@ class AppConfig implements IAppConfig {
 
 		$update = $this->connection->getQueryBuilder();
 		$update->update('appconfig')
-			   ->set('type', $update->createNamedParameter($type, IQueryBuilder::PARAM_INT))
-			   ->where($update->expr()->eq('appid', $update->createNamedParameter($app)))
-			   ->andWhere($update->expr()->eq('configkey', $update->createNamedParameter($key)));
+			->set('type', $update->createNamedParameter($type, IQueryBuilder::PARAM_INT))
+			->where($update->expr()->eq('appid', $update->createNamedParameter($app)))
+			->andWhere($update->expr()->eq('configkey', $update->createNamedParameter($key)));
 		$update->executeStatement();
 		$this->valueTypes[$app][$key] = $type;
 
@@ -927,10 +927,10 @@ class AppConfig implements IAppConfig {
 
 		$update = $this->connection->getQueryBuilder();
 		$update->update('appconfig')
-			   ->set('type', $update->createNamedParameter($type, IQueryBuilder::PARAM_INT))
-			   ->set('configvalue', $update->createNamedParameter($value))
-			   ->where($update->expr()->eq('appid', $update->createNamedParameter($app)))
-			   ->andWhere($update->expr()->eq('configkey', $update->createNamedParameter($key)));
+			->set('type', $update->createNamedParameter($type, IQueryBuilder::PARAM_INT))
+			->set('configvalue', $update->createNamedParameter($value))
+			->where($update->expr()->eq('appid', $update->createNamedParameter($app)))
+			->andWhere($update->expr()->eq('configkey', $update->createNamedParameter($key)));
 		$update->executeStatement();
 
 		$this->valueTypes[$app][$key] = $type;
@@ -962,9 +962,9 @@ class AppConfig implements IAppConfig {
 
 		$update = $this->connection->getQueryBuilder();
 		$update->update('appconfig')
-			   ->set('lazy', $update->createNamedParameter($lazy ? 1 : 0, IQueryBuilder::PARAM_INT))
-			   ->where($update->expr()->eq('appid', $update->createNamedParameter($app)))
-			   ->andWhere($update->expr()->eq('configkey', $update->createNamedParameter($key)));
+			->set('lazy', $update->createNamedParameter($lazy ? 1 : 0, IQueryBuilder::PARAM_INT))
+			->where($update->expr()->eq('appid', $update->createNamedParameter($app)))
+			->andWhere($update->expr()->eq('configkey', $update->createNamedParameter($key)));
 		$update->executeStatement();
 
 		// At this point, it is a lot safer to clean cache
@@ -1075,8 +1075,8 @@ class AppConfig implements IAppConfig {
 		$this->assertParams($app, $key);
 		$qb = $this->connection->getQueryBuilder();
 		$qb->delete('appconfig')
-		   ->where($qb->expr()->eq('appid', $qb->createNamedParameter($app)))
-		   ->andWhere($qb->expr()->eq('configkey', $qb->createNamedParameter($key)));
+			->where($qb->expr()->eq('appid', $qb->createNamedParameter($app)))
+			->andWhere($qb->expr()->eq('configkey', $qb->createNamedParameter($key)));
 		$qb->executeStatement();
 
 		unset($this->lazyCache[$app][$key]);
@@ -1094,7 +1094,7 @@ class AppConfig implements IAppConfig {
 		$this->assertParams($app);
 		$qb = $this->connection->getQueryBuilder();
 		$qb->delete('appconfig')
-		   ->where($qb->expr()->eq('appid', $qb->createNamedParameter($app)));
+			->where($qb->expr()->eq('appid', $qb->createNamedParameter($app)));
 		$qb->executeStatement();
 
 		$this->clearCache();
@@ -1176,8 +1176,8 @@ class AppConfig implements IAppConfig {
 		}
 	}
 
-	private function loadConfigAll(): void {
-		$this->loadConfig(null);
+	private function loadConfigAll(?string $app = null): void {
+		$this->loadConfig($app, null);
 	}
 
 	/**
@@ -1185,20 +1185,22 @@ class AppConfig implements IAppConfig {
 	 *
 	 * @param bool|null $lazy set to TRUE to load config set as lazy loaded, set to NULL to load all config
 	 */
-	private function loadConfig(?bool $lazy = false): void {
+	private function loadConfig(?string $app = null, ?bool $lazy = false): void {
 		if ($this->isLoaded($lazy)) {
 			return;
 		}
 
-		if (($lazy ?? true) !== false) { // if lazy is null or true, we debug log
-			$this->logger->debug('The loading of lazy AppConfig values have been requested', ['exception' => new \RuntimeException('ignorable exception')]);
+		// if lazy is null or true, we debug log
+		if (($lazy ?? true) !== false && $app !== null) {
+			$exception = new \RuntimeException('The loading of lazy AppConfig values have been triggered by app "' . $app . '"');
+			$this->logger->debug($exception->getMessage(), ['exception' => $exception, 'app' => $app]);
 		}
 
 		$qb = $this->connection->getQueryBuilder();
 		$qb->from('appconfig');
 
 		/**
-		 * The use of $this->>migrationCompleted is only needed to manage the
+		 * The use of $this->migrationCompleted is only needed to manage the
 		 * database during the upgrading process to nc29.
 		 */
 		if (!$this->migrationCompleted) {
@@ -1227,7 +1229,7 @@ class AppConfig implements IAppConfig {
 			}
 
 			$this->migrationCompleted = false;
-			$this->loadConfig($lazy);
+			$this->loadConfig($app, $lazy);
 
 			return;
 		}
@@ -1295,13 +1297,13 @@ class AppConfig implements IAppConfig {
 	 * @param string $default = null, default value if the key does not exist
 	 *
 	 * @return string the value or $default
-	 * @deprecated - use getValue*()
+	 * @deprecated 29.0.0 use getValue*()
 	 *
 	 * This function gets a value from the appconfig table. If the key does
 	 * not exist the default value will be returned
 	 */
 	public function getValue($app, $key, $default = null) {
-		$this->loadConfig();
+		$this->loadConfig($app);
 
 		return $this->fastCache[$app][$key] ?? $default;
 	}
@@ -1316,7 +1318,7 @@ class AppConfig implements IAppConfig {
 	 * @return bool True if the value was inserted or updated, false if the value was the same
 	 * @throws AppConfigTypeConflictException
 	 * @throws AppConfigUnknownKeyException
-	 * @deprecated
+	 * @deprecated 29.0.0
 	 */
 	public function setValue($app, $key, $value) {
 		/**
@@ -1378,7 +1380,7 @@ class AppConfig implements IAppConfig {
 	 * @return array<string, string|int|float|bool|array>
 	 */
 	private function formatAppValues(string $app, array $values, ?bool $lazy = null): array {
-		foreach($values as $key => $value) {
+		foreach ($values as $key => $value) {
 			try {
 				$type = $this->getValueType($app, $key, $lazy);
 			} catch (AppConfigUnknownKeyException $e) {
@@ -1422,7 +1424,7 @@ class AppConfig implements IAppConfig {
 	 * @param string $app
 	 *
 	 * @return string[]
-	 * @deprecated data sensitivity should be set when calling setValue*()
+	 * @deprecated 29.0.0 data sensitivity should be set when calling setValue*()
 	 */
 	private function getSensitiveKeys(string $app): array {
 		$sensitiveValues = [
@@ -1430,8 +1432,15 @@ class AppConfig implements IAppConfig {
 				'/^key_pairs$/',
 				'/^local_gskey$/',
 			],
+			'call_summary_bot' => [
+				'/^secret_(.*)$/',
+			],
 			'external' => [
 				'/^sites$/',
+				'/^jwt_token_privkey_(.*)$/',
+			],
+			'globalsiteselector' => [
+				'/^gss\.jwt\.key$/',
 			],
 			'integration_discourse' => [
 				'/^private_key$/',
@@ -1490,6 +1499,12 @@ class AppConfig implements IAppConfig {
 			'notify_push' => [
 				'/^cookie$/',
 			],
+			'onlyoffice' => [
+				'/^jwt_secret$/',
+			],
+			'passwords' => [
+				'/^SSEv1ServerKey$/',
+			],
 			'serverinfo' => [
 				'/^token$/',
 			],
@@ -1521,8 +1536,14 @@ class AppConfig implements IAppConfig {
 			'user_ldap' => [
 				'/^(s..)?ldap_agent_password$/',
 			],
+			'twofactor_gateway' => [
+				'/^.*token$/',
+			],
 			'user_saml' => [
 				'/^idp-x509cert$/',
+			],
+			'whiteboard' => [
+				'/^jwt_secret_key$/',
 			],
 		];
 
@@ -1533,7 +1554,7 @@ class AppConfig implements IAppConfig {
 	 * Clear all the cached app config values
 	 * New cache will be generated next time a config value is retrieved
 	 *
-	 * @deprecated use {@see clearCache()}
+	 * @deprecated 29.0.0 use {@see clearCache()}
 	 */
 	public function clearCachedConfig(): void {
 		$this->clearCache();

@@ -13,6 +13,8 @@ use Exception;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\Capabilities\ICapability;
 use OCP\IConfig;
@@ -30,7 +32,7 @@ class OCMController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private IConfig $config,
-		private LoggerInterface $logger
+		private LoggerInterface $logger,
 	) {
 		parent::__construct('core', $request);
 	}
@@ -39,15 +41,15 @@ class OCMController extends Controller {
 	 * generate a OCMProvider with local data and send it as DataResponse.
 	 * This replaces the old PHP file ocm-provider/index.php
 	 *
-	 * @PublicPage
-	 * @NoCSRFRequired
 	 * @psalm-suppress MoreSpecificReturnType
 	 * @psalm-suppress LessSpecificReturnStatement
-	 * @return DataResponse<Http::STATUS_OK, array{enabled: bool, apiVersion: string, endPoint: string, resourceTypes: array{name: string, shareTypes: string[], protocols: array{webdav: string}}[]}, array{X-NEXTCLOUD-OCM-PROVIDERS: true, Content-Type: 'application/json'}>|DataResponse<Http::STATUS_INTERNAL_SERVER_ERROR, array{message: string}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{enabled: bool, apiVersion: string, endPoint: string, resourceTypes: list<array{name: string, shareTypes: list<string>, protocols: array{webdav: string}}>}, array{X-NEXTCLOUD-OCM-PROVIDERS: true, Content-Type: 'application/json'}>|DataResponse<Http::STATUS_INTERNAL_SERVER_ERROR, array{message: string}, array{}>
 	 *
 	 * 200: OCM Provider details returned
 	 * 500: OCM not supported
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
 	#[FrontpageRoute(verb: 'GET', url: '/ocm-provider/')]
 	public function discovery(): DataResponse {
 		try {

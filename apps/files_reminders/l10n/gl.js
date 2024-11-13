@@ -16,7 +16,9 @@ OC.L10N.register(
     "Set reminder at custom date & time" : "Definir lembrete na data e hora personalizadas",
     "Reminder set for \"{fileName}\"" : "Lembrete definido para «{fileName}»",
     "Failed to set reminder" : "Produciuse un fallo ao definir o lembrete",
+    "Reminder cleared for \"{fileName}\"" : "Limpouse o lembrete para «{fileName}»",
     "Failed to clear reminder" : "Produciuse un fallo ao limpar o lembrete",
+    "Reminder set" : "Definir lembrete",
     "Set custom reminder" : "Definir un lembrete personalizado",
     "Later today" : "Hoxe máis tarde",
     "Set reminder for later today" : "Definir un lembrete para hoxe máis tarde",
@@ -25,9 +27,6 @@ OC.L10N.register(
     "This weekend" : "Este fin de semana",
     "Set reminder for this weekend" : "Definir un lembrete para este fin de semana",
     "Next week" : "Semana seguinte",
-    "Set reminder for next week" : "Definir un lembrete para a semana seguinte",
-    "Back" : "Atras",
-    "Reminder cleared" : "Limpouse o lembrete",
-    "Failed to load reminder" : "Produciuse un fallo ao cargar o lembrete"
+    "Set reminder for next week" : "Definir un lembrete para a semana seguinte"
 },
 "nplurals=2; plural=(n != 1);");

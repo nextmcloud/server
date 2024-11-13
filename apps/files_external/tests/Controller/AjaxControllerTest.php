@@ -1,26 +1,7 @@
 <?php
 /**
- * @copyright Copyright (c) 2016 Lukas Reschke <lukas@statuscode.ch>
- *
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Lukas Reschke <lukas@statuscode.ch>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- *
- * @license GNU AGPL version 3 or any later version
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
+ * SPDX-FileCopyrightText: 2016 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 namespace OCA\Files_External\Tests\Controller;
 
@@ -71,7 +52,7 @@ class AjaxControllerTest extends TestCase {
 		parent::setUp();
 	}
 
-	public function testGetSshKeys() {
+	public function testGetSshKeys(): void {
 		$this->rsa
 			->expects($this->once())
 			->method('createKey')
@@ -92,7 +73,7 @@ class AjaxControllerTest extends TestCase {
 		$this->assertEquals($expected, $this->ajaxController->getSshKeys());
 	}
 
-	public function testSaveGlobalCredentialsAsAdminForAnotherUser() {
+	public function testSaveGlobalCredentialsAsAdminForAnotherUser(): void {
 		$user = $this->createMock(IUser::class);
 		$user
 			->expects($this->once())
@@ -109,7 +90,7 @@ class AjaxControllerTest extends TestCase {
 		$this->assertSame(false, $this->ajaxController->saveGlobalCredentials('UidOfTestUser', 'test', 'password'));
 	}
 
-	public function testSaveGlobalCredentialsAsAdminForSelf() {
+	public function testSaveGlobalCredentialsAsAdminForSelf(): void {
 		$user = $this->createMock(IUser::class);
 		$user
 			->expects($this->once())
@@ -127,7 +108,7 @@ class AjaxControllerTest extends TestCase {
 		$this->assertSame(true, $this->ajaxController->saveGlobalCredentials('MyAdminUid', 'test', 'password'));
 	}
 
-	public function testSaveGlobalCredentialsAsNormalUserForSelf() {
+	public function testSaveGlobalCredentialsAsNormalUserForSelf(): void {
 		$user = $this->createMock(IUser::class);
 		$user
 			->method('getUID')
@@ -142,7 +123,7 @@ class AjaxControllerTest extends TestCase {
 		$this->assertSame(true, $this->ajaxController->saveGlobalCredentials('MyUserUid', 'test', 'password'));
 	}
 
-	public function testSaveGlobalCredentialsAsNormalUserForAnotherUser() {
+	public function testSaveGlobalCredentialsAsNormalUserForAnotherUser(): void {
 		$user = $this->createMock(IUser::class);
 		$user
 			->method('getUID')

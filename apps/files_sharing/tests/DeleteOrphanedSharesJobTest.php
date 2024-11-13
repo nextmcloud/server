@@ -1,32 +1,16 @@
 <?php
 /**
- * @copyright Copyright (c) 2016, ownCloud, Inc.
- *
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Joas Schilling <coding@schilljs.com>
- * @author Morris Jobke <hey@morrisjobke.de>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- * @author Thomas Müller <thomas.mueller@tmit.eu>
- * @author Vincent Petry <vincent@nextcloud.com>
- *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program. If not, see <http://www.gnu.org/licenses/>
- *
+ * SPDX-FileCopyrightText: 2017-2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 namespace OCA\Files_Sharing\Tests;
 
+use OC\Files\Filesystem;
 use OCA\Files_Sharing\DeleteOrphanedSharesJob;
+use OCP\Constants;
+use OCP\IDBConnection;
+use OCP\Server;
 use OCP\Share\IShare;
 
 /**
@@ -48,7 +32,7 @@ class DeleteOrphanedSharesJobTest extends \Test\TestCase {
 	private $job;
 
 	/**
-	 * @var \OCP\IDBConnection
+	 * @var IDBConnection
 	 */
 	private $connection;
 
@@ -68,7 +52,7 @@ class DeleteOrphanedSharesJobTest extends \Test\TestCase {
 		$appManager->disableApp('files_trashbin');
 
 		// just in case...
-		\OC\Files\Filesystem::getLoader()->removeStorageWrapper('oc_trashbin');
+		Filesystem::getLoader()->removeStorageWrapper('oc_trashbin');
 	}
 
 	public static function tearDownAfterClass(): void {
@@ -93,7 +77,7 @@ class DeleteOrphanedSharesJobTest extends \Test\TestCase {
 
 		\OC::registerShareHooks(\OC::$server->getSystemConfig());
 
-		$this->job = \OCP\Server::get(DeleteOrphanedSharesJob::class);
+		$this->job = Server::get(DeleteOrphanedSharesJob::class);
 	}
 
 	protected function tearDown(): void {
@@ -127,7 +111,7 @@ class DeleteOrphanedSharesJobTest extends \Test\TestCase {
 	/**
 	 * Test clearing orphaned shares
 	 */
-	public function testClearShares() {
+	public function testClearShares(): void {
 		$this->loginAsUser($this->user1);
 
 		$user1Folder = \OC::$server->getUserFolder($this->user1);
@@ -139,7 +123,7 @@ class DeleteOrphanedSharesJobTest extends \Test\TestCase {
 
 		$share->setNode($testSubFolder)
 			->setShareType(IShare::TYPE_USER)
-			->setPermissions(\OCP\Constants::PERMISSION_READ)
+			->setPermissions(Constants::PERMISSION_READ)
 			->setSharedWith($this->user2)
 			->setSharedBy($this->user1);
 

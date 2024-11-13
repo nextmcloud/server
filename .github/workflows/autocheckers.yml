@@ -45,21 +45,21 @@ jobs:
 
     strategy:
       matrix:
-        php-versions: ['8.3']
+        php-versions: ['8.1']
 
     name: PHP checkers
 
     steps:
       - name: Checkout server
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29
+        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938
         with:
           submodules: true
 
       - name: Set up php ${{ matrix.php-versions }}
-        uses: shivammathur/setup-php@7fdd3ece872ec7ec4c098ae5ab7637d5e0a96067 # v2
+        uses: shivammathur/setup-php@c541c155eee45413f5b09a52248675b1a2575231 #v2.31.1
         with:
           php-version: ${{ matrix.php-versions }}
-          extensions: ctype, json, mbstring
+          extensions: bz2, ctype, curl, dom, fileinfo, gd, iconv, intl, json, libxml, mbstring, openssl, pcntl, posix, session, simplexml, xmlreader, xmlwriter, zip, zlib, sqlite, pdo_sqlite
           coverage: none
           ini-file: development
         env:

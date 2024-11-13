@@ -1,31 +1,12 @@
 <?php
 /**
- * @copyright Copyright (c) 2016, ownCloud, Inc.
- *
- * @author Christoph Wurst <christoph@winzerhof-wurst.at>
- * @author Joas Schilling <coding@schilljs.com>
- * @author John Molakvoæ <skjnldsv@protonmail.com>
- * @author Roeland Jago Douma <roeland@famdouma.nl>
- *
- * @license AGPL-3.0
- *
- * This code is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License, version 3,
- * as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License, version 3,
- * along with this program. If not, see <http://www.gnu.org/licenses/>
- *
+ * SPDX-FileCopyrightText: 2017-2024 Nextcloud GmbH and Nextcloud contributors
+ * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
+ * SPDX-License-Identifier: AGPL-3.0-only
  */
 namespace OCA\Files_Sharing;
 
 use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IDBConnection;
 use OCP\Share\Exceptions\ShareNotFound;
@@ -37,21 +18,16 @@ use OCP\Share\IShare;
  */
 class ExpireSharesJob extends TimedJob {
 
-	/** @var IManager */
-	private $shareManager;
-
-	/** @var IDBConnection */
-	private $db;
-
-	public function __construct(ITimeFactory $time, IManager $shareManager, IDBConnection $db) {
-		$this->shareManager = $shareManager;
-		$this->db = $db;
-
+	public function __construct(
+		ITimeFactory $time,
+		private IManager $shareManager,
+		private IDBConnection $db,
+	) {
 		parent::__construct($time);
 
 		// Run once a day
 		$this->setInterval(24 * 60 * 60);
-		$this->setTimeSensitivity(IJob::TIME_INSENSITIVE);
+		$this->setTimeSensitivity(self::TIME_INSENSITIVE);
 	}
 
 

@@ -1,24 +1,7 @@
 <!--
-  - @copyright Copyright (c) 2019 John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @author John Molakvoæ <skjnldsv@protonmail.com>
-  -
-  - @license GNU AGPL version 3 or any later version
-  -
-  - This program is free software: you can redistribute it and/or modify
-  - it under the terms of the GNU Affero General Public License as
-  - published by the Free Software Foundation, either version 3 of the
-  - License, or (at your option) any later version.
-  -
-  - This program is distributed in the hope that it will be useful,
-  - but WITHOUT ANY WARRANTY; without even the implied warranty of
-  - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  - GNU Affero General Public License for more details.
-  -
-  - You should have received a copy of the GNU Affero General Public License
-  - along with this program. If not, see <http://www.gnu.org/licenses/>.
-  -
-  -->
+  - SPDX-FileCopyrightText: 2019 Nextcloud GmbH and Nextcloud contributors
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
 
 <template>
 	<div class="sharingTab" :class="{ 'icon-loading': loading }">
@@ -99,15 +82,20 @@
 </template>
 
 <script>
-import { CollectionList } from 'nextcloud-vue-collections'
-import { generateOcsUrl } from '@nextcloud/router'
-import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
-import axios from '@nextcloud/axios'
+import { getCurrentUser } from '@nextcloud/auth'
+import { orderBy } from '@nextcloud/files'
 import { loadState } from '@nextcloud/initial-state'
+import { generateOcsUrl } from '@nextcloud/router'
+import { CollectionList } from 'nextcloud-vue-collections'
 
-import Config from '../services/ConfigService.js'
+import axios from '@nextcloud/axios'
+import moment from '@nextcloud/moment'
+import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
+
 import { shareWithTitle } from '../utils/SharedWithMe.js'
-import Share from '../models/Share.js'
+
+import Config from '../services/ConfigService.ts'
+import Share from '../models/Share.ts'
 import ShareTypes from '../mixins/ShareTypes.js'
 import SharingEntryInternal from '../components/SharingEntryInternal.vue'
 import SharingEntrySimple from '../components/SharingEntrySimple.vue'
@@ -224,7 +212,7 @@ export default {
 				this.processSharedWithMe(sharedWithMe)
 				this.processShares(shares)
 			} catch (error) {
-				if (error.response.data?.ocs?.meta?.message) {
+				if (error?.response?.data?.ocs?.meta?.message) {
 					this.error = error.response.data.ocs.meta.message
 				} else {
 					this.error = t('files_sharing', 'Unable to load the shares list')
@@ -257,7 +245,7 @@ export default {
 		updateExpirationSubtitle(share) {
 			const expiration = moment(share.expireDate).unix()
 			this.$set(this.sharedWithMe, 'subtitle', t('files_sharing', 'Expires {relativetime}', {
-				relativetime: OC.Util.relativeModifiedDate(expiration * 1000),
+				relativetime: moment(expiration * 1000).fromNow(),
 			}))
 
 			// share have expired
@@ -277,10 +265,17 @@ export default {
 		 */
 		processShares({ data }) {
 			if (data.ocs && data.ocs.data && data.ocs.data.length > 0) {
-				// create Share objects and sort by newest
-				const shares = data.ocs.data
-					.map(share => new Share(share))
-					.sort((a, b) => b.createdTime - a.createdTime)
+				const shares = orderBy(
+					data.ocs.data.map(share => new Share(share)),
+					[
+						// First order by the "share with" label
+						(share) => share.shareWithDisplayName,
+						// Then by the label
+						(share) => share.label,
+						// And last resort order by createdTime
+						(share) => share.createdTime,
+					],
+				)
 
 				this.linkShares = shares.filter(share => share.type === this.SHARE_TYPES.SHARE_TYPE_LINK || share.type === this.SHARE_TYPES.SHARE_TYPE_EMAIL)
 				this.shares = shares.filter(share => share.type !== this.SHARE_TYPES.SHARE_TYPE_LINK && share.type !== this.SHARE_TYPES.SHARE_TYPE_EMAIL)
@@ -319,7 +314,7 @@ export default {
 					// interval update
 					this.expirationInterval = setInterval(this.updateExpirationSubtitle, 10000, share)
 				}
-			} else if (this.fileInfo && this.fileInfo.shareOwnerId !== undefined ? this.fileInfo.shareOwnerId !== OC.currentUser : false) {
+			} else if (this.fileInfo && this.fileInfo.shareOwnerId !== undefined ? this.fileInfo.shareOwnerId !== getCurrentUser().uid : false) {
 				// Fallback to compare owner and current user.
 				this.sharedWithMe = {
 					displayName: this.fileInfo.shareOwner,

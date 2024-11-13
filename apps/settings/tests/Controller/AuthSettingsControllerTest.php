@@ -37,7 +37,7 @@ class AuthSettingsControllerTest extends TestCase {
 	private $tokenProvider;
 	/** @var ISession|MockObject */
 	private $session;
-	/**@var IUserSession|MockObject */
+	/** @var IUserSession|MockObject */
 	private $userSession;
 	/** @var ISecureRandom|MockObject */
 	private $secureRandom;
@@ -74,7 +74,7 @@ class AuthSettingsControllerTest extends TestCase {
 		);
 	}
 
-	public function testCreate() {
+	public function testCreate(): void {
 		$name = 'Nexus 4';
 		$sessionToken = $this->createMock(IToken::class);
 		$deviceToken = $this->createMock(IToken::class);
@@ -123,7 +123,7 @@ class AuthSettingsControllerTest extends TestCase {
 		$this->assertEquals($expected, $response->getData());
 	}
 
-	public function testCreateSessionNotAvailable() {
+	public function testCreateSessionNotAvailable(): void {
 		$name = 'personal phone';
 
 		$this->session->expects($this->once())
@@ -136,7 +136,7 @@ class AuthSettingsControllerTest extends TestCase {
 		$this->assertEquals($expected, $this->controller->create($name));
 	}
 
-	public function testCreateInvalidToken() {
+	public function testCreateInvalidToken(): void {
 		$name = 'Company IPhone';
 
 		$this->session->expects($this->once())
@@ -153,7 +153,7 @@ class AuthSettingsControllerTest extends TestCase {
 		$this->assertEquals($expected, $this->controller->create($name));
 	}
 
-	public function testDestroy() {
+	public function testDestroy(): void {
 		$tokenId = 124;
 		$token = $this->createMock(PublicKeyToken::class);
 
@@ -175,7 +175,7 @@ class AuthSettingsControllerTest extends TestCase {
 		$this->assertEquals([], $this->controller->destroy($tokenId));
 	}
 
-	public function testDestroyExpired() {
+	public function testDestroyExpired(): void {
 		$tokenId = 124;
 		$token = $this->createMock(PublicKeyToken::class);
 
@@ -199,7 +199,7 @@ class AuthSettingsControllerTest extends TestCase {
 		$this->assertSame([], $this->controller->destroy($tokenId));
 	}
 
-	public function testDestroyWrongUser() {
+	public function testDestroyWrongUser(): void {
 		$tokenId = 124;
 		$token = $this->createMock(PublicKeyToken::class);
 
@@ -244,7 +244,7 @@ class AuthSettingsControllerTest extends TestCase {
 
 		$token->expects($this->once())
 			->method('getScopeAsArray')
-			->willReturn(['filesystem' => true]);
+			->willReturn([IToken::SCOPE_FILESYSTEM => true]);
 
 		$token->expects($this->once())
 			->method('setName')
@@ -254,7 +254,7 @@ class AuthSettingsControllerTest extends TestCase {
 			->method('updateToken')
 			->with($this->equalTo($token));
 
-		$this->assertSame([], $this->controller->update($tokenId, ['filesystem' => true], $newName));
+		$this->assertSame([], $this->controller->update($tokenId, [IToken::SCOPE_FILESYSTEM => true], $newName));
 	}
 
 	public function dataUpdateFilesystemScope(): array {
@@ -287,17 +287,17 @@ class AuthSettingsControllerTest extends TestCase {
 
 		$token->expects($this->once())
 			->method('getScopeAsArray')
-			->willReturn(['filesystem' => $filesystem]);
+			->willReturn([IToken::SCOPE_FILESYSTEM => $filesystem]);
 
 		$token->expects($this->once())
 			->method('setScope')
-			->with($this->equalTo(['filesystem' => $newFilesystem]));
+			->with($this->equalTo([IToken::SCOPE_FILESYSTEM => $newFilesystem]));
 
 		$this->tokenProvider->expects($this->once())
 			->method('updateToken')
 			->with($this->equalTo($token));
 
-		$this->assertSame([], $this->controller->update($tokenId, ['filesystem' => $newFilesystem], 'App password'));
+		$this->assertSame([], $this->controller->update($tokenId, [IToken::SCOPE_FILESYSTEM => $newFilesystem], 'App password'));
 	}
 
 	public function testUpdateNoChange(): void {
@@ -316,7 +316,7 @@ class AuthSettingsControllerTest extends TestCase {
 
 		$token->expects($this->once())
 			->method('getScopeAsArray')
-			->willReturn(['filesystem' => true]);
+			->willReturn([IToken::SCOPE_FILESYSTEM => true]);
 
 		$token->expects($this->never())
 			->method('setName');
@@ -328,10 +328,10 @@ class AuthSettingsControllerTest extends TestCase {
 			->method('updateToken')
 			->with($this->equalTo($token));
 
-		$this->assertSame([], $this->controller->update($tokenId, ['filesystem' => true], 'App password'));
+		$this->assertSame([], $this->controller->update($tokenId, [IToken::SCOPE_FILESYSTEM => true], 'App password'));
 	}
 
-	public function testUpdateExpired() {
+	public function testUpdateExpired(): void {
 		$tokenId = 42;
 		$token = $this->createMock(PublicKeyToken::class);
 
@@ -348,10 +348,10 @@ class AuthSettingsControllerTest extends TestCase {
 			->method('updateToken')
 			->with($this->equalTo($token));
 
-		$this->assertSame([], $this->controller->update($tokenId, ['filesystem' => true], 'App password'));
+		$this->assertSame([], $this->controller->update($tokenId, [IToken::SCOPE_FILESYSTEM => true], 'App password'));
 	}
 
-	public function testUpdateTokenWrongUser() {
+	public function testUpdateTokenWrongUser(): void {
 		$tokenId = 42;
 		$token = $this->createMock(PublicKeyToken::class);
 
@@ -366,12 +366,12 @@ class AuthSettingsControllerTest extends TestCase {
 		$this->tokenProvider->expects($this->never())
 			->method('updateToken');
 
-		$response = $this->controller->update($tokenId, ['filesystem' => true], 'App password');
+		$response = $this->controller->update($tokenId, [IToken::SCOPE_FILESYSTEM => true], 'App password');
 		$this->assertSame([], $response->getData());
 		$this->assertSame(\OCP\AppFramework\Http::STATUS_NOT_FOUND, $response->getStatus());
 	}
 
-	public function testUpdateTokenNonExisting() {
+	public function testUpdateTokenNonExisting(): void {
 		$this->tokenProvider->expects($this->once())
 			->method('getTokenById')
 			->with($this->equalTo(42))
@@ -380,7 +380,7 @@ class AuthSettingsControllerTest extends TestCase {
 		$this->tokenProvider->expects($this->never())
 			->method('updateToken');
 
-		$response = $this->controller->update(42, ['filesystem' => true], 'App password');
+		$response = $this->controller->update(42, [IToken::SCOPE_FILESYSTEM => true], 'App password');
 		$this->assertSame([], $response->getData());
 		$this->assertSame(\OCP\AppFramework\Http::STATUS_NOT_FOUND, $response->getStatus());
 	}

@@ -42,6 +42,7 @@ OC.L10N.register(
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "Ao activar esta opción cífranse todos os ficheiros almacenados no almacenamento principal, senón só  se cifran os ficheiros do almacenamento externo.",
     "Enable recovery key" : "Activar a chave de recuperación",
     "Disable recovery key" : "Desactivar a chave de recuperación",
+    "The recovery key is an additional encryption key used to encrypt files. It is used to recover files from an account if the password is forgotten." : "A chave de recuperación é unha chave de cifrado adicional que se usa para cifrar ficheiros. Utilízase para recuperar ficheiros dunha conta se se esquece o contrasinal.",
     "Recovery key password" : "Contrasinal da chave de recuperación",
     "Repeat recovery key password" : "Repita o contrasinal da chave de recuperación",
     "Change recovery key password:" : "Cambiar o contrasinal da chave de la recuperación:",
@@ -60,7 +61,6 @@ OC.L10N.register(
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "Ao activar esta opción permitiráselle volver obter acceso aos ficheiros cifrados no caso de perda do contrasinal",
     "Enabled" : "Activado",
     "Disabled" : "Desactivado",
-    "Please login to the web interface, go to the \"Security\" section of your personal settings and update your encryption password by entering this password into the \"Old log-in password\" field and your current login-password." : "Acceda na interface web, vaia á sección «Seguranza» dos seus axustes persoais e actualice o seu contrasinal de cifrado introducindo este contrasinal no campo «Contrasinal antigo de acceso» e o seu contrasinal de acceso actual.",
     "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "A chave de recuperación é unha chave de cifrado adicional que se utiliza para cifrar ficheiros. Permite a recuperación de ficheiros dun usuario se o usuario esquece o seu contrasinal."
 },
 "nplurals=2; plural=(n != 1);");

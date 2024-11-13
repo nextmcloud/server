@@ -10,6 +10,7 @@ namespace OC\Encryption;
 use OC\Files\Filesystem;
 use OC\Files\SetupManager;
 use OC\Files\View;
+use OCP\Encryption\IFile;
 use Psr\Log\LoggerInterface;
 
 class HookManager {
@@ -41,7 +42,7 @@ class HookManager {
 				$user = \OC::$server->getUserManager()->get($owner);
 			}
 			if (!$user) {
-				throw new \Exception("Inconsistent data, File unshared, but owner not found. Should not happen");
+				throw new \Exception('Inconsistent data, File unshared, but owner not found. Should not happen');
 			}
 
 			$uid = '';
@@ -63,7 +64,7 @@ class HookManager {
 					\OC::$server->getConfig()),
 				Filesystem::getMountManager(),
 				\OC::$server->getEncryptionManager(),
-				\OC::$server->getEncryptionFilesHelper(),
+				\OC::$server->get(IFile::class),
 				\OC::$server->get(LoggerInterface::class),
 				$uid
 			);

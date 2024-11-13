@@ -156,7 +156,7 @@ class OC_Util {
 		}
 
 		if (!empty($skeletonDirectory)) {
-			$logger->debug('copying skeleton for '.$userId.' from '.$skeletonDirectory.' to '.$userDirectory->getFullPath('/'), ['app' => 'files_skeleton']);
+			$logger->debug('copying skeleton for ' . $userId . ' from ' . $skeletonDirectory . ' to ' . $userDirectory->getFullPath('/'), ['app' => 'files_skeleton']);
 			self::copyr($skeletonDirectory, $userDirectory);
 			// update the file cache
 			$userDirectory->getStorage()->getScanner()->scan('', \OC\Files\Cache\Scanner::SCAN_RECURSIVE);
@@ -175,7 +175,7 @@ class OC_Util {
 	 * @return void
 	 */
 	public static function copyr($source, \OCP\Files\Folder $target) {
-		$logger = \OC::$server->getLogger();
+		$logger = \OCP\Server::get(LoggerInterface::class);
 
 		// Verify if folder exists
 		$dir = opendir($source);
@@ -216,76 +216,6 @@ class OC_Util {
 	}
 
 	/**
-	 * get the current installed version of ownCloud
-	 *
-	 * @return array
-	 */
-	public static function getVersion() {
-		OC_Util::loadVersion();
-		return self::$versionCache['OC_Version'];
-	}
-
-	/**
-	 * get the current installed version string of ownCloud
-	 *
-	 * @return string
-	 */
-	public static function getVersionString() {
-		OC_Util::loadVersion();
-		return self::$versionCache['OC_VersionString'];
-	}
-
-	/**
-	 * @deprecated the value is of no use anymore
-	 * @return string
-	 */
-	public static function getEditionString() {
-		return '';
-	}
-
-	/**
-	 * @description get the update channel of the current installed of ownCloud.
-	 * @return string
-	 */
-	public static function getChannel() {
-		OC_Util::loadVersion();
-		return \OC::$server->getConfig()->getSystemValueString('updater.release.channel', self::$versionCache['OC_Channel']);
-	}
-
-	/**
-	 * @description get the build number of the current installed of ownCloud.
-	 * @return string
-	 */
-	public static function getBuild() {
-		OC_Util::loadVersion();
-		return self::$versionCache['OC_Build'];
-	}
-
-	/**
-	 * @description load the version.php into the session as cache
-	 * @suppress PhanUndeclaredVariable
-	 */
-	private static function loadVersion() {
-		if (self::$versionCache !== null) {
-			return;
-		}
-
-		$timestamp = filemtime(OC::$SERVERROOT . '/version.php');
-		require OC::$SERVERROOT . '/version.php';
-		/** @var int $timestamp */
-		self::$versionCache['OC_Version_Timestamp'] = $timestamp;
-		/** @var string $OC_Version */
-		self::$versionCache['OC_Version'] = $OC_Version;
-		/** @var string $OC_VersionString */
-		self::$versionCache['OC_VersionString'] = $OC_VersionString;
-		/** @var string $OC_Build */
-		self::$versionCache['OC_Build'] = $OC_Build;
-
-		/** @var string $OC_Channel */
-		self::$versionCache['OC_Channel'] = $OC_Channel;
-	}
-
-	/**
 	 * generates a path for JS/CSS files. If no application is provided it will create the path for core.
 	 *
 	 * @param string $application application to get the files from
@@ -296,7 +226,7 @@ class OC_Util {
 	private static function generatePath($application, $directory, $file) {
 		if (is_null($file)) {
 			$file = $application;
-			$application = "";
+			$application = '';
 		}
 		if (!empty($application)) {
 			return "$application/$directory/$file";
@@ -322,7 +252,7 @@ class OC_Util {
 		if ($application !== 'core' && $file !== null) {
 			self::addTranslations($application);
 		}
-		self::addExternalResource($application, $prepend, $path, "script");
+		self::addExternalResource($application, $prepend, $path, 'script');
 	}
 
 	/**
@@ -335,7 +265,7 @@ class OC_Util {
 	 */
 	public static function addVendorScript($application, $file = null, $prepend = false) {
 		$path = OC_Util::generatePath($application, 'vendor', $file);
-		self::addExternalResource($application, $prepend, $path, "script");
+		self::addExternalResource($application, $prepend, $path, 'script');
 	}
 
 	/**
@@ -356,7 +286,7 @@ class OC_Util {
 		} else {
 			$path = "l10n/$languageCode";
 		}
-		self::addExternalResource($application, $prepend, $path, "script");
+		self::addExternalResource($application, $prepend, $path, 'script');
 	}
 
 	/**
@@ -369,7 +299,7 @@ class OC_Util {
 	 */
 	public static function addStyle($application, $file = null, $prepend = false) {
 		$path = OC_Util::generatePath($application, 'css', $file);
-		self::addExternalResource($application, $prepend, $path, "style");
+		self::addExternalResource($application, $prepend, $path, 'style');
 	}
 
 	/**
@@ -382,7 +312,7 @@ class OC_Util {
 	 */
 	public static function addVendorStyle($application, $file = null, $prepend = false) {
 		$path = OC_Util::generatePath($application, 'vendor', $file);
-		self::addExternalResource($application, $prepend, $path, "style");
+		self::addExternalResource($application, $prepend, $path, 'style');
 	}
 
 	/**
@@ -394,8 +324,8 @@ class OC_Util {
 	 * @param string $type (script or style)
 	 * @return void
 	 */
-	private static function addExternalResource($application, $prepend, $path, $type = "script") {
-		if ($type === "style") {
+	private static function addExternalResource($application, $prepend, $path, $type = 'script') {
+		if ($type === 'style') {
 			if (!in_array($path, self::$styles)) {
 				if ($prepend === true) {
 					array_unshift(self::$styles, $path);
@@ -403,7 +333,7 @@ class OC_Util {
 					self::$styles[] = $path;
 				}
 			}
-		} elseif ($type === "script") {
+		} elseif ($type === 'script') {
 			if (!in_array($path, self::$scripts)) {
 				if ($prepend === true) {
 					array_unshift(self::$scripts, $path);
@@ -545,8 +475,7 @@ class OC_Util {
 		// defined = defined
 		// ini = ini_get
 		// If the dependency is not found the missing module name is shown to the EndUser
-		// When adding new checks always verify that they pass on Travis as well
-		// for ini settings, see https://github.com/owncloud/administration/blob/master/travis-ci/custom.ini
+		// When adding new checks always verify that they pass on CI as well
 		$dependencies = [
 			'classes' => [
 				'ZipArchive' => 'zip',
@@ -687,7 +616,7 @@ class OC_Util {
 
 	/**
 	 * Check that the data directory exists and is valid by
-	 * checking the existence of the ".ocdata" file.
+	 * checking the existence of the ".ncdata" file.
 	 *
 	 * @param string $dataDirectory data directory path
 	 * @return array errors found
@@ -701,11 +630,11 @@ class OC_Util {
 				'hint' => $l->t('Check the value of "datadirectory" in your configuration.')
 			];
 		}
-		if (!file_exists($dataDirectory . '/.ocdata')) {
+
+		if (!file_exists($dataDirectory . '/.ncdata')) {
 			$errors[] = [
 				'error' => $l->t('Your data directory is invalid.'),
-				'hint' => $l->t('Ensure there is a file called ".ocdata"' .
-					' in the root of the data directory.')
+				'hint' => $l->t('Ensure there is a file called "%1$s" in the root of the data directory. It should have the content: "%2$s"', ['.ncdata', '# Nextcloud data directory']),
 			];
 		}
 		return $errors;
@@ -783,7 +712,7 @@ class OC_Util {
 		$id = \OC::$server->getSystemConfig()->getValue('instanceid', null);
 		if (is_null($id)) {
 			// We need to guarantee at least one letter in instanceid so it can be used as the session_name
-			$id = 'oc' . \OC::$server->get(ISecureRandom::class)->generate(10, \OCP\Security\ISecureRandom::CHAR_LOWER.\OCP\Security\ISecureRandom::CHAR_DIGITS);
+			$id = 'oc' . \OC::$server->get(ISecureRandom::class)->generate(10, \OCP\Security\ISecureRandom::CHAR_LOWER . \OCP\Security\ISecureRandom::CHAR_DIGITS);
 			\OC::$server->getSystemConfig()->setValue('instanceid', $id);
 		}
 		return $id;
@@ -949,7 +878,12 @@ class OC_Util {
 	 * @return bool
 	 */
 	public static function isAnnotationsWorking() {
-		$reflection = new \ReflectionMethod(__METHOD__);
+		if (PHP_VERSION_ID >= 80300) {
+			/** @psalm-suppress UndefinedMethod */
+			$reflection = \ReflectionMethod::createFromMethodName(__METHOD__);
+		} else {
+			$reflection = new \ReflectionMethod(__METHOD__);
+		}
 		$docs = $reflection->getDocComment();
 
 		return (is_string($docs) && strlen($docs) > 50);
@@ -991,7 +925,7 @@ class OC_Util {
 	 * @return string the theme
 	 */
 	public static function getTheme() {
-		$theme = \OC::$server->getSystemConfig()->getValue("theme", '');
+		$theme = \OC::$server->getSystemConfig()->getValue('theme', '');
 
 		if ($theme === '') {
 			if (is_dir(OC::$SERVERROOT . '/themes/default')) {
@@ -1015,54 +949,11 @@ class OC_Util {
 
 		$normalizedValue = Normalizer::normalize($value);
 		if ($normalizedValue === null || $normalizedValue === false) {
-			\OC::$server->getLogger()->warning('normalizing failed for "' . $value . '"', ['app' => 'core']);
+			\OCP\Server::get(LoggerInterface::class)->warning('normalizing failed for "' . $value . '"', ['app' => 'core']);
 			return $value;
 		}
 
 		return $normalizedValue;
-	}
-
-	/**
-	 * A human readable string is generated based on version and build number
-	 *
-	 * @return string
-	 */
-	public static function getHumanVersion() {
-		$version = OC_Util::getVersionString();
-		$build = OC_Util::getBuild();
-		if (!empty($build) and OC_Util::getChannel() === 'daily') {
-			$version .= ' Build:' . $build;
-		}
-		return $version;
-	}
-
-	/**
-	 * Returns whether the given file name is valid
-	 *
-	 * @param string $file file name to check
-	 * @return bool true if the file name is valid, false otherwise
-	 * @deprecated use \OC\Files\View::verifyPath()
-	 */
-	public static function isValidFileName($file) {
-		$trimmed = trim($file);
-		if ($trimmed === '') {
-			return false;
-		}
-		if (\OC\Files\Filesystem::isIgnoredDir($trimmed)) {
-			return false;
-		}
-
-		// detect part files
-		if (preg_match('/' . \OCP\Files\FileInfo::BLACKLIST_FILES_REGEX . '/', $trimmed) !== 0) {
-			return false;
-		}
-
-		foreach (\OCP\Util::getForbiddenFileNameChars() as $char) {
-			if (str_contains($trimmed, $char)) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	/**

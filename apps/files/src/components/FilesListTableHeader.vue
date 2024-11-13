@@ -6,7 +6,7 @@
 	<tr class="files-list__row-head">
 		<th class="files-list__column files-list__row-checkbox"
 			@keyup.esc.exact="resetSelection">
-			<NcCheckboxRadioSwitch v-bind="selectAllBind" @update:checked="onToggleAll" />
+			<NcCheckboxRadioSwitch v-bind="selectAllBind" data-cy-files-list-selection-checkbox @update:checked="onToggleAll" />
 		</th>
 
 		<!-- Columns display -->
@@ -54,16 +54,21 @@
 </template>
 
 <script lang="ts">
-import { translate as t } from '@nextcloud/l10n'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import { defineComponent, type PropType } from 'vue'
+import type { Node } from '@nextcloud/files'
+import type { PropType } from 'vue'
+import type { FileSource } from '../types.ts'
 
+import { translate as t } from '@nextcloud/l10n'
+import { defineComponent } from 'vue'
+
+import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
+import FilesListTableHeaderButton from './FilesListTableHeaderButton.vue'
+
+import { useNavigation } from '../composables/useNavigation'
 import { useFilesStore } from '../store/files.ts'
 import { useSelectionStore } from '../store/selection.ts'
-import FilesListTableHeaderButton from './FilesListTableHeaderButton.vue'
 import filesSortingMixin from '../mixins/filesSorting.ts'
-import logger from '../logger.js'
-import type { Node } from '@nextcloud/files'
+import logger from '../logger.ts'
 
 export default defineComponent({
 	name: 'FilesListTableHeader',
@@ -99,17 +104,17 @@ export default defineComponent({
 	setup() {
 		const filesStore = useFilesStore()
 		const selectionStore = useSelectionStore()
+		const { currentView } = useNavigation()
+
 		return {
 			filesStore,
 			selectionStore,
+
+			currentView,
 		}
 	},
 
 	computed: {
-		currentView() {
-			return this.$navigation.active
-		},
-
 		columns() {
 			// Hide columns if the list is too small
 			if (this.filesListWidth < 512) {
@@ -169,7 +174,7 @@ export default defineComponent({
 
 		onToggleAll(selected) {
 			if (selected) {
-				const selection = this.nodes.map(node => node.fileid).filter(Boolean) as number[]
+				const selection = this.nodes.map(node => node.source).filter(Boolean) as FileSource[]
 				logger.debug('Added all nodes to selection', { selection })
 				this.selectionStore.setLastIndex(null)
 				this.selectionStore.set(selection)

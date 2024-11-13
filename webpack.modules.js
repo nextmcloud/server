@@ -11,6 +11,7 @@ module.exports = {
 		init: path.join(__dirname, 'apps/comments/src', 'init.ts'),
 	},
 	core: {
+		'ajax-cron': path.join(__dirname, 'core/src', 'ajax-cron.ts'),
 		files_client: path.join(__dirname, 'core/src', 'files/client.js'),
 		files_fileinfo: path.join(__dirname, 'core/src', 'files/fileinfo.js'),
 		install: path.join(__dirname, 'core/src', 'install.js'),
@@ -18,12 +19,14 @@ module.exports = {
 		main: path.join(__dirname, 'core/src', 'main.js'),
 		maintenance: path.join(__dirname, 'core/src', 'maintenance.js'),
 		profile: path.join(__dirname, 'core/src', 'profile.ts'),
+		'public-page-menu': path.resolve(__dirname, 'core/src', 'public-page-menu.ts'),
 		recommendedapps: path.join(__dirname, 'core/src', 'recommendedapps.js'),
 		systemtags: path.resolve(__dirname, 'core/src', 'systemtags/merged-systemtags.js'),
 		'unified-search': path.join(__dirname, 'core/src', 'unified-search.ts'),
 		'legacy-unified-search': path.join(__dirname, 'core/src', 'legacy-unified-search.js'),
 		'unsupported-browser': path.join(__dirname, 'core/src', 'unsupported-browser.js'),
 		'unsupported-browser-redirect': path.join(__dirname, 'core/src', 'unsupported-browser-redirect.js'),
+		public: path.join(__dirname, 'core/src', 'public.ts'),
 	},
 	dashboard: {
 		main: path.join(__dirname, 'apps/dashboard/src', 'main.js'),
@@ -37,7 +40,7 @@ module.exports = {
 		main: path.join(__dirname, 'apps/files/src', 'main.ts'),
 		init: path.join(__dirname, 'apps/files/src', 'init.ts'),
 		search: path.join(__dirname, 'apps/files/src/plugins/search', 'folderSearch.ts'),
-		'personal-settings': path.join(__dirname, 'apps/files/src', 'main-personal-settings.js'),
+		'settings-personal': path.join(__dirname, 'apps/files/src', 'main-personal-settings.js'),
 		'reference-files': path.join(__dirname, 'apps/files/src', 'reference-files.ts'),
 	},
 	files_external: {
@@ -51,11 +54,13 @@ module.exports = {
 		collaboration: path.join(__dirname, 'apps/files_sharing/src', 'collaborationresourceshandler.js'),
 		files_sharing_tab: path.join(__dirname, 'apps/files_sharing/src', 'files_sharing_tab.js'),
 		init: path.join(__dirname, 'apps/files_sharing/src', 'init.ts'),
+		'init-public': path.join(__dirname, 'apps/files_sharing/src', 'init-public.ts'),
 		main: path.join(__dirname, 'apps/files_sharing/src', 'main.ts'),
 		'personal-settings': path.join(__dirname, 'apps/files_sharing/src', 'personal-settings.js'),
+		'public-file-request': path.join(__dirname, 'apps/files_sharing/src', 'public-file-request.ts'),
 	},
 	files_trashbin: {
-		main: path.join(__dirname, 'apps/files_trashbin/src', 'main.ts'),
+		init: path.join(__dirname, 'apps/files_trashbin/src', 'files-init.ts'),
 	},
 	files_versions: {
 		files_versions: path.join(__dirname, 'apps/files_versions/src', 'files_versions_tab.js'),
@@ -64,6 +69,7 @@ module.exports = {
 		oauth2: path.join(__dirname, 'apps/oauth2/src', 'main.js'),
 	},
 	federatedfilesharing: {
+		external: path.join(__dirname, 'apps/federatedfilesharing/src', 'external.js'),
 		'vue-settings-admin': path.join(__dirname, 'apps/federatedfilesharing/src', 'main-admin.js'),
 		'vue-settings-personal': path.join(__dirname, 'apps/federatedfilesharing/src', 'main-personal.js'),
 	},
@@ -101,6 +107,7 @@ module.exports = {
 		init: path.join(__dirname, 'apps/updatenotification/src', 'init.ts'),
 		'view-changelog-page': path.join(__dirname, 'apps/updatenotification/src', 'view-changelog-page.ts'),
 		updatenotification: path.join(__dirname, 'apps/updatenotification/src', 'updatenotification.js'),
+		'update-notification-legacy': path.join(__dirname, 'apps/updatenotification/src', 'update-notification-legacy.ts'),
 	},
 	user_status: {
 		menu: path.join(__dirname, 'apps/user_status/src', 'menu.js'),

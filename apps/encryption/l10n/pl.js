@@ -42,6 +42,7 @@ OC.L10N.register(
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "Włączenie tej opcji spowoduje szyfrowanie wszystkich plików zapisanych na pamięci wewnętrznej. W innym wypadku szyfrowane będą tylko pliki na pamięci zewnętrznej.",
     "Enable recovery key" : "Włącz klucz odzyskiwania",
     "Disable recovery key" : "Wyłącz klucz odzyskiwania",
+    "The recovery key is an additional encryption key used to encrypt files. It is used to recover files from an account if the password is forgotten." : "Klucz odzyskiwania to dodatkowy klucz szyfrowania używany do szyfrowania plików. Służy do odzyskiwania plików z konta w przypadku zapomnienia hasła.",
     "Recovery key password" : "Hasło klucza odzyskiwania",
     "Repeat recovery key password" : "Powtórz hasło klucza odzyskiwania",
     "Change recovery key password:" : "Zmień hasło klucza odzyskiwania",
@@ -60,7 +61,6 @@ OC.L10N.register(
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "Włączenie tej opcji umożliwia otrzymać dostęp do zaszyfrowanych plików w przypadku utraty hasła",
     "Enabled" : "Włączone",
     "Disabled" : "Wyłączone",
-    "Please login to the web interface, go to the \"Security\" section of your personal settings and update your encryption password by entering this password into the \"Old log-in password\" field and your current login-password." : "Zaloguj się poprzez interfejs WEB, przejdź do zakładki \"ochrona\" w Twoich ustawieniach oraz zaktualizuj Twoje hasło szyfrowania wpisując je w pole \"stare hasło logowania\" i Twoje aktualne hasło do logowania.",
     "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "Kluczem do odzyskiwania jest dodatkowy klucz szyfrujący, który służy do szyfrowania plików. Umożliwia on odzyskanie plików użytkownika, jeśli użytkownik zapomni swoje hasło."
 },
 "nplurals=4; plural=(n==1 ? 0 : (n%10>=2 && n%10<=4) && (n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);");

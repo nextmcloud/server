@@ -1,7 +1,6 @@
 OC.L10N.register(
     "updatenotification",
     {
-    "{version} is available. Get more information on how to update." : "新版本 {version} 推出了，可以更新。",
     "Channel updated" : "頻道已更新",
     "Web updater is disabled" : "Web updater 已停用",
     "App updated" : "應用程式更新了",
@@ -57,13 +56,11 @@ OC.L10N.register(
     "_<strong>%n</strong> app has no compatible version for this Nextcloud version available._::_<strong>%n</strong> apps have no compatible version for this Nextcloud version available._" : ["有 <strong>%n</strong> 個應用程式沒有與此 Nextcloud 版本相容的版本。"],
     "Changelog for app {app}" : "應用程式 {app} 的更新日誌",
     "What's new in {app} version {version}" : "{app}版本{version}有什麼新功能",
+    "{version} is available. Get more information on how to update." : "新版本 {version} 推出了，可以更新。",
     "Update to %1$s is available." : "更新版 %1$s 已經推出。",
     "Displays update notifications for Nextcloud and provides the SSO for the updater." : "顯示 Nextcloud 的更新通告，並為更新程式提供 SSO。",
     "Please note that the web updater is not recommended with more than 100 users! Please use the command line updater instead!" : "請注意，不建議使用超過 100 個用戶的網絡更新程序！ 請改用命令行更新程序！",
     "Please use the command line updater to update." : "請使用命令行更新程序進行更新。",
-    "You can change the update channel below which also affects the apps management page. E.g. after switching to the beta channel, beta app updates will be offered to you in the apps management page." : "您可以變更下方的更新頻道，這也會影響應用程式管理頁面。例如，切換到測試版頻道後，在應用程式管理頁更新應用程式時也會提供測試版。",
-    "Update channel:" : "更新頻道：",
-    "Note that after a new release the update only shows up after the first minor release or later. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found. Learn more about updates and release channels at {link}" : "請注意，新版本推出後，僅會在有第一個次要版本或更新的版本時顯示。我們會逐步向用戶推送新版本，並在發現問題時跳過特定版本。在 {link} 取得關於更新與推出頻道的更多資訊",
-    "Checked on {lastCheckedDate}" : "上次檢查日期：{lastCheckedDate}"
+    "Note that after a new release the update only shows up after the first minor release or later. We roll out new versions spread out over time to our users and sometimes skip a version when issues are found. Learn more about updates and release channels at {link}" : "請注意，新版本推出後，僅會在有第一個次要版本或更新的版本時顯示。我們會逐步向用戶推送新版本，並在發現問題時跳過特定版本。在 {link} 取得關於更新與推出頻道的更多資訊"
 },
 "nplurals=1; plural=0;");
