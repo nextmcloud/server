@@ -333,7 +333,6 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 		$emailTemplate->setSubject($this->l->t('%1$s shared %2$s with you', [$initiatorDisplayName, $filename]));
 		$emailTemplate->addHeader();
 		$emailTemplate->addHeading($this->l->t('%1$s shared %2$s with you', [$initiatorDisplayName, $filename]), false);
-		$text = $this->l->t('%1$s shared %2$s with you.', [$initiatorDisplayName, $filename]);
 
 		if ($note !== '') {
 			$emailTemplate->addBodyListItem(
@@ -352,11 +351,6 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 				$this->getAbsoluteImagePath('caldav/time.png'),
 			);
 		}
-
-		$emailTemplate->addBodyText(
-			htmlspecialchars($text . ' ' . $this->l->t('Click the button below to open it.')),
-			$text
-		);
 
 		$emailTemplate->addBodyButton(
 			$this->l->t('Open %s', [$filename]),
@@ -432,7 +426,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 		$initiatorDisplayName = ($initiatorUser instanceof IUser) ? $initiatorUser->getDisplayName() : $initiator;
 		$initiatorEmailAddress = ($initiatorUser instanceof IUser) ? $initiatorUser->getEMailAddress() : null;
 
-		$plainBodyPart = $this->l->t("%1\$s shared %2\$s with you.\nYou should have already received a separate mail with a link to access it.\n", [$initiatorDisplayName, $filename]);
+		$plainBodyPart = $this->l->t('%1$s shared %2$s with you. You should have already received a separate mail with a link to access it.', [$initiatorDisplayName, $filename]);
 		$htmlBodyPart = $this->l->t('%1$s shared %2$s with you. You should have already received a separate mail with a link to access it.', [$initiatorDisplayName, $filename]);
 
 		$message = $this->mailer->createMessage();
@@ -573,7 +567,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 		$initiator = $this->userManager->get($share->getSharedBy());
 		$initiatorEMailAddress = ($initiator instanceof IUser) ? $initiator->getEMailAddress() : null;
 		$initiatorDisplayName = ($initiator instanceof IUser) ? $initiator->getDisplayName() : $share->getSharedBy();
-		$shareWith = $share->getSharedWith();
+		$shareWith = implode(', ', $this->getSharedWithEmails($share));
 
 		if ($initiatorEMailAddress === null) {
 			throw new \Exception(
@@ -1014,7 +1008,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 		$share->setPassword($data['password']);
 		$passwordExpirationTime = \DateTime::createFromFormat('Y-m-d H:i:s', $data['password_expiration_time'] ?? '');
 		$share->setPasswordExpirationTime($passwordExpirationTime !== false ? $passwordExpirationTime : null);
-		$share->setLabel($data['label']);
+		$share->setLabel($data['label'] ?? '');
 		$share->setSendPasswordByTalk((bool)$data['password_by_talk']);
 		$share->setHideDownload((bool)$data['hide_download']);
 		$share->setReminderSent((bool)$data['reminder_sent']);

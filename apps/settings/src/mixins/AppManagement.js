@@ -43,7 +43,7 @@ export default {
 		},
 		updateButtonText() {
 			if (this.app?.app_api && this.app?.daemon?.accepts_deploy_id === 'manual-install') {
-				return t('settings', 'manual-install apps cannot be updated')
+				return t('settings', 'Manually installed apps cannot be updated')
 			}
 			return t('settings', 'Update to {version}', { version: this.app?.update })
 		},
@@ -188,9 +188,9 @@ export default {
 					.catch((error) => { showError(error) })
 			}
 		},
-		enable(appId) {
+		enable(appId, deployOptions = []) {
 			if (this.app?.app_api) {
-				this.appApiStore.enableApp(appId)
+				this.appApiStore.enableApp(appId, deployOptions)
 					.then(() => { rebuildNavigation() })
 					.catch((error) => { showError(error) })
 			} else {
@@ -210,15 +210,16 @@ export default {
 					.catch((error) => { showError(error) })
 			}
 		},
-		remove(appId, removeData = false) {
-			if (this.app?.app_api) {
-				this.appApiStore.uninstallApp(appId, removeData)
-					.then(() => { rebuildNavigation() })
-					.catch((error) => { showError(error) })
-			} else {
-				this.$store.dispatch('appApiApps/uninstallApp', { appId, removeData })
-					.then((response) => { rebuildNavigation() })
-					.catch((error) => { showError(error) })
+		async remove(appId, removeData = false) {
+			try {
+				if (this.app?.app_api) {
+					await this.appApiStore.uninstallApp(appId, removeData)
+				} else {
+					await this.$store.dispatch('uninstallApp', { appId, removeData })
+				}
+				await rebuildNavigation()
+			} catch (error) {
+				showError(error)
 			}
 		},
 		install(appId) {

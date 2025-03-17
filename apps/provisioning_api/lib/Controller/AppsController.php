@@ -28,21 +28,32 @@ class AppsController extends OCSController {
 	}
 
 	/**
+	 * @throws \InvalidArgumentException
+	 */
+	protected function verifyAppId(string $app): string {
+		$cleanId = $this->appManager->cleanAppId($app);
+		if ($cleanId !== $app) {
+			throw new \InvalidArgumentException('Invalid app id given');
+		}
+		return $cleanId;
+	}
+
+	/**
 	 * Get a list of installed apps
 	 *
 	 * @param ?string $filter Filter for enabled or disabled apps
-	 * @return DataResponse<Http::STATUS_OK, array{apps: string[]}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{apps: list<string>}, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: Installed apps returned
 	 */
 	public function getApps(?string $filter = null): DataResponse {
 		$apps = (new OC_App())->listAllApps();
+		/** @var list<string> $list */
 		$list = [];
 		foreach ($apps as $app) {
 			$list[] = $app['id'];
 		}
-		/** @var string[] $list */
 		if ($filter) {
 			switch ($filter) {
 				case 'enabled':
@@ -50,7 +61,7 @@ class AppsController extends OCSController {
 					break;
 				case 'disabled':
 					$enabled = OC_App::getEnabledApps();
-					return new DataResponse(['apps' => array_diff($list, $enabled)]);
+					return new DataResponse(['apps' => array_values(array_diff($list, $enabled))]);
 					break;
 				default:
 					// Invalid filter variable
@@ -71,6 +82,11 @@ class AppsController extends OCSController {
 	 * 200: App info returned
 	 */
 	public function getAppInfo(string $app): DataResponse {
+		try {
+			$app = $this->verifyAppId($app);
+		} catch (\InvalidArgumentException $e) {
+			throw new OCSException($e->getMessage(), OCSController::RESPOND_UNAUTHORISED);
+		}
 		$info = $this->appManager->getAppInfo($app);
 		if (!is_null($info)) {
 			return new DataResponse($info);
@@ -83,7 +99,7 @@ class AppsController extends OCSController {
 	 * Enable an app
 	 *
 	 * @param string $app ID of the app
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: App enabled successfully
@@ -91,7 +107,10 @@ class AppsController extends OCSController {
 	#[PasswordConfirmationRequired]
 	public function enable(string $app): DataResponse {
 		try {
+			$app = $this->verifyAppId($app);
 			$this->appManager->enableApp($app);
+		} catch (\InvalidArgumentException $e) {
+			throw new OCSException($e->getMessage(), OCSController::RESPOND_UNAUTHORISED);
 		} catch (AppPathNotFoundException $e) {
 			throw new OCSException('The request app was not found', OCSController::RESPOND_NOT_FOUND);
 		}
@@ -102,13 +121,19 @@ class AppsController extends OCSController {
 	 * Disable an app
 	 *
 	 * @param string $app ID of the app
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
+	 * @throws OCSException
 	 *
 	 * 200: App disabled successfully
 	 */
 	#[PasswordConfirmationRequired]
 	public function disable(string $app): DataResponse {
-		$this->appManager->disableApp($app);
+		try {
+			$app = $this->verifyAppId($app);
+			$this->appManager->disableApp($app);
+		} catch (\InvalidArgumentException $e) {
+			throw new OCSException($e->getMessage(), OCSController::RESPOND_UNAUTHORISED);
+		}
 		return new DataResponse();
 	}
 }

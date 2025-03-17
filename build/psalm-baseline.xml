@@ -543,12 +543,6 @@
       <code><![CDATA[bool]]></code>
     </InvalidReturnType>
   </file>
-  <file src="apps/dav/lib/HookManager.php">
-    <InvalidPropertyAssignmentValue>
-      <code><![CDATA[$this->usersToDelete]]></code>
-      <code><![CDATA[$this->usersToDelete]]></code>
-    </InvalidPropertyAssignmentValue>
-  </file>
   <file src="apps/dav/lib/Migration/BuildCalendarSearchIndexBackgroundJob.php">
     <ParamNameMismatch>
       <code><![CDATA[$arguments]]></code>
@@ -873,16 +867,6 @@
       <code><![CDATA[Mount]]></code>
     </MoreSpecificReturnType>
   </file>
-  <file src="apps/files_sharing/lib/External/Scanner.php">
-    <MoreSpecificImplementedParamType>
-      <code><![CDATA[$cacheData]]></code>
-    </MoreSpecificImplementedParamType>
-  </file>
-  <file src="apps/files_sharing/lib/Middleware/SharingCheckMiddleware.php">
-    <InvalidArgument>
-      <code><![CDATA[$exception->getMessage()]]></code>
-    </InvalidArgument>
-  </file>
   <file src="apps/files_sharing/lib/MountProvider.php">
     <RedundantFunctionCall>
       <code><![CDATA[array_values]]></code>
@@ -978,7 +962,6 @@
   </file>
   <file src="apps/files_versions/appinfo/routes.php">
     <InvalidScope>
-      <code><![CDATA[$this]]></code>
       <code><![CDATA[$this->create('files_versions_download', 'apps/files_versions/download.php')]]></code>
     </InvalidScope>
   </file>
@@ -1000,11 +983,6 @@
       <code><![CDATA[$storage1->instanceOfStorage('\OC\Files\ObjectStore\ObjectStoreStorage')]]></code>
     </RedundantCondition>
   </file>
-  <file src="apps/lookup_server_connector/lib/BackgroundJobs/RetryJob.php">
-    <InvalidArgument>
-      <code><![CDATA[$this->retries + 1]]></code>
-    </InvalidArgument>
-  </file>
   <file src="apps/oauth2/lib/Controller/OauthApiController.php">
     <NoInterfaceProperties>
       <code><![CDATA[$this->request->server]]></code>
@@ -1024,11 +1002,6 @@
   <file src="apps/settings/lib/AppInfo/Application.php">
     <UndefinedInterfaceMethod>
       <code><![CDATA[getSettingsManager]]></code>
-    </UndefinedInterfaceMethod>
-  </file>
-  <file src="apps/settings/lib/Controller/AppSettingsController.php">
-    <UndefinedInterfaceMethod>
-      <code><![CDATA[ignoreNextcloudRequirementForApp]]></code>
     </UndefinedInterfaceMethod>
   </file>
   <file src="apps/settings/lib/Hooks.php">
@@ -1115,20 +1088,6 @@
     <InvalidDocblock>
       <code><![CDATA[public function setLdapAccess(Access $access) {]]></code>
     </InvalidDocblock>
-  </file>
-  <file src="apps/user_ldap/lib/User/User.php">
-    <FalsableReturnStatement>
-      <code><![CDATA[$this->avatarImage]]></code>
-    </FalsableReturnStatement>
-    <InvalidPropertyAssignmentValue>
-      <code><![CDATA[$this->refreshedFeatures]]></code>
-    </InvalidPropertyAssignmentValue>
-    <InvalidReturnType>
-      <code><![CDATA[null]]></code>
-    </InvalidReturnType>
-    <RedundantCondition>
-      <code><![CDATA[$aQuota && (count($aQuota) > 0)]]></code>
-    </RedundantCondition>
   </file>
   <file src="apps/user_ldap/lib/User_LDAP.php">
     <ImplementedReturnTypeMismatch>
@@ -1265,12 +1224,6 @@
       <code><![CDATA[$this->timeFactory->getTime()]]></code>
     </InvalidScalarArgument>
   </file>
-  <file src="core/Command/Maintenance/Mimetype/UpdateDB.php">
-    <UndefinedInterfaceMethod>
-      <code><![CDATA[getAllMappings]]></code>
-      <code><![CDATA[updateFilecache]]></code>
-    </UndefinedInterfaceMethod>
-  </file>
   <file src="core/Command/Preview/Repair.php">
     <UndefinedInterfaceMethod>
       <code><![CDATA[section]]></code>
@@ -1334,15 +1287,6 @@
     <MoreSpecificImplementedParamType>
       <code><![CDATA[$key]]></code>
     </MoreSpecificImplementedParamType>
-    <TypeDoesNotContainType>
-      <code><![CDATA[!is_array($userIds)]]></code>
-    </TypeDoesNotContainType>
-  </file>
-  <file src="lib/private/App/AppManager.php">
-    <LessSpecificImplementedReturnType>
-      <code><![CDATA[array]]></code>
-      <code><![CDATA[array]]></code>
-    </LessSpecificImplementedReturnType>
   </file>
   <file src="lib/private/App/AppStore/Fetcher/Fetcher.php">
     <TooManyArguments>
@@ -1399,9 +1343,6 @@
     </UndefinedInterfaceMethod>
   </file>
   <file src="lib/private/AppFramework/Http/Dispatcher.php">
-    <NoInterfaceProperties>
-      <code><![CDATA[$this->request->method]]></code>
-    </NoInterfaceProperties>
     <NullArgument>
       <code><![CDATA[null]]></code>
     </NullArgument>
@@ -1795,16 +1736,9 @@
     </MoreSpecificReturnType>
   </file>
   <file src="lib/private/Files/Cache/Cache.php">
-    <InvalidArgument>
-      <code><![CDATA[$parentData]]></code>
-    </InvalidArgument>
     <InvalidNullableReturnType>
       <code><![CDATA[array]]></code>
     </InvalidNullableReturnType>
-    <InvalidScalarArgument>
-      <code><![CDATA[$path]]></code>
-      <code><![CDATA[\OC_Util::normalizeUnicode($path)]]></code>
-    </InvalidScalarArgument>
     <NullableReturnStatement>
       <code><![CDATA[null]]></code>
       <code><![CDATA[null]]></code>
@@ -1833,12 +1767,6 @@
     <InvalidArgument>
       <code><![CDATA[self::SCAN_RECURSIVE_INCOMPLETE]]></code>
     </InvalidArgument>
-    <InvalidReturnStatement>
-      <code><![CDATA[$existingChildren]]></code>
-    </InvalidReturnStatement>
-    <InvalidReturnType>
-      <code><![CDATA[array[]]]></code>
-    </InvalidReturnType>
   </file>
   <file src="lib/private/Files/Cache/Storage.php">
     <InvalidNullableReturnType>
@@ -2063,11 +1991,6 @@
     </NoInterfaceProperties>
   </file>
   <file src="lib/private/Files/Storage/Wrapper/Encoding.php">
-    <InvalidArgument>
-      <code><![CDATA[\Normalizer::FORM_C]]></code>
-      <code><![CDATA[\Normalizer::FORM_C]]></code>
-      <code><![CDATA[\Normalizer::FORM_D]]></code>
-    </InvalidArgument>
     <UndefinedInterfaceMethod>
       <code><![CDATA[$this->namesCache]]></code>
       <code><![CDATA[$this->namesCache]]></code>
@@ -2118,14 +2041,6 @@
     <ParamNameMismatch>
       <code><![CDATA[$mimetype]]></code>
     </ParamNameMismatch>
-  </file>
-  <file src="lib/private/Files/Utils/Scanner.php">
-    <LessSpecificReturnStatement>
-      <code><![CDATA[$mounts]]></code>
-    </LessSpecificReturnStatement>
-    <MoreSpecificReturnType>
-      <code><![CDATA[\OC\Files\Mount\MountPoint[]]]></code>
-    </MoreSpecificReturnType>
   </file>
   <file src="lib/private/Files/View.php">
     <InvalidScalarArgument>
@@ -2341,6 +2256,14 @@
       <code><![CDATA[?IImage]]></code>
     </InvalidReturnType>
   </file>
+  <file src="lib/private/Profile/Actions/FediverseAction.php">
+    <NoValue>
+      <code><![CDATA[$instance]]></code>
+    </NoValue>
+    <RedundantCondition>
+      <code><![CDATA[$instance === '']]></code>
+    </RedundantCondition>
+  </file>
   <file src="lib/private/RedisFactory.php">
     <InvalidArgument>
       <code><![CDATA[\RedisCluster::OPT_SLAVE_FAILOVER]]></code>
@@ -2402,11 +2325,6 @@
     <NullableReturnStatement>
       <code><![CDATA[$this->collectionName]]></code>
     </NullableReturnStatement>
-  </file>
-  <file src="lib/private/Security/Bruteforce/Throttler.php">
-    <NullArgument>
-      <code><![CDATA[null]]></code>
-    </NullArgument>
   </file>
   <file src="lib/private/Security/CSP/ContentSecurityPolicyNonceManager.php">
     <NoInterfaceProperties>
@@ -2594,12 +2512,6 @@
       <code><![CDATA[$tag]]></code>
     </MoreSpecificImplementedParamType>
   </file>
-  <file src="lib/private/TempManager.php">
-    <FalsableReturnStatement>
-      <code><![CDATA[false]]></code>
-      <code><![CDATA[false]]></code>
-    </FalsableReturnStatement>
-  </file>
   <file src="lib/private/Template/CSSResourceLocator.php">
     <ParamNameMismatch>
       <code><![CDATA[$style]]></code>
@@ -2620,15 +2532,6 @@
       <code><![CDATA[$script]]></code>
       <code><![CDATA[$script]]></code>
     </ParamNameMismatch>
-  </file>
-  <file src="lib/private/TemplateLayout.php">
-    <InvalidParamDefault>
-      <code><![CDATA[string]]></code>
-      <code><![CDATA[string]]></code>
-    </InvalidParamDefault>
-    <InvalidScalarArgument>
-      <code><![CDATA[$appId]]></code>
-    </InvalidScalarArgument>
   </file>
   <file src="lib/private/URLGenerator.php">
     <InvalidReturnStatement>
@@ -2692,11 +2595,6 @@
     <UndefinedInterfaceMethod>
       <code><![CDATA[getQuota]]></code>
     </UndefinedInterfaceMethod>
-  </file>
-  <file src="lib/private/legacy/OC_Template.php">
-    <InvalidReturnType>
-      <code><![CDATA[bool|string]]></code>
-    </InvalidReturnType>
   </file>
   <file src="lib/private/legacy/OC_User.php">
     <UndefinedClass>

@@ -17,6 +17,7 @@ use OCA\Theming\ThemingDefaults;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\OpenAPI;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\FileDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -58,7 +59,7 @@ class UserThemeController extends OCSController {
 	 * Enable theme
 	 *
 	 * @param string $themeId the theme ID
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSBadRequestException Enabling theme is not possible
 	 * @throws PreConditionNotMetException
 	 *
@@ -77,7 +78,7 @@ class UserThemeController extends OCSController {
 	 * Disable theme
 	 *
 	 * @param string $themeId the theme ID
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSBadRequestException Disabling theme is not possible
 	 * @throws PreConditionNotMetException
 	 *
@@ -130,6 +131,7 @@ class UserThemeController extends OCSController {
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
+	#[OpenAPI(scope: OpenAPI::SCOPE_DEFAULT)]
 	public function getBackground(): Response {
 		$file = $this->backgroundService->getBackground();
 		if ($file !== null) {

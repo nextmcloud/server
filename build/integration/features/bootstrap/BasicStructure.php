@@ -8,6 +8,7 @@ use Behat\Gherkin\Node\TableNode;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ServerException;
 use PHPUnit\Framework\Assert;
 use Psr\Http\Message\ResponseInterface;
 
@@ -120,7 +121,11 @@ trait BasicStructure {
 	 * @return string
 	 */
 	public function getOCSResponse($response) {
-		return simplexml_load_string($response->getBody())->meta[0]->statuscode;
+		$body = simplexml_load_string((string)$response->getBody());
+		if ($body === false) {
+			throw new \RuntimeException('Could not parse OCS response, body is not valid XML');
+		}
+		return $body->meta[0]->statuscode;
 	}
 
 	/**
@@ -169,6 +174,8 @@ trait BasicStructure {
 		try {
 			$this->response = $client->request($verb, $fullUrl, $options);
 		} catch (ClientException $ex) {
+			$this->response = $ex->getResponse();
+		} catch (ServerException $ex) {
 			$this->response = $ex->getResponse();
 		}
 	}
@@ -279,7 +286,8 @@ trait BasicStructure {
 	 * @param string $user
 	 */
 	public function loggingInUsingWebAs($user) {
-		$loginUrl = substr($this->baseUrl, 0, -5) . '/index.php/login';
+		$baseUrl = substr($this->baseUrl, 0, -5);
+		$loginUrl = $baseUrl . '/index.php/login';
 		// Request a new session and extract CSRF token
 		$client = new Client();
 		$response = $client->get(
@@ -302,6 +310,9 @@ trait BasicStructure {
 					'requesttoken' => $this->requestToken,
 				],
 				'cookies' => $this->cookieJar,
+				'headers' => [
+					'Origin' => $baseUrl,
+				],
 			]
 		);
 		$this->extracRequestTokenFromResponse($response);

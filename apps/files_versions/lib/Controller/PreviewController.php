@@ -10,6 +10,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\OpenAPI;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\FileDisplayResponse;
 use OCP\Files\IRootFolder;
@@ -18,6 +19,7 @@ use OCP\IPreview;
 use OCP\IRequest;
 use OCP\IUserSession;
 
+#[OpenAPI(scope: OpenAPI::SCOPE_DEFAULT)]
 class PreviewController extends Controller {
 
 	public function __construct(
@@ -38,7 +40,7 @@ class PreviewController extends Controller {
 	 * @param int $x Width of the preview
 	 * @param int $y Height of the preview
 	 * @param string $version Version of the file to get the preview for
-	 * @return FileDisplayResponse<Http::STATUS_OK, array{Content-Type: string}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND, array<empty>, array{}>
+	 * @return FileDisplayResponse<Http::STATUS_OK, array{Content-Type: string}>|DataResponse<Http::STATUS_BAD_REQUEST|Http::STATUS_NOT_FOUND, list<empty>, array{}>
 	 *
 	 * 200: Preview returned
 	 * 400: Getting preview is not possible

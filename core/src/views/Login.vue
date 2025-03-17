@@ -111,18 +111,13 @@ import LoginForm from '../components/login/LoginForm.vue'
 import PasswordLessLoginForm from '../components/login/PasswordLessLoginForm.vue'
 import ResetPassword from '../components/login/ResetPassword.vue'
 import UpdatePassword from '../components/login/UpdatePassword.vue'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
+import { wipeBrowserStorages } from '../utils/xhr-request.js'
 
 const query = queryString.parse(location.search)
 if (query.clear === '1') {
-	try {
-		window.localStorage.clear()
-		window.sessionStorage.clear()
-		console.debug('Browser storage cleared')
-	} catch (e) {
-		console.error('Could not clear browser storage', e)
-	}
+	wipeBrowserStorages()
 }
 
 export default {
@@ -196,6 +191,7 @@ body {
 .fade-enter-active, .fade-leave-active {
 	transition: opacity .3s;
 }
+
 .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
 	opacity: 0;
 }

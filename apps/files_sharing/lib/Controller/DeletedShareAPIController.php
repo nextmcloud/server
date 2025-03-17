@@ -38,7 +38,7 @@ class DeletedShareAPIController extends OCSController {
 		string $appName,
 		IRequest $request,
 		private ShareManager $shareManager,
-		private string $userId,
+		private ?string $userId,
 		private IUserManager $userManager,
 		private IGroupManager $groupManager,
 		private IRootFolder $rootFolder,
@@ -135,22 +135,23 @@ class DeletedShareAPIController extends OCSController {
 	/**
 	 * Get a list of all deleted shares
 	 *
-	 * @return DataResponse<Http::STATUS_OK, Files_SharingDeletedShare[], array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<Files_SharingDeletedShare>, array{}>
 	 *
 	 * 200: Deleted shares returned
 	 */
 	#[NoAdminRequired]
 	public function index(): DataResponse {
 		$groupShares = $this->shareManager->getDeletedSharedWith($this->userId, IShare::TYPE_GROUP, null, -1, 0);
+		$teamShares = $this->shareManager->getDeletedSharedWith($this->userId, IShare::TYPE_CIRCLE, null, -1, 0);
 		$roomShares = $this->shareManager->getDeletedSharedWith($this->userId, IShare::TYPE_ROOM, null, -1, 0);
 		$deckShares = $this->shareManager->getDeletedSharedWith($this->userId, IShare::TYPE_DECK, null, -1, 0);
 		$sciencemeshShares = $this->shareManager->getDeletedSharedWith($this->userId, IShare::TYPE_SCIENCEMESH, null, -1, 0);
 
-		$shares = array_merge($groupShares, $roomShares, $deckShares, $sciencemeshShares);
+		$shares = array_merge($groupShares, $teamShares, $roomShares, $deckShares, $sciencemeshShares);
 
-		$shares = array_map(function (IShare $share) {
+		$shares = array_values(array_map(function (IShare $share) {
 			return $this->formatShare($share);
-		}, $shares);
+		}, $shares));
 
 		return new DataResponse($shares);
 	}
@@ -159,7 +160,7 @@ class DeletedShareAPIController extends OCSController {
 	 * Undelete a deleted share
 	 *
 	 * @param string $id ID of the share
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 * @throws OCSNotFoundException Share not found
 	 *

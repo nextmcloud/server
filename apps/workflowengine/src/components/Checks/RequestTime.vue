@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
 import moment from 'moment-timezone'
 import valueMixin from '../../mixins/valueMixin.js'
 
@@ -109,7 +109,7 @@ export default {
 			margin-bottom: 5px;
 		}
 
-		.multiselect::v-deep .multiselect__tags:not(:hover):not(:focus):not(:active) {
+		.multiselect:deep(.multiselect__tags:not(:hover):not(:focus):not(:active)) {
 			border: 1px solid transparent;
 		}
 

@@ -150,16 +150,6 @@ class OwnershipTransferService {
 			$output
 		);
 
-		$destinationPath = $finalTarget . '/' . $path;
-		// restore the shares
-		$this->restoreShares(
-			$sourceUid,
-			$destinationUid,
-			$destinationPath,
-			$shares,
-			$output
-		);
-
 		// transfer the incoming shares
 		if ($transferIncomingShares === true) {
 			$sourceShares = $this->collectIncomingShares(
@@ -184,6 +174,16 @@ class OwnershipTransferService {
 				$move
 			);
 		}
+
+		$destinationPath = $finalTarget . '/' . $path;
+		// restore the shares
+		$this->restoreShares(
+			$sourceUid,
+			$destinationUid,
+			$destinationPath,
+			$shares,
+			$output
+		);
 	}
 
 	private function sanitizeFolderName(string $name): string {
@@ -310,7 +310,7 @@ class OwnershipTransferService {
 		foreach ($supportedShareTypes as $shareType) {
 			$offset = 0;
 			while (true) {
-				$sharePage = $this->shareManager->getSharesBy($sourceUid, $shareType, null, true, 50, $offset);
+				$sharePage = $this->shareManager->getSharesBy($sourceUid, $shareType, null, true, 50, $offset, onlyValid: false);
 				$progress->advance(count($sharePage));
 				if (empty($sharePage)) {
 					break;
@@ -340,10 +340,19 @@ class OwnershipTransferService {
 		$progress->finish();
 		$output->writeln('');
 
-		return array_map(fn (IShare $share) => [
-			'share' => $share,
-			'suffix' => substr(Filesystem::normalizePath($view->getPath($share->getNodeId())), strlen($normalizedPath)),
-		], $shares);
+		return array_values(array_filter(array_map(function (IShare $share) use ($view, $normalizedPath, $output, $sourceUid) {
+			try {
+				$nodePath = $view->getPath($share->getNodeId());
+			} catch (NotFoundException $e) {
+				$output->writeln("<error>Failed to find path for shared file {$share->getNodeId()} for user $sourceUid, skipping</error>");
+				return null;
+			}
+
+			return [
+				'share' => $share,
+				'suffix' => substr(Filesystem::normalizePath($nodePath), strlen($normalizedPath)),
+			];
+		}, $shares)));
 	}
 
 	private function collectIncomingShares(string $sourceUid,
@@ -397,7 +406,7 @@ class OwnershipTransferService {
 			$view->mkdir($finalTarget);
 			$finalTarget = $finalTarget . '/' . basename($sourcePath);
 		}
-		if ($view->rename($sourcePath, $finalTarget) === false) {
+		if ($view->rename($sourcePath, $finalTarget, ['checkSubMounts' => false]) === false) {
 			throw new TransferOwnershipException('Could not transfer files.', 1);
 		}
 		if (!is_dir("$sourceUid/files")) {
@@ -464,7 +473,7 @@ class OwnershipTransferService {
 						}
 						$share->setNodeId($newNodeId);
 
-						$this->shareManager->updateShare($share);
+						$this->shareManager->updateShare($share, onlyValid: false);
 					}
 				}
 			} catch (NotFoundException $e) {

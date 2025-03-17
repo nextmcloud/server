@@ -31,6 +31,8 @@ use OCP\Files\Node;
 use OCP\Files\NotPermittedException;
 use OCP\Files\SimpleFS\ISimpleFile;
 use OCP\Http\Client\IClientService;
+use OCP\ICache;
+use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IServerContainer;
@@ -77,6 +79,10 @@ class Manager implements IManager {
 	private ?array $availableTaskTypes = null;
 
 	private IAppData $appData;
+	private ?array $preferences = null;
+	private ?array $providersById = null;
+	private ICache $distributedCache;
+
 	public function __construct(
 		private IConfig $config,
 		private Coordinator $coordinator,
@@ -91,8 +97,10 @@ class Manager implements IManager {
 		private IUserMountCache $userMountCache,
 		private IClientService $clientService,
 		private IAppManager $appManager,
+		ICacheFactory $cacheFactory,
 	) {
 		$this->appData = $appDataFactory->get('core');
+		$this->distributedCache = $cacheFactory->createDistributed('task_processing::');
 	}
 
 
@@ -538,6 +546,10 @@ class Manager implements IManager {
 			\OCP\TaskProcessing\TaskTypes\AudioToText::ID => \OCP\Server::get(\OCP\TaskProcessing\TaskTypes\AudioToText::class),
 			\OCP\TaskProcessing\TaskTypes\ContextWrite::ID => \OCP\Server::get(\OCP\TaskProcessing\TaskTypes\ContextWrite::class),
 			\OCP\TaskProcessing\TaskTypes\GenerateEmoji::ID => \OCP\Server::get(\OCP\TaskProcessing\TaskTypes\GenerateEmoji::class),
+			\OCP\TaskProcessing\TaskTypes\TextToTextChangeTone::ID => \OCP\Server::get(\OCP\TaskProcessing\TaskTypes\TextToTextChangeTone::class),
+			\OCP\TaskProcessing\TaskTypes\TextToTextChatWithTools::ID => \OCP\Server::get(\OCP\TaskProcessing\TaskTypes\TextToTextChatWithTools::class),
+			\OCP\TaskProcessing\TaskTypes\ContextAgentInteraction::ID => \OCP\Server::get(\OCP\TaskProcessing\TaskTypes\ContextAgentInteraction::class),
+			\OCP\TaskProcessing\TaskTypes\TextToTextProofread::ID => \OCP\Server::get(\OCP\TaskProcessing\TaskTypes\TextToTextProofread::class),
 		];
 
 		foreach ($context->getTaskProcessingTaskTypes() as $providerServiceRegistration) {
@@ -559,6 +571,29 @@ class Manager implements IManager {
 		$taskTypes += $this->_getTextProcessingTaskTypes();
 
 		return $taskTypes;
+	}
+
+	/**
+	 * @return array
+	 */
+	private function _getTaskTypeSettings(): array {
+		try {
+			$json = $this->config->getAppValue('core', 'ai.taskprocessing_type_preferences', '');
+			if ($json === '') {
+				return [];
+			}
+			return json_decode($json, true, flags: JSON_THROW_ON_ERROR);
+		} catch (\JsonException $e) {
+			$this->logger->error('Failed to get settings. JSON Error in ai.taskprocessing_type_preferences', ['exception' => $e]);
+			$taskTypeSettings = [];
+			$taskTypes = $this->_getTaskTypes();
+			foreach ($taskTypes as $taskType) {
+				$taskTypeSettings[$taskType->getId()] = false;
+			};
+
+			return $taskTypeSettings;
+		}
+
 	}
 
 	/**
@@ -698,12 +733,23 @@ class Manager implements IManager {
 
 	public function getPreferredProvider(string $taskTypeId) {
 		try {
-			$preferences = json_decode($this->config->getAppValue('core', 'ai.taskprocessing_provider_preferences', 'null'), associative: true, flags: JSON_THROW_ON_ERROR);
+			if ($this->preferences === null) {
+				$this->preferences = $this->distributedCache->get('ai.taskprocessing_provider_preferences');
+				if ($this->preferences === null) {
+					$this->preferences = json_decode($this->config->getAppValue('core', 'ai.taskprocessing_provider_preferences', 'null'), associative: true, flags: JSON_THROW_ON_ERROR);
+					$this->distributedCache->set('ai.taskprocessing_provider_preferences', $this->preferences, 60 * 3);
+				}
+			}
+
 			$providers = $this->getProviders();
-			if (isset($preferences[$taskTypeId])) {
-				$provider = current(array_values(array_filter($providers, fn ($provider) => $provider->getId() === $preferences[$taskTypeId])));
-				if ($provider !== false) {
-					return $provider;
+			if (isset($this->preferences[$taskTypeId])) {
+				$providersById = $this->providersById ?? array_reduce($providers, static function (array $carry, IProvider $provider) {
+					$carry[$provider->getId()] = $provider;
+					return $carry;
+				}, []);
+				$this->providersById = $providersById;
+				if (isset($providersById[$this->preferences[$taskTypeId]])) {
+					return $providersById[$this->preferences[$taskTypeId]];
 				}
 			}
 			// By default, use the first available provider
@@ -718,12 +764,23 @@ class Manager implements IManager {
 		throw new \OCP\TaskProcessing\Exception\Exception('No matching provider found');
 	}
 
-	public function getAvailableTaskTypes(): array {
+	public function getAvailableTaskTypes(bool $showDisabled = false): array {
 		if ($this->availableTaskTypes === null) {
+			$cachedValue = $this->distributedCache->get('available_task_types_v2');
+			if ($cachedValue !== null) {
+				$this->availableTaskTypes = unserialize($cachedValue);
+			}
+		}
+		// Either we have no cache or showDisabled is turned on, which we don't want to cache, ever.
+		if ($this->availableTaskTypes === null || $showDisabled) {
 			$taskTypes = $this->_getTaskTypes();
+			$taskTypeSettings = $this->_getTaskTypeSettings();
 
 			$availableTaskTypes = [];
 			foreach ($taskTypes as $taskType) {
+				if ((!$showDisabled) && isset($taskTypeSettings[$taskType->getId()]) && !$taskTypeSettings[$taskType->getId()]) {
+					continue;
+				}
 				try {
 					$provider = $this->getPreferredProvider($taskType->getId());
 				} catch (\OCP\TaskProcessing\Exception\Exception $e) {
@@ -749,8 +806,15 @@ class Manager implements IManager {
 				}
 			}
 
+			if ($showDisabled) {
+				// Do not cache showDisabled, ever.
+				return $availableTaskTypes;
+			}
+
 			$this->availableTaskTypes = $availableTaskTypes;
+			$this->distributedCache->set('available_task_types_v2', serialize($this->availableTaskTypes), 60);
 		}
+
 
 		return $this->availableTaskTypes;
 	}
@@ -935,7 +999,7 @@ class Manager implements IManager {
 				$task->setEndedAt(time());
 				$error = 'The task was processed successfully but the provider\'s output doesn\'t pass validation against the task type\'s outputShape spec and/or the provider\'s own optionalOutputShape spec';
 				$task->setErrorMessage($error);
-				$this->logger->error($error, ['exception' => $e]);
+				$this->logger->error($error, ['exception' => $e, 'output' => $result]);
 			} catch (NotPermittedException $e) {
 				$task->setProgress(1);
 				$task->setStatus(Task::STATUS_FAILED);
@@ -952,7 +1016,11 @@ class Manager implements IManager {
 				$this->logger->error($error, ['exception' => $e]);
 			}
 		}
-		$taskEntity = \OC\TaskProcessing\Db\Task::fromPublicTask($task);
+		try {
+			$taskEntity = \OC\TaskProcessing\Db\Task::fromPublicTask($task);
+		} catch (\JsonException $e) {
+			throw new \OCP\TaskProcessing\Exception\Exception('The task was processed successfully but the provider\'s output could not be encoded as JSON for the database.', 0, $e);
+		}
 		try {
 			$this->taskMapper->update($taskEntity);
 			$this->runWebhook($task);
@@ -1328,7 +1396,7 @@ class Manager implements IManager {
 				$this->logger->warning('Task processing AppAPI webhook failed for task ' . $task->getId() . '. Invalid method: ' . $method);
 			}
 			[, $exAppId, $httpMethod] = $parsedMethod;
-			if (!$this->appManager->isInstalled('app_api')) {
+			if (!$this->appManager->isEnabledForAnyone('app_api')) {
 				$this->logger->warning('Task processing AppAPI webhook failed for task ' . $task->getId() . '. AppAPI is disabled or not installed.');
 				return;
 			}

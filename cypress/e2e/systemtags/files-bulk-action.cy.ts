@@ -57,7 +57,6 @@ function triggerTagManagementDialogAction() {
 }
 
 describe('Systemtags: Files bulk action', { testIsolation: false }, () => {
-	let snapshot: string
 	let user1: User
 	let user2: User
 
@@ -76,6 +75,11 @@ describe('Systemtags: Files bulk action', { testIsolation: false }, () => {
 		resetTags()
 	})
 
+	after(() => {
+		resetTags()
+		cy.runOccCommand('config:app:set systemtags restrict_creation_to_admin --value 0')
+	})
+
 	it('Can assign tag to selection', () => {
 		cy.login(user1)
 		cy.visit('/apps/files')
@@ -88,6 +92,7 @@ describe('Systemtags: Files bulk action', { testIsolation: false }, () => {
 
 		triggerTagManagementDialogAction()
 		cy.get('[data-cy-systemtags-picker-tag]').should('have.length', 5)
+		cy.get('[data-cy-systemtags-picker-tag-color]').should('have.length', 5)
 
 		cy.intercept('PROPFIND', '/remote.php/dav/systemtags/*/files').as('getTagData')
 		cy.intercept('PROPPATCH', '/remote.php/dav/systemtags/*/files').as('assignTagData')
@@ -116,6 +121,7 @@ describe('Systemtags: Files bulk action', { testIsolation: false }, () => {
 
 		triggerTagManagementDialogAction()
 		cy.get('[data-cy-systemtags-picker-tag]').should('have.length', 5)
+		cy.get('[data-cy-systemtags-picker-tag-color]').should('have.length', 5)
 
 		cy.intercept('PROPFIND', '/remote.php/dav/systemtags/*/files').as('getTagData')
 		cy.intercept('PROPPATCH', '/remote.php/dav/systemtags/*/files').as('assignTagData')
@@ -326,7 +332,10 @@ describe('Systemtags: Files bulk action', { testIsolation: false }, () => {
 
 			const newTag = randomBytes(8).toString('base64').slice(0, 6)
 			cy.get('[data-cy-systemtags-picker-input]').type(newTag)
-			cy.get('[data-cy-systemtags-picker-input-submit]').click()
+
+			cy.get('[data-cy-systemtags-picker-tag]').should('have.length', 0)
+			cy.get('[data-cy-systemtags-picker-button-create]').should('be.visible')
+			cy.get('[data-cy-systemtags-picker-button-create]').click()
 
 			cy.wait('@createTag')
 			cy.get('[data-cy-systemtags-picker-tag]').should('have.length', 6)
@@ -349,6 +358,57 @@ describe('Systemtags: Files bulk action', { testIsolation: false }, () => {
 			expectInlineTagForFile('file3.txt', [newTag])
 			expectInlineTagForFile('file4.txt', [newTag])
 			expectInlineTagForFile('file5.txt', [newTag])
+		})
+	})
+
+	it('Cannot create tag if restriction is in place', () => {
+		let tagId: string
+
+		cy.runOccCommand('config:app:set systemtags restrict_creation_to_admin --value 1')
+		cy.runOccCommand('tag:add testTag public --output json').then(({ stdout }) => {
+			const tag = JSON.parse(stdout)
+			tagId = tag.id
+		})
+
+		cy.createRandomUser().then((user1) => {
+			files.forEach((file) => {
+				cy.uploadContent(user1, new Blob([]), 'text/plain', '/' + file)
+			})
+
+			cy.login(user1)
+			cy.visit('/apps/files')
+
+			files.forEach((file) => {
+				getRowForFile(file).should('be.visible')
+			})
+			selectAllFiles()
+
+			triggerTagManagementDialogAction()
+
+			cy.findByRole('textbox', { name: 'Search or create tag' }).should('not.exist')
+			cy.findByRole('textbox', { name: 'Search tag' }).should('be.visible')
+
+			cy.get('[data-cy-systemtags-picker-input]').type('testTag')
+
+			cy.get('[data-cy-systemtags-picker-tag]').should('have.length', 1)
+			cy.get('[data-cy-systemtags-picker-button-create]').should('not.exist')
+			cy.get('[data-cy-systemtags-picker-tag-color]').should('not.exist')
+
+			// Assign the tag
+			cy.intercept('PROPFIND', '/remote.php/dav/systemtags/*/files').as('getTagData')
+			cy.intercept('PROPPATCH', '/remote.php/dav/systemtags/*/files').as('assignTagData')
+
+			cy.get(`[data-cy-systemtags-picker-tag="${tagId}"]`).should('be.visible')
+				.findByRole('checkbox').click({ force: true })
+			cy.get('[data-cy-systemtags-picker-button-submit]').click()
+
+			cy.wait('@getTagData')
+			cy.wait('@assignTagData')
+
+			cy.get('[data-cy-systemtags-picker]').should('not.exist')
+
+			// Finally, reset the restriction
+			cy.runOccCommand('config:app:set systemtags restrict_creation_to_admin --value 0')
 		})
 	})
 })

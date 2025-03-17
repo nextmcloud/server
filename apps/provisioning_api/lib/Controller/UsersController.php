@@ -31,6 +31,7 @@ use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 use OCP\AppFramework\OCSController;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\Files\IRootFolder;
 use OCP\Group\ISubAdmin;
 use OCP\HintException;
 use OCP\IConfig;
@@ -53,7 +54,7 @@ use Psr\Log\LoggerInterface;
 /**
  * @psalm-import-type Provisioning_APIUserDetails from ResponseDefinitions
  */
-class UsersController extends AUserData {
+class UsersController extends AUserDataOCSController {
 
 	private IL10N $l10n;
 
@@ -67,6 +68,7 @@ class UsersController extends AUserData {
 		IAccountManager $accountManager,
 		ISubAdmin $subAdminManager,
 		IFactory $l10nFactory,
+		IRootFolder $rootFolder,
 		private IURLGenerator $urlGenerator,
 		private LoggerInterface $logger,
 		private NewUserMailHelper $newUserMailHelper,
@@ -85,7 +87,8 @@ class UsersController extends AUserData {
 			$userSession,
 			$accountManager,
 			$subAdminManager,
-			$l10nFactory
+			$l10nFactory,
+			$rootFolder,
 		);
 
 		$this->l10n = $l10nFactory->get($appName);
@@ -97,7 +100,7 @@ class UsersController extends AUserData {
 	 * @param string $search Text to search for
 	 * @param int|null $limit Limit the amount of groups returned
 	 * @param int $offset Offset for searching for groups
-	 * @return DataResponse<Http::STATUS_OK, array{users: string[]}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{users: list<string>}, array{}>
 	 *
 	 * 200: Users returned
 	 */
@@ -125,7 +128,7 @@ class UsersController extends AUserData {
 			}
 		}
 
-		/** @var string[] $users */
+		/** @var list<string> $users */
 		$users = array_keys($users);
 
 		return new DataResponse([
@@ -341,8 +344,8 @@ class UsersController extends AUserData {
 	 * Search users by their phone numbers
 	 *
 	 * @param string $location Location of the phone number (for country code)
-	 * @param array<string, string[]> $search Phone numbers to search for
-	 * @return DataResponse<Http::STATUS_OK, array<string, string>, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array<empty>, array{}>
+	 * @param array<string, list<string>> $search Phone numbers to search for
+	 * @return DataResponse<Http::STATUS_OK, array<string, string>, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, list<empty>, array{}>
 	 *
 	 * 200: Users returned
 	 * 400: Invalid location
@@ -433,8 +436,8 @@ class UsersController extends AUserData {
 	 * @param string $password Password of the user
 	 * @param string $displayName Display name of the user
 	 * @param string $email Email of the user
-	 * @param string[] $groups Groups of the user
-	 * @param string[] $subadmin Groups where the user is subadmin
+	 * @param list<string> $groups Groups of the user
+	 * @param list<string> $subadmin Groups where the user is subadmin
 	 * @param string $quota Quota of the user
 	 * @param string $language Language of the user
 	 * @param ?string $manager Manager of the user
@@ -689,7 +692,7 @@ class UsersController extends AUserData {
 	 *
 	 * Get a list of fields that are editable for the current user
 	 *
-	 * @return DataResponse<Http::STATUS_OK, string[], array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<string>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: Editable fields returned
@@ -710,7 +713,7 @@ class UsersController extends AUserData {
 	 * Get a list of fields that are editable for a user
 	 *
 	 * @param string $userId ID of the user
-	 * @return DataResponse<Http::STATUS_OK, string[], array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<string>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: Editable fields for user returned
@@ -779,7 +782,7 @@ class UsersController extends AUserData {
 	 * @param string $collectionName Collection to update
 	 * @param string $key Key that will be updated
 	 * @param string $value New value for the key
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: User values edited successfully
@@ -884,14 +887,14 @@ class UsersController extends AUserData {
 	 * @param string $userId ID of the user
 	 * @param string $key Key that will be updated
 	 * @param string $value New value for the key
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: User value edited successfully
 	 */
 	#[PasswordConfirmationRequired]
 	#[NoAdminRequired]
-	#[UserRateLimit(limit: 50, period: 60)]
+	#[UserRateLimit(limit: 50, period: 600)]
 	public function editUser(string $userId, string $key, string $value): DataResponse {
 		$currentLoggedInUser = $this->userSession->getUser();
 
@@ -1092,9 +1095,9 @@ class UsersController extends AUserData {
 					throw new OCSException($this->l10n->t('Invalid first day of week'), 101);
 				}
 				if ($intValue === -1) {
-					$this->config->deleteUserValue($targetUser->getUID(), 'core', AUserData::USER_FIELD_FIRST_DAY_OF_WEEK);
+					$this->config->deleteUserValue($targetUser->getUID(), 'core', AUserDataOCSController::USER_FIELD_FIRST_DAY_OF_WEEK);
 				} else {
-					$this->config->setUserValue($targetUser->getUID(), 'core', AUserData::USER_FIELD_FIRST_DAY_OF_WEEK, $value);
+					$this->config->setUserValue($targetUser->getUID(), 'core', AUserDataOCSController::USER_FIELD_FIRST_DAY_OF_WEEK, $value);
 				}
 				break;
 			case self::USER_FIELD_NOTIFICATION_EMAIL:
@@ -1222,7 +1225,7 @@ class UsersController extends AUserData {
 	 *
 	 * @param string $userId ID of the user
 	 *
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 *
 	 * @throws OCSException
 	 *
@@ -1261,7 +1264,7 @@ class UsersController extends AUserData {
 	 * Delete a user
 	 *
 	 * @param string $userId ID of the user
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: User deleted successfully
@@ -1301,7 +1304,7 @@ class UsersController extends AUserData {
 	 * Disable a user
 	 *
 	 * @param string $userId ID of the user
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: User disabled successfully
@@ -1316,7 +1319,7 @@ class UsersController extends AUserData {
 	 * Enable a user
 	 *
 	 * @param string $userId ID of the user
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: User enabled successfully
@@ -1330,7 +1333,7 @@ class UsersController extends AUserData {
 	/**
 	 * @param string $userId
 	 * @param bool $value
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 */
 	private function setEnabled(string $userId, bool $value): DataResponse {
@@ -1360,7 +1363,7 @@ class UsersController extends AUserData {
 	 * Get a list of groups the user belongs to
 	 *
 	 * @param string $userId ID of the user
-	 * @return DataResponse<Http::STATUS_OK, array{groups: string[]}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{groups: list<string>}, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: Users groups returned
@@ -1387,16 +1390,10 @@ class UsersController extends AUserData {
 			// Looking up someone else
 			if ($subAdminManager->isUserAccessible($loggedInUser, $targetUser)) {
 				// Return the group that the method caller is subadmin of for the user in question
-				/** @var IGroup[] $getSubAdminsGroups */
-				$getSubAdminsGroups = $subAdminManager->getSubAdminsGroups($loggedInUser);
-				foreach ($getSubAdminsGroups as $key => $group) {
-					$getSubAdminsGroups[$key] = $group->getGID();
-				}
-				/** @var string[] $groups */
-				$groups = array_intersect(
-					$getSubAdminsGroups,
+				$groups = array_values(array_intersect(
+					array_map(static fn (IGroup $group) => $group->getGID(), $subAdminManager->getSubAdminsGroups($loggedInUser)),
 					$this->groupManager->getUserGroupIds($targetUser)
-				);
+				));
 				return new DataResponse(['groups' => $groups]);
 			} else {
 				// Not permitted
@@ -1410,7 +1407,7 @@ class UsersController extends AUserData {
 	 *
 	 * @param string $userId ID of the user
 	 * @param string $groupid ID of the group
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: User added to group successfully
@@ -1450,7 +1447,7 @@ class UsersController extends AUserData {
 	 *
 	 * @param string $userId ID of the user
 	 * @param string $groupid ID of the group
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: User removed from group successfully
@@ -1517,7 +1514,7 @@ class UsersController extends AUserData {
 	 *
 	 * @param string $userId ID of the user
 	 * @param string $groupid ID of the group
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: User added as group subadmin successfully
@@ -1557,7 +1554,7 @@ class UsersController extends AUserData {
 	 *
 	 * @param string $userId ID of the user
 	 * @param string $groupid ID of the group
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: User removed as group subadmin successfully
@@ -1591,7 +1588,7 @@ class UsersController extends AUserData {
 	 * Get the groups a user is a subadmin of
 	 *
 	 * @param string $userId ID if the user
-	 * @return DataResponse<Http::STATUS_OK, string[], array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<string>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: User subadmin groups returned
@@ -1606,7 +1603,7 @@ class UsersController extends AUserData {
 	 * Resend the welcome message
 	 *
 	 * @param string $userId ID if the user
-	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 * @return DataResponse<Http::STATUS_OK, list<empty>, array{}>
 	 * @throws OCSException
 	 *
 	 * 200: Resent welcome message successfully

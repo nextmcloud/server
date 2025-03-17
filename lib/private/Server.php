@@ -7,6 +7,8 @@
 namespace OC;
 
 use bantu\IniGetWrapper\IniGetWrapper;
+use NCU\Config\IUserConfig;
+use NCU\Security\Signature\ISignatureManager;
 use OC\Accounts\AccountManager;
 use OC\App\AppManager;
 use OC\App\AppStore\Bundles\BundleFetcher;
@@ -43,6 +45,7 @@ use OC\Files\Cache\FileAccess;
 use OC\Files\Config\MountProviderCollection;
 use OC\Files\Config\UserMountCache;
 use OC\Files\Config\UserMountCacheListener;
+use OC\Files\Conversion\ConversionManager;
 use OC\Files\Lock\LockManager;
 use OC\Files\Mount\CacheMountProvider;
 use OC\Files\Mount\LocalHomeMountProvider;
@@ -102,6 +105,7 @@ use OC\Security\Hasher;
 use OC\Security\Ip\RemoteAddress;
 use OC\Security\RateLimiting\Limiter;
 use OC\Security\SecureRandom;
+use OC\Security\Signature\SignatureManager;
 use OC\Security\TrustedDomainHelper;
 use OC\Security\VerificationToken\VerificationToken;
 use OC\Session\CryptoWrapper;
@@ -152,6 +156,7 @@ use OCP\Federation\ICloudIdManager;
 use OCP\Files\Cache\IFileAccess;
 use OCP\Files\Config\IMountProviderCollection;
 use OCP\Files\Config\IUserMountCache;
+use OCP\Files\Conversion\IConversionManager;
 use OCP\Files\IMimeTypeDetector;
 use OCP\Files\IMimeTypeLoader;
 use OCP\Files\IRootFolder;
@@ -281,6 +286,7 @@ class Server extends ServerContainer implements IServerContainer {
 
 		$this->registerAlias(\OCP\DirectEditing\IManager::class, \OC\DirectEditing\Manager::class);
 		$this->registerAlias(ITemplateManager::class, TemplateManager::class);
+		$this->registerAlias(\OCP\Template\ITemplateManager::class, \OC\Template\TemplateManager::class);
 
 		$this->registerAlias(IActionFactory::class, ActionFactory::class);
 
@@ -567,6 +573,7 @@ class Server extends ServerContainer implements IServerContainer {
 		});
 
 		$this->registerAlias(IAppConfig::class, \OC\AppConfig::class);
+		$this->registerAlias(IUserConfig::class, \OC\Config\UserConfig::class);
 
 		$this->registerService(IFactory::class, function (Server $c) {
 			return new \OC\L10N\Factory(
@@ -785,6 +792,7 @@ class Server extends ServerContainer implements IServerContainer {
 				$c->get(ICacheFactory::class),
 				$c->get(IEventDispatcher::class),
 				$c->get(LoggerInterface::class),
+				$c->get(ServerVersion::class),
 			);
 		});
 		$this->registerAlias(IAppManager::class, AppManager::class);
@@ -830,8 +838,8 @@ class Server extends ServerContainer implements IServerContainer {
 			$busClass = $c->get(\OCP\IConfig::class)->getSystemValueString('commandbus');
 			if ($busClass) {
 				[$app, $class] = explode('::', $busClass, 2);
-				if ($c->get(IAppManager::class)->isInstalled($app)) {
-					\OC_App::loadApp($app);
+				if ($c->get(IAppManager::class)->isEnabledForUser($app)) {
+					$c->get(IAppManager::class)->loadApp($app);
 					return $c->get($class);
 				} else {
 					throw new ServiceUnavailableException("The app providing the command bus ($app) is not enabled");
@@ -1039,7 +1047,7 @@ class Server extends ServerContainer implements IServerContainer {
 				$classExists = false;
 			}
 
-			if ($classExists && $c->get(\OCP\IConfig::class)->getSystemValueBool('installed', false) && $c->get(IAppManager::class)->isInstalled('theming') && $c->get(TrustedDomainHelper::class)->isTrustedDomain($c->getRequest()->getInsecureServerHost())) {
+			if ($classExists && $c->get(\OCP\IConfig::class)->getSystemValueBool('installed', false) && $c->get(IAppManager::class)->isEnabledForAnyone('theming') && $c->get(TrustedDomainHelper::class)->isTrustedDomain($c->getRequest()->getInsecureServerHost())) {
 				$backgroundService = new BackgroundService(
 					$c->get(IRootFolder::class),
 					$c->getAppDataDir('theming'),
@@ -1102,7 +1110,6 @@ class Server extends ServerContainer implements IServerContainer {
 			);
 
 			return new CryptoWrapper(
-				$c->get(\OCP\IConfig::class),
 				$c->get(ICrypto::class),
 				$c->get(ISecureRandom::class),
 				$request
@@ -1178,18 +1185,7 @@ class Server extends ServerContainer implements IServerContainer {
 		});
 
 		$this->registerAlias(\OCP\GlobalScale\IConfig::class, \OC\GlobalScale\Config::class);
-
-		$this->registerService(ICloudFederationProviderManager::class, function (ContainerInterface $c) {
-			return new CloudFederationProviderManager(
-				$c->get(\OCP\IConfig::class),
-				$c->get(IAppManager::class),
-				$c->get(IClientService::class),
-				$c->get(ICloudIdManager::class),
-				$c->get(IOCMDiscoveryService::class),
-				$c->get(LoggerInterface::class)
-			);
-		});
-
+		$this->registerAlias(ICloudFederationProviderManager::class, CloudFederationProviderManager::class);
 		$this->registerService(ICloudFederationFactory::class, function (Server $c) {
 			return new CloudFederationFactory();
 		});
@@ -1265,6 +1261,8 @@ class Server extends ServerContainer implements IServerContainer {
 
 		$this->registerAlias(ITranslationManager::class, TranslationManager::class);
 
+		$this->registerAlias(IConversionManager::class, ConversionManager::class);
+
 		$this->registerAlias(ISpeechToTextManager::class, SpeechToTextManager::class);
 
 		$this->registerAlias(IEventSourceFactory::class, EventSourceFactory::class);
@@ -1294,6 +1292,8 @@ class Server extends ServerContainer implements IServerContainer {
 		$this->registerAlias(\OCP\Security\Ip\IFactory::class, \OC\Security\Ip\Factory::class);
 
 		$this->registerAlias(IRichTextFormatter::class, \OC\RichObjectStrings\RichTextFormatter::class);
+
+		$this->registerAlias(ISignatureManager::class, SignatureManager::class);
 
 		$this->connectDispatcher();
 	}

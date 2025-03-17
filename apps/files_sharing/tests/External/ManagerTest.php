@@ -22,6 +22,7 @@ use OCP\Files\NotFoundException;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\ICacheFactory;
+use OCP\IDBConnection;
 use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IURLGenerator;
@@ -29,6 +30,7 @@ use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
 use OCP\OCS\IDiscoveryService;
+use OCP\Server;
 use OCP\Share\IShare;
 use Psr\Log\LoggerInterface;
 use Test\Traits\UserTrait;
@@ -105,7 +107,7 @@ class ManagerTest extends TestCase {
 
 		$this->manager = $this->createManagerForUser($this->uid);
 
-		$this->testMountProvider = new MountProvider(\OC::$server->getDatabaseConnection(), function () {
+		$this->testMountProvider = new MountProvider(Server::get(IDBConnection::class), function () {
 			return $this->manager;
 		}, new CloudIdManager(
 			$this->contactsManager,
@@ -134,7 +136,7 @@ class ManagerTest extends TestCase {
 
 	protected function tearDown(): void {
 		// clear the share external table to avoid side effects
-		$query = \OC::$server->getDatabaseConnection()->prepare('DELETE FROM `*PREFIX*share_external`');
+		$query = Server::get(IDBConnection::class)->prepare('DELETE FROM `*PREFIX*share_external`');
 		$result = $query->execute();
 		$result->closeCursor();
 
@@ -152,12 +154,12 @@ class ManagerTest extends TestCase {
 		return $this->getMockBuilder(Manager::class)
 			->setConstructorArgs(
 				[
-					\OC::$server->getDatabaseConnection(),
+					Server::get(IDBConnection::class),
 					$this->mountManager,
 					new StorageFactory(),
 					$this->clientService,
-					\OC::$server->getNotificationManager(),
-					\OC::$server->query(IDiscoveryService::class),
+					Server::get(\OCP\Notification\IManager::class),
+					Server::get(IDiscoveryService::class),
 					$this->cloudFederationProviderManager,
 					$this->cloudFederationFactory,
 					$this->groupManager,
@@ -645,10 +647,10 @@ class ManagerTest extends TestCase {
 			'user' => 'user2',
 			'remoteId' => '2342'
 		];
-		$this->assertSame(null, call_user_func_array([$manager2, 'addShare'], $shareData2));
 
-		$user2Shares = $manager2->getOpenShares();
-		$this->assertCount(2, $user2Shares);
+		$this->assertCount(1, $manager2->getOpenShares());
+		$this->assertSame(null, call_user_func_array([$manager2, 'addShare'], $shareData2));
+		$this->assertCount(2, $manager2->getOpenShares());
 
 		$this->manager->expects($this->once())->method('tryOCMEndPoint')->with('http://localhost', 'token1', '2342', 'decline')->willReturn([]);
 		$this->manager->removeUserShares($this->uid);
@@ -690,10 +692,10 @@ class ManagerTest extends TestCase {
 			'user' => 'user2',
 			'remoteId' => '2342'
 		];
-		$this->assertSame(null, call_user_func_array([$manager2, 'addShare'], $shareData2));
 
-		$user2Shares = $manager2->getOpenShares();
-		$this->assertCount(2, $user2Shares);
+		$this->assertCount(1, $manager2->getOpenShares());
+		$this->assertSame(null, call_user_func_array([$manager2, 'addShare'], $shareData2));
+		$this->assertCount(2, $manager2->getOpenShares());
 
 		$this->manager->expects($this->never())->method('tryOCMEndPoint');
 		$this->manager->removeGroupShares('group1');

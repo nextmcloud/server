@@ -169,7 +169,7 @@ class OC_App {
 	 * @param bool $forceRefresh whether to refresh the cache
 	 * @param bool $all whether to return apps for all users, not only the
 	 *                  currently logged in one
-	 * @return string[]
+	 * @return list<string>
 	 */
 	public static function getEnabledApps(bool $forceRefresh = false, bool $all = false): array {
 		if (!\OC::$server->getSystemConfig()->getValue('installed', false)) {
@@ -185,7 +185,7 @@ class OC_App {
 		}
 
 		if (is_null($user)) {
-			$apps = $appManager->getInstalledApps();
+			$apps = $appManager->getEnabledApps();
 		} else {
 			$apps = $appManager->getEnabledAppsForUser($user);
 		}

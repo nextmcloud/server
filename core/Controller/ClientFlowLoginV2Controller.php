@@ -41,6 +41,8 @@ use OCP\Security\ISecureRandom;
 class ClientFlowLoginV2Controller extends Controller {
 	public const TOKEN_NAME = 'client.flow.v2.login.token';
 	public const STATE_NAME = 'client.flow.v2.state.token';
+	// Denotes that the session was created for the login flow and should therefore be ephemeral.
+	public const EPHEMERAL_NAME = 'client.flow.v2.state.ephemeral';
 
 	public function __construct(
 		string $appName,
@@ -61,7 +63,7 @@ class ClientFlowLoginV2Controller extends Controller {
 	 * Poll the login flow credentials
 	 *
 	 * @param string $token Token of the flow
-	 * @return JSONResponse<Http::STATUS_OK, CoreLoginFlowV2Credentials, array{}>|JSONResponse<Http::STATUS_NOT_FOUND, array<empty>, array{}>
+	 * @return JSONResponse<Http::STATUS_OK, CoreLoginFlowV2Credentials, array{}>|JSONResponse<Http::STATUS_NOT_FOUND, list<empty>, array{}>
 	 *
 	 * 200: Login flow credentials returned
 	 * 404: Login flow not found or completed
@@ -69,6 +71,7 @@ class ClientFlowLoginV2Controller extends Controller {
 	#[NoCSRFRequired]
 	#[PublicPage]
 	#[FrontpageRoute(verb: 'POST', url: '/login/v2/poll')]
+	#[OpenAPI(scope: OpenAPI::SCOPE_DEFAULT)]
 	public function poll(string $token): JSONResponse {
 		try {
 			$creds = $this->loginFlowV2Service->poll($token);
@@ -275,6 +278,7 @@ class ClientFlowLoginV2Controller extends Controller {
 	#[NoCSRFRequired]
 	#[PublicPage]
 	#[FrontpageRoute(verb: 'POST', url: '/login/v2')]
+	#[OpenAPI(scope: OpenAPI::SCOPE_DEFAULT)]
 	public function init(): JSONResponse {
 		// Get client user agent
 		$userAgent = $this->request->getHeader('USER_AGENT');

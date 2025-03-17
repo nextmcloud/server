@@ -24,7 +24,7 @@ $getUserAvatar = static function (int $size) use ($_): string {
 		<meta charset="utf-8">
 		<title>
 			<?php
-				p(!empty($_['pageTitle']) && $_['pageTitle'] !== $_['application'] ? $_['pageTitle'] . ' - ' : '');
+				p(!empty($_['pageTitle']) && (empty($_['application']) || $_['pageTitle'] !== $_['application']) ? $_['pageTitle'] . ' - ' : '');
 p(!empty($_['application']) ? $_['application'] . ' - ' : '');
 p($theme->getTitle());
 ?>
@@ -81,7 +81,7 @@ p($theme->getTitle());
 			</div>
 		</header>
 
-		<main id="content" class="app-<?php p($_['appid']) ?>">
+		<div id="content" class="app-<?php p($_['appid']) ?>">
 			<h1 class="hidden-visually" id="page-heading-level-1">
 				<?php p((!empty($_['application']) && !empty($_['pageTitle']) && $_['application'] != $_['pageTitle'])
 					? $_['application'] . ': ' . $_['pageTitle']
@@ -89,7 +89,7 @@ p($theme->getTitle());
 				); ?>
 			</h1>
 			<?php print_unescaped($_['content']); ?>
-		</main>
+		</div>
 		<div id="profiler-toolbar"></div>
 	</body>
 </html>

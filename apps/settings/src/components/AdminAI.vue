@@ -10,10 +10,15 @@
 				<div :key="type">
 					<h3>{{ t('settings', 'Task:') }} {{ type.name }}</h3>
 					<p>{{ type.description }}</p>
-					<p>&nbsp;</p>
+					<NcCheckboxRadioSwitch v-model="settings['ai.taskprocessing_type_preferences'][type.id]"
+						type="switch"
+						@update:modelValue="saveChanges">
+						{{ t('settings', 'Enable') }}
+					</NcCheckboxRadioSwitch>
 					<NcSelect v-model="settings['ai.taskprocessing_provider_preferences'][type.id]"
 						class="provider-select"
 						:clearable="false"
+						:disabled="!settings['ai.taskprocessing_type_preferences'][type.id]"
 						:options="taskProcessingProviders.filter(p => p.taskType === type.id).map(p => p.id)"
 						@input="saveChanges">
 						<template #option="{label}">
@@ -102,17 +107,17 @@
 
 <script>
 import axios from '@nextcloud/axios'
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import NcSettingsSection from '@nextcloud/vue/dist/Components/NcSettingsSection.js'
-import NcSelect from '@nextcloud/vue/dist/Components/NcSelect.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
+import NcSelect from '@nextcloud/vue/components/NcSelect'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import draggable from 'vuedraggable'
 import DragVerticalIcon from 'vue-material-design-icons/DragVertical.vue'
 import ArrowDownIcon from 'vue-material-design-icons/ArrowDown.vue'
 import ArrowUpIcon from 'vue-material-design-icons/ArrowUp.vue'
 import { loadState } from '@nextcloud/initial-state'
-
+import { nextTick } from 'vue'
 import { generateUrl } from '@nextcloud/router'
 
 export default {
@@ -185,6 +190,7 @@ export default {
 		},
 		async saveChanges() {
 			this.loading = true
+			await nextTick()
 			const data = { settings: this.settings }
 			try {
 				await axios.put(generateUrl('/settings/api/admin/ai'), data)

@@ -798,13 +798,15 @@ class DefaultShareProvider implements IShareProviderWithNotification, IShareProv
 			->andWhere(
 				$qb->expr()->orX(
 					$qb->expr()->eq('share_type', $qb->createNamedParameter(IShare::TYPE_USER)),
-					$qb->expr()->eq('share_type', $qb->createNamedParameter(IShare::TYPE_GROUP))
+					$qb->expr()->eq('share_type', $qb->createNamedParameter(IShare::TYPE_GROUP)),
+					$qb->expr()->eq('share_type', $qb->createNamedParameter(IShare::TYPE_LINK)),
 				)
 			)
 			->andWhere($qb->expr()->orX(
 				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
 				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
 			))
+			->orderBy('id', 'ASC')
 			->executeQuery();
 
 		$shares = [];
@@ -1341,6 +1343,18 @@ class DefaultShareProvider implements IShareProviderWithNotification, IShareProv
 				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
 				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
 			));
+
+		// Ensure accepted is true for user and usergroup type
+		$qb->andWhere(
+			$qb->expr()->orX(
+				$qb->expr()->andX(
+					$qb->expr()->neq('share_type', $qb->createNamedParameter(IShare::TYPE_USER)),
+					$qb->expr()->neq('share_type', $qb->createNamedParameter(IShare::TYPE_USERGROUP)),
+				),
+				$qb->expr()->eq('accepted', $qb->createNamedParameter(IShare::STATUS_ACCEPTED, IQueryBuilder::PARAM_INT)),
+			),
+		);
+
 		$cursor = $qb->executeQuery();
 
 		$users = [];
@@ -1510,21 +1524,16 @@ class DefaultShareProvider implements IShareProviderWithNotification, IShareProv
 			'shareWith' => $shareWith,
 		]);
 
-		$emailTemplate->setSubject($l->t('%1$s shared »%2$s« with you', [$initiatorDisplayName, $filename]));
+		$emailTemplate->setSubject($l->t('%1$s shared %2$s with you', [$initiatorDisplayName, $filename]));
 		$emailTemplate->addHeader();
-		$emailTemplate->addHeading($l->t('%1$s shared »%2$s« with you', [$initiatorDisplayName, $filename]), false);
-		$text = $l->t('%1$s shared »%2$s« with you.', [$initiatorDisplayName, $filename]);
+		$emailTemplate->addHeading($l->t('%1$s shared %2$s with you', [$initiatorDisplayName, $filename]), false);
 
 		if ($note !== '') {
 			$emailTemplate->addBodyText(htmlspecialchars($note), $note);
 		}
 
-		$emailTemplate->addBodyText(
-			htmlspecialchars($text . ' ' . $l->t('Click the button below to open it.')),
-			$text
-		);
 		$emailTemplate->addBodyButton(
-			$l->t('Open »%s«', [$filename]),
+			$l->t('Open %s', [$filename]),
 			$link
 		);
 
@@ -1599,20 +1608,20 @@ class DefaultShareProvider implements IShareProviderWithNotification, IShareProv
 			$initiatorUser = $this->userManager->get($initiator);
 			$initiatorDisplayName = ($initiatorUser instanceof IUser) ? $initiatorUser->getDisplayName() : $initiator;
 			$initiatorEmailAddress = ($initiatorUser instanceof IUser) ? $initiatorUser->getEMailAddress() : null;
-			$plainHeading = $l->t('%1$s shared »%2$s« with you and wants to add:', [$initiatorDisplayName, $filename]);
-			$htmlHeading = $l->t('%1$s shared »%2$s« with you and wants to add', [$initiatorDisplayName, $filename]);
+			$plainHeading = $l->t('%1$s shared %2$s with you and wants to add:', [$initiatorDisplayName, $filename]);
+			$htmlHeading = $l->t('%1$s shared %2$s with you and wants to add', [$initiatorDisplayName, $filename]);
 			$message = $this->mailer->createMessage();
 
 			$emailTemplate = $this->mailer->createEMailTemplate('defaultShareProvider.sendNote');
 
-			$emailTemplate->setSubject($l->t('»%s« added a note to a file shared with you', [$initiatorDisplayName]));
+			$emailTemplate->setSubject($l->t('%s added a note to a file shared with you', [$initiatorDisplayName]));
 			$emailTemplate->addHeader();
 			$emailTemplate->addHeading($htmlHeading, $plainHeading);
 			$emailTemplate->addBodyText(htmlspecialchars($note), $note);
 
 			$link = $this->urlGenerator->linkToRouteAbsolute('files.viewcontroller.showFile', ['fileid' => $share->getNode()->getId()]);
 			$emailTemplate->addBodyButton(
-				$l->t('Open »%s«', [$filename]),
+				$l->t('Open %s', [$filename]),
 				$link
 			);
 

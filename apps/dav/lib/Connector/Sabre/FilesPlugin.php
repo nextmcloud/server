@@ -8,7 +8,9 @@
 namespace OCA\DAV\Connector\Sabre;
 
 use OC\AppFramework\Http\Request;
+use OC\FilesMetadata\Model\FilesMetadata;
 use OCA\DAV\Connector\Sabre\Exception\InvalidPath;
+use OCA\Files_Sharing\External\Mount as SharingExternalMount;
 use OCP\Constants;
 use OCP\Files\ForbiddenException;
 use OCP\Files\IFilenameValidator;
@@ -57,6 +59,7 @@ class FilesPlugin extends ServerPlugin {
 	public const HAS_PREVIEW_PROPERTYNAME = '{http://nextcloud.org/ns}has-preview';
 	public const MOUNT_TYPE_PROPERTYNAME = '{http://nextcloud.org/ns}mount-type';
 	public const MOUNT_ROOT_PROPERTYNAME = '{http://nextcloud.org/ns}is-mount-root';
+	public const IS_FEDERATED_PROPERTYNAME = '{http://nextcloud.org/ns}is-federated';
 	public const METADATA_ETAG_PROPERTYNAME = '{http://nextcloud.org/ns}metadata_etag';
 	public const UPLOAD_TIME_PROPERTYNAME = '{http://nextcloud.org/ns}upload_time';
 	public const CREATION_TIME_PROPERTYNAME = '{http://nextcloud.org/ns}creation_time';
@@ -118,6 +121,7 @@ class FilesPlugin extends ServerPlugin {
 		$server->protectedProperties[] = self::DATA_FINGERPRINT_PROPERTYNAME;
 		$server->protectedProperties[] = self::HAS_PREVIEW_PROPERTYNAME;
 		$server->protectedProperties[] = self::MOUNT_TYPE_PROPERTYNAME;
+		$server->protectedProperties[] = self::IS_FEDERATED_PROPERTYNAME;
 		$server->protectedProperties[] = self::SHARE_NOTE;
 
 		// normally these cannot be changed (RFC4918), but we want them modifiable through PROPPATCH
@@ -199,6 +203,11 @@ class FilesPlugin extends ServerPlugin {
 		$sourceNodeFileInfo = $sourceNode->getFileInfo();
 		if (!$sourceNodeFileInfo->isDeletable()) {
 			throw new Forbidden($source . ' cannot be deleted');
+		}
+
+		// The source is not allowed to be the parent of the target
+		if (str_starts_with($source, $target . '/')) {
+			throw new Forbidden($source . ' cannot be moved to it\'s parent');
 		}
 	}
 
@@ -413,6 +422,11 @@ class FilesPlugin extends ServerPlugin {
 			$propFind->handle(self::DISPLAYNAME_PROPERTYNAME, function () use ($node) {
 				return $node->getName();
 			});
+
+			$propFind->handle(self::IS_FEDERATED_PROPERTYNAME, function () use ($node) {
+				return $node->getFileInfo()->getMountPoint()
+					instanceof SharingExternalMount;
+			});
 		}
 
 		if ($node instanceof File) {
@@ -575,12 +589,20 @@ class FilesPlugin extends ServerPlugin {
 			$propPatch->handle(
 				$mutation,
 				function (mixed $value) use ($accessRight, $knownMetadata, $node, $mutation, $filesMetadataManager): bool {
+					/** @var FilesMetadata $metadata */
 					$metadata = $filesMetadataManager->getMetadata((int)$node->getFileId(), true);
+					$metadata->setStorageId($node->getNode()->getStorage()->getCache()->getNumericStorageId());
 					$metadataKey = substr($mutation, strlen(self::FILE_METADATA_PREFIX));
 
 					// confirm metadata key is editable via PROPPATCH
 					if ($knownMetadata->getEditPermission($metadataKey) < $accessRight) {
 						throw new FilesMetadataException('you do not have enough rights to update \'' . $metadataKey . '\' on this node');
+					}
+
+					if ($value === null) {
+						$metadata->unset($metadataKey);
+						$filesMetadataManager->saveMetadata($metadata);
+						return true;
 					}
 
 					// If the metadata is unknown, it defaults to string.

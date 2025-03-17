@@ -62,7 +62,7 @@ class APIController extends OCSController {
 	 *
 	 * @param string $newVersion Server version to check updates for
 	 *
-	 * @return DataResponse<Http::STATUS_OK, array{missing: UpdateNotificationApp[], available: UpdateNotificationApp[]}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{appstore_disabled: bool, already_on_latest?: bool}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{missing: list<UpdateNotificationApp>, available: list<UpdateNotificationApp>}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{appstore_disabled: bool, already_on_latest?: bool}, array{}>
 	 *
 	 * 200: Apps returned
 	 * 404: New versions not found
@@ -75,7 +75,7 @@ class APIController extends OCSController {
 		}
 
 		// Get list of installed custom apps
-		$installedApps = $this->appManager->getInstalledApps();
+		$installedApps = $this->appManager->getEnabledApps();
 		$installedApps = array_filter($installedApps, function ($app) {
 			try {
 				$this->appManager->getAppPath($app);
@@ -153,14 +153,23 @@ class APIController extends OCSController {
 	 * @param string $appId App to search changelog entry for
 	 * @param string|null $version The version to search the changelog entry for (defaults to the latest installed)
 	 *
-	 * @return DataResponse<Http::STATUS_OK, array{appName: string, content: string, version: string}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{}, array{}>
+	 * @return DataResponse<Http::STATUS_OK, array{appName: string, content: string, version: string}, array{}>|DataResponse<Http::STATUS_NOT_FOUND, array{}, array{}>|DataResponse<Http::STATUS_BAD_REQUEST, array{}, array{}>
 	 *
 	 * 200: Changelog entry returned
+	 * 400: The `version` parameter is not a valid version format
 	 * 404: No changelog found
 	 */
 	public function getAppChangelogEntry(string $appId, ?string $version = null): DataResponse {
 		$version = $version ?? $this->appManager->getAppVersion($appId);
-		$changes = $this->manager->getChangelog($appId, $version);
+		// handle pre-release versions
+		$matches = [];
+		$result = preg_match('/^(\d+\.\d+(\.\d+)?)/', $version, $matches);
+		if ($result === false || $result === 0) {
+			return new DataResponse([], Http::STATUS_BAD_REQUEST);
+		}
+		$shortVersion = $matches[0];
+
+		$changes = $this->manager->getChangelog($appId, $shortVersion);
 
 		if ($changes === null) {
 			return new DataResponse([], Http::STATUS_NOT_FOUND);

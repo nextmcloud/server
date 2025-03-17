@@ -10,7 +10,6 @@ use OC\ServerNotAvailableException;
 use OCA\User_LDAP\Access;
 use OCA\User_LDAP\Connection;
 use OCA\User_LDAP\Exceptions\ConstraintViolationException;
-use OCA\User_LDAP\FilesystemHelper;
 use OCA\User_LDAP\Helper;
 use OCA\User_LDAP\ILDAPWrapper;
 use OCA\User_LDAP\LDAP;
@@ -24,9 +23,11 @@ use OCP\HintException;
 use OCP\IAppConfig;
 use OCP\IAvatarManager;
 use OCP\IConfig;
+use OCP\IDBConnection;
 use OCP\Image;
 use OCP\IUserManager;
 use OCP\Notification\IManager as INotificationManager;
+use OCP\Server;
 use OCP\Share\IManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
@@ -111,7 +112,6 @@ class AccessTest extends TestCase {
 		$um = $this->getMockBuilder(Manager::class)
 			->setConstructorArgs([
 				$this->createMock(IConfig::class),
-				$this->createMock(FilesystemHelper::class),
 				$this->createMock(LoggerInterface::class),
 				$this->createMock(IAvatarManager::class),
 				$this->createMock(Image::class),
@@ -119,7 +119,7 @@ class AccessTest extends TestCase {
 				$this->createMock(INotificationManager::class),
 				$this->shareManager])
 			->getMock();
-		$helper = new Helper(\OC::$server->getConfig(), \OC::$server->getDatabaseConnection());
+		$helper = new Helper(Server::get(IConfig::class), Server::get(IDBConnection::class));
 
 		return [$lw, $connector, $um, $helper];
 	}
@@ -667,7 +667,7 @@ class AccessTest extends TestCase {
 		$this->groupMapper->expects($this->never())
 			->method('getNameByDN');
 
-		$this->connection->expects($this->exactly(3))
+		$this->connection->expects($this->exactly(1))
 			->method('writeToCache');
 
 		$groups = $this->access->fetchListOfGroups($filter, $attributes);

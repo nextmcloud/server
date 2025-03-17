@@ -4,7 +4,7 @@
  */
 import type { Folder, Node, View } from '@nextcloud/files'
 import type { IFilePickerButton } from '@nextcloud/dialogs'
-import type { FileStat, ResponseDataDetailed } from 'webdav'
+import type { FileStat, ResponseDataDetailed, WebDAVClientError } from 'webdav'
 import type { MoveCopyResult } from './moveOrCopyActionUtils'
 
 import { isAxiosError } from '@nextcloud/axios'
@@ -165,7 +165,18 @@ export const handleCopyMoveNodeTo = async (node: Node, destination: Folder, meth
 				}
 				// getting here means either no conflict, file was renamed to keep both files
 				// in a conflict, or the selected file was chosen to be kept during the conflict
-				await client.moveFile(currentPath, join(destinationPath, node.basename))
+				try {
+					await client.moveFile(currentPath, join(destinationPath, node.basename))
+				} catch (error) {
+					const parser = new DOMParser()
+					const text = await (error as WebDAVClientError).response?.text()
+					const message = parser.parseFromString(text ?? '', 'text/xml')
+						.querySelector('message')?.textContent
+					if (message) {
+						showError(message)
+					}
+					throw error
+				}
 				// Delete the node as it will be fetched again
 				// when navigating to the destination folder
 				emit('files:node:deleted', node)
@@ -247,6 +258,11 @@ async function openFilePickerForAction(
 				return buttons
 			}
 
+			if (selection.some((node) => (node.permissions & Permission.CREATE) === 0)) {
+				// Missing 'CREATE' permissions for selected destination
+				return buttons
+			}
+
 			if (action === MoveCopyAction.MOVE || action === MoveCopyAction.MOVE_OR_COPY) {
 				buttons.push({
 					label: target ? t('files', 'Move to {target}', { target }, undefined, { escape: false, sanitize: false }) : t('files', 'Move'),
@@ -278,8 +294,9 @@ async function openFilePickerForAction(
 	return promise
 }
 
+export const ACTION_COPY_MOVE = 'move-copy'
 export const action = new FileAction({
-	id: 'move-copy',
+	id: ACTION_COPY_MOVE,
 	displayName(nodes: Node[]) {
 		switch (getActionForNodes(nodes)) {
 		case MoveCopyAction.MOVE:

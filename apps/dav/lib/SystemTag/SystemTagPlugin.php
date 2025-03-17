@@ -10,6 +10,7 @@ namespace OCA\DAV\SystemTag;
 use OCA\DAV\Connector\Sabre\Directory;
 use OCA\DAV\Connector\Sabre\FilesPlugin;
 use OCA\DAV\Connector\Sabre\Node;
+use OCP\AppFramework\Http;
 use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -17,6 +18,8 @@ use OCP\SystemTag\ISystemTag;
 use OCP\SystemTag\ISystemTagManager;
 use OCP\SystemTag\ISystemTagObjectMapper;
 use OCP\SystemTag\TagAlreadyExistsException;
+use OCP\SystemTag\TagCreationForbiddenException;
+use OCP\SystemTag\TagUpdateForbiddenException;
 use OCP\Util;
 use Sabre\DAV\Exception\BadRequest;
 use Sabre\DAV\Exception\Conflict;
@@ -49,6 +52,7 @@ class SystemTagPlugin extends \Sabre\DAV\ServerPlugin {
 	public const NUM_FILES_PROPERTYNAME = '{http://nextcloud.org/ns}files-assigned';
 	public const REFERENCE_FILEID_PROPERTYNAME = '{http://nextcloud.org/ns}reference-fileid';
 	public const OBJECTIDS_PROPERTYNAME = '{http://nextcloud.org/ns}object-ids';
+	public const COLOR_PROPERTYNAME = '{http://nextcloud.org/ns}color';
 
 	/**
 	 * @var \Sabre\DAV\Server $server
@@ -126,7 +130,7 @@ class SystemTagPlugin extends \Sabre\DAV\ServerPlugin {
 			$response->setHeader('Content-Location', $url . $tag->getId());
 
 			// created
-			$response->setStatus(201);
+			$response->setStatus(Http::STATUS_CREATED);
 			return false;
 		}
 	}
@@ -187,6 +191,8 @@ class SystemTagPlugin extends \Sabre\DAV\ServerPlugin {
 			return $tag;
 		} catch (TagAlreadyExistsException $e) {
 			throw new Conflict('Tag already exists', 0, $e);
+		} catch (TagCreationForbiddenException $e) {
+			throw new Forbidden('You don’t have permissions to create tags', 0, $e);
 		}
 	}
 
@@ -208,7 +214,7 @@ class SystemTagPlugin extends \Sabre\DAV\ServerPlugin {
 			return;
 		}
 
-		if (!($node instanceof SystemTagNode) && !($node instanceof SystemTagMappingNode) && !($node instanceof SystemTagObjectType)) {
+		if (!$node instanceof SystemTagNode && !$node instanceof SystemTagMappingNode && !$node instanceof SystemTagObjectType) {
 			return;
 		}
 
@@ -241,6 +247,10 @@ class SystemTagPlugin extends \Sabre\DAV\ServerPlugin {
 		$propFind->handle(self::CANASSIGN_PROPERTYNAME, function () use ($node) {
 			// this is the effective permission for the current user
 			return $this->tagManager->canUserAssignTag($node->getSystemTag(), $this->userSession->getUser()) ? 'true' : 'false';
+		});
+
+		$propFind->handle(self::COLOR_PROPERTYNAME, function () use ($node) {
+			return $node->getSystemTag()->getColor() ?? '';
 		});
 
 		$propFind->handle(self::GROUPS_PROPERTYNAME, function () use ($node) {
@@ -367,18 +377,18 @@ class SystemTagPlugin extends \Sabre\DAV\ServerPlugin {
 	 */
 	public function handleUpdateProperties($path, PropPatch $propPatch) {
 		$node = $this->server->tree->getNodeForPath($path);
-		if (!($node instanceof SystemTagNode) && !($node instanceof SystemTagObjectType)) {
+		if (!$node instanceof SystemTagNode && !$node instanceof SystemTagObjectType) {
 			return;
 		}
-		
+
 		$propPatch->handle([self::OBJECTIDS_PROPERTYNAME], function ($props) use ($node) {
-			if (!($node instanceof SystemTagObjectType)) {
+			if (!$node instanceof SystemTagObjectType) {
 				return false;
 			}
 
 			if (isset($props[self::OBJECTIDS_PROPERTYNAME])) {
 				$propValue = $props[self::OBJECTIDS_PROPERTYNAME];
-				if (!($propValue instanceof SystemTagsObjectList) || count($propValue->getObjects()) === 0) {
+				if (!$propValue instanceof SystemTagsObjectList || count($propValue->getObjects()) === 0) {
 					throw new BadRequest('Invalid object-ids property');
 				}
 
@@ -388,7 +398,7 @@ class SystemTagPlugin extends \Sabre\DAV\ServerPlugin {
 				if (count($objectTypes) !== 1 || $objectTypes[0] !== $node->getName()) {
 					throw new BadRequest('Invalid object-ids property. All object types must be of the same type: ' . $node->getName());
 				}
-				
+
 				$this->tagMapper->setObjectIdsForTag($node->getSystemTag()->getId(), $node->getName(), array_keys($objects));
 			}
 
@@ -406,8 +416,9 @@ class SystemTagPlugin extends \Sabre\DAV\ServerPlugin {
 			self::GROUPS_PROPERTYNAME,
 			self::NUM_FILES_PROPERTYNAME,
 			self::REFERENCE_FILEID_PROPERTYNAME,
+			self::COLOR_PROPERTYNAME,
 		], function ($props) use ($node) {
-			if (!($node instanceof SystemTagNode)) {
+			if (!$node instanceof SystemTagNode) {
 				return false;
 			}
 
@@ -415,6 +426,7 @@ class SystemTagPlugin extends \Sabre\DAV\ServerPlugin {
 			$name = $tag->getName();
 			$userVisible = $tag->isUserVisible();
 			$userAssignable = $tag->isUserAssignable();
+			$color = $tag->getColor();
 
 			$updateTag = false;
 
@@ -435,6 +447,15 @@ class SystemTagPlugin extends \Sabre\DAV\ServerPlugin {
 				$updateTag = true;
 			}
 
+			if (isset($props[self::COLOR_PROPERTYNAME])) {
+				$propValue = $props[self::COLOR_PROPERTYNAME];
+				if ($propValue === '' || $propValue === 'null') {
+					$propValue = null;
+				}
+				$color = $propValue;
+				$updateTag = true;
+			}
+
 			if (isset($props[self::GROUPS_PROPERTYNAME])) {
 				if (!$this->groupManager->isAdmin($this->userSession->getUser()->getUID())) {
 					// property only available for admins
@@ -452,7 +473,11 @@ class SystemTagPlugin extends \Sabre\DAV\ServerPlugin {
 			}
 
 			if ($updateTag) {
-				$node->update($name, $userVisible, $userAssignable);
+				try {
+					$node->update($name, $userVisible, $userAssignable, $color);
+				} catch (TagUpdateForbiddenException $e) {
+					throw new Forbidden('You don’t have permissions to update tags', 0, $e);
+				}
 			}
 
 			return true;

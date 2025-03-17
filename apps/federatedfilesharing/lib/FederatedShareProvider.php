@@ -250,7 +250,8 @@ class FederatedShareProvider implements IShareProvider {
 			$remote,
 			$shareWith,
 			$share->getPermissions(),
-			$share->getNode()->getName()
+			$share->getNode()->getName(),
+			$share->getShareType(),
 		);
 
 		return [$token, $remoteId];
@@ -881,126 +882,151 @@ class FederatedShareProvider implements IShareProvider {
 		//TODO: probably a good idea to send unshare info to remote servers
 
 		$qb = $this->dbConnection->getQueryBuilder();
-
 		$qb->delete('share')
 			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(IShare::TYPE_REMOTE)))
 			->andWhere($qb->expr()->eq('uid_owner', $qb->createNamedParameter($uid)))
 			->executeStatement();
+
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->delete('share_external')
+			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(IShare::TYPE_GROUP)))
+			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($uid)))
+			->executeStatement();
 	}
 
-	/**
-	 * This provider does not handle groups
-	 *
-	 * @param string $gid
-	 */
 	public function groupDeleted($gid) {
-		// We don't handle groups here
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('id')
+			->from('share_external')
+			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(IShare::TYPE_GROUP)))
+			// This is not a typo, the group ID is really stored in the 'user' column
+			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($gid)));
+		$cursor = $qb->executeQuery();
+		$parentShareIds = $cursor->fetchAll(\PDO::FETCH_COLUMN);
+		$cursor->closeCursor();
+		if ($parentShareIds === []) {
+			return;
+		}
+
+		$qb = $this->dbConnection->getQueryBuilder();
+		$parentShareIdsParam = $qb->createNamedParameter($parentShareIds, IQueryBuilder::PARAM_INT_ARRAY);
+		$qb->delete('share_external')
+			->where($qb->expr()->in('id', $parentShareIdsParam))
+			->orWhere($qb->expr()->in('parent', $parentShareIdsParam))
+			->executeStatement();
 	}
 
-	/**
-	 * This provider does not handle groups
-	 *
-	 * @param string $uid
-	 * @param string $gid
-	 */
 	public function userDeletedFromGroup($uid, $gid) {
-		// We don't handle groups here
+		$qb = $this->dbConnection->getQueryBuilder();
+		$qb->select('id')
+			->from('share_external')
+			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(IShare::TYPE_GROUP)))
+			// This is not a typo, the group ID is really stored in the 'user' column
+			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($gid)));
+		$cursor = $qb->executeQuery();
+		$parentShareIds = $cursor->fetchAll(\PDO::FETCH_COLUMN);
+		$cursor->closeCursor();
+		if ($parentShareIds === []) {
+			return;
+		}
+
+		$qb = $this->dbConnection->getQueryBuilder();
+		$parentShareIdsParam = $qb->createNamedParameter($parentShareIds, IQueryBuilder::PARAM_INT_ARRAY);
+		$qb->delete('share_external')
+			->where($qb->expr()->in('parent', $parentShareIdsParam))
+			->andWhere($qb->expr()->eq('user', $qb->createNamedParameter($uid)))
+			->executeStatement();
 	}
 
 	/**
-	 * check if users from other Nextcloud instances are allowed to mount public links share by this instance
-	 *
-	 * @return bool
+	 * Check if users from other Nextcloud instances are allowed to mount public links share by this instance
 	 */
-	public function isOutgoingServer2serverShareEnabled() {
+	public function isOutgoingServer2serverShareEnabled(): bool {
 		if ($this->gsConfig->onlyInternalFederation()) {
 			return false;
 		}
 		$result = $this->config->getAppValue('files_sharing', 'outgoing_server2server_share_enabled', 'yes');
-		return ($result === 'yes');
+		return $result === 'yes';
 	}
 
 	/**
-	 * check if users are allowed to mount public links from other Nextclouds
-	 *
-	 * @return bool
+	 * Check if users are allowed to mount public links from other Nextclouds
 	 */
-	public function isIncomingServer2serverShareEnabled() {
+	public function isIncomingServer2serverShareEnabled(): bool {
 		if ($this->gsConfig->onlyInternalFederation()) {
 			return false;
 		}
 		$result = $this->config->getAppValue('files_sharing', 'incoming_server2server_share_enabled', 'yes');
-		return ($result === 'yes');
+		return $result === 'yes';
 	}
 
 
 	/**
-	 * check if users from other Nextcloud instances are allowed to send federated group shares
-	 *
-	 * @return bool
+	 * Check if users from other Nextcloud instances are allowed to send federated group shares
 	 */
-	public function isOutgoingServer2serverGroupShareEnabled() {
+	public function isOutgoingServer2serverGroupShareEnabled(): bool {
 		if ($this->gsConfig->onlyInternalFederation()) {
 			return false;
 		}
 		$result = $this->config->getAppValue('files_sharing', 'outgoing_server2server_group_share_enabled', 'no');
-		return ($result === 'yes');
+		return $result === 'yes';
 	}
 
 	/**
-	 * check if users are allowed to receive federated group shares
-	 *
-	 * @return bool
+	 * Check if users are allowed to receive federated group shares
 	 */
-	public function isIncomingServer2serverGroupShareEnabled() {
+	public function isIncomingServer2serverGroupShareEnabled(): bool {
 		if ($this->gsConfig->onlyInternalFederation()) {
 			return false;
 		}
 		$result = $this->config->getAppValue('files_sharing', 'incoming_server2server_group_share_enabled', 'no');
-		return ($result === 'yes');
+		return $result === 'yes';
 	}
 
 	/**
-	 * check if federated group sharing is supported, therefore the OCM API need to be enabled
-	 *
-	 * @return bool
+	 * Check if federated group sharing is supported, therefore the OCM API need to be enabled
 	 */
-	public function isFederatedGroupSharingSupported() {
+	public function isFederatedGroupSharingSupported(): bool {
 		return $this->cloudFederationProviderManager->isReady();
 	}
 
 	/**
 	 * Check if querying sharees on the lookup server is enabled
-	 *
-	 * @return bool
 	 */
-	public function isLookupServerQueriesEnabled() {
+	public function isLookupServerQueriesEnabled(): bool {
 		// in a global scale setup we should always query the lookup server
 		if ($this->gsConfig->isGlobalScaleEnabled()) {
 			return true;
 		}
-		$result = $this->config->getAppValue('files_sharing', 'lookupServerEnabled', 'yes');
-		return ($result === 'yes');
+		$result = $this->config->getAppValue('files_sharing', 'lookupServerEnabled', 'no') === 'yes';
+		// TODO: Reenable if lookup server is used again
+		// return $result;
+		return false;
 	}
 
 
 	/**
 	 * Check if it is allowed to publish user specific data to the lookup server
-	 *
-	 * @return bool
 	 */
-	public function isLookupServerUploadEnabled() {
+	public function isLookupServerUploadEnabled(): bool {
 		// in a global scale setup the admin is responsible to keep the lookup server up-to-date
 		if ($this->gsConfig->isGlobalScaleEnabled()) {
 			return false;
 		}
-		$result = $this->config->getAppValue('files_sharing', 'lookupServerUploadEnabled', 'yes');
-		return ($result === 'yes');
+		$result = $this->config->getAppValue('files_sharing', 'lookupServerUploadEnabled', 'no') === 'yes';
+		// TODO: Reenable if lookup server is used again
+		// return $result;
+		return false;
 	}
 
 	/**
-	 * @inheritdoc
+	 * Check if auto accepting incoming shares from trusted servers is enabled
 	 */
+	public function isFederatedTrustedShareAutoAccept(): bool {
+		$result = $this->config->getAppValue('files_sharing', 'federatedTrustedShareAutoAccept', 'yes');
+		return $result === 'yes';
+	}
+
 	public function getAccessList($nodes, $currentAccess) {
 		$ids = [];
 		foreach ($nodes as $node) {

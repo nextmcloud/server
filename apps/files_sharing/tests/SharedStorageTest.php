@@ -16,7 +16,10 @@ use OCA\Files_Sharing\SharedStorage;
 use OCA\Files_Trashbin\AppInfo\Application;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\Constants;
+use OCP\Files\Config\IMountProviderCollection;
 use OCP\Files\NotFoundException;
+use OCP\IUserManager;
+use OCP\Server;
 use OCP\Share\IShare;
 
 /**
@@ -389,8 +392,8 @@ class SharedStorageTest extends TestCase {
 		self::loginHelper(self::TEST_FILES_SHARING_API_USER2);
 		$this->assertTrue($rootView->file_exists('/' . self::TEST_FILES_SHARING_API_USER2 . '/files/' . $this->folder));
 
-		$mountConfigManager = \OC::$server->getMountProviderCollection();
-		$mounts = $mountConfigManager->getMountsForUser(\OC::$server->getUserManager()->get(self::TEST_FILES_SHARING_API_USER3));
+		$mountConfigManager = Server::get(IMountProviderCollection::class);
+		$mounts = $mountConfigManager->getMountsForUser(Server::get(IUserManager::class)->get(self::TEST_FILES_SHARING_API_USER3));
 		array_walk($mounts, [Filesystem::getMountManager(), 'addMount']);
 
 		$this->assertTrue($rootView->file_exists('/' . self::TEST_FILES_SHARING_API_USER3 . '/files/' . $this->filename));
@@ -578,5 +581,31 @@ class SharedStorageTest extends TestCase {
 		// trigger init
 		$this->assertInstanceOf(FailedStorage::class, $storage->getSourceStorage());
 		$this->assertInstanceOf(FailedCache::class, $storage->getCache());
+	}
+
+	public function testCopyPermissions(): void {
+		self::loginHelper(self::TEST_FILES_SHARING_API_USER1);
+
+		$share = $this->share(
+			IShare::TYPE_USER,
+			$this->filename,
+			self::TEST_FILES_SHARING_API_USER1,
+			self::TEST_FILES_SHARING_API_USER2,
+			Constants::PERMISSION_ALL - Constants::PERMISSION_CREATE - Constants::PERMISSION_DELETE
+		);
+
+		self::loginHelper(self::TEST_FILES_SHARING_API_USER2);
+		$view = new View('/' . self::TEST_FILES_SHARING_API_USER2 . '/files');
+		$this->assertTrue($view->file_exists($this->filename));
+
+		$this->assertTrue($view->copy($this->filename, '/target.txt'));
+
+		$this->assertTrue($view->file_exists('/target.txt'));
+
+		$info = $view->getFileInfo('/target.txt');
+		$this->assertEquals(Constants::PERMISSION_ALL - Constants::PERMISSION_CREATE, $info->getPermissions());
+
+		$this->view->unlink($this->filename);
+		$this->shareManager->deleteShare($share);
 	}
 }

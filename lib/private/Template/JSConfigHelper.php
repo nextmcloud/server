@@ -12,7 +12,7 @@ use OC\Authentication\Token\IProvider;
 use OC\CapabilitiesManager;
 use OC\Files\FilenameValidator;
 use OC\Share\Share;
-use OCA\Provisioning_API\Controller\AUserData;
+use OCA\Provisioning_API\Controller\AUserDataOCSController;
 use OCP\App\AppPathNotFoundException;
 use OCP\App\IAppManager;
 use OCP\Authentication\Exceptions\ExpiredTokenException;
@@ -78,7 +78,7 @@ class JSConfigHelper {
 		$apps_paths = [];
 
 		if ($this->currentUser === null) {
-			$apps = $this->appManager->getInstalledApps();
+			$apps = $this->appManager->getEnabledApps();
 		} else {
 			$apps = $this->appManager->getEnabledAppsForUser($this->currentUser);
 		}
@@ -136,7 +136,7 @@ class JSConfigHelper {
 
 		$capabilities = $this->capabilitiesManager->getCapabilities(false, true);
 
-		$userFirstDay = $this->config->getUserValue($uid, 'core', AUserData::USER_FIELD_FIRST_DAY_OF_WEEK, null);
+		$userFirstDay = $this->config->getUserValue($uid, 'core', AUserDataOCSController::USER_FIELD_FIRST_DAY_OF_WEEK, null);
 		$firstDay = (int)($userFirstDay ?? $this->l->l('firstday', null));
 
 		$config = [
