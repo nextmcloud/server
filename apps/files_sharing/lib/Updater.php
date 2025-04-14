@@ -11,6 +11,7 @@ use OC\Files\Filesystem;
 use OC\Files\Mount\MountPoint;
 use OCP\Constants;
 use OCP\Files\Folder;
+use OCP\Files\Mount\IMountManager;
 use OCP\Server;
 use OCP\Share\IShare;
 
@@ -48,12 +49,16 @@ class Updater {
 
 		$src = $userFolder->get($path);
 
-		$shareManager = \OC::$server->getShareManager();
+		$shareManager = Server::get(\OCP\Share\IManager::class);
+
+		// We intentionally include invalid shares, as they have been automatically invalidated due to the node no longer
+		// being accessible for the user. Only in this case where we adjust the share after it was moved we want to ignore
+		// this to be able to still adjust it.
 
 		// FIXME: should CIRCLES be included here ??
-		$shares = $shareManager->getSharesBy($user->getUID(), IShare::TYPE_USER, $src, false, -1);
-		$shares = array_merge($shares, $shareManager->getSharesBy($user->getUID(), IShare::TYPE_GROUP, $src, false, -1));
-		$shares = array_merge($shares, $shareManager->getSharesBy($user->getUID(), IShare::TYPE_ROOM, $src, false, -1));
+		$shares = $shareManager->getSharesBy($user->getUID(), IShare::TYPE_USER, $src, false, -1, onlyValid: false);
+		$shares = array_merge($shares, $shareManager->getSharesBy($user->getUID(), IShare::TYPE_GROUP, $src, false, -1, onlyValid: false));
+		$shares = array_merge($shares, $shareManager->getSharesBy($user->getUID(), IShare::TYPE_ROOM, $src, false, -1, onlyValid: false));
 
 		if ($src instanceof Folder) {
 			$cacheAccess = Server::get(FileAccess::class);
@@ -61,9 +66,9 @@ class Updater {
 			$sourceStorageId = $src->getStorage()->getCache()->getNumericStorageId();
 			$sourceInternalPath = $src->getInternalPath();
 			$subShares = array_merge(
-				$shareManager->getSharesBy($user->getUID(), IShare::TYPE_USER),
-				$shareManager->getSharesBy($user->getUID(), IShare::TYPE_GROUP),
-				$shareManager->getSharesBy($user->getUID(), IShare::TYPE_ROOM),
+				$shareManager->getSharesBy($user->getUID(), IShare::TYPE_USER, onlyValid: false),
+				$shareManager->getSharesBy($user->getUID(), IShare::TYPE_GROUP, onlyValid: false),
+				$shareManager->getSharesBy($user->getUID(), IShare::TYPE_ROOM, onlyValid: false),
 			);
 			$shareSourceIds = array_map(fn (IShare $share) => $share->getNodeId(), $subShares);
 			$shareSources = $cacheAccess->getByFileIdsInStorage($shareSourceIds, $sourceStorageId);
@@ -84,7 +89,7 @@ class Updater {
 		}
 
 		// Check if the destination is inside a share
-		$mountManager = \OC::$server->getMountManager();
+		$mountManager = Server::get(IMountManager::class);
 		$dstMount = $mountManager->find($src->getPath());
 
 		//Ownership is moved over
@@ -111,7 +116,7 @@ class Updater {
 
 			$share->setShareOwner($newOwner);
 			$share->setPermissions($newPermissions);
-			$shareManager->updateShare($share);
+			$shareManager->updateShare($share, onlyValid: false);
 		}
 	}
 

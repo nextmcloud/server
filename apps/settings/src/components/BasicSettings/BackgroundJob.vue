@@ -69,9 +69,9 @@ import { confirmPassword } from '@nextcloud/password-confirmation'
 import axios from '@nextcloud/axios'
 import moment from '@nextcloud/moment'
 
-import NcCheckboxRadioSwitch from '@nextcloud/vue/dist/Components/NcCheckboxRadioSwitch.js'
-import NcSettingsSection from '@nextcloud/vue/dist/Components/NcSettingsSection.js'
-import NcNoteCard from '@nextcloud/vue/dist/Components/NcNoteCard.js'
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+import NcSettingsSection from '@nextcloud/vue/components/NcSettingsSection'
+import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 
 import '@nextcloud/password-confirmation/dist/style.css'
 
@@ -185,6 +185,7 @@ export default {
 	background-color: var(--color-error);
 	width: initial;
 }
+
 .warning {
 	margin-top: 8px;
 	padding: 5px;
@@ -193,6 +194,7 @@ export default {
 	background-color: var(--color-warning);
 	width: initial;
 }
+
 .ajaxSwitch {
 	margin-top: 1rem;
 }

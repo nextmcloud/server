@@ -141,7 +141,7 @@
 <script>
 import { subscribe, unsubscribe } from '@nextcloud/event-bus'
 import pLimit from 'p-limit'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
+import NcButton from '@nextcloud/vue/components/NcButton'
 import AppItem from './AppList/AppItem.vue'
 import AppManagement from '../mixins/AppManagement'
 import { useAppApiStore } from '../store/app-api-store'
@@ -250,7 +250,8 @@ export default {
 			if (this.search === '') {
 				return []
 			}
-			return this.$store.getters.getAllApps
+			const exApps = this.$store.getters.isAppApiEnabled ? this.appApiStore.getAllApps : []
+			return [...this.$store.getters.getAllApps, ...exApps]
 				.filter(app => {
 					if (app.name.toLowerCase().search(this.search.toLowerCase()) !== -1) {
 						return (!this.apps.find(_app => _app.id === app.id))

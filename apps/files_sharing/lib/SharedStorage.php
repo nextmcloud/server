@@ -7,6 +7,7 @@
 namespace OCA\Files_Sharing;
 
 use OC\Files\Cache\CacheDependencies;
+use OC\Files\Cache\CacheEntry;
 use OC\Files\Cache\FailedCache;
 use OC\Files\Cache\NullWatcher;
 use OC\Files\ObjectStore\HomeObjectStoreStorage;
@@ -20,14 +21,12 @@ use OC\Files\Storage\Wrapper\Wrapper;
 use OC\Files\View;
 use OC\Share\Share;
 use OC\User\NoUserException;
-use OCA\Files_External\Config\ConfigAdapter;
 use OCA\Files_Sharing\ISharedStorage as LegacyISharedStorage;
 use OCP\Constants;
 use OCP\Files\Cache\ICache;
 use OCP\Files\Cache\ICacheEntry;
 use OCP\Files\Cache\IScanner;
 use OCP\Files\Cache\IWatcher;
-use OCP\Files\Config\IUserMountCache;
 use OCP\Files\Folder;
 use OCP\Files\IHomeStorage;
 use OCP\Files\IRootFolder;
@@ -37,6 +36,7 @@ use OCP\Files\Storage\ILockingStorage;
 use OCP\Files\Storage\ISharedStorage;
 use OCP\Files\Storage\IStorage;
 use OCP\Lock\ILockingProvider;
+use OCP\Server;
 use OCP\Share\IShare;
 use OCP\Util;
 use Psr\Log\LoggerInterface;
@@ -91,7 +91,7 @@ class SharedStorage extends Jail implements LegacyISharedStorage, ISharedStorage
 
 	public function __construct(array $parameters) {
 		$this->ownerView = $parameters['ownerView'];
-		$this->logger = \OC::$server->get(LoggerInterface::class);
+		$this->logger = Server::get(LoggerInterface::class);
 
 		$this->superShare = $parameters['superShare'];
 		$this->groupedShares = $parameters['groupedShares'];
@@ -151,7 +151,7 @@ class SharedStorage extends Jail implements LegacyISharedStorage, ISharedStorage
 			}
 
 			/** @var IRootFolder $rootFolder */
-			$rootFolder = \OC::$server->get(IRootFolder::class);
+			$rootFolder = Server::get(IRootFolder::class);
 			$this->ownerUserFolder = $rootFolder->getUserFolder($this->superShare->getShareOwner());
 			$sourceId = $this->superShare->getNodeId();
 			$ownerNodes = $this->ownerUserFolder->getById($sourceId);
@@ -413,7 +413,7 @@ class SharedStorage extends Jail implements LegacyISharedStorage, ISharedStorage
 		$this->cache = new Cache(
 			$storage,
 			$sourceRoot,
-			\OC::$server->get(CacheDependencies::class),
+			Server::get(CacheDependencies::class),
 			$this->getShare()
 		);
 		return $this->cache;
@@ -437,17 +437,17 @@ class SharedStorage extends Jail implements LegacyISharedStorage, ISharedStorage
 
 		// Get node information
 		$node = $this->getShare()->getNodeCacheEntry();
-		if ($node) {
-			/** @var IUserMountCache $userMountCache */
-			$userMountCache = \OC::$server->get(IUserMountCache::class);
-			$mounts = $userMountCache->getMountsForStorageId($node->getStorageId());
-			foreach ($mounts as $mount) {
-				// If the share is originating from an external storage
-				if ($mount->getMountProvider() === ConfigAdapter::class) {
-					// Propagate original storage scan
-					$this->watcher = parent::getWatcher($path, $storage);
-					return $this->watcher;
+		if ($node instanceof CacheEntry) {
+			$storageId = $node->getData()['storage_string_id'] ?? null;
+			// for shares from the home storage we can rely on the home storage to keep itself up to date
+			// for other storages we need use the proper watcher
+			if ($storageId !== null && !(str_starts_with($storageId, 'home::') || str_starts_with($storageId, 'object::user'))) {
+				$cache = $this->getCache();
+				$this->watcher = parent::getWatcher($path, $storage);
+				if ($cache instanceof Cache) {
+					$this->watcher->onUpdate($cache->markRootChanged(...));
 				}
+				return $this->watcher;
 			}
 		}
 
@@ -463,7 +463,7 @@ class SharedStorage extends Jail implements LegacyISharedStorage, ISharedStorage
 	 */
 	public function unshareStorage(): bool {
 		foreach ($this->groupedShares as $share) {
-			\OC::$server->getShareManager()->deleteFromSelf($share, $this->user);
+			Server::get(\OCP\Share\IManager::class)->deleteFromSelf($share, $this->user);
 		}
 		return true;
 	}

@@ -12,6 +12,7 @@ namespace OCA\Provisioning_API\Controller;
 
 use InvalidArgumentException;
 use OC\Authentication\Token\RemoteWipe;
+use OC\Group\Group;
 use OC\KnownUser\KnownUserService;
 use OC\User\Backend;
 use OCA\Provisioning_API\ResponseDefinitions;
@@ -31,6 +32,7 @@ use OCP\AppFramework\OCS\OCSForbiddenException;
 use OCP\AppFramework\OCS\OCSNotFoundException;
 use OCP\AppFramework\OCSController;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\Files\IRootFolder;
 use OCP\Group\ISubAdmin;
 use OCP\HintException;
 use OCP\IConfig;
@@ -51,9 +53,10 @@ use OCP\Util;
 use Psr\Log\LoggerInterface;
 
 /**
+ * @psalm-import-type Provisioning_APIGroupDetails from ResponseDefinitions
  * @psalm-import-type Provisioning_APIUserDetails from ResponseDefinitions
  */
-class UsersController extends AUserData {
+class UsersController extends AUserDataOCSController {
 
 	private IL10N $l10n;
 
@@ -67,6 +70,7 @@ class UsersController extends AUserData {
 		IAccountManager $accountManager,
 		ISubAdmin $subAdminManager,
 		IFactory $l10nFactory,
+		IRootFolder $rootFolder,
 		private IURLGenerator $urlGenerator,
 		private LoggerInterface $logger,
 		private NewUserMailHelper $newUserMailHelper,
@@ -85,7 +89,8 @@ class UsersController extends AUserData {
 			$userSession,
 			$accountManager,
 			$subAdminManager,
-			$l10nFactory
+			$l10nFactory,
+			$rootFolder,
 		);
 
 		$this->l10n = $l10nFactory->get($appName);
@@ -743,14 +748,16 @@ class UsersController extends AUserData {
 			$targetUser = $currentLoggedInUser;
 		}
 
-		// Editing self (display, email)
-		if ($this->config->getSystemValue('allow_user_to_change_display_name', true) !== false) {
-			if (
-				$targetUser->getBackend() instanceof ISetDisplayNameBackend
-				|| $targetUser->getBackend()->implementsActions(Backend::SET_DISPLAYNAME)
-			) {
-				$permittedFields[] = IAccountManager::PROPERTY_DISPLAYNAME;
-			}
+		$allowDisplayNameChange = $this->config->getSystemValue('allow_user_to_change_display_name', true);
+		if ($allowDisplayNameChange === true && (
+			$targetUser->getBackend() instanceof ISetDisplayNameBackend
+			|| $targetUser->getBackend()->implementsActions(Backend::SET_DISPLAYNAME)
+		)) {
+			$permittedFields[] = IAccountManager::PROPERTY_DISPLAYNAME;
+		}
+
+		// Fallback to display name value to avoid changing behavior with the new option.
+		if ($this->config->getSystemValue('allow_user_to_change_email', $allowDisplayNameChange)) {
 			$permittedFields[] = IAccountManager::PROPERTY_EMAIL;
 		}
 
@@ -891,7 +898,7 @@ class UsersController extends AUserData {
 	 */
 	#[PasswordConfirmationRequired]
 	#[NoAdminRequired]
-	#[UserRateLimit(limit: 50, period: 60)]
+	#[UserRateLimit(limit: 50, period: 600)]
 	public function editUser(string $userId, string $key, string $value): DataResponse {
 		$currentLoggedInUser = $this->userSession->getUser();
 
@@ -902,15 +909,17 @@ class UsersController extends AUserData {
 
 		$permittedFields = [];
 		if ($targetUser->getUID() === $currentLoggedInUser->getUID()) {
-			// Editing self (display, email)
-			if ($this->config->getSystemValue('allow_user_to_change_display_name', true) !== false) {
-				if (
-					$targetUser->getBackend() instanceof ISetDisplayNameBackend
-					|| $targetUser->getBackend()->implementsActions(Backend::SET_DISPLAYNAME)
-				) {
-					$permittedFields[] = self::USER_FIELD_DISPLAYNAME;
-					$permittedFields[] = IAccountManager::PROPERTY_DISPLAYNAME;
-				}
+			$allowDisplayNameChange = $this->config->getSystemValue('allow_user_to_change_display_name', true);
+			if ($allowDisplayNameChange !== false && (
+				$targetUser->getBackend() instanceof ISetDisplayNameBackend
+				|| $targetUser->getBackend()->implementsActions(Backend::SET_DISPLAYNAME)
+			)) {
+				$permittedFields[] = self::USER_FIELD_DISPLAYNAME;
+				$permittedFields[] = IAccountManager::PROPERTY_DISPLAYNAME;
+			}
+
+			// Fallback to display name value to avoid changing behavior with the new option.
+			if ($this->config->getSystemValue('allow_user_to_change_email', $allowDisplayNameChange)) {
 				$permittedFields[] = IAccountManager::PROPERTY_EMAIL;
 			}
 
@@ -1070,7 +1079,7 @@ class UsersController extends AUserData {
 					}
 					$targetUser->setPassword($value);
 				} catch (HintException $e) { // password policy error
-					throw new OCSException($e->getMessage(), 107);
+					throw new OCSException($e->getHint(), 107);
 				}
 				break;
 			case self::USER_FIELD_LANGUAGE:
@@ -1092,9 +1101,9 @@ class UsersController extends AUserData {
 					throw new OCSException($this->l10n->t('Invalid first day of week'), 101);
 				}
 				if ($intValue === -1) {
-					$this->config->deleteUserValue($targetUser->getUID(), 'core', AUserData::USER_FIELD_FIRST_DAY_OF_WEEK);
+					$this->config->deleteUserValue($targetUser->getUID(), 'core', AUserDataOCSController::USER_FIELD_FIRST_DAY_OF_WEEK);
 				} else {
-					$this->config->setUserValue($targetUser->getUID(), 'core', AUserData::USER_FIELD_FIRST_DAY_OF_WEEK, $value);
+					$this->config->setUserValue($targetUser->getUID(), 'core', AUserDataOCSController::USER_FIELD_FIRST_DAY_OF_WEEK, $value);
 				}
 				break;
 			case self::USER_FIELD_NOTIFICATION_EMAIL:
@@ -1397,6 +1406,127 @@ class UsersController extends AUserData {
 				throw new OCSException('', OCSController::RESPOND_NOT_FOUND);
 			}
 		}
+	}
+
+	/**
+	 * @NoSubAdminRequired
+	 *
+	 * Get a list of groups with details
+	 *
+	 * @param string $userId ID of the user
+	 * @return DataResponse<Http::STATUS_OK, array{groups: list<Provisioning_APIGroupDetails>}, array{}>
+	 * @throws OCSException
+	 *
+	 * 200: Users groups returned
+	 */
+	#[NoAdminRequired]
+	public function getUsersGroupsDetails(string $userId): DataResponse {
+		$loggedInUser = $this->userSession->getUser();
+
+		$targetUser = $this->userManager->get($userId);
+		if ($targetUser === null) {
+			throw new OCSException('', OCSController::RESPOND_NOT_FOUND);
+		}
+
+		$isAdmin = $this->groupManager->isAdmin($loggedInUser->getUID());
+		$isDelegatedAdmin = $this->groupManager->isDelegatedAdmin($loggedInUser->getUID());
+		if ($targetUser->getUID() === $loggedInUser->getUID() || $isAdmin || $isDelegatedAdmin) {
+			// Self lookup or admin lookup
+			$groups = array_map(
+				function (Group $group) {
+					return [
+						'id' => $group->getGID(),
+						'displayname' => $group->getDisplayName(),
+						'usercount' => $group->count(),
+						'disabled' => $group->countDisabled(),
+						'canAdd' => $group->canAddUser(),
+						'canRemove' => $group->canRemoveUser(),
+					];
+				},
+				array_values($this->groupManager->getUserGroups($targetUser)),
+			);
+			return new DataResponse([
+				'groups' => $groups,
+			]);
+		} else {
+			$subAdminManager = $this->groupManager->getSubAdmin();
+
+			// Looking up someone else
+			if ($subAdminManager->isUserAccessible($loggedInUser, $targetUser)) {
+				// Return the group that the method caller is subadmin of for the user in question
+				$gids = array_values(array_intersect(
+					array_map(
+						static fn (IGroup $group) => $group->getGID(),
+						$subAdminManager->getSubAdminsGroups($loggedInUser),
+					),
+					$this->groupManager->getUserGroupIds($targetUser)
+				));
+				$groups = array_map(
+					function (string $gid) {
+						$group = $this->groupManager->get($gid);
+						return [
+							'id' => $group->getGID(),
+							'displayname' => $group->getDisplayName(),
+							'usercount' => $group->count(),
+							'disabled' => $group->countDisabled(),
+							'canAdd' => $group->canAddUser(),
+							'canRemove' => $group->canRemoveUser(),
+						];
+					},
+					$gids,
+				);
+				return new DataResponse([
+					'groups' => $groups,
+				]);
+			} else {
+				// Not permitted
+				throw new OCSException('', OCSController::RESPOND_NOT_FOUND);
+			}
+		}
+	}
+
+	/**
+	 * @NoSubAdminRequired
+	 *
+	 * Get a list of the groups the user is a subadmin of, with details
+	 *
+	 * @param string $userId ID of the user
+	 * @return DataResponse<Http::STATUS_OK, array{groups: list<Provisioning_APIGroupDetails>}, array{}>
+	 * @throws OCSException
+	 *
+	 * 200: Users subadmin groups returned
+	 */
+	#[NoAdminRequired]
+	public function getUserSubAdminGroupsDetails(string $userId): DataResponse {
+		$loggedInUser = $this->userSession->getUser();
+
+		$targetUser = $this->userManager->get($userId);
+		if ($targetUser === null) {
+			throw new OCSException('', OCSController::RESPOND_NOT_FOUND);
+		}
+
+		$isAdmin = $this->groupManager->isAdmin($loggedInUser->getUID());
+		$isDelegatedAdmin = $this->groupManager->isDelegatedAdmin($loggedInUser->getUID());
+		if ($targetUser->getUID() === $loggedInUser->getUID() || $isAdmin || $isDelegatedAdmin) {
+			$subAdminManager = $this->groupManager->getSubAdmin();
+			$groups = array_map(
+				function (IGroup $group) {
+					return [
+						'id' => $group->getGID(),
+						'displayname' => $group->getDisplayName(),
+						'usercount' => $group->count(),
+						'disabled' => $group->countDisabled(),
+						'canAdd' => $group->canAddUser(),
+						'canRemove' => $group->canRemoveUser(),
+					];
+				},
+				array_values($subAdminManager->getSubAdminsGroups($targetUser)),
+			);
+			return new DataResponse([
+				'groups' => $groups,
+			]);
+		}
+		throw new OCSException('', OCSController::RESPOND_NOT_FOUND);
 	}
 
 	/**

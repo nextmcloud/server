@@ -21,7 +21,7 @@ declare global {
 			 * Upload a file from the fixtures folder to a given user storage.
 			 * **Warning**: Using this function will reset the previous session
 			 */
-			uploadFile(user: User, fixture?: string, mimeType?: string, target?: string): Cypress.Chainable<void>,
+			uploadFile(user: User, fixture?: string, mimeType?: string, target?: string): Cypress.Chainable<AxiosResponse>,
 
 			/**
 			 * Upload a raw content to a given user storage.
@@ -30,10 +30,15 @@ declare global {
 			uploadContent(user: User, content: Blob, mimeType: string, target: string, mtime?: number): Cypress.Chainable<AxiosResponse>,
 
 			/**
+			 * Delete a file or directory
+			 */
+			rm(user: User, target: string): Cypress.Chainable<AxiosResponse>,
+
+			/**
 			 * Create a new directory
 			 * **Warning**: Using this function will reset the previous session
 			 */
-			mkdir(user: User, target: string): Cypress.Chainable<void>,
+			mkdir(user: User, target: string): Cypress.Chainable<AxiosResponse>,
 
 			/**
 			 * Set a file as favorite (or remove from favorite)
@@ -53,27 +58,7 @@ declare global {
 			 */
 			resetUserTheming(user?: User): Cypress.Chainable<void>,
 
-			/**
-			 * Run an occ command in the docker container.
-			 */
-			runOccCommand(command: string, options?: Partial<Cypress.ExecOptions>): Cypress.Chainable<Cypress.Exec>,
-
 			userFileExists(user: string, path: string): Cypress.Chainable<number>
-
-			/**
-			 * Create a snapshot of the current database
-			 */
-			backupDB(): Cypress.Chainable<string>,
-
-			/**
-			 * Restore a snapshot of the database
-			 * Default is the post-setup state
-			 */
-			restoreDB(snapshot?: string): Cypress.Chainable
-
-			backupData(users?: string[]): Cypress.Chainable<string>
-
-			restoreData(snapshot?: string): Cypress.Chainable
 		}
 	}
 }

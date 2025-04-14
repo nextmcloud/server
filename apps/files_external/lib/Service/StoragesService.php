@@ -19,6 +19,7 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\Config\IUserMountCache;
 use OCP\Files\Events\InvalidateMountCacheEvent;
 use OCP\Files\StorageNotAvailableException;
+use OCP\Server;
 use OCP\Util;
 use Psr\Log\LoggerInterface;
 
@@ -76,13 +77,13 @@ abstract class StoragesService {
 			return $config;
 		} catch (\UnexpectedValueException $e) {
 			// don't die if a storage backend doesn't exist
-			\OC::$server->get(LoggerInterface::class)->error('Could not load storage.', [
+			Server::get(LoggerInterface::class)->error('Could not load storage.', [
 				'app' => 'files_external',
 				'exception' => $e,
 			]);
 			return null;
 		} catch (\InvalidArgumentException $e) {
-			\OC::$server->get(LoggerInterface::class)->error('Could not load storage.', [
+			Server::get(LoggerInterface::class)->error('Could not load storage.', [
 				'app' => 'files_external',
 				'exception' => $e,
 			]);
@@ -117,7 +118,7 @@ abstract class StoragesService {
 	 * @return StorageConfig
 	 * @throws NotFoundException if the storage with the given id was not found
 	 */
-	public function getStorage($id) {
+	public function getStorage(int $id) {
 		$mount = $this->dbConfig->getMountById($id);
 
 		if (!is_array($mount)) {
@@ -433,7 +434,7 @@ abstract class StoragesService {
 	 *
 	 * @throws NotFoundException if no storage was found with the given id
 	 */
-	public function removeStorage($id) {
+	public function removeStorage(int $id) {
 		$existingMount = $this->dbConfig->getMountById($id);
 
 		if (!is_array($existingMount)) {

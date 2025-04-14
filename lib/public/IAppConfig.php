@@ -45,6 +45,9 @@ interface IAppConfig {
 	/** @since 29.0.0 */
 	public const VALUE_ARRAY = 64;
 
+	/** @since 31.0.0 */
+	public const FLAG_SENSITIVE = 1;   // value is sensitive
+
 	/**
 	 * Get list of all apps that have at least one config value stored in database
 	 *
@@ -504,4 +507,12 @@ interface IAppConfig {
 	 * @deprecated 29.0.0 Use {@see getAllValues()} or {@see searchValues()}
 	 */
 	public function getFilteredValues($app);
+
+	/**
+	 * Returns the installed version of all apps
+	 *
+	 * @return array<string, string>
+	 * @since 32.0.0
+	 */
+	public function getAppInstalledVersions(): array;
 }

@@ -141,6 +141,8 @@ class OwnershipTransferService {
 			$sourcePath
 		);
 
+		$sourceSize = $view->getFileInfo($sourcePath)->getSize();
+
 		// transfer the files
 		$this->transferFiles(
 			$sourceUid,
@@ -149,6 +151,7 @@ class OwnershipTransferService {
 			$view,
 			$output
 		);
+		$sizeDifference = $sourceSize - $view->getFileInfo($finalTarget)->getSize();
 
 		// transfer the incoming shares
 		if ($transferIncomingShares === true) {
@@ -184,6 +187,9 @@ class OwnershipTransferService {
 			$shares,
 			$output
 		);
+		if ($sizeDifference !== 0) {
+			$output->writeln("Transferred folder have a size difference of: $sizeDifference Bytes which means the transfer may be incomplete. Please check the logs if there was any issue during the transfer operation.");
+		}
 	}
 
 	private function sanitizeFolderName(string $name): string {
@@ -310,7 +316,7 @@ class OwnershipTransferService {
 		foreach ($supportedShareTypes as $shareType) {
 			$offset = 0;
 			while (true) {
-				$sharePage = $this->shareManager->getSharesBy($sourceUid, $shareType, null, true, 50, $offset);
+				$sharePage = $this->shareManager->getSharesBy($sourceUid, $shareType, null, true, 50, $offset, onlyValid: false);
 				$progress->advance(count($sharePage));
 				if (empty($sharePage)) {
 					break;
@@ -340,10 +346,19 @@ class OwnershipTransferService {
 		$progress->finish();
 		$output->writeln('');
 
-		return array_map(fn (IShare $share) => [
-			'share' => $share,
-			'suffix' => substr(Filesystem::normalizePath($view->getPath($share->getNodeId())), strlen($normalizedPath)),
-		], $shares);
+		return array_values(array_filter(array_map(function (IShare $share) use ($view, $normalizedPath, $output, $sourceUid) {
+			try {
+				$nodePath = $view->getPath($share->getNodeId());
+			} catch (NotFoundException $e) {
+				$output->writeln("<error>Failed to find path for shared file {$share->getNodeId()} for user $sourceUid, skipping</error>");
+				return null;
+			}
+
+			return [
+				'share' => $share,
+				'suffix' => substr(Filesystem::normalizePath($nodePath), strlen($normalizedPath)),
+			];
+		}, $shares)));
 	}
 
 	private function collectIncomingShares(string $sourceUid,
@@ -397,7 +412,7 @@ class OwnershipTransferService {
 			$view->mkdir($finalTarget);
 			$finalTarget = $finalTarget . '/' . basename($sourcePath);
 		}
-		if ($view->rename($sourcePath, $finalTarget) === false) {
+		if ($view->rename($sourcePath, $finalTarget, ['checkSubMounts' => false]) === false) {
 			throw new TransferOwnershipException('Could not transfer files.', 1);
 		}
 		if (!is_dir("$sourceUid/files")) {
@@ -464,7 +479,7 @@ class OwnershipTransferService {
 						}
 						$share->setNodeId($newNodeId);
 
-						$this->shareManager->updateShare($share);
+						$this->shareManager->updateShare($share, onlyValid: false);
 					}
 				}
 			} catch (NotFoundException $e) {

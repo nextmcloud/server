@@ -9,13 +9,13 @@
 import Docker from 'dockerode'
 import waitOn from 'wait-on'
 import { c as createTar } from 'tar'
-import path from 'path'
+import path, { basename } from 'path'
 import { execSync } from 'child_process'
 import { existsSync } from 'fs'
 
 export const docker = new Docker()
 
-const CONTAINER_NAME = 'nextcloud-cypress-tests-server'
+const CONTAINER_NAME = `nextcloud-cypress-tests_${basename(process.cwd()).replace(' ', '')}`
 const SERVER_IMAGE = 'ghcr.io/nextcloud/continuous-integration-shallow-server'
 
 /**
@@ -49,6 +49,10 @@ export const startNextcloud = async function(branch: string = getCurrentGitBranc
 					reject(err)
 				}
 			}))
+
+			const digest = await (await docker.getImage(SERVER_IMAGE).inspect()).RepoDigests.at(0)
+			const sha = digest?.split('@').at(1)
+			console.log('├─ Using image ' + sha)
 			console.log('└─ Done')
 		} catch (e) {
 			console.log('└─ Failed to pull images')
@@ -84,6 +88,12 @@ export const startNextcloud = async function(branch: string = getCurrentGitBranc
 					Type: 'tmpfs',
 					ReadOnly: false,
 				}],
+				PortBindings: {
+					'80/tcp': [{
+						HostIP: '0.0.0.0',
+						HostPort: '8083',
+					}],
+				},
 			},
 			Env: [
 				`BRANCH=${branch}`,
@@ -238,11 +248,15 @@ export const getContainerIP = async function(
 	while (ip === '' && tries < 10) {
 		tries++
 
-		await container.inspect(function(err, data) {
+		container.inspect(function(err, data) {
 			if (err) {
 				throw err
 			}
-			ip = data?.NetworkSettings?.IPAddress || ''
+			if (data?.HostConfig.PortBindings?.['80/tcp']?.[0]?.HostPort) {
+				ip = `localhost:${data.HostConfig.PortBindings['80/tcp'][0].HostPort}`
+			} else {
+				ip = data?.NetworkSettings?.IPAddress || ''
+			}
 		})
 
 		if (ip !== '') {

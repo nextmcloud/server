@@ -23,6 +23,7 @@ use OCP\Accounts\IAccountPropertyCollection;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCS\OCSException;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\Files\IRootFolder;
 use OCP\Group\ISubAdmin;
 use OCP\IConfig;
 use OCP\IGroup;
@@ -41,6 +42,7 @@ use OCP\User\Backend\ISetDisplayNameBackend;
 use OCP\UserInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Test\TestCase;
 
 class UsersControllerTest extends TestCase {
@@ -76,6 +78,7 @@ class UsersControllerTest extends TestCase {
 	private $knownUserService;
 	/** @var IEventDispatcher|MockObject */
 	private $eventDispatcher;
+	private IRootFolder $rootFolder;
 	/** @var IPhoneNumberUtil */
 	private $phoneNumberUtil;
 
@@ -98,6 +101,7 @@ class UsersControllerTest extends TestCase {
 		$this->knownUserService = $this->createMock(KnownUserService::class);
 		$this->eventDispatcher = $this->createMock(IEventDispatcher::class);
 		$this->phoneNumberUtil = new PhoneNumberUtil();
+		$this->rootFolder = $this->createMock(IRootFolder::class);
 
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(fn (string $txt, array $replacement = []) => sprintf($txt, ...$replacement));
@@ -114,6 +118,7 @@ class UsersControllerTest extends TestCase {
 				$this->accountManager,
 				$this->subAdminManager,
 				$this->l10nFactory,
+				$this->rootFolder,
 				$this->urlGenerator,
 				$this->logger,
 				$this->newUserMailHelper,
@@ -508,6 +513,7 @@ class UsersControllerTest extends TestCase {
 				$this->accountManager,
 				$this->subAdminManager,
 				$this->l10nFactory,
+				$this->rootFolder,
 				$this->urlGenerator,
 				$this->logger,
 				$this->newUserMailHelper,
@@ -1127,7 +1133,7 @@ class UsersControllerTest extends TestCase {
 		$this->api
 			->expects($this->once())
 			->method('fillStorageInfo')
-			->with('UID')
+			->with($targetUser)
 			->willReturn(['DummyValue']);
 
 		$backend = $this->createMock(UserInterface::class);
@@ -1144,9 +1150,13 @@ class UsersControllerTest extends TestCase {
 			->method('getHome')
 			->willReturn('/var/www/newtcloud/data/UID');
 		$targetUser
-			->expects($this->once())
+			->expects($this->exactly(2))
 			->method('getLastLogin')
 			->willReturn(1521191471);
+		$targetUser
+			->expects($this->once())
+			->method('getFirstLogin')
+			->willReturn(1511191471);
 		$targetUser
 			->expects($this->once())
 			->method('getBackendClassName')
@@ -1169,6 +1179,8 @@ class UsersControllerTest extends TestCase {
 			'id' => 'UID',
 			'enabled' => true,
 			'storageLocation' => '/var/www/newtcloud/data/UID',
+			'firstLoginTimestamp' => 1511191471,
+			'lastLoginTimestamp' => 1521191471,
 			'lastLogin' => 1521191471000,
 			'backend' => 'Database',
 			'subadmin' => ['group3'],
@@ -1254,7 +1266,7 @@ class UsersControllerTest extends TestCase {
 		$this->api
 			->expects($this->once())
 			->method('fillStorageInfo')
-			->with('UID')
+			->with($targetUser)
 			->willReturn(['DummyValue']);
 
 		$backend = $this->createMock(UserInterface::class);
@@ -1270,9 +1282,13 @@ class UsersControllerTest extends TestCase {
 			->expects($this->never())
 			->method('getHome');
 		$targetUser
-			->expects($this->once())
+			->expects($this->exactly(2))
 			->method('getLastLogin')
 			->willReturn(1521191471);
+		$targetUser
+			->expects($this->once())
+			->method('getFirstLogin')
+			->willReturn(1511191471);
 		$targetUser
 			->expects($this->once())
 			->method('getBackendClassName')
@@ -1308,6 +1324,8 @@ class UsersControllerTest extends TestCase {
 		$expected = [
 			'id' => 'UID',
 			'enabled' => true,
+			'firstLoginTimestamp' => 1511191471,
+			'lastLoginTimestamp' => 1521191471,
 			'lastLogin' => 1521191471000,
 			'backend' => 'Database',
 			'subadmin' => [],
@@ -1429,7 +1447,7 @@ class UsersControllerTest extends TestCase {
 		$this->api
 			->expects($this->once())
 			->method('fillStorageInfo')
-			->with('UID')
+			->with($targetUser)
 			->willReturn(['DummyValue']);
 
 		$backend = $this->createMock(UserInterface::class);
@@ -1452,9 +1470,13 @@ class UsersControllerTest extends TestCase {
 			->expects($this->never())
 			->method('getHome');
 		$targetUser
-			->expects($this->once())
+			->expects($this->exactly(2))
 			->method('getLastLogin')
 			->willReturn(1521191471);
+		$targetUser
+			->expects($this->once())
+			->method('getFirstLogin')
+			->willReturn(1511191471);
 		$targetUser
 			->expects($this->once())
 			->method('getBackendClassName')
@@ -1485,6 +1507,8 @@ class UsersControllerTest extends TestCase {
 
 		$expected = [
 			'id' => 'UID',
+			'firstLoginTimestamp' => 1511191471,
+			'lastLoginTimestamp' => 1521191471,
 			'lastLogin' => 1521191471000,
 			'backend' => 'Database',
 			'subadmin' => [],
@@ -1644,6 +1668,8 @@ class UsersControllerTest extends TestCase {
 			->expects($this->any())
 			->method('getBackend')
 			->willReturn($backend);
+
+		$this->config->method('getSystemValue')->willReturnCallback(fn (string $key, mixed $default) => $default);
 
 		$this->assertEquals([], $this->api->editUser('UserToEdit', 'email', 'demo@nextcloud.com')->getData());
 	}
@@ -1838,6 +1864,8 @@ class UsersControllerTest extends TestCase {
 			->expects($this->any())
 			->method('getBackend')
 			->willReturn($backend);
+
+		$this->config->method('getSystemValue')->willReturnCallback(fn (string $key, mixed $default) => $default);
 
 		$this->api->editUser('UserToEdit', 'email', 'demo.org');
 	}
@@ -3788,6 +3816,7 @@ class UsersControllerTest extends TestCase {
 				$this->accountManager,
 				$this->subAdminManager,
 				$this->l10nFactory,
+				$this->rootFolder,
 				$this->urlGenerator,
 				$this->logger,
 				$this->newUserMailHelper,
@@ -3878,6 +3907,7 @@ class UsersControllerTest extends TestCase {
 				$this->accountManager,
 				$this->subAdminManager,
 				$this->l10nFactory,
+				$this->rootFolder,
 				$this->urlGenerator,
 				$this->logger,
 				$this->newUserMailHelper,
@@ -4235,7 +4265,8 @@ class UsersControllerTest extends TestCase {
 
 	public function dataGetEditableFields() {
 		return [
-			[false, ISetDisplayNameBackend::class, [
+			[false, true, ISetDisplayNameBackend::class, [
+				IAccountManager::PROPERTY_EMAIL,
 				IAccountManager::COLLECTION_EMAIL,
 				IAccountManager::PROPERTY_PHONE,
 				IAccountManager::PROPERTY_ADDRESS,
@@ -4249,7 +4280,22 @@ class UsersControllerTest extends TestCase {
 				IAccountManager::PROPERTY_PROFILE_ENABLED,
 				IAccountManager::PROPERTY_PRONOUNS,
 			]],
-			[true, ISetDisplayNameBackend::class, [
+			[true, false, ISetDisplayNameBackend::class, [
+				IAccountManager::PROPERTY_DISPLAYNAME,
+				IAccountManager::COLLECTION_EMAIL,
+				IAccountManager::PROPERTY_PHONE,
+				IAccountManager::PROPERTY_ADDRESS,
+				IAccountManager::PROPERTY_WEBSITE,
+				IAccountManager::PROPERTY_TWITTER,
+				IAccountManager::PROPERTY_FEDIVERSE,
+				IAccountManager::PROPERTY_ORGANISATION,
+				IAccountManager::PROPERTY_ROLE,
+				IAccountManager::PROPERTY_HEADLINE,
+				IAccountManager::PROPERTY_BIOGRAPHY,
+				IAccountManager::PROPERTY_PROFILE_ENABLED,
+				IAccountManager::PROPERTY_PRONOUNS,
+			]],
+			[true, true, ISetDisplayNameBackend::class, [
 				IAccountManager::PROPERTY_DISPLAYNAME,
 				IAccountManager::PROPERTY_EMAIL,
 				IAccountManager::COLLECTION_EMAIL,
@@ -4265,8 +4311,65 @@ class UsersControllerTest extends TestCase {
 				IAccountManager::PROPERTY_PROFILE_ENABLED,
 				IAccountManager::PROPERTY_PRONOUNS,
 			]],
-			[true, UserInterface::class, [
+			[false, false, ISetDisplayNameBackend::class, [
+				IAccountManager::COLLECTION_EMAIL,
+				IAccountManager::PROPERTY_PHONE,
+				IAccountManager::PROPERTY_ADDRESS,
+				IAccountManager::PROPERTY_WEBSITE,
+				IAccountManager::PROPERTY_TWITTER,
+				IAccountManager::PROPERTY_FEDIVERSE,
+				IAccountManager::PROPERTY_ORGANISATION,
+				IAccountManager::PROPERTY_ROLE,
+				IAccountManager::PROPERTY_HEADLINE,
+				IAccountManager::PROPERTY_BIOGRAPHY,
+				IAccountManager::PROPERTY_PROFILE_ENABLED,
+				IAccountManager::PROPERTY_PRONOUNS,
+			]],
+			[false, true, UserInterface::class, [
 				IAccountManager::PROPERTY_EMAIL,
+				IAccountManager::COLLECTION_EMAIL,
+				IAccountManager::PROPERTY_PHONE,
+				IAccountManager::PROPERTY_ADDRESS,
+				IAccountManager::PROPERTY_WEBSITE,
+				IAccountManager::PROPERTY_TWITTER,
+				IAccountManager::PROPERTY_FEDIVERSE,
+				IAccountManager::PROPERTY_ORGANISATION,
+				IAccountManager::PROPERTY_ROLE,
+				IAccountManager::PROPERTY_HEADLINE,
+				IAccountManager::PROPERTY_BIOGRAPHY,
+				IAccountManager::PROPERTY_PROFILE_ENABLED,
+				IAccountManager::PROPERTY_PRONOUNS,
+			]],
+			[true, false, UserInterface::class, [
+				IAccountManager::COLLECTION_EMAIL,
+				IAccountManager::PROPERTY_PHONE,
+				IAccountManager::PROPERTY_ADDRESS,
+				IAccountManager::PROPERTY_WEBSITE,
+				IAccountManager::PROPERTY_TWITTER,
+				IAccountManager::PROPERTY_FEDIVERSE,
+				IAccountManager::PROPERTY_ORGANISATION,
+				IAccountManager::PROPERTY_ROLE,
+				IAccountManager::PROPERTY_HEADLINE,
+				IAccountManager::PROPERTY_BIOGRAPHY,
+				IAccountManager::PROPERTY_PROFILE_ENABLED,
+				IAccountManager::PROPERTY_PRONOUNS,
+			]],
+			[true, true, UserInterface::class, [
+				IAccountManager::PROPERTY_EMAIL,
+				IAccountManager::COLLECTION_EMAIL,
+				IAccountManager::PROPERTY_PHONE,
+				IAccountManager::PROPERTY_ADDRESS,
+				IAccountManager::PROPERTY_WEBSITE,
+				IAccountManager::PROPERTY_TWITTER,
+				IAccountManager::PROPERTY_FEDIVERSE,
+				IAccountManager::PROPERTY_ORGANISATION,
+				IAccountManager::PROPERTY_ROLE,
+				IAccountManager::PROPERTY_HEADLINE,
+				IAccountManager::PROPERTY_BIOGRAPHY,
+				IAccountManager::PROPERTY_PROFILE_ENABLED,
+				IAccountManager::PROPERTY_PRONOUNS,
+			]],
+			[false, false, UserInterface::class, [
 				IAccountManager::COLLECTION_EMAIL,
 				IAccountManager::PROPERTY_PHONE,
 				IAccountManager::PROPERTY_ADDRESS,
@@ -4290,13 +4393,12 @@ class UsersControllerTest extends TestCase {
 	 * @param string $userBackend
 	 * @param array $expected
 	 */
-	public function testGetEditableFields(bool $allowedToChangeDisplayName, string $userBackend, array $expected): void {
-		$this->config
-			->method('getSystemValue')
-			->with(
-				$this->equalTo('allow_user_to_change_display_name'),
-				$this->anything()
-			)->willReturn($allowedToChangeDisplayName);
+	public function testGetEditableFields(bool $allowedToChangeDisplayName, bool $allowedToChangeEmail, string $userBackend, array $expected): void {
+		$this->config->method('getSystemValue')->willReturnCallback(fn (string $key, mixed $default) => match ($key) {
+			'allow_user_to_change_display_name' => $allowedToChangeDisplayName,
+			'allow_user_to_change_email' => $allowedToChangeEmail,
+			default => throw new RuntimeException('Unexpected system config key: ' . $key),
+		});
 
 		$user = $this->createMock(IUser::class);
 		$this->userSession->method('getUser')

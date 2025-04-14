@@ -34,6 +34,7 @@
 					provider.id concatenated to provider.name is used to create the item id, if same then, there should be an issue. -->
 					<NcActionButton v-for="provider in providers"
 						:key="`${provider.id}-${provider.name.replace(/\s/g, '')}`"
+						:disabled="provider.disabled"
 						@click="addProviderFilter(provider)">
 						<template #icon>
 							<img :src="provider.icon" class="filter-button__icon" alt="">
@@ -120,7 +121,7 @@
 			</h3>
 			<div v-for="providerResult in results" :key="providerResult.id" class="result">
 				<h4 :id="`unified-search-result-${providerResult.id}`" class="result-title">
-					{{ providerResult.provider }}
+					{{ providerResult.name }}
 				</h4>
 				<ul class="result-items" :aria-labelledby="`unified-search-result-${providerResult.id}`">
 					<SearchResult v-for="(result, index) in providerResult.results"
@@ -128,14 +129,14 @@
 						v-bind="result" />
 				</ul>
 				<div class="result-footer">
-					<NcButton type="tertiary-no-background" @click="loadMoreResultsForProvider(providerResult.id)">
+					<NcButton type="tertiary-no-background" @click="loadMoreResultsForProvider(providerResult)">
 						{{ t('core', 'Load more results') }}
 						<template #icon>
 							<IconDotsHorizontal :size="20" />
 						</template>
 					</NcButton>
 					<NcButton v-if="providerResult.inAppSearch" alignment="end-reverse" type="tertiary-no-background">
-						{{ t('core', 'Search in') }} {{ providerResult.provider }}
+						{{ t('core', 'Search in') }} {{ providerResult.name }}
 						<template #icon>
 							<IconArrowRight :size="20" />
 						</template>
@@ -164,13 +165,13 @@ import IconDotsHorizontal from 'vue-material-design-icons/DotsHorizontal.vue'
 import IconFilter from 'vue-material-design-icons/Filter.vue'
 import IconListBox from 'vue-material-design-icons/ListBox.vue'
 import IconMagnify from 'vue-material-design-icons/Magnify.vue'
-import NcActions from '@nextcloud/vue/dist/Components/NcActions.js'
-import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js'
-import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
-import NcButton from '@nextcloud/vue/dist/Components/NcButton.js'
-import NcEmptyContent from '@nextcloud/vue/dist/Components/NcEmptyContent.js'
-import NcInputField from '@nextcloud/vue/dist/Components/NcInputField.js'
-import NcDialog from '@nextcloud/vue/dist/Components/NcDialog.js'
+import NcActions from '@nextcloud/vue/components/NcActions'
+import NcActionButton from '@nextcloud/vue/components/NcActionButton'
+import NcAvatar from '@nextcloud/vue/components/NcAvatar'
+import NcButton from '@nextcloud/vue/components/NcButton'
+import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
+import NcInputField from '@nextcloud/vue/components/NcInputField'
+import NcDialog from '@nextcloud/vue/components/NcDialog'
 
 import CustomDateRangeModal from './CustomDateRangeModal.vue'
 import FilterChip from './SearchFilterChip.vue'
@@ -263,6 +264,7 @@ export default defineComponent({
 			contacts: [],
 			showDateRangeModal: false,
 			internalIsVisible: this.open,
+			initialized: false,
 		}
 	},
 
@@ -307,6 +309,18 @@ export default defineComponent({
 			// Load results when opened with already filled query
 			if (this.open) {
 				this.focusInput()
+				if (!this.initialized) {
+					Promise.all([getProviders(), getContacts({ searchTerm: '' })])
+						.then(([providers, contacts]) => {
+							this.providers = this.groupProvidersByApp([...providers, ...this.externalFilters])
+							this.contacts = this.mapContacts(contacts)
+							unifiedSearchLogger.debug('Search providers and contacts initialized:', { providers: this.providers, contacts: this.contacts })
+							this.initialized = true
+						})
+						.catch((error) => {
+							unifiedSearchLogger.error(error)
+						})
+				}
 				if (this.searchQuery) {
 					this.find(this.searchQuery)
 				}
@@ -323,18 +337,6 @@ export default defineComponent({
 
 	mounted() {
 		subscribe('nextcloud:unified-search:add-filter', this.handlePluginFilter)
-		getProviders().then((providers) => {
-			this.providers = providers
-			this.externalFilters.forEach(filter => {
-				this.providers.push(filter)
-			})
-			this.providers = this.groupProvidersByApp(this.providers)
-			unifiedSearchLogger.debug('Search providers', { providers: this.providers })
-		})
-		getContacts({ searchTerm: '' }).then((contacts) => {
-			this.contacts = this.mapContacts(contacts)
-			unifiedSearchLogger.debug('Contacts', { contacts: this.contacts })
-		})
 	},
 	methods: {
 		/**
@@ -372,33 +374,30 @@ export default defineComponent({
 			const providersToSearch = this.filteredProviders.length > 0 ? this.filteredProviders : this.providers
 			const searchProvider = (provider, filters) => {
 				const params = {
-					type: provider.id,
+					type: provider.searchFrom ?? provider.id,
 					query,
 					cursor: null,
 					extraQueries: provider.extraParams,
 				}
 
+				// This block of filter checks should be dynamic somehow and should be handled in
+				// nextcloud/search lib
 				if (filters.dateFilterIsApplied) {
 					if (provider.filters?.since && provider.filters?.until) {
 						params.since = this.dateFilter.startFrom
 						params.until = this.dateFilter.endAt
-					} else {
-						// Date filter is applied but provider does not support it, no need to search provider
-						return
 					}
 				}
 
 				if (filters.personFilterIsApplied) {
 					if (provider.filters?.person) {
 						params.person = this.personFilter.user
-					} else {
-						// Person filter is applied but provider does not support it, no need to search provider
-						return
 					}
 				}
 
 				if (this.providerResultLimit > 5) {
 					params.limit = this.providerResultLimit
+					unifiedSearchLogger.debug('Limiting search to', params.limit)
 				}
 
 				const request = unifiedSearch(params).request
@@ -406,7 +405,10 @@ export default defineComponent({
 				request().then((response) => {
 					newResults.push({
 						id: provider.id,
-						provider: provider.name,
+						appId: provider.appId,
+						searchFrom: provider.searchFrom,
+						icon: provider.icon,
+						name: provider.name,
 						inAppSearch: provider.inAppSearch,
 						results: response.data.ocs.data.entries,
 					})
@@ -493,19 +495,35 @@ export default defineComponent({
 				this.filters[existingPersonFilter].name = person.displayName
 			}
 
+			this.providers.forEach(async (provider, index) => {
+				this.providers[index].disabled = !(await this.providerIsCompatibleWithFilters(provider, ['person']))
+			})
+
 			this.debouncedFind(this.searchQuery)
 			unifiedSearchLogger.debug('Person filter applied', { person })
 		},
-		loadMoreResultsForProvider(providerId) {
+		async loadMoreResultsForProvider(provider) {
 			this.providerResultLimit += 5
-			this.filters = this.filters.filter(filter => filter.type !== 'provider')
-			const provider = this.providers.find(provider => provider.id === providerId)
+			// If load more result for filter, remove other filters
+			this.filters = this.filters.filter(filter => filter.id === provider.id)
+			this.filteredProviders = this.filteredProviders.filter(filteredProvider => filteredProvider.id === provider.id)
+			// Plugin filters may have extra parameters, so we need to keep them
+			// See method handlePluginFilter for more details
+			if (this.filteredProviders.length > 0 && this.filteredProviders[0].isPluginFilter) {
+				provider = this.filteredProviders[0]
+			}
 			this.addProviderFilter(provider, true)
 		},
 		addProviderFilter(providerFilter, loadMoreResultsForProvider = false) {
+			unifiedSearchLogger.debug('Applying provider filter', { providerFilter, loadMoreResultsForProvider })
 			if (!providerFilter.id) return
 			if (providerFilter.isPluginFilter) {
-				providerFilter.callback()
+				// There is no way to know what should go into the callback currently
+				// Here we are passing isProviderFilterApplied (boolean) which is a flag sent to the plugin
+				// This is sent to the plugin so that depending on whether the filter is applied or not, the plugin can decide what to do
+				// TODO : In nextcloud/search, this should be a proper interface that the plugin can implement
+				const isProviderFilterApplied = this.filteredProviders.some(provider => provider.id === providerFilter.id)
+				providerFilter.callback(!isProviderFilterApplied)
 			}
 			this.providerResultLimit = loadMoreResultsForProvider ? this.providerResultLimit : 5
 			this.providerActionMenuIsOpen = false
@@ -518,11 +536,8 @@ export default defineComponent({
 				this.filters = this.syncProviderFilters(this.filters, this.filteredProviders)
 			}
 			this.filteredProviders.push({
-				id: providerFilter.id,
-				name: providerFilter.name,
-				icon: providerFilter.icon,
+				...providerFilter,
 				type: providerFilter.type || 'provider',
-				filters: providerFilter.filters,
 				isPluginFilter: providerFilter.isPluginFilter || false,
 			})
 			this.filters = this.syncProviderFilters(this.filters, this.filteredProviders)
@@ -549,6 +564,7 @@ export default defineComponent({
 						if (filter.type === 'person') {
 							this.personFilterIsApplied = false
 						}
+						this.enableAllProviders()
 						break
 					}
 				}
@@ -587,6 +603,9 @@ export default defineComponent({
 				this.filters.push(this.dateFilter)
 			}
 			this.dateFilterIsApplied = true
+			this.providers.forEach(async (provider, index) => {
+				this.providers[index].disabled = !(await this.providerIsCompatibleWithFilters(provider, ['since', 'until']))
+			})
 			this.debouncedFind(this.searchQuery)
 		},
 		applyQuickDateRange(range) {
@@ -643,6 +662,7 @@ export default defineComponent({
 			this.updateDateFilter()
 		},
 		handlePluginFilter(addFilterEvent) {
+			unifiedSearchLogger.debug('Handling plugin filter', { addFilterEvent })
 			for (let i = 0; i < this.filteredProviders.length; i++) {
 				const provider = this.filteredProviders[i]
 				if (provider.id === addFilterEvent.id) {
@@ -676,6 +696,14 @@ export default defineComponent({
 			})
 
 			return flattenedArray
+		},
+		async providerIsCompatibleWithFilters(provider, filterIds) {
+			return filterIds.every(filterId => provider.filters?.[filterId] !== undefined)
+		},
+		async enableAllProviders() {
+			this.providers.forEach(async (_, index) => {
+				this.providers[index].disabled = false
+			})
 		},
 	},
 })

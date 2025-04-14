@@ -23,9 +23,11 @@ use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\Mount\IMountManager;
 use OCP\Files\Mount\IMountPoint;
+use OCP\Files\Mount\IShareOwnerlessMount;
 use OCP\Files\Node;
 use OCP\Files\Storage\IStorage;
 use OCP\HintException;
+use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IDateTimeZone;
 use OCP\IGroup;
@@ -107,6 +109,8 @@ class ManagerTest extends \Test\TestCase {
 	private DateTimeZone $timezone;
 	/** @var IDateTimeZone|MockObject */
 	protected $dateTimeZone;
+	/** @var IAppConfig|MockObject */
+	protected $appConfig;
 
 	protected function setUp(): void {
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -128,6 +132,8 @@ class ManagerTest extends \Test\TestCase {
 		$this->dateTimeZone = $this->createMock(IDateTimeZone::class);
 		$this->timezone = new \DateTimeZone('Pacific/Auckland');
 		$this->dateTimeZone->method('getTimeZone')->willReturnCallback(fn () => $this->timezone);
+
+		$this->appConfig = $this->createMock(IAppConfig::class);
 
 		$this->l10nFactory = $this->createMock(IFactory::class);
 		$this->l = $this->createMock(IL10N::class);
@@ -170,6 +176,7 @@ class ManagerTest extends \Test\TestCase {
 			$this->knownUserService,
 			$this->shareDisabledChecker,
 			$this->dateTimeZone,
+			$this->appConfig,
 		);
 	}
 
@@ -197,6 +204,7 @@ class ManagerTest extends \Test\TestCase {
 				$this->knownUserService,
 				$this->shareDisabledChecker,
 				$this->dateTimeZone,
+				$this->appConfig,
 			]);
 	}
 
@@ -778,7 +786,7 @@ class ManagerTest extends \Test\TestCase {
 				$this->assertInstanceOf(ValidatePasswordPolicyEvent::class, $event);
 				/** @var ValidatePasswordPolicyEvent $event */
 				$this->assertSame('password', $event->getPassword());
-				throw new HintException('message', 'password not accepted');
+				throw new HintException('password not accepted');
 			}
 			);
 
@@ -885,10 +893,9 @@ class ManagerTest extends \Test\TestCase {
 		$mount = $this->createMock(MoveableMount::class);
 		$limitedPermssions->method('getMountPoint')->willReturn($mount);
 
-
-		$data[] = [$this->createShare(null, IShare::TYPE_USER, $limitedPermssions, $user2, $user0, $user0, 31, null, null), 'Cannot increase permissions of path', true];
+		// increase permissions of a re-share
 		$data[] = [$this->createShare(null, IShare::TYPE_GROUP, $limitedPermssions, $group0, $user0, $user0, 17, null, null), 'Cannot increase permissions of path', true];
-		$data[] = [$this->createShare(null, IShare::TYPE_LINK, $limitedPermssions, null, $user0, $user0, 3, null, null), 'Cannot increase permissions of path', true];
+		$data[] = [$this->createShare(null, IShare::TYPE_USER, $limitedPermssions, $user2, $user0, $user0, 3, null, null), 'Cannot increase permissions of path', true];
 
 		$nonMovableStorage = $this->createMock(IStorage::class);
 		$nonMovableStorage->method('instanceOfStorage')
@@ -919,6 +926,20 @@ class ManagerTest extends \Test\TestCase {
 		$data[] = [$this->createShare(null, IShare::TYPE_GROUP, $rootFolder, $group0, $user0, $user0, 2, null, null), 'You cannot share your root folder', true];
 		$data[] = [$this->createShare(null, IShare::TYPE_LINK, $rootFolder, null, $user0, $user0, 16, null, null), 'You cannot share your root folder', true];
 
+		$allPermssionsFiles = $this->createMock(File::class);
+		$allPermssionsFiles->method('isShareable')->willReturn(true);
+		$allPermssionsFiles->method('getPermissions')->willReturn(\OCP\Constants::PERMISSION_ALL);
+		$allPermssionsFiles->method('getId')->willReturn(187);
+		$allPermssionsFiles->method('getOwner')
+			->willReturn($owner);
+		$allPermssionsFiles->method('getStorage')
+			->willReturn($storage);
+
+		// test invalid CREATE or DELETE permissions
+		$data[] = [$this->createShare(null, IShare::TYPE_USER, $allPermssionsFiles, $user2, $user0, $user0, \OCP\Constants::PERMISSION_ALL, null, null), 'File shares cannot have create or delete permissions', true];
+		$data[] = [$this->createShare(null, IShare::TYPE_GROUP, $allPermssionsFiles, $group0, $user0, $user0, \OCP\Constants::PERMISSION_READ | \OCP\Constants::PERMISSION_CREATE, null, null), 'File shares cannot have create or delete permissions', true];
+		$data[] = [$this->createShare(null, IShare::TYPE_LINK, $allPermssionsFiles, null, $user0, $user0, \OCP\Constants::PERMISSION_READ | \OCP\Constants::PERMISSION_DELETE, null, null), 'File shares cannot have create or delete permissions', true];
+
 		$allPermssions = $this->createMock(Folder::class);
 		$allPermssions->method('isShareable')->willReturn(true);
 		$allPermssions->method('getPermissions')->willReturn(\OCP\Constants::PERMISSION_ALL);
@@ -931,6 +952,12 @@ class ManagerTest extends \Test\TestCase {
 		$data[] = [$this->createShare(null, IShare::TYPE_USER, $allPermssions, $user2, $user0, $user0, 30, null, null), 'Shares need at least read permissions', true];
 		$data[] = [$this->createShare(null, IShare::TYPE_GROUP, $allPermssions, $group0, $user0, $user0, 2, null, null), 'Shares need at least read permissions', true];
 
+		// test invalid permissions
+		$data[] = [$this->createShare(null, IShare::TYPE_USER, $allPermssions, $user2, $user0, $user0, 32, null, null), 'Valid permissions are required for sharing', true];
+		$data[] = [$this->createShare(null, IShare::TYPE_GROUP, $allPermssions, $group0, $user0, $user0, 63, null, null), 'Valid permissions are required for sharing', true];
+		$data[] = [$this->createShare(null, IShare::TYPE_LINK, $allPermssions, null, $user0, $user0, -1, null, null), 'Valid permissions are required for sharing', true];
+
+		// working shares
 		$data[] = [$this->createShare(null, IShare::TYPE_USER, $allPermssions, $user2, $user0, $user0, 31, null, null), null, false];
 		$data[] = [$this->createShare(null, IShare::TYPE_GROUP, $allPermssions, $group0, $user0, $user0, 3, null, null), null, false];
 		$data[] = [$this->createShare(null, IShare::TYPE_LINK, $allPermssions, null, $user0, $user0, 17, null, null), null, false];
@@ -2237,7 +2264,7 @@ class ManagerTest extends \Test\TestCase {
 
 	public function testPathCreateChecksContainsSharedMount(): void {
 		$this->expectException(\InvalidArgumentException::class);
-		$this->expectExceptionMessage('Path contains files shared with you');
+		$this->expectExceptionMessage('You cannot share a folder that contains other shares');
 
 		$path = $this->createMock(Folder::class);
 		$path->method('getPath')->willReturn('path');
@@ -2398,8 +2425,9 @@ class ManagerTest extends \Test\TestCase {
 	}
 
 	public function testCreateShareUser(): void {
+		/** @var Manager&MockObject $manager */
 		$manager = $this->createManagerMock()
-			->setMethods(['canShare', 'generalCreateChecks', 'userCreateChecks', 'pathCreateChecks'])
+			->onlyMethods(['canShare', 'generalCreateChecks', 'userCreateChecks', 'pathCreateChecks'])
 			->getMock();
 
 		$shareOwner = $this->createMock(IUser::class);
@@ -2888,6 +2916,31 @@ class ManagerTest extends \Test\TestCase {
 				$this->equalTo(1),
 				$this->equalTo(1)
 			)->willReturn([$share]);
+
+		$shares = $this->manager->getSharesBy('user', IShare::TYPE_USER, $node, true, 1, 1);
+
+		$this->assertCount(1, $shares);
+		$this->assertSame($share, $shares[0]);
+	}
+
+	public function testGetSharesByOwnerless(): void {
+		$mount = $this->createMock(IShareOwnerlessMount::class);
+
+		$node = $this->createMock(Folder::class);
+		$node
+			->expects($this->once())
+			->method('getMountPoint')
+			->willReturn($mount);
+
+		$share = $this->manager->newShare();
+		$share->setNode($node);
+		$share->setShareType(IShare::TYPE_USER);
+
+		$this->defaultProvider
+			->expects($this->once())
+			->method('getSharesByPath')
+			->with($this->equalTo($node))
+			->willReturn([$share]);
 
 		$shares = $this->manager->getSharesBy('user', IShare::TYPE_USER, $node, true, 1, 1);
 
@@ -4492,6 +4545,49 @@ class ManagerTest extends \Test\TestCase {
 
 		$this->assertSame($expects, $result);
 	}
+
+	public function testGetSharesInFolderOwnerless(): void {
+		$factory = new DummyFactory2($this->createMock(IServerContainer::class));
+
+		$manager = $this->createManager($factory);
+
+		$factory->setProvider($this->defaultProvider);
+		$extraProvider = $this->createMock(IShareProvider::class);
+		$factory->setSecondProvider($extraProvider);
+
+		$share1 = $this->createMock(IShare::class);
+		$share2 = $this->createMock(IShare::class);
+
+		$mount = $this->createMock(IShareOwnerlessMount::class);
+
+		$file = $this->createMock(File::class);
+		$file
+			->method('getId')
+			->willReturn(1);
+
+		$folder = $this->createMock(Folder::class);
+		$folder
+			->method('getMountPoint')
+			->willReturn($mount);
+		$folder
+			->method('getDirectoryListing')
+			->willReturn([$file]);
+
+		$this->defaultProvider
+			->method('getSharesByPath')
+			->with($file)
+			->willReturn([$share1]);
+
+		$extraProvider
+			->method('getSharesByPath')
+			->with($file)
+			->willReturn([$share2]);
+
+		$this->assertSame([
+			1 => [$share1, $share2],
+		], $manager->getSharesInFolder('user', $folder));
+	}
+
 
 	public function testGetAccessList(): void {
 		$factory = new DummyFactory2($this->createMock(IServerContainer::class));

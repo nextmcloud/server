@@ -10,6 +10,7 @@ use OC;
 use OC\AppFramework\Http;
 use OC\AppFramework\Http\Dispatcher;
 use OC\AppFramework\Http\Output;
+use OC\AppFramework\Middleware\FlowV2EphemeralSessionsMiddleware;
 use OC\AppFramework\Middleware\MiddlewareDispatcher;
 use OC\AppFramework\Middleware\OCSMiddleware;
 use OC\AppFramework\Middleware\Security\CORSMiddleware;
@@ -23,6 +24,7 @@ use OC\Diagnostics\EventLogger;
 use OC\Log\PsrLoggerAdapter;
 use OC\ServerContainer;
 use OC\Settings\AuthorizedGroupMapper;
+use OC\User\Manager as UserManager;
 use OCA\WorkflowEngine\Manager;
 use OCP\AppFramework\Http\IOutput;
 use OCP\AppFramework\IAppContainer;
@@ -215,7 +217,7 @@ class DIContainer extends SimpleContainer implements IAppContainer {
 				)
 			);
 
-
+			$dispatcher->registerMiddleware($c->get(FlowV2EphemeralSessionsMiddleware::class));
 
 			$securityMiddleware = new SecurityMiddleware(
 				$c->get(IRequest::class),
@@ -251,6 +253,8 @@ class DIContainer extends SimpleContainer implements IAppContainer {
 					$c->get(ITimeFactory::class),
 					$c->get(\OC\Authentication\Token\IProvider::class),
 					$c->get(LoggerInterface::class),
+					$c->get(IRequest::class),
+					$c->get(UserManager::class),
 				)
 			);
 			$dispatcher->registerMiddleware(
@@ -271,15 +275,7 @@ class DIContainer extends SimpleContainer implements IAppContainer {
 					$c->get(LoggerInterface::class)
 				)
 			);
-			$dispatcher->registerMiddleware(
-				new RateLimitingMiddleware(
-					$c->get(IRequest::class),
-					$c->get(IUserSession::class),
-					$c->get(IControllerMethodReflector::class),
-					$c->get(OC\Security\RateLimiting\Limiter::class),
-					$c->get(ISession::class)
-				)
-			);
+			$dispatcher->registerMiddleware($c->get(RateLimitingMiddleware::class));
 			$dispatcher->registerMiddleware(
 				new OC\AppFramework\Middleware\PublicShare\PublicShareMiddleware(
 					$c->get(IRequest::class),

@@ -12,7 +12,13 @@ use OC\App\InfoParser;
 use OC\AppConfig;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
-use OCP\IURLGenerator;
+use OCP\ICacheFactory;
+use OCP\IConfig;
+use OCP\IDBConnection;
+use OCP\IGroupManager;
+use OCP\IUserManager;
+use OCP\IUserSession;
+use OCP\ServerVersion;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
@@ -345,6 +351,7 @@ class AppTest extends \Test\TestCase {
 					'federatedfilesharing',
 					'lookup_server_connector',
 					'oauth2',
+					'profile',
 					'provisioning_api',
 					'settings',
 					'theming',
@@ -368,6 +375,7 @@ class AppTest extends \Test\TestCase {
 					'federatedfilesharing',
 					'lookup_server_connector',
 					'oauth2',
+					'profile',
 					'provisioning_api',
 					'settings',
 					'theming',
@@ -392,6 +400,7 @@ class AppTest extends \Test\TestCase {
 					'federatedfilesharing',
 					'lookup_server_connector',
 					'oauth2',
+					'profile',
 					'provisioning_api',
 					'settings',
 					'theming',
@@ -416,6 +425,7 @@ class AppTest extends \Test\TestCase {
 					'federatedfilesharing',
 					'lookup_server_connector',
 					'oauth2',
+					'profile',
 					'provisioning_api',
 					'settings',
 					'theming',
@@ -440,6 +450,7 @@ class AppTest extends \Test\TestCase {
 					'federatedfilesharing',
 					'lookup_server_connector',
 					'oauth2',
+					'profile',
 					'provisioning_api',
 					'settings',
 					'theming',
@@ -458,8 +469,8 @@ class AppTest extends \Test\TestCase {
 	 * @dataProvider appConfigValuesProvider
 	 */
 	public function testEnabledApps($user, $expectedApps, $forceAll): void {
-		$userManager = \OC::$server->getUserManager();
-		$groupManager = \OC::$server->getGroupManager();
+		$userManager = \OCP\Server::get(IUserManager::class);
+		$groupManager = \OCP\Server::get(IGroupManager::class);
 		$user1 = $userManager->createUser(self::TEST_USER1, 'NotAnEasyPassword123456+');
 		$user2 = $userManager->createUser(self::TEST_USER2, 'NotAnEasyPassword123456_');
 		$user3 = $userManager->createUser(self::TEST_USER3, 'NotAnEasyPassword123456?');
@@ -507,7 +518,7 @@ class AppTest extends \Test\TestCase {
 	 * enabled apps more than once when a user is set.
 	 */
 	public function testEnabledAppsCache(): void {
-		$userManager = \OC::$server->getUserManager();
+		$userManager = \OCP\Server::get(IUserManager::class);
 		$user1 = $userManager->createUser(self::TEST_USER1, 'NotAnEasyPassword123456+');
 
 		\OC_User::setUserId(self::TEST_USER1);
@@ -523,11 +534,11 @@ class AppTest extends \Test\TestCase {
 			);
 
 		$apps = \OC_App::getEnabledApps();
-		$this->assertEquals(['files', 'app3', 'cloud_federation_api', 'dav', 'federatedfilesharing', 'lookup_server_connector', 'oauth2', 'provisioning_api', 'settings', 'theming', 'twofactor_backupcodes', 'viewer', 'workflowengine'], $apps);
+		$this->assertEquals(['files', 'app3', 'cloud_federation_api', 'dav', 'federatedfilesharing', 'lookup_server_connector', 'oauth2', 'profile', 'provisioning_api', 'settings', 'theming', 'twofactor_backupcodes', 'viewer', 'workflowengine'], $apps);
 
 		// mock should not be called again here
 		$apps = \OC_App::getEnabledApps();
-		$this->assertEquals(['files', 'app3', 'cloud_federation_api', 'dav', 'federatedfilesharing', 'lookup_server_connector', 'oauth2', 'provisioning_api', 'settings', 'theming', 'twofactor_backupcodes', 'viewer', 'workflowengine'], $apps);
+		$this->assertEquals(['files', 'app3', 'cloud_federation_api', 'dav', 'federatedfilesharing', 'lookup_server_connector', 'oauth2', 'profile', 'provisioning_api', 'settings', 'theming', 'twofactor_backupcodes', 'viewer', 'workflowengine'], $apps);
 
 		$this->restoreAppConfig();
 		\OC_User::setUserId(null);
@@ -539,8 +550,8 @@ class AppTest extends \Test\TestCase {
 	private function setupAppConfigMock() {
 		/** @var AppConfig|MockObject */
 		$appConfig = $this->getMockBuilder(AppConfig::class)
-			->setMethods(['getValues'])
-			->setConstructorArgs([\OC::$server->getDatabaseConnection()])
+			->onlyMethods(['getValues'])
+			->setConstructorArgs([\OCP\Server::get(IDBConnection::class)])
 			->disableOriginalConstructor()
 			->getMock();
 
@@ -556,13 +567,13 @@ class AppTest extends \Test\TestCase {
 	private function registerAppConfig(AppConfig $appConfig) {
 		$this->overwriteService(AppConfig::class, $appConfig);
 		$this->overwriteService(AppManager::class, new AppManager(
-			\OC::$server->getUserSession(),
-			\OC::$server->getConfig(),
-			\OC::$server->getGroupManager(),
-			\OC::$server->getMemCacheFactory(),
-			\OC::$server->get(IEventDispatcher::class),
-			\OC::$server->get(LoggerInterface::class),
-			\OC::$server->get(IURLGenerator::class),
+			\OCP\Server::get(IUserSession::class),
+			\OCP\Server::get(IConfig::class),
+			\OCP\Server::get(IGroupManager::class),
+			\OCP\Server::get(ICacheFactory::class),
+			\OCP\Server::get(IEventDispatcher::class),
+			\OCP\Server::get(LoggerInterface::class),
+			\OCP\Server::get(ServerVersion::class),
 		));
 	}
 

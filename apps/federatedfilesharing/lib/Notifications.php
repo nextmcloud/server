@@ -108,12 +108,13 @@ class Notifications {
 	 * @throws HintException
 	 * @throws \OC\ServerNotAvailableException
 	 */
-	public function requestReShare($token, $id, $shareId, $remote, $shareWith, $permission, $filename) {
+	public function requestReShare($token, $id, $shareId, $remote, $shareWith, $permission, $filename, $shareType) {
 		$fields = [
 			'shareWith' => $shareWith,
 			'token' => $token,
 			'permission' => $permission,
 			'remoteId' => $shareId,
+			'shareType' => $shareType,
 		];
 
 		$ocmFields = $fields;
@@ -397,7 +398,7 @@ class Notifications {
 					$fields['remoteId'],
 					[
 						'sharedSecret' => $fields['token'],
-						'messgage' => 'file is no longer shared with you'
+						'message' => 'file is no longer shared with you'
 					]
 				);
 				return $this->federationProviderManager->sendNotification($remoteDomain, $notification);

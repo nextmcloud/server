@@ -65,8 +65,8 @@ class User implements IUser {
 	/** @var string */
 	private $home;
 
-	/** @var int|null */
-	private $lastLogin;
+	private ?int $lastLogin = null;
+	private ?int $firstLogin = null;
 
 	/** @var IAvatarManager */
 	private $avatarManager;
@@ -202,28 +202,47 @@ class User implements IUser {
 	/**
 	 * returns the timestamp of the user's last login or 0 if the user did never
 	 * login
-	 *
-	 * @return int
 	 */
-	public function getLastLogin() {
+	public function getLastLogin(): int {
 		if ($this->lastLogin === null) {
 			$this->lastLogin = (int)$this->config->getUserValue($this->uid, 'login', 'lastLogin', 0);
 		}
-		return (int)$this->lastLogin;
+		return $this->lastLogin;
+	}
+
+	/**
+	 * returns the timestamp of the user's last login or 0 if the user did never
+	 * login
+	 */
+	public function getFirstLogin(): int {
+		if ($this->firstLogin === null) {
+			$this->firstLogin = (int)$this->config->getUserValue($this->uid, 'login', 'firstLogin', 0);
+		}
+		return $this->firstLogin;
 	}
 
 	/**
 	 * updates the timestamp of the most recent login of this user
 	 */
-	public function updateLastLoginTimestamp() {
+	public function updateLastLoginTimestamp(): bool {
 		$previousLogin = $this->getLastLogin();
+		$firstLogin = $this->getFirstLogin();
 		$now = time();
 		$firstTimeLogin = $previousLogin === 0;
 
 		if ($now - $previousLogin > 60) {
-			$this->lastLogin = time();
-			$this->config->setUserValue(
-				$this->uid, 'login', 'lastLogin', (string)$this->lastLogin);
+			$this->lastLogin = $now;
+			$this->config->setUserValue($this->uid, 'login', 'lastLogin', (string)$this->lastLogin);
+		}
+
+		if ($firstLogin === 0) {
+			if ($firstTimeLogin) {
+				$this->firstLogin = $now;
+			} else {
+				/* Unknown first login, most likely was before upgrade to Nextcloud 31 */
+				$this->firstLogin = -1;
+			}
+			$this->config->setUserValue($this->uid, 'login', 'firstLogin', (string)$this->firstLogin);
 		}
 
 		return $firstTimeLogin;
@@ -426,6 +445,11 @@ class User implements IUser {
 			return false;
 		}
 		return $this->backend->implementsActions(Backend::SET_DISPLAYNAME);
+	}
+
+	public function canChangeEmail(): bool {
+		// Fallback to display name value to avoid changing behavior with the new option.
+		return $this->config->getSystemValueBool('allow_user_to_change_email', $this->config->getSystemValueBool('allow_user_to_change_display_name', true));
 	}
 
 	/**

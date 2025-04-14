@@ -7,15 +7,17 @@ import type { FileStat, ResponseDataDetailed, WebDAVClientError } from 'webdav'
 import type { ServerTag, Tag, TagWithId } from '../types.js'
 
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
+import { generateUrl, generateOcsUrl } from '@nextcloud/router'
 import { t } from '@nextcloud/l10n'
 
 import { davClient } from './davClient.js'
 import { formatTag, parseIdFromLocation, parseTags } from '../utils'
-import { logger } from '../logger.js'
+import logger from '../logger.ts'
+import { emit } from '@nextcloud/event-bus'
+import { confirmPassword } from '@nextcloud/password-confirmation'
 
 export const fetchTagsPayload = `<?xml version="1.0"?>
-<d:propfind xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
+<d:propfind xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
 	<d:prop>
 		<oc:id />
 		<oc:display-name />
@@ -23,6 +25,7 @@ export const fetchTagsPayload = `<?xml version="1.0"?>
 		<oc:user-assignable />
 		<oc:can-assign />
 		<d:getetag />
+		<nc:color />
 	</d:prop>
 </d:propfind>`
 
@@ -46,7 +49,7 @@ export const fetchTag = async (tagId: number): Promise<TagWithId> => {
 	try {
 		const { data: tag } = await davClient.stat(path, {
 			data: fetchTagsPayload,
-			details: true
+			details: true,
 		}) as ResponseDataDetailed<Required<FileStat>>
 		return parseTags([tag])[0]
 	} catch (error) {
@@ -81,6 +84,7 @@ export const createTag = async (tag: Tag | ServerTag): Promise<number> => {
 		})
 		const contentLocation = headers.get('content-location')
 		if (contentLocation) {
+			emit('systemtags:tag:created', tag)
 			return parseIdFromLocation(contentLocation)
 		}
 		logger.error(t('systemtags', 'Missing "Content-Location" header'))
@@ -98,12 +102,13 @@ export const createTag = async (tag: Tag | ServerTag): Promise<number> => {
 export const updateTag = async (tag: TagWithId): Promise<void> => {
 	const path = '/systemtags/' + tag.id
 	const data = `<?xml version="1.0"?>
-	<d:propertyupdate xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
+	<d:propertyupdate xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
 		<d:set>
 			<d:prop>
 				<oc:display-name>${tag.displayName}</oc:display-name>
 				<oc:user-visible>${tag.userVisible}</oc:user-visible>
 				<oc:user-assignable>${tag.userAssignable}</oc:user-assignable>
+				<nc:color>${tag?.color || null}</nc:color>
 			</d:prop>
 		</d:set>
 	</d:propertyupdate>`
@@ -113,6 +118,7 @@ export const updateTag = async (tag: TagWithId): Promise<void> => {
 			method: 'PROPPATCH',
 			data,
 		})
+		emit('systemtags:tag:updated', tag)
 	} catch (error) {
 		logger.error(t('systemtags', 'Failed to update tag'), { error })
 		throw new Error(t('systemtags', 'Failed to update tag'))
@@ -123,6 +129,7 @@ export const deleteTag = async (tag: TagWithId): Promise<void> => {
 	const path = '/systemtags/' + tag.id
 	try {
 		await davClient.deleteFile(path)
+		emit('systemtags:tag:deleted', tag)
 	} catch (error) {
 		logger.error(t('systemtags', 'Failed to delete tag'), { error })
 		throw new Error(t('systemtags', 'Failed to delete tag'))
@@ -196,4 +203,26 @@ export const setTagObjects = async function(tag: TagWithId, type: string, object
 			'if-match': etag,
 		},
 	})
+}
+
+type OcsResponse = {
+	ocs: NonNullable<unknown>,
+}
+
+export const updateSystemTagsAdminRestriction = async (isAllowed: boolean): Promise<OcsResponse> => {
+	// Convert to string for compatibility
+	const isAllowedString = isAllowed ? '1' : '0'
+
+	const url = generateOcsUrl('/apps/provisioning_api/api/v1/config/apps/{appId}/{key}', {
+		appId: 'systemtags',
+		key: 'restrict_creation_to_admin',
+	})
+
+	await confirmPassword()
+
+	const res = await axios.post(url, {
+		value: isAllowedString,
+	})
+
+	return res.data
 }

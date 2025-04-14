@@ -164,6 +164,16 @@ interface IUserManager {
 	public function countUsers();
 
 	/**
+	 * Get how many users exists in total, whithin limit
+	 *
+	 * @param int $limit Limit the count to avoid resource waste. 0 to disable
+	 * @param bool $onlyMappedUsers Count mapped users instead of all users for compatible backends
+	 *
+	 * @since 31.0.0
+	 */
+	public function countUsersTotal(int $limit = 0, bool $onlyMappedUsers = false): int|false;
+
+	/**
 	 * @param \Closure $callback
 	 * @psalm-param \Closure(\OCP\IUser):void $callback
 	 * @param string $search
@@ -221,4 +231,15 @@ interface IUserManager {
 	 * @since 30.0.0
 	 */
 	public function getLastLoggedInUsers(?int $limit = null, int $offset = 0, string $search = ''): array;
+
+	/**
+	 * Gets the list of users.
+	 * An iterator is returned allowing the caller to stop the iteration at any time.
+	 * The offset argument allows the caller to continue the iteration at a specific offset.
+	 *
+	 * @param int $offset from which offset to fetch
+	 * @return \Iterator<IUser> list of IUser object
+	 * @since 32.0.0
+	 */
+	public function getSeenUsers(int $offset = 0): \Iterator;
 }

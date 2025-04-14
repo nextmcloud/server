@@ -20,6 +20,7 @@ use OCP\Files\FileInfo;
 use OCP\Files\IMimeTypeDetector;
 use OCP\ICache;
 use OCP\ICacheFactory;
+use OCP\ITempManager;
 use OCP\Server;
 use Psr\Log\LoggerInterface;
 
@@ -113,7 +114,7 @@ class AmazonS3 extends Common {
 				$this->objectCache[$key] = $this->getConnection()->headObject([
 					'Bucket' => $this->bucket,
 					'Key' => $key
-				])->toArray();
+				] + $this->getSSECParameters())->toArray();
 			} catch (S3Exception $e) {
 				if ($e->getStatusCode() >= 500) {
 					throw $e;
@@ -207,7 +208,7 @@ class AmazonS3 extends Common {
 				'Key' => $path . '/',
 				'Body' => '',
 				'ContentType' => FileInfo::MIMETYPE_FOLDER
-			]);
+			] + $this->getSSECParameters());
 			$this->testTimeout();
 		} catch (S3Exception $e) {
 			$this->logger->error($e->getMessage(), [
@@ -451,7 +452,7 @@ class AmazonS3 extends Common {
 				}
 			case 'w':
 			case 'wb':
-				$tmpFile = \OC::$server->getTempManager()->getTemporaryFile();
+				$tmpFile = Server::get(ITempManager::class)->getTemporaryFile();
 
 				$handle = fopen($tmpFile, 'w');
 				return CallbackWrapper::wrap($handle, null, null, function () use ($path, $tmpFile): void {
@@ -472,7 +473,7 @@ class AmazonS3 extends Common {
 				} else {
 					$ext = '';
 				}
-				$tmpFile = \OC::$server->getTempManager()->getTemporaryFile($ext);
+				$tmpFile = Server::get(ITempManager::class)->getTemporaryFile($ext);
 				if ($this->file_exists($path)) {
 					$source = $this->readObject($path);
 					file_put_contents($tmpFile, $source);
@@ -507,7 +508,7 @@ class AmazonS3 extends Common {
 				'Body' => '',
 				'ContentType' => $mimeType,
 				'MetadataDirective' => 'REPLACE',
-			]);
+			] + $this->getSSECParameters());
 			$this->testTimeout();
 		} catch (S3Exception $e) {
 			$this->logger->error($e->getMessage(), [

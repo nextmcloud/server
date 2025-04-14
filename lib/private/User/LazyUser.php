@@ -60,11 +60,15 @@ class LazyUser implements IUser {
 		return $this->getUser()->setDisplayName($displayName);
 	}
 
-	public function getLastLogin() {
+	public function getLastLogin(): int {
 		return $this->getUser()->getLastLogin();
 	}
 
-	public function updateLastLoginTimestamp() {
+	public function getFirstLogin(): int {
+		return $this->getUser()->getFirstLogin();
+	}
+
+	public function updateLastLoginTimestamp(): bool {
 		return $this->getUser()->updateLastLoginTimestamp();
 	}
 
@@ -106,6 +110,10 @@ class LazyUser implements IUser {
 
 	public function canChangeDisplayName() {
 		return $this->getUser()->canChangeDisplayName();
+	}
+
+	public function canChangeEmail(): bool {
+		return $this->getUser()->canChangeEmail();
 	}
 
 	public function isEnabled() {

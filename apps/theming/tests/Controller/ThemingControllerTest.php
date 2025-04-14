@@ -25,7 +25,9 @@ use OCP\IConfig;
 use OCP\IL10N;
 use OCP\INavigationManager;
 use OCP\IRequest;
+use OCP\ITempManager;
 use OCP\IURLGenerator;
+use OCP\Server;
 use PHPUnit\Framework\MockObject\MockObject;
 use Test\TestCase;
 
@@ -125,11 +127,24 @@ class ThemingControllerTest extends TestCase {
 	}
 
 	public function dataUpdateStylesheetError() {
+		$urls = [
+			'url' => 'web address',
+			'imprintUrl' => 'legal notice address',
+			'privacyUrl' => 'privacy policy address',
+		];
+
+		$urlTests = [];
+		foreach ($urls as $urlKey => $urlName) {
+			// Check length limit
+			$urlTests[] = [$urlKey, 'http://example.com/' . str_repeat('a', 501), "The given {$urlName} is too long"];
+			// Check potential evil javascript
+			$urlTests[] = [$urlKey, 'javascript:alert(1)', "The given {$urlName} is not a valid URL"];
+			// Check XSS
+			$urlTests[] = [$urlKey, 'https://example.com/"><script/src="alert(\'1\')"><a/href/="', "The given {$urlName} is not a valid URL"];
+		}
+
 		return [
 			['name', str_repeat('a', 251), 'The given name is too long'],
-			['url', 'http://example.com/' . str_repeat('a', 501), 'The given web address is too long'],
-			['url', str_repeat('a', 501), 'The given web address is not a valid URL'],
-			['url', 'javascript:alert(1)', 'The given web address is not a valid URL'],
 			['slogan', str_repeat('a', 501), 'The given slogan is too long'],
 			['primary_color', '0082C9', 'The given color is invalid'],
 			['primary_color', '#0082Z9', 'The given color is invalid'],
@@ -137,10 +152,8 @@ class ThemingControllerTest extends TestCase {
 			['background_color', '0082C9', 'The given color is invalid'],
 			['background_color', '#0082Z9', 'The given color is invalid'],
 			['background_color', 'Nextcloud', 'The given color is invalid'],
-			['imprintUrl', '0082C9', 'The given legal notice address is not a valid URL'],
-			['imprintUrl', '0082C9', 'The given legal notice address is not a valid URL'],
-			['imprintUrl', 'javascript:foo', 'The given legal notice address is not a valid URL'],
-			['privacyUrl', '#0082Z9', 'The given privacy policy address is not a valid URL'],
+
+			...$urlTests,
 		];
 	}
 
@@ -344,8 +357,8 @@ class ThemingControllerTest extends TestCase {
 
 	/** @dataProvider dataUpdateImages */
 	public function testUpdateLogoNormalLogoUpload($mimeType, $folderExists = true): void {
-		$tmpLogo = \OC::$server->getTempManager()->getTemporaryFolder() . '/logo.svg';
-		$destination = \OC::$server->getTempManager()->getTemporaryFolder();
+		$tmpLogo = Server::get(ITempManager::class)->getTemporaryFolder() . '/logo.svg';
+		$destination = Server::get(ITempManager::class)->getTemporaryFolder();
 
 		touch($tmpLogo);
 		copy(__DIR__ . '/../../../../tests/data/testimage.png', $tmpLogo);
@@ -396,7 +409,7 @@ class ThemingControllerTest extends TestCase {
 
 	/** @dataProvider dataUpdateImages */
 	public function testUpdateLogoLoginScreenUpload($folderExists): void {
-		$tmpLogo = \OC::$server->getTempManager()->getTemporaryFolder() . 'logo.png';
+		$tmpLogo = Server::get(ITempManager::class)->getTemporaryFolder() . 'logo.png';
 
 		touch($tmpLogo);
 		copy(__DIR__ . '/../../../../tests/data/desktopapp.png', $tmpLogo);
@@ -444,7 +457,7 @@ class ThemingControllerTest extends TestCase {
 	}
 
 	public function testUpdateLogoLoginScreenUploadWithInvalidImage(): void {
-		$tmpLogo = \OC::$server->getTempManager()->getTemporaryFolder() . '/logo.svg';
+		$tmpLogo = Server::get(ITempManager::class)->getTemporaryFolder() . '/logo.svg';
 
 		touch($tmpLogo);
 		file_put_contents($tmpLogo, file_get_contents(__DIR__ . '/../../../../tests/data/data.zip'));
@@ -702,7 +715,15 @@ class ThemingControllerTest extends TestCase {
 		@$this->assertEquals($expected, $this->themingController->getImage('background'));
 	}
 
-	public function testGetManifest(): void {
+	public static function dataGetManifest(): array {
+		return [
+			[true],
+			[false],
+		];
+	}
+
+	/** @dataProvider dataGetManifest */
+	public function testGetManifest(bool $standalone): void {
 		$this->config
 			->expects($this->once())
 			->method('getAppValue')
@@ -723,6 +744,11 @@ class ThemingControllerTest extends TestCase {
 				['theming.Icon.getTouchIcon', ['app' => 'core'], 'touchicon'],
 				['theming.Icon.getFavicon', ['app' => 'core'], 'favicon'],
 			]);
+		$this->config
+			->expects($this->exactly(2))
+			->method('getSystemValueBool')
+			->with('theming.standalone_window.enabled', true)
+			->willReturn($standalone);
 		$response = new JSONResponse([
 			'name' => 'Nextcloud',
 			'start_url' => 'localhost',
@@ -739,7 +765,8 @@ class ThemingControllerTest extends TestCase {
 						'sizes' => '16x16'
 					]
 				],
-			'display' => 'standalone',
+			'display_override' => [$standalone ? 'minimal-ui' : ''],
+			'display' => $standalone ? 'standalone' : 'browser',
 			'short_name' => 'Nextcloud',
 			'theme_color' => null,
 			'background_color' => null,

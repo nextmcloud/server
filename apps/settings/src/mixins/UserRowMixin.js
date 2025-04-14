@@ -4,6 +4,7 @@
  */
 
 import { formatFileSize } from '@nextcloud/files'
+import { useFormatDateTime } from '@nextcloud/vue'
 
 export default {
 	props: {
@@ -14,14 +15,6 @@ export default {
 		settings: {
 			type: Object,
 			default: () => ({}),
-		},
-		groups: {
-			type: Array,
-			default: () => [],
-		},
-		subAdminsGroups: {
-			type: Array,
-			default: () => [],
 		},
 		quotaOptions: {
 			type: Array,
@@ -36,36 +29,29 @@ export default {
 			default: () => [],
 		},
 	},
+	setup(props) {
+		const { formattedFullTime } = useFormatDateTime(props.user.firstLoginTimestamp * 1000, {
+			relativeTime: false,
+			format: {
+				timeStyle: 'short',
+				dateStyle: 'short',
+			},
+		})
+		return {
+			formattedFullTime,
+		}
+	},
+	data() {
+		return {
+			availableGroups: this.user.groups.map(id => ({ id, name: id })),
+			availableSubAdminGroups: this.user.subadmin.map(id => ({ id, name: id })),
+			userGroups: this.user.groups.map(id => ({ id, name: id })),
+			userSubAdminGroups: this.user.subadmin.map(id => ({ id, name: id })),
+		}
+	},
 	computed: {
 		showConfig() {
 			return this.$store.getters.getShowConfig
-		},
-
-		/* GROUPS MANAGEMENT */
-		userGroups() {
-			const userGroups = this.groups.filter(group => this.user.groups.includes(group.id))
-			return userGroups
-		},
-		userSubAdminsGroups() {
-			const userSubAdminsGroups = this.subAdminsGroups.filter(group => this.user.subadmin.includes(group.id))
-			return userSubAdminsGroups
-		},
-		availableGroups() {
-			return this.groups.map((group) => {
-				// clone object because we don't want
-				// to edit the original groups
-				const groupClone = Object.assign({}, group)
-
-				// two settings here:
-				// 1. user NOT in group but no permission to add
-				// 2. user is in group but no permission to remove
-				groupClone.$isDisabled
-					= (group.canAdd === false
-						&& !this.user.groups.includes(group.id))
-					|| (group.canRemove === false
-						&& this.user.groups.includes(group.id))
-				return groupClone
-			})
 		},
 
 		/* QUOTA MANAGEMENT */
@@ -120,16 +106,26 @@ export default {
 			return userLang
 		},
 
+		userFirstLogin() {
+			if (this.user.firstLoginTimestamp > 0) {
+				return this.formattedFullTime
+			}
+			if (this.user.firstLoginTimestamp < 0) {
+				return t('settings', 'Unknown')
+			}
+			return t('settings', 'Never')
+		},
+
 		/* LAST LOGIN */
 		userLastLoginTooltip() {
-			if (this.user.lastLogin > 0) {
-				return OC.Util.formatDate(this.user.lastLogin)
+			if (this.user.lastLoginTimestamp > 0) {
+				return OC.Util.formatDate(this.user.lastLoginTimestamp * 1000)
 			}
 			return ''
 		},
 		userLastLogin() {
-			if (this.user.lastLogin > 0) {
-				return OC.Util.relativeModifiedDate(this.user.lastLogin)
+			if (this.user.lastLoginTimestamp > 0) {
+				return OC.Util.relativeModifiedDate(this.user.lastLoginTimestamp * 1000)
 			}
 			return t('settings', 'Never')
 		},

@@ -12,7 +12,7 @@ use OC\Authentication\Token\IProvider;
 use OC\CapabilitiesManager;
 use OC\Files\FilenameValidator;
 use OC\Share\Share;
-use OCA\Provisioning_API\Controller\AUserData;
+use OCA\Provisioning_API\Controller\AUserDataOCSController;
 use OCP\App\AppPathNotFoundException;
 use OCP\App\IAppManager;
 use OCP\Authentication\Exceptions\ExpiredTokenException;
@@ -30,6 +30,7 @@ use OCP\ILogger;
 use OCP\ISession;
 use OCP\IURLGenerator;
 use OCP\IUser;
+use OCP\Server;
 use OCP\ServerVersion;
 use OCP\Session\Exceptions\SessionNotAvailableException;
 use OCP\Share\IManager as IShareManager;
@@ -78,7 +79,7 @@ class JSConfigHelper {
 		$apps_paths = [];
 
 		if ($this->currentUser === null) {
-			$apps = $this->appManager->getInstalledApps();
+			$apps = $this->appManager->getEnabledApps();
 		} else {
 			$apps = $this->appManager->getEnabledAppsForUser($this->currentUser);
 		}
@@ -136,7 +137,7 @@ class JSConfigHelper {
 
 		$capabilities = $this->capabilitiesManager->getCapabilities(false, true);
 
-		$userFirstDay = $this->config->getUserValue($uid, 'core', AUserData::USER_FIELD_FIRST_DAY_OF_WEEK, null);
+		$userFirstDay = $this->config->getUserValue($uid, 'core', AUserDataOCSController::USER_FIELD_FIRST_DAY_OF_WEEK, null);
 		$firstDay = (int)($userFirstDay ?? $this->l->l('firstday', null));
 
 		$config = [
@@ -160,6 +161,8 @@ class JSConfigHelper {
 			'versionstring' => $this->serverVersion->getVersionString(),
 			'enable_non-accessible_features' => $this->config->getSystemValueBool('enable_non-accessible_features', true),
 		];
+
+		$shareManager = Server::get(IShareManager::class);
 
 		$array = [
 			'_oc_debug' => $this->config->getSystemValue('debug', false) ? 'true' : 'false',
@@ -235,11 +238,11 @@ class JSConfigHelper {
 					'defaultExpireDateEnforced' => $enforceDefaultExpireDate,
 					'enforcePasswordForPublicLink' => Util::isPublicLinkPasswordRequired(),
 					'enableLinkPasswordByDefault' => $enableLinkPasswordByDefault,
-					'sharingDisabledForUser' => Util::isSharingDisabledForUser(),
+					'sharingDisabledForUser' => $shareManager->sharingDisabledForUser($uid),
 					'resharingAllowed' => Share::isResharingAllowed(),
 					'remoteShareAllowed' => $outgoingServer2serverShareEnabled,
 					'federatedCloudShareDoc' => $this->urlGenerator->linkToDocs('user-sharing-federated'),
-					'allowGroupSharing' => \OC::$server->get(IShareManager::class)->allowGroupSharing(),
+					'allowGroupSharing' => $shareManager->allowGroupSharing(),
 					'defaultInternalExpireDateEnabled' => $defaultInternalExpireDateEnabled,
 					'defaultInternalExpireDate' => $defaultInternalExpireDate,
 					'defaultInternalExpireDateEnforced' => $defaultInternalExpireDateEnforced,

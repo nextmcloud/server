@@ -7,12 +7,19 @@ import { View, getNavigation } from '@nextcloud/files'
 
 import { getContents } from '../services/PersonalFiles'
 import AccountIcon from '@mdi/svg/svg/account.svg?raw'
+import { loadState } from '@nextcloud/initial-state'
 
 export default () => {
+	// Don't show this view if the user has no storage quota
+	const storageStats = loadState('files', 'storageStats', { quota: -1 })
+	if (storageStats.quota === 0) {
+		return
+	}
+
 	const Navigation = getNavigation()
 	Navigation.register(new View({
 		id: 'personal',
-		name: t('files', 'Personal Files'),
+		name: t('files', 'Personal files'),
 		caption: t('files', 'List of your files and folders that are not shared.'),
 
 		emptyTitle: t('files', 'No personal files found'),

@@ -24,8 +24,10 @@ use OCP\L10N\IFactory;
 use OCP\Server;
 use OCP\Support\Subscription\IAssertion;
 use OCP\User\Backend\ICheckPasswordBackend;
+use OCP\User\Backend\ICountMappedUsersBackend;
 use OCP\User\Backend\ICountUsersBackend;
 use OCP\User\Backend\IGetRealUIDBackend;
+use OCP\User\Backend\ILimitAwareCountUsersBackend;
 use OCP\User\Backend\IProvideEnabledStateBackend;
 use OCP\User\Backend\ISearchKnownUsersBackend;
 use OCP\User\Events\BeforeUserCreatedEvent;
@@ -488,22 +490,58 @@ class Manager extends PublicEmitter implements IUserManager {
 		return $userCountStatistics;
 	}
 
+	public function countUsersTotal(int $limit = 0, bool $onlyMappedUsers = false): int|false {
+		$userCount = false;
+
+		foreach ($this->backends as $backend) {
+			if ($onlyMappedUsers && $backend instanceof ICountMappedUsersBackend) {
+				$backendUsers = $backend->countMappedUsers();
+			} elseif ($backend instanceof ILimitAwareCountUsersBackend) {
+				$backendUsers = $backend->countUsers($limit);
+			} elseif ($backend instanceof ICountUsersBackend || $backend->implementsActions(Backend::COUNT_USERS)) {
+				/** @var ICountUsersBackend $backend */
+				$backendUsers = $backend->countUsers();
+			} else {
+				$this->logger->debug('Skip backend for user count: ' . get_class($backend));
+				continue;
+			}
+			if ($backendUsers !== false) {
+				$userCount = (int)$userCount + $backendUsers;
+				if ($limit > 0) {
+					if ($userCount >= $limit) {
+						break;
+					}
+					$limit -= $userCount;
+				}
+			} else {
+				$this->logger->warning('Can not determine user count for ' . get_class($backend));
+			}
+		}
+		return $userCount;
+	}
+
 	/**
 	 * returns how many users per backend exist in the requested groups (if supported by backend)
 	 *
-	 * @param IGroup[] $groups an array of gid to search in
-	 * @return array|int an array of backend class as key and count number as value
-	 *                   if $hasLoggedIn is true only an int is returned
+	 * @param IGroup[] $groups an array of groups to search in
+	 * @param int $limit limit to stop counting
+	 * @return array{int,int} total number of users, and number of disabled users in the given groups, below $limit. If limit is reached, -1 is returned for number of disabled users
 	 */
-	public function countUsersOfGroups(array $groups) {
+	public function countUsersAndDisabledUsersOfGroups(array $groups, int $limit): array {
 		$users = [];
+		$disabled = [];
 		foreach ($groups as $group) {
-			$usersIds = array_map(function ($user) {
-				return $user->getUID();
-			}, $group->getUsers());
-			$users = array_merge($users, $usersIds);
+			foreach ($group->getUsers() as $user) {
+				$users[$user->getUID()] = 1;
+				if (!$user->isEnabled()) {
+					$disabled[$user->getUID()] = 1;
+				}
+				if (count($users) >= $limit) {
+					return [count($users),-1];
+				}
+			}
 		}
-		return count(array_unique($users));
+		return [count($users),count($disabled)];
 	}
 
 	/**
@@ -570,36 +608,6 @@ class Manager extends PublicEmitter implements IUserManager {
 	}
 
 	/**
-	 * returns how many users are disabled in the requested groups
-	 *
-	 * @param array $groups groupids to search
-	 * @return int
-	 * @since 14.0.0
-	 */
-	public function countDisabledUsersOfGroups(array $groups): int {
-		$queryBuilder = \OC::$server->getDatabaseConnection()->getQueryBuilder();
-		$queryBuilder->select($queryBuilder->createFunction('COUNT(DISTINCT ' . $queryBuilder->getColumnName('uid') . ')'))
-			->from('preferences', 'p')
-			->innerJoin('p', 'group_user', 'g', $queryBuilder->expr()->eq('p.userid', 'g.uid'))
-			->where($queryBuilder->expr()->eq('appid', $queryBuilder->createNamedParameter('core')))
-			->andWhere($queryBuilder->expr()->eq('configkey', $queryBuilder->createNamedParameter('enabled')))
-			->andWhere($queryBuilder->expr()->eq('configvalue', $queryBuilder->createNamedParameter('false'), IQueryBuilder::PARAM_STR))
-			->andWhere($queryBuilder->expr()->in('gid', $queryBuilder->createNamedParameter($groups, IQueryBuilder::PARAM_STR_ARRAY)));
-
-		$result = $queryBuilder->execute();
-		$count = $result->fetchOne();
-		$result->closeCursor();
-
-		if ($count !== false) {
-			$count = (int)$count;
-		} else {
-			$count = 0;
-		}
-
-		return $count;
-	}
-
-	/**
 	 * returns how many users have logged in once
 	 *
 	 * @return int
@@ -620,30 +628,14 @@ class Manager extends PublicEmitter implements IUserManager {
 		return $result;
 	}
 
-	/**
-	 * @param \Closure $callback
-	 * @psalm-param \Closure(\OCP\IUser):?bool $callback
-	 * @since 11.0.0
-	 */
 	public function callForSeenUsers(\Closure $callback) {
-		$limit = 1000;
-		$offset = 0;
-		do {
-			$userIds = $this->getSeenUserIds($limit, $offset);
-			$offset += $limit;
-			foreach ($userIds as $userId) {
-				foreach ($this->backends as $backend) {
-					if ($backend->userExists($userId)) {
-						$user = $this->getUserObject($userId, $backend, false);
-						$return = $callback($user);
-						if ($return === false) {
-							return;
-						}
-						break;
-					}
-				}
+		$users = $this->getSeenUsers();
+		foreach ($users as $user) {
+			$return = $callback($user);
+			if ($return === false) {
+				return;
 			}
-		} while (count($userIds) >= $limit);
+		}
 	}
 
 	/**
@@ -818,5 +810,31 @@ class Manager extends PublicEmitter implements IUserManager {
 
 	public function getDisplayNameCache(): DisplayNameCache {
 		return $this->displayNameCache;
+	}
+
+	/**
+	 * Gets the list of users sorted by lastLogin, from most recent to least recent
+	 *
+	 * @param int $offset from which offset to fetch
+	 * @return \Iterator<IUser> list of user IDs
+	 * @since 30.0.0
+	 */
+	public function getSeenUsers(int $offset = 0): \Iterator {
+		$limit = 1000;
+
+		do {
+			$userIds = $this->getSeenUserIds($limit, $offset);
+			$offset += $limit;
+
+			foreach ($userIds as $userId) {
+				foreach ($this->backends as $backend) {
+					if ($backend->userExists($userId)) {
+						$user = $this->getUserObject($userId, $backend, false);
+						yield $user;
+						break;
+					}
+				}
+			}
+		} while (count($userIds) === $limit);
 	}
 }
