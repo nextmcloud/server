@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2018 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -41,9 +42,6 @@ class Principal implements BackendInterface {
 	/** @var bool */
 	private $hasCircles;
 
-	/** @var ProxyMapper */
-	private $proxyMapper;
-
 	/** @var KnownUserService */
 	private $knownUserService;
 
@@ -54,7 +52,7 @@ class Principal implements BackendInterface {
 		private IShareManager $shareManager,
 		private IUserSession $userSession,
 		private IAppManager $appManager,
-		ProxyMapper $proxyMapper,
+		private ProxyMapper $proxyMapper,
 		KnownUserService $knownUserService,
 		private IConfig $config,
 		private IFactory $languageFactory,
@@ -62,7 +60,6 @@ class Principal implements BackendInterface {
 	) {
 		$this->principalPrefix = trim($principalPrefix, '/');
 		$this->hasGroups = $this->hasCircles = ($principalPrefix === 'principals/users/');
-		$this->proxyMapper = $proxyMapper;
 		$this->knownUserService = $knownUserService;
 	}
 
@@ -154,6 +151,11 @@ class Principal implements BackendInterface {
 			return [
 				'uri' => 'principals/system/' . $name,
 				'{DAV:}displayname' => $this->languageFactory->get('dav')->t('Accounts'),
+			];
+		} elseif ($prefix === 'principals/shares') {
+			return [
+				'uri' => 'principals/shares/' . $name,
+				'{DAV:}displayname' => $name,
 			];
 		}
 		return null;

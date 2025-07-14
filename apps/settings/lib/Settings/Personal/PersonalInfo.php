@@ -29,6 +29,7 @@ use OCP\L10N\IFactory;
 use OCP\Notification\IManager;
 use OCP\Server;
 use OCP\Settings\ISettings;
+use OCP\Util;
 
 class PersonalInfo implements ISettings {
 
@@ -71,7 +72,7 @@ class PersonalInfo implements ISettings {
 		if ($storageInfo['quota'] === FileInfo::SPACE_UNLIMITED) {
 			$totalSpace = $this->l->t('Unlimited');
 		} else {
-			$totalSpace = \OC_Helper::humanFileSize($storageInfo['total']);
+			$totalSpace = Util::humanFileSize($storageInfo['total']);
 		}
 
 		$messageParameters = $this->getMessageParameters($account);
@@ -88,7 +89,7 @@ class PersonalInfo implements ISettings {
 			'groups' => $this->getGroups($user),
 			'quota' => $storageInfo['quota'],
 			'totalSpace' => $totalSpace,
-			'usage' => \OC_Helper::humanFileSize($storageInfo['used']),
+			'usage' => Util::humanFileSize($storageInfo['used']),
 			'usageRelative' => round($storageInfo['relative']),
 			'displayName' => $this->getProperty($account, IAccountManager::PROPERTY_DISPLAYNAME),
 			'emailMap' => $this->getEmailMap($account),
@@ -114,6 +115,7 @@ class PersonalInfo implements ISettings {
 		$accountParameters = [
 			'avatarChangeSupported' => $user->canChangeAvatar(),
 			'displayNameChangeSupported' => $user->canChangeDisplayName(),
+			'emailChangeSupported' => $user->canChangeEmail(),
 			'federationEnabled' => $federationEnabled,
 			'lookupServerUploadEnabled' => $lookupServerUploadEnabled,
 		];

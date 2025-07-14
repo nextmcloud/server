@@ -9,7 +9,6 @@ declare(strict_types=1);
  */
 namespace OCA\DAV\AppInfo;
 
-use OCA\DAV\CalDAV\Activity\Backend;
 use OCA\DAV\CalDAV\AppCalendar\AppCalendarPlugin;
 use OCA\DAV\CalDAV\CachedSubscriptionProvider;
 use OCA\DAV\CalDAV\CalendarManager;
@@ -21,7 +20,6 @@ use OCA\DAV\CalDAV\Reminder\NotificationProviderManager;
 use OCA\DAV\CalDAV\Reminder\Notifier;
 use OCA\DAV\Capabilities;
 use OCA\DAV\CardDAV\ContactsManager;
-use OCA\DAV\CardDAV\PhotoCache;
 use OCA\DAV\CardDAV\SyncService;
 use OCA\DAV\Events\AddressBookCreatedEvent;
 use OCA\DAV\Events\AddressBookDeletedEvent;
@@ -66,6 +64,7 @@ use OCA\DAV\SetupChecks\WebdavEndpoint;
 use OCA\DAV\UserMigration\CalendarMigrator;
 use OCA\DAV\UserMigration\ContactsMigrator;
 use OCP\Accounts\UserUpdatedEvent;
+use OCP\App\IAppManager;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -82,9 +81,7 @@ use OCP\Config\BeforePreferenceDeletedEvent;
 use OCP\Config\BeforePreferenceSetEvent;
 use OCP\Contacts\IManager as IContactsManager;
 use OCP\DB\Events\AddMissingIndicesEvent;
-use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\Events\TrustedServerRemovedEvent;
-use OCP\Files\AppData\IAppDataFactory;
 use OCP\IUserSession;
 use OCP\Server;
 use OCP\Settings\Events\DeclarativeSettingsGetValueEvent;
@@ -114,12 +111,6 @@ class Application extends App implements IBootstrap {
 
 	public function register(IRegistrationContext $context): void {
 		$context->registerServiceAlias('CardDAVSyncService', SyncService::class);
-		$context->registerService(PhotoCache::class, function (ContainerInterface $c) {
-			return new PhotoCache(
-				$c->get(IAppDataFactory::class)->get('dav-photocache'),
-				$c->get(LoggerInterface::class)
-			);
-		});
 		$context->registerService(AppCalendarPlugin::class, function (ContainerInterface $c) {
 			return new AppCalendarPlugin(
 				$c->get(ICalendarManager::class),
@@ -205,6 +196,7 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(UserDeletedEvent::class, UserEventsListener::class);
 		$context->registerEventListener(UserCreatedEvent::class, UserEventsListener::class);
 		$context->registerEventListener(UserChangedEvent::class, UserEventsListener::class);
+		$context->registerEventListener(UserUpdatedEvent::class, UserEventsListener::class);
 
 		$context->registerNotifierService(Notifier::class);
 
@@ -226,37 +218,11 @@ class Application extends App implements IBootstrap {
 
 	public function boot(IBootContext $context): void {
 		// Load all dav apps
-		\OC_App::loadApps(['dav']);
+		$context->getServerContainer()->get(IAppManager::class)->loadApps(['dav']);
 
-		$context->injectFn([$this, 'registerHooks']);
-		$context->injectFn([$this, 'registerContactsManager']);
-		$context->injectFn([$this, 'registerCalendarManager']);
-		$context->injectFn([$this, 'registerCalendarReminders']);
-	}
-
-	public function registerHooks(
-		IEventDispatcher $dispatcher,
-		IAppContainer $container,
-	): void {
-		$dispatcher->addListener(UserUpdatedEvent::class, function (UserUpdatedEvent $event) use ($container): void {
-			/** @var SyncService $syncService */
-			$syncService = Server::get(SyncService::class);
-			$syncService->updateUser($event->getUser());
-		});
-
-
-		$dispatcher->addListener(CalendarShareUpdatedEvent::class, function (CalendarShareUpdatedEvent $event) use ($container): void {
-			/** @var Backend $backend */
-			$backend = $container->query(Backend::class);
-			$backend->onCalendarUpdateShares(
-				$event->getCalendarData(),
-				$event->getOldShares(),
-				$event->getAdded(),
-				$event->getRemoved()
-			);
-
-			// Here we should recalculate if reminders should be sent to new or old sharees
-		});
+		$context->injectFn($this->registerContactsManager(...));
+		$context->injectFn($this->registerCalendarManager(...));
+		$context->injectFn($this->registerCalendarReminders(...));
 	}
 
 	public function registerContactsManager(IContactsManager $cm, IAppContainer $container): void {
@@ -279,12 +245,11 @@ class Application extends App implements IBootstrap {
 		$cm->setupContactsProvider($contactsManager, $userID, $urlGenerator);
 	}
 
-	private function setupSystemContactsProvider(IContactsManager $contactsManager,
-		IAppContainer $container): void {
+	private function setupSystemContactsProvider(IContactsManager $contactsManager, IAppContainer $container): void {
 		/** @var ContactsManager $cm */
 		$cm = $container->query(ContactsManager::class);
 		$urlGenerator = $container->getServer()->getURLGenerator();
-		$cm->setupSystemContactsProvider($contactsManager, $urlGenerator);
+		$cm->setupSystemContactsProvider($contactsManager, null, $urlGenerator);
 	}
 
 	public function registerCalendarManager(ICalendarManager $calendarManager,

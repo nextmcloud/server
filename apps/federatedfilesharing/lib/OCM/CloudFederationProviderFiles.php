@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2018 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -67,7 +68,6 @@ class CloudFederationProviderFiles implements ISignedCloudFederationProvider {
 		private LoggerInterface $logger,
 		private IFilenameValidator $filenameValidator,
 		private readonly IProviderFactory $shareProviderFactory,
-		private TrustedServers $trustedServers,
 	) {
 	}
 
@@ -156,6 +156,17 @@ class CloudFederationProviderFiles implements ISignedCloudFederationProvider {
 				// get DisplayName about the owner of the share
 				$ownerDisplayName = $this->getUserDisplayName($ownerFederatedId);
 
+				$trustedServers = null;
+				if ($this->appManager->isEnabledForAnyone('federation')
+					&& class_exists(TrustedServers::class)) {
+					try {
+						$trustedServers = Server::get(TrustedServers::class);
+					} catch (\Throwable $e) {
+						$this->logger->debug('Failed to create TrustedServers', ['exception' => $e]);
+					}
+				}
+
+
 				if ($shareType === IShare::TYPE_USER) {
 					$event = $this->activityManager->generateEvent();
 					$event->setApp('files_sharing')
@@ -167,7 +178,7 @@ class CloudFederationProviderFiles implements ISignedCloudFederationProvider {
 					$this->notifyAboutNewShare($shareWith, $shareId, $ownerFederatedId, $sharedByFederatedId, $name, $ownerDisplayName);
 
 					// If auto-accept is enabled, accept the share
-					if ($this->federatedShareProvider->isFederatedTrustedShareAutoAccept() && $this->trustedServers->isTrustedServer($remote)) {
+					if ($this->federatedShareProvider->isFederatedTrustedShareAutoAccept() && $trustedServers?->isTrustedServer($remote) === true) {
 						$this->externalShareManager->acceptShare($shareId, $shareWith);
 					}
 				} else {
@@ -183,7 +194,7 @@ class CloudFederationProviderFiles implements ISignedCloudFederationProvider {
 						$this->notifyAboutNewShare($user->getUID(), $shareId, $ownerFederatedId, $sharedByFederatedId, $name, $ownerDisplayName);
 
 						// If auto-accept is enabled, accept the share
-						if ($this->federatedShareProvider->isFederatedTrustedShareAutoAccept() && $this->trustedServers->isTrustedServer($remote)) {
+						if ($this->federatedShareProvider->isFederatedTrustedShareAutoAccept() && $trustedServers?->isTrustedServer($remote) === true) {
 							$this->externalShareManager->acceptShare($shareId, $user->getUID());
 						}
 					}
@@ -692,8 +703,8 @@ class CloudFederationProviderFiles implements ISignedCloudFederationProvider {
 	 */
 	protected function verifyShare(IShare $share, $token) {
 		if (
-			$share->getShareType() === IShare::TYPE_REMOTE &&
-			$share->getToken() === $token
+			$share->getShareType() === IShare::TYPE_REMOTE
+			&& $share->getToken() === $token
 		) {
 			return true;
 		}

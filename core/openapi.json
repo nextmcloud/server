@@ -317,6 +317,104 @@
                     }
                 }
             },
+            "ProfileAction": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "icon",
+                    "title",
+                    "target"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "icon": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "target": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                }
+            },
+            "ProfileData": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/ProfileFields"
+                    },
+                    {
+                        "type": "object",
+                        "required": [
+                            "timezone",
+                            "timezoneOffset"
+                        ],
+                        "properties": {
+                            "timezone": {
+                                "type": "string",
+                                "description": "Timezone identifier like Europe/Berlin or America/North_Dakota/Beulah"
+                            },
+                            "timezoneOffset": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "Offset in seconds, negative when behind UTC, positive otherwise"
+                            }
+                        }
+                    }
+                ]
+            },
+            "ProfileFields": {
+                "type": "object",
+                "required": [
+                    "userId",
+                    "actions"
+                ],
+                "properties": {
+                    "userId": {
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "biography": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "displayname": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "headline": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "isUserAvatarVisible": {
+                        "type": "boolean"
+                    },
+                    "organisation": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "pronouns": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "role": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "actions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ProfileAction"
+                        }
+                    }
+                }
+            },
             "PublicCapabilities": {
                 "type": "object",
                 "required": [
@@ -1075,6 +1173,13 @@
                 ],
                 "parameters": [
                     {
+                        "name": "user-agent",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "name": "OCS-APIRequest",
                         "in": "header",
                         "description": "Required to be true for the API request to pass",
@@ -1505,7 +1610,8 @@
                         "description": "can be piped, top prio first, e.g.: \"commenters|share-recipients\"",
                         "schema": {
                             "type": "string",
-                            "nullable": true
+                            "nullable": true,
+                            "default": null
                         }
                     },
                     {
@@ -3095,6 +3201,134 @@
                         }
                     }
                 }
+            },
+            "get": {
+                "operationId": "profile_api-get-profile-fields",
+                "summary": "Get profile fields for another user",
+                "tags": [
+                    "profile_api"
+                ],
+                "security": [
+                    {
+                        "bearer_auth": []
+                    },
+                    {
+                        "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "targetUserId",
+                        "in": "path",
+                        "description": "ID of the user",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "OCS-APIRequest",
+                        "in": "header",
+                        "description": "Required to be true for the API request to pass",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "default": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Profile data returned successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "$ref": "#/components/schemas/ProfileData"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Profile is disabled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "nullable": true
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Account not found or disabled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "ocs"
+                                    ],
+                                    "properties": {
+                                        "ocs": {
+                                            "type": "object",
+                                            "required": [
+                                                "meta",
+                                                "data"
+                                            ],
+                                            "properties": {
+                                                "meta": {
+                                                    "$ref": "#/components/schemas/OCSMeta"
+                                                },
+                                                "data": {
+                                                    "nullable": true
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/ocs/v2.php/references/extract": {
@@ -3777,6 +4011,7 @@
                                         "type": "integer",
                                         "format": "int64",
                                         "nullable": true,
+                                        "default": null,
                                         "description": "Timestamp of the last usage"
                                     }
                                 }
@@ -3971,11 +4206,13 @@
                                     "webhookUri": {
                                         "type": "string",
                                         "nullable": true,
+                                        "default": null,
                                         "description": "URI to be requested when the task finishes"
                                     },
                                     "webhookMethod": {
                                         "type": "string",
                                         "nullable": true,
+                                        "default": null,
                                         "description": "Method used for the webhook request (HTTP:GET, HTTP:POST, HTTP:PUT, HTTP:DELETE or AppAPI:APP_ID:GET, AppAPI:APP_ID:POST...)"
                                     }
                                 }
@@ -4484,7 +4721,8 @@
                         "description": "An arbitrary identifier for the task",
                         "schema": {
                             "type": "string",
-                            "nullable": true
+                            "nullable": true,
+                            "default": null
                         }
                     },
                     {
@@ -4612,7 +4850,8 @@
                         "description": "An arbitrary identifier for the task",
                         "schema": {
                             "type": "string",
-                            "nullable": true
+                            "nullable": true,
+                            "default": null
                         }
                     },
                     {
@@ -5820,7 +6059,8 @@
                         "description": "An arbitrary identifier for the task",
                         "schema": {
                             "type": "string",
-                            "nullable": true
+                            "nullable": true,
+                            "default": null
                         }
                     },
                     {
@@ -6647,7 +6887,8 @@
                         "description": "An arbitrary identifier for the task",
                         "schema": {
                             "type": "string",
-                            "nullable": true
+                            "nullable": true,
+                            "default": null
                         }
                     },
                     {
@@ -7186,7 +7427,8 @@
                         "schema": {
                             "type": "integer",
                             "format": "int64",
-                            "nullable": true
+                            "nullable": true,
+                            "default": null
                         }
                     },
                     {
@@ -7196,7 +7438,8 @@
                         "schema": {
                             "type": "integer",
                             "format": "int64",
-                            "nullable": true
+                            "nullable": true,
+                            "default": null
                         }
                     },
                     {
@@ -7205,6 +7448,7 @@
                         "description": "Offset for searching",
                         "schema": {
                             "nullable": true,
+                            "default": null,
                             "oneOf": [
                                 {
                                     "type": "integer",
@@ -7818,6 +8062,15 @@
                     },
                     {
                         "basic_auth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "user-agent",
+                        "in": "header",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {

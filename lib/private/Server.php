@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -55,6 +56,7 @@ use OC\Files\Mount\RootMountProvider;
 use OC\Files\Node\HookConnector;
 use OC\Files\Node\LazyRoot;
 use OC\Files\Node\Root;
+use OC\Files\ObjectStore\PrimaryObjectStoreConfig;
 use OC\Files\SetupManager;
 use OC\Files\Storage\StorageFactory;
 use OC\Files\Template\TemplateManager;
@@ -124,10 +126,6 @@ use OC\User\DisplayNameCache;
 use OC\User\Listeners\BeforeUserDeletedListener;
 use OC\User\Listeners\UserChangedListener;
 use OC\User\Session;
-use OCA\Files_External\Service\BackendService;
-use OCA\Files_External\Service\GlobalStoragesService;
-use OCA\Files_External\Service\UserGlobalStoragesService;
-use OCA\Files_External\Service\UserStoragesService;
 use OCA\Theming\ImageManager;
 use OCA\Theming\Service\BackgroundService;
 use OCA\Theming\ThemingDefaults;
@@ -138,7 +136,6 @@ use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Authentication\LoginCredentials\IStore;
 use OCP\Authentication\Token\IProvider as OCPIProvider;
 use OCP\BackgroundJob\IJobList;
-use OCP\Collaboration\AutoComplete\IManager;
 use OCP\Collaboration\Reference\IReferenceManager;
 use OCP\Command\IBus;
 use OCP\Comments\ICommentsManager;
@@ -189,7 +186,6 @@ use OCP\IRequest;
 use OCP\IRequestId;
 use OCP\IServerContainer;
 use OCP\ISession;
-use OCP\ITagManager;
 use OCP\ITempManager;
 use OCP\IURLGenerator;
 use OCP\IUserManager;
@@ -201,6 +197,7 @@ use OCP\Lock\ILockingProvider;
 use OCP\Lockdown\ILockdownManager;
 use OCP\Log\ILogFactory;
 use OCP\Mail\IMailer;
+use OCP\OCM\ICapabilityAwareOCMProvider;
 use OCP\OCM\IOCMDiscoveryService;
 use OCP\OCM\IOCMProvider;
 use OCP\Preview\IMimeIconProvider;
@@ -212,7 +209,6 @@ use OCP\RichObjectStrings\IRichTextFormatter;
 use OCP\RichObjectStrings\IValidator;
 use OCP\Route\IRouter;
 use OCP\Security\Bruteforce\IThrottler;
-use OCP\Security\IContentSecurityPolicyManager;
 use OCP\Security\ICredentialsManager;
 use OCP\Security\ICrypto;
 use OCP\Security\IHasher;
@@ -242,7 +238,6 @@ use OCP\User\Events\UserLoggedInEvent;
 use OCP\User\Events\UserLoggedInWithCookieEvent;
 use OCP\User\Events\UserLoggedOutEvent;
 use OCP\User\IAvailabilityCoordinator;
-use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -272,9 +267,7 @@ class Server extends ServerContainer implements IServerContainer {
 		$this->registerService(ContainerInterface::class, function (ContainerInterface $c) {
 			return $c;
 		});
-		$this->registerService(\OCP\IServerContainer::class, function (ContainerInterface $c) {
-			return $c;
-		});
+		$this->registerDeprecatedAlias(\OCP\IServerContainer::class, ContainerInterface::class);
 
 		$this->registerAlias(\OCP\Calendar\IManager::class, \OC\Calendar\Manager::class);
 
@@ -326,7 +319,7 @@ class Server extends ServerContainer implements IServerContainer {
 			return new Profiler($c->get(SystemConfig::class));
 		});
 
-		$this->registerService(\OCP\Encryption\IManager::class, function (Server $c): Encryption\Manager {
+		$this->registerService(Encryption\Manager::class, function (Server $c): Encryption\Manager {
 			$view = new View();
 			$util = new Encryption\Util(
 				$view,
@@ -343,6 +336,7 @@ class Server extends ServerContainer implements IServerContainer {
 				new ArrayCache()
 			);
 		});
+		$this->registerAlias(\OCP\Encryption\IManager::class, Encryption\Manager::class);
 
 		$this->registerService(IFile::class, function (ContainerInterface $c) {
 			$util = new Encryption\Util(
@@ -411,7 +405,8 @@ class Server extends ServerContainer implements IServerContainer {
 
 			$previewConnector = new \OC\Preview\WatcherConnector(
 				$root,
-				$c->get(SystemConfig::class)
+				$c->get(SystemConfig::class),
+				$this->get(IEventDispatcher::class)
 			);
 			$previewConnector->connectWatcher();
 
@@ -574,6 +569,7 @@ class Server extends ServerContainer implements IServerContainer {
 
 		$this->registerAlias(IAppConfig::class, \OC\AppConfig::class);
 		$this->registerAlias(IUserConfig::class, \OC\Config\UserConfig::class);
+		$this->registerAlias(IAppManager::class, AppManager::class);
 
 		$this->registerService(IFactory::class, function (Server $c) {
 			return new \OC\L10N\Factory(
@@ -607,10 +603,10 @@ class Server extends ServerContainer implements IServerContainer {
 
 			if ($config->getValue('installed', false) && !(defined('PHPUNIT_RUN') && PHPUNIT_RUN)) {
 				$logQuery = $config->getValue('log_query');
-				$prefixClosure = function () use ($logQuery, $serverVersion) {
+				$prefixClosure = function () use ($logQuery, $serverVersion): ?string {
 					if (!$logQuery) {
 						try {
-							$v = \OC_App::getAppVersions();
+							$v = \OCP\Server::get(IAppConfig::class)->getAppInstalledVersions(true);
 						} catch (\Doctrine\DBAL\Exception $e) {
 							// Database service probably unavailable
 							// Probably related to https://github.com/nextcloud/server/issues/37424
@@ -625,7 +621,7 @@ class Server extends ServerContainer implements IServerContainer {
 						];
 					}
 					$v['core'] = implode(',', $serverVersion->getVersion());
-					$version = implode(',', $v);
+					$version = implode(',', array_keys($v)) . implode(',', $v);
 					$instanceId = \OC_Util::getInstanceId();
 					$path = \OC::$SERVERROOT;
 					return md5($instanceId . '-' . $version . '-' . $path);
@@ -782,21 +778,6 @@ class Server extends ServerContainer implements IServerContainer {
 		});
 
 		$this->registerAlias(ITempManager::class, TempManager::class);
-
-		$this->registerService(AppManager::class, function (ContainerInterface $c) {
-			// TODO: use auto-wiring
-			return new \OC\App\AppManager(
-				$c->get(IUserSession::class),
-				$c->get(\OCP\IConfig::class),
-				$c->get(IGroupManager::class),
-				$c->get(ICacheFactory::class),
-				$c->get(IEventDispatcher::class),
-				$c->get(LoggerInterface::class),
-				$c->get(ServerVersion::class),
-			);
-		});
-		$this->registerAlias(IAppManager::class, AppManager::class);
-
 		$this->registerAlias(IDateTimeZone::class, DateTimeZone::class);
 
 		$this->registerService(IDateTimeFormatter::class, function (Server $c) {
@@ -825,10 +806,11 @@ class Server extends ServerContainer implements IServerContainer {
 
 			$config = $c->get(\OCP\IConfig::class);
 			$logger = $c->get(LoggerInterface::class);
+			$objectStoreConfig = $c->get(PrimaryObjectStoreConfig::class);
 			$manager->registerProvider(new CacheMountProvider($config));
 			$manager->registerHomeProvider(new LocalHomeMountProvider());
-			$manager->registerHomeProvider(new ObjectHomeMountProvider($config));
-			$manager->registerRootProvider(new RootMountProvider($config, $c->get(LoggerInterface::class)));
+			$manager->registerHomeProvider(new ObjectHomeMountProvider($objectStoreConfig));
+			$manager->registerRootProvider(new RootMountProvider($objectStoreConfig, $config));
 			$manager->registerRootProvider(new ObjectStorePreviewCacheMountProvider($logger, $config));
 
 			return $manager;
@@ -867,15 +849,15 @@ class Server extends ServerContainer implements IServerContainer {
 
 		$this->registerDeprecatedAlias('IntegrityCodeChecker', Checker::class);
 		$this->registerService(Checker::class, function (ContainerInterface $c) {
-			// IConfig and IAppManager requires a working database. This code
-			// might however be called when ownCloud is not yet setup.
+			// IConfig requires a working database. This code
+			// might however be called when Nextcloud is not yet setup.
 			if (\OC::$server->get(SystemConfig::class)->getValue('installed', false)) {
 				$config = $c->get(\OCP\IConfig::class);
 				$appConfig = $c->get(\OCP\IAppConfig::class);
 			} else {
-				$config = $appConfig = $appManager = null;
+				$config = null;
+				$appConfig = null;
 			}
-			$appManager = $c->get(IAppManager::class);
 
 			return new Checker(
 				$c->get(ServerVersion::class),
@@ -885,11 +867,11 @@ class Server extends ServerContainer implements IServerContainer {
 				$config,
 				$appConfig,
 				$c->get(ICacheFactory::class),
-				$appManager,
+				$c->get(IAppManager::class),
 				$c->get(IMimeTypeDetector::class)
 			);
 		});
-		$this->registerService(\OCP\IRequest::class, function (ContainerInterface $c) {
+		$this->registerService(Request::class, function (ContainerInterface $c) {
 			if (isset($this['urlParams'])) {
 				$urlParams = $this['urlParams'];
 			} else {
@@ -923,6 +905,7 @@ class Server extends ServerContainer implements IServerContainer {
 				$stream
 			);
 		});
+		$this->registerAlias(\OCP\IRequest::class, Request::class);
 
 		$this->registerService(IRequestId::class, function (ContainerInterface $c): IRequestId {
 			return new RequestId(
@@ -1124,7 +1107,7 @@ class Server extends ServerContainer implements IServerContainer {
 			$config = $c->get(\OCP\IConfig::class);
 			$factoryClass = $config->getSystemValue('sharing.managerFactory', ProviderFactory::class);
 			/** @var \OCP\Share\IProviderFactory $factory */
-			return new $factoryClass($this);
+			return $c->get($factoryClass);
 		});
 
 		$this->registerAlias(\OCP\Share\IManager::class, \OC\Share20\Manager::class);
@@ -1275,7 +1258,8 @@ class Server extends ServerContainer implements IServerContainer {
 
 		$this->registerAlias(IPhoneNumberUtil::class, PhoneNumberUtil::class);
 
-		$this->registerAlias(IOCMProvider::class, OCMProvider::class);
+		$this->registerAlias(ICapabilityAwareOCMProvider::class, OCMProvider::class);
+		$this->registerDeprecatedAlias(IOCMProvider::class, OCMProvider::class);
 
 		$this->registerAlias(ISetupCheckManager::class, SetupCheckManager::class);
 
@@ -1302,30 +1286,6 @@ class Server extends ServerContainer implements IServerContainer {
 		/** @var HookConnector $hookConnector */
 		$hookConnector = $this->get(HookConnector::class);
 		$hookConnector->viewToNode();
-	}
-
-	/**
-	 * @return \OCP\Calendar\IManager
-	 * @deprecated 20.0.0
-	 */
-	public function getCalendarManager() {
-		return $this->get(\OC\Calendar\Manager::class);
-	}
-
-	/**
-	 * @return \OCP\Calendar\Resource\IManager
-	 * @deprecated 20.0.0
-	 */
-	public function getCalendarResourceBackendManager() {
-		return $this->get(\OC\Calendar\Resource\Manager::class);
-	}
-
-	/**
-	 * @return \OCP\Calendar\Room\IManager
-	 * @deprecated 20.0.0
-	 */
-	public function getCalendarRoomBackendManager() {
-		return $this->get(\OC\Calendar\Room\Manager::class);
 	}
 
 	private function connectDispatcher(): void {
@@ -1365,14 +1325,6 @@ class Server extends ServerContainer implements IServerContainer {
 	}
 
 	/**
-	 * @return \OCP\Encryption\Keys\IStorage
-	 * @deprecated 20.0.0
-	 */
-	public function getEncryptionKeyStorage() {
-		return $this->get(IStorage::class);
-	}
-
-	/**
 	 * The current request object holding all information about the request
 	 * currently being processed is returned from this method.
 	 * In case the current execution was not initiated by a web request null is returned
@@ -1382,61 +1334,6 @@ class Server extends ServerContainer implements IServerContainer {
 	 */
 	public function getRequest() {
 		return $this->get(IRequest::class);
-	}
-
-	/**
-	 * Returns the preview manager which can create preview images for a given file
-	 *
-	 * @return IPreview
-	 * @deprecated 20.0.0
-	 */
-	public function getPreviewManager() {
-		return $this->get(IPreview::class);
-	}
-
-	/**
-	 * Returns the tag manager which can get and set tags for different object types
-	 *
-	 * @see \OCP\ITagManager::load()
-	 * @return ITagManager
-	 * @deprecated 20.0.0
-	 */
-	public function getTagManager() {
-		return $this->get(ITagManager::class);
-	}
-
-	/**
-	 * Returns the system-tag manager
-	 *
-	 * @return ISystemTagManager
-	 *
-	 * @since 9.0.0
-	 * @deprecated 20.0.0
-	 */
-	public function getSystemTagManager() {
-		return $this->get(ISystemTagManager::class);
-	}
-
-	/**
-	 * Returns the system-tag object mapper
-	 *
-	 * @return ISystemTagObjectMapper
-	 *
-	 * @since 9.0.0
-	 * @deprecated 20.0.0
-	 */
-	public function getSystemTagObjectMapper() {
-		return $this->get(ISystemTagObjectMapper::class);
-	}
-
-	/**
-	 * Returns the avatar manager, used for avatar functionality
-	 *
-	 * @return IAvatarManager
-	 * @deprecated 20.0.0
-	 */
-	public function getAvatarManager() {
-		return $this->get(IAvatarManager::class);
 	}
 
 	/**
@@ -1523,22 +1420,6 @@ class Server extends ServerContainer implements IServerContainer {
 	}
 
 	/**
-	 * @return \OC\Authentication\TwoFactorAuth\Manager
-	 * @deprecated 20.0.0
-	 */
-	public function getTwoFactorAuthManager() {
-		return $this->get(\OC\Authentication\TwoFactorAuth\Manager::class);
-	}
-
-	/**
-	 * @return \OC\NavigationManager
-	 * @deprecated 20.0.0
-	 */
-	public function getNavigationManager() {
-		return $this->get(INavigationManager::class);
-	}
-
-	/**
 	 * @return \OCP\IConfig
 	 * @deprecated 20.0.0
 	 */
@@ -1552,16 +1433,6 @@ class Server extends ServerContainer implements IServerContainer {
 	 */
 	public function getSystemConfig() {
 		return $this->get(SystemConfig::class);
-	}
-
-	/**
-	 * Returns the app config manager
-	 *
-	 * @return IAppConfig
-	 * @deprecated 20.0.0
-	 */
-	public function getAppConfig() {
-		return $this->get(IAppConfig::class);
 	}
 
 	/**
@@ -1593,14 +1464,6 @@ class Server extends ServerContainer implements IServerContainer {
 	}
 
 	/**
-	 * @return AppFetcher
-	 * @deprecated 20.0.0
-	 */
-	public function getAppFetcher() {
-		return $this->get(AppFetcher::class);
-	}
-
-	/**
 	 * Returns an ICache instance. Since 8.1.0 it returns a fake cache. Use
 	 * getMemCacheFactory() instead.
 	 *
@@ -1620,17 +1483,6 @@ class Server extends ServerContainer implements IServerContainer {
 	public function getMemCacheFactory() {
 		return $this->get(ICacheFactory::class);
 	}
-
-	/**
-	 * Returns an \OC\RedisFactory instance
-	 *
-	 * @return \OC\RedisFactory
-	 * @deprecated 20.0.0
-	 */
-	public function getGetRedisFactory() {
-		return $this->get('RedisFactory');
-	}
-
 
 	/**
 	 * Returns the current session
@@ -1660,25 +1512,6 @@ class Server extends ServerContainer implements IServerContainer {
 	 */
 	public function getJobList() {
 		return $this->get(IJobList::class);
-	}
-
-	/**
-	 * @return ILogFactory
-	 * @throws \OCP\AppFramework\QueryException
-	 * @deprecated 20.0.0
-	 */
-	public function getLogFactory() {
-		return $this->get(ILogFactory::class);
-	}
-
-	/**
-	 * Returns a router for generating and matching urls
-	 *
-	 * @return IRouter
-	 * @deprecated 20.0.0
-	 */
-	public function getRouter() {
-		return $this->get(IRouter::class);
 	}
 
 	/**
@@ -1712,56 +1545,12 @@ class Server extends ServerContainer implements IServerContainer {
 	}
 
 	/**
-	 * Returns a CredentialsManager instance
-	 *
-	 * @return ICredentialsManager
-	 * @deprecated 20.0.0
-	 */
-	public function getCredentialsManager() {
-		return $this->get(ICredentialsManager::class);
-	}
-
-	/**
 	 * Get the certificate manager
 	 *
 	 * @return \OCP\ICertificateManager
 	 */
 	public function getCertificateManager() {
 		return $this->get(ICertificateManager::class);
-	}
-
-	/**
-	 * Returns an instance of the HTTP client service
-	 *
-	 * @return IClientService
-	 * @deprecated 20.0.0
-	 */
-	public function getHTTPClientService() {
-		return $this->get(IClientService::class);
-	}
-
-	/**
-	 * Get the active event logger
-	 *
-	 * The returned logger only logs data when debug mode is enabled
-	 *
-	 * @return IEventLogger
-	 * @deprecated 20.0.0
-	 */
-	public function getEventLogger() {
-		return $this->get(IEventLogger::class);
-	}
-
-	/**
-	 * Get the active query logger
-	 *
-	 * The returned logger only logs data when debug mode is enabled
-	 *
-	 * @return IQueryLogger
-	 * @deprecated 20.0.0
-	 */
-	public function getQueryLogger() {
-		return $this->get(IQueryLogger::class);
 	}
 
 	/**
@@ -1805,66 +1594,6 @@ class Server extends ServerContainer implements IServerContainer {
 	}
 
 	/**
-	 * @return \OC\OCSClient
-	 * @deprecated 20.0.0
-	 */
-	public function getOcsClient() {
-		return $this->get('OcsClient');
-	}
-
-	/**
-	 * @return IDateTimeZone
-	 * @deprecated 20.0.0
-	 */
-	public function getDateTimeZone() {
-		return $this->get(IDateTimeZone::class);
-	}
-
-	/**
-	 * @return IDateTimeFormatter
-	 * @deprecated 20.0.0
-	 */
-	public function getDateTimeFormatter() {
-		return $this->get(IDateTimeFormatter::class);
-	}
-
-	/**
-	 * @return IMountProviderCollection
-	 * @deprecated 20.0.0
-	 */
-	public function getMountProviderCollection() {
-		return $this->get(IMountProviderCollection::class);
-	}
-
-	/**
-	 * Get the IniWrapper
-	 *
-	 * @return IniGetWrapper
-	 * @deprecated 20.0.0
-	 */
-	public function getIniWrapper() {
-		return $this->get(IniGetWrapper::class);
-	}
-
-	/**
-	 * @return \OCP\Command\IBus
-	 * @deprecated 20.0.0
-	 */
-	public function getCommandBus() {
-		return $this->get(IBus::class);
-	}
-
-	/**
-	 * Get the trusted domain helper
-	 *
-	 * @return TrustedDomainHelper
-	 * @deprecated 20.0.0
-	 */
-	public function getTrustedDomainHelper() {
-		return $this->get(TrustedDomainHelper::class);
-	}
-
-	/**
 	 * Get the locking provider
 	 *
 	 * @return ILockingProvider
@@ -1873,22 +1602,6 @@ class Server extends ServerContainer implements IServerContainer {
 	 */
 	public function getLockingProvider() {
 		return $this->get(ILockingProvider::class);
-	}
-
-	/**
-	 * @return IMountManager
-	 * @deprecated 20.0.0
-	 **/
-	public function getMountManager() {
-		return $this->get(IMountManager::class);
-	}
-
-	/**
-	 * @return IUserMountCache
-	 * @deprecated 20.0.0
-	 */
-	public function getUserMountCache() {
-		return $this->get(IUserMountCache::class);
 	}
 
 	/**
@@ -1912,16 +1625,6 @@ class Server extends ServerContainer implements IServerContainer {
 	}
 
 	/**
-	 * Get the manager of all the capabilities
-	 *
-	 * @return CapabilitiesManager
-	 * @deprecated 20.0.0
-	 */
-	public function getCapabilitiesManager() {
-		return $this->get(CapabilitiesManager::class);
-	}
-
-	/**
 	 * Get the Notification Manager
 	 *
 	 * @return \OCP\Notification\IManager
@@ -1930,14 +1633,6 @@ class Server extends ServerContainer implements IServerContainer {
 	 */
 	public function getNotificationManager() {
 		return $this->get(\OCP\Notification\IManager::class);
-	}
-
-	/**
-	 * @return ICommentsManager
-	 * @deprecated 20.0.0
-	 */
-	public function getCommentsManager() {
-		return $this->get(ICommentsManager::class);
 	}
 
 	/**
@@ -1957,14 +1652,6 @@ class Server extends ServerContainer implements IServerContainer {
 	}
 
 	/**
-	 * @return \OC\Session\CryptoWrapper
-	 * @deprecated 20.0.0
-	 */
-	public function getSessionCryptoWrapper() {
-		return $this->get('CryptoWrapper');
-	}
-
-	/**
 	 * @return CsrfTokenManager
 	 * @deprecated 20.0.0
 	 */
@@ -1973,101 +1660,11 @@ class Server extends ServerContainer implements IServerContainer {
 	}
 
 	/**
-	 * @return IThrottler
-	 * @deprecated 20.0.0
-	 */
-	public function getBruteForceThrottler() {
-		return $this->get(Throttler::class);
-	}
-
-	/**
-	 * @return IContentSecurityPolicyManager
-	 * @deprecated 20.0.0
-	 */
-	public function getContentSecurityPolicyManager() {
-		return $this->get(ContentSecurityPolicyManager::class);
-	}
-
-	/**
 	 * @return ContentSecurityPolicyNonceManager
 	 * @deprecated 20.0.0
 	 */
 	public function getContentSecurityPolicyNonceManager() {
 		return $this->get(ContentSecurityPolicyNonceManager::class);
-	}
-
-	/**
-	 * Not a public API as of 8.2, wait for 9.0
-	 *
-	 * @return \OCA\Files_External\Service\BackendService
-	 * @deprecated 20.0.0
-	 */
-	public function getStoragesBackendService() {
-		return $this->get(BackendService::class);
-	}
-
-	/**
-	 * Not a public API as of 8.2, wait for 9.0
-	 *
-	 * @return \OCA\Files_External\Service\GlobalStoragesService
-	 * @deprecated 20.0.0
-	 */
-	public function getGlobalStoragesService() {
-		return $this->get(GlobalStoragesService::class);
-	}
-
-	/**
-	 * Not a public API as of 8.2, wait for 9.0
-	 *
-	 * @return \OCA\Files_External\Service\UserGlobalStoragesService
-	 * @deprecated 20.0.0
-	 */
-	public function getUserGlobalStoragesService() {
-		return $this->get(UserGlobalStoragesService::class);
-	}
-
-	/**
-	 * Not a public API as of 8.2, wait for 9.0
-	 *
-	 * @return \OCA\Files_External\Service\UserStoragesService
-	 * @deprecated 20.0.0
-	 */
-	public function getUserStoragesService() {
-		return $this->get(UserStoragesService::class);
-	}
-
-	/**
-	 * @return \OCP\Share\IManager
-	 * @deprecated 20.0.0
-	 */
-	public function getShareManager() {
-		return $this->get(\OCP\Share\IManager::class);
-	}
-
-	/**
-	 * @return \OCP\Collaboration\Collaborators\ISearch
-	 * @deprecated 20.0.0
-	 */
-	public function getCollaboratorSearch() {
-		return $this->get(\OCP\Collaboration\Collaborators\ISearch::class);
-	}
-
-	/**
-	 * @return \OCP\Collaboration\AutoComplete\IManager
-	 * @deprecated 20.0.0
-	 */
-	public function getAutoCompleteManager() {
-		return $this->get(IManager::class);
-	}
-
-	/**
-	 * Returns the LDAP Provider
-	 *
-	 * @return \OCP\LDAP\ILDAPProvider
-	 * @deprecated 20.0.0
-	 */
-	public function getLDAPProvider() {
-		return $this->get('LDAPProvider');
 	}
 
 	/**
@@ -2083,17 +1680,8 @@ class Server extends ServerContainer implements IServerContainer {
 	 * @deprecated 20.0.0 Use get(\OCP\Files\AppData\IAppDataFactory::class)->get($app) instead
 	 */
 	public function getAppDataDir($app) {
-		/** @var \OC\Files\AppData\Factory $factory */
 		$factory = $this->get(\OC\Files\AppData\Factory::class);
 		return $factory->get($app);
-	}
-
-	/**
-	 * @return \OCP\Lockdown\ILockdownManager
-	 * @deprecated 20.0.0
-	 */
-	public function getLockdownManager() {
-		return $this->get('LockdownManager');
 	}
 
 	/**
@@ -2102,78 +1690,5 @@ class Server extends ServerContainer implements IServerContainer {
 	 */
 	public function getCloudIdManager() {
 		return $this->get(ICloudIdManager::class);
-	}
-
-	/**
-	 * @return \OCP\GlobalScale\IConfig
-	 * @deprecated 20.0.0
-	 */
-	public function getGlobalScaleConfig() {
-		return $this->get(IConfig::class);
-	}
-
-	/**
-	 * @return \OCP\Federation\ICloudFederationProviderManager
-	 * @deprecated 20.0.0
-	 */
-	public function getCloudFederationProviderManager() {
-		return $this->get(ICloudFederationProviderManager::class);
-	}
-
-	/**
-	 * @return \OCP\Remote\Api\IApiFactory
-	 * @deprecated 20.0.0
-	 */
-	public function getRemoteApiFactory() {
-		return $this->get(IApiFactory::class);
-	}
-
-	/**
-	 * @return \OCP\Federation\ICloudFederationFactory
-	 * @deprecated 20.0.0
-	 */
-	public function getCloudFederationFactory() {
-		return $this->get(ICloudFederationFactory::class);
-	}
-
-	/**
-	 * @return \OCP\Remote\IInstanceFactory
-	 * @deprecated 20.0.0
-	 */
-	public function getRemoteInstanceFactory() {
-		return $this->get(IInstanceFactory::class);
-	}
-
-	/**
-	 * @return IStorageFactory
-	 * @deprecated 20.0.0
-	 */
-	public function getStorageFactory() {
-		return $this->get(IStorageFactory::class);
-	}
-
-	/**
-	 * Get the Preview GeneratorHelper
-	 *
-	 * @return GeneratorHelper
-	 * @since 17.0.0
-	 * @deprecated 20.0.0
-	 */
-	public function getGeneratorHelper() {
-		return $this->get(\OC\Preview\GeneratorHelper::class);
-	}
-
-	private function registerDeprecatedAlias(string $alias, string $target) {
-		$this->registerService($alias, function (ContainerInterface $container) use ($target, $alias) {
-			try {
-				/** @var LoggerInterface $logger */
-				$logger = $container->get(LoggerInterface::class);
-				$logger->debug('The requested alias "' . $alias . '" is deprecated. Please request "' . $target . '" directly. This alias will be removed in a future Nextcloud version.', ['app' => 'serverDI']);
-			} catch (ContainerExceptionInterface $e) {
-				// Could not get logger. Continue
-			}
-
-			return $container->get($target);
-		}, false);
 	}
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2022 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -19,6 +20,30 @@ class UserConfig {
 			'allowed' => [true, false],
 		],
 		[
+			// The view to start the files app in
+			'key' => 'default_view',
+			'default' => 'files',
+			'allowed' => ['files', 'personal'],
+		],
+		[
+			// Whether to show the folder tree
+			'key' => 'folder_tree',
+			'default' => true,
+			'allowed' => [true, false],
+		],
+		[
+			// Whether to show the files list in grid view or not
+			'key' => 'grid_view',
+			'default' => false,
+			'allowed' => [true, false],
+		],
+		[
+			// Whether to show the "confirm file deletion" warning
+			'key' => 'show_dialog_deletion',
+			'default' => false,
+			'allowed' => [true, false],
+		],
+		[
 			// Whether to show the "confirm file extension change" warning
 			'key' => 'show_dialog_file_extension',
 			'default' => true,
@@ -31,6 +56,12 @@ class UserConfig {
 			'allowed' => [true, false],
 		],
 		[
+			// Whether to show the mime column or not
+			'key' => 'show_mime_column',
+			'default' => false,
+			'allowed' => [true, false],
+		],
+		[
 			// Whether to sort favorites first in the list or not
 			'key' => 'sort_favorites_first',
 			'default' => true,
@@ -39,18 +70,6 @@ class UserConfig {
 		[
 			// Whether to sort folders before files in the list or not
 			'key' => 'sort_folders_first',
-			'default' => true,
-			'allowed' => [true, false],
-		],
-		[
-			// Whether to show the files list in grid view or not
-			'key' => 'grid_view',
-			'default' => false,
-			'allowed' => [true, false],
-		],
-		[
-			// Whether to show the folder tree
-			'key' => 'folder_tree',
 			'default' => true,
 			'allowed' => [true, false],
 		],

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2017 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -76,13 +77,10 @@ class LookupPluginTest extends TestCase {
 			->willReturn('yes');
 		$this->config->expects($this->exactly(2))
 			->method('getSystemValueBool')
-			->withConsecutive(
-				['gs.enabled', false],
-				['has_internet_connection', true],
-			)->willReturnOnConsecutiveCalls(
-				true,
-				true,
-			);
+			->willReturnMap([
+				['gs.enabled', false, true],
+				['has_internet_connection', true, true],
+			]);
 
 		$this->config->expects($this->once())
 			->method('getSystemValueString')
@@ -105,13 +103,10 @@ class LookupPluginTest extends TestCase {
 			->willReturn('yes');
 		$this->config->expects($this->exactly(2))
 			->method('getSystemValueBool')
-			->withConsecutive(
-				['gs.enabled', false],
-				['has_internet_connection', true],
-			)->willReturnOnConsecutiveCalls(
-				false,
-				false,
-			);
+			->willReturnMap([
+				['gs.enabled', false, false],
+				['has_internet_connection', true, false],
+			]);
 
 		$this->clientService->expects($this->never())
 			->method('newClient');
@@ -123,9 +118,9 @@ class LookupPluginTest extends TestCase {
 	}
 
 	/**
-	 * @dataProvider searchDataProvider
 	 * @param array $searchParams
 	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('searchDataProvider')]
 	public function testSearch(array $searchParams): void {
 		$type = new SearchResultType('lookup');
 
@@ -141,13 +136,10 @@ class LookupPluginTest extends TestCase {
 			->willReturn('yes');
 		$this->config->expects($this->exactly(2))
 			->method('getSystemValueBool')
-			->withConsecutive(
-				['gs.enabled', false],
-				['has_internet_connection', true],
-			)->willReturnOnConsecutiveCalls(
-				true,
-				true,
-			);
+			->willReturnMap([
+				['gs.enabled', false, true],
+				['has_internet_connection', true, true],
+			]);
 
 		$this->config->expects($this->once())
 			->method('getSystemValueString')
@@ -184,11 +176,11 @@ class LookupPluginTest extends TestCase {
 
 
 	/**
-	 * @dataProvider dataSearchEnableDisableLookupServer
 	 * @param array $searchParams
 	 * @param bool $GSEnabled
 	 * @param bool $LookupEnabled
 	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('dataSearchEnableDisableLookupServer')]
 	public function testSearchEnableDisableLookupServer(array $searchParams, $GSEnabled, $LookupEnabled): void {
 		$type = new SearchResultType('lookup');
 
@@ -206,13 +198,10 @@ class LookupPluginTest extends TestCase {
 
 			$this->config->expects($this->exactly(2))
 				->method('getSystemValueBool')
-				->withConsecutive(
-					['gs.enabled', false],
-					['has_internet_connection', true],
-				)->willReturnOnConsecutiveCalls(
-					$GSEnabled,
-					true,
-				);
+				->willReturnMap([
+					['gs.enabled', false, $GSEnabled],
+					['has_internet_connection', true, true],
+				]);
 			$this->config->expects($this->once())
 				->method('getSystemValueString')
 				->with('lookup_server', 'https://lookup.nextcloud.com')
@@ -239,13 +228,10 @@ class LookupPluginTest extends TestCase {
 			$searchResult->expects($this->never())->method('addResultSet');
 			$this->config->expects($this->exactly(2))
 				->method('getSystemValueBool')
-				->withConsecutive(
-					['gs.enabled', false],
-					['has_internet_connection', true],
-				)->willReturnOnConsecutiveCalls(
-					$GSEnabled,
-					true,
-				);
+				->willReturnMap([
+					['gs.enabled', false, $GSEnabled],
+					['has_internet_connection', true, true],
+				]);
 		}
 		$moreResults = $this->plugin->search(
 			$searchParams['search'],
@@ -276,7 +262,7 @@ class LookupPluginTest extends TestCase {
 		$this->assertFalse($this->plugin->search('irr', 10, 0, $searchResult));
 	}
 
-	public function dataSearchEnableDisableLookupServer() {
+	public static function dataSearchEnableDisableLookupServer(): array {
 		$fedIDs = [
 			'foo@enceladus.moon',
 			'foobar@enceladus.moon',
@@ -449,7 +435,7 @@ class LookupPluginTest extends TestCase {
 		];
 	}
 
-	public function searchDataProvider() {
+	public static function searchDataProvider(): array {
 		$fedIDs = [
 			'foo@enceladus.moon',
 			'foobar@enceladus.moon',

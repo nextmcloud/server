@@ -16,7 +16,6 @@ OC.L10N.register(
     "Hello, {name}" : "Bonjour {name}",
     "Happy birthday 🥳🤩🎂🎉" : "Joyeux anniversaire ! 🥳🤩🎂🎉",
     "Happy birthday, {name} 🥳🤩🎂🎉" : "Joyeux anniversaire, {name}! 🥳🤩🎂🎉",
-    "\"{title} icon\"" : "« Icône {title} »",
     "Customize" : "Personnaliser",
     "Edit widgets" : "Modifier les widgets",
     "Get more widgets from the App Store" : "Obtenez plus de widgets depuis le magasin d’applications",

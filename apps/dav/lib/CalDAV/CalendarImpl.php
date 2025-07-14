@@ -8,9 +8,15 @@ declare(strict_types=1);
  */
 namespace OCA\DAV\CalDAV;
 
+use Generator;
 use OCA\DAV\CalDAV\Auth\CustomPrincipalPlugin;
 use OCA\DAV\CalDAV\InvitationResponse\InvitationResponseServer;
+use OCP\Calendar\CalendarExportOptions;
 use OCP\Calendar\Exceptions\CalendarException;
+use OCP\Calendar\ICalendarExport;
+use OCP\Calendar\ICalendarIsEnabled;
+use OCP\Calendar\ICalendarIsShared;
+use OCP\Calendar\ICalendarIsWritable;
 use OCP\Calendar\ICreateFromString;
 use OCP\Calendar\IHandleImipMessage;
 use OCP\Constants;
@@ -24,7 +30,7 @@ use Sabre\VObject\Property;
 use Sabre\VObject\Reader;
 use function Sabre\Uri\split as uriSplit;
 
-class CalendarImpl implements ICreateFromString, IHandleImipMessage {
+class CalendarImpl implements ICreateFromString, IHandleImipMessage, ICalendarIsWritable, ICalendarIsShared, ICalendarExport, ICalendarIsEnabled {
 	public function __construct(
 		private Calendar $calendar,
 		/** @var array<string, mixed> */
@@ -87,16 +93,6 @@ class CalendarImpl implements ICreateFromString, IHandleImipMessage {
 		return $vtimezone;
 	}
 
-	/**
-	 * @param string $pattern which should match within the $searchProperties
-	 * @param array $searchProperties defines the properties within the query pattern should match
-	 * @param array $options - optional parameters:
-	 *                       ['timerange' => ['start' => new DateTime(...), 'end' => new DateTime(...)]]
-	 * @param int|null $limit - limit number of search results
-	 * @param int|null $offset - offset for paging of search results
-	 * @return array an array of events/journals/todos which are arrays of key-value-pairs
-	 * @since 13.0.0
-	 */
 	public function search(string $pattern, array $searchProperties = [], array $options = [], $limit = null, $offset = null): array {
 		return $this->backend->search($this->calendarInfo, $pattern,
 			$searchProperties, $options, $limit, $offset);
@@ -129,6 +125,13 @@ class CalendarImpl implements ICreateFromString, IHandleImipMessage {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @since 32.0.0
+	 */
+	public function isEnabled(): bool {
+		return $this->calendarInfo['{http://owncloud.org/ns}calendar-enabled'] ?? true;
 	}
 
 	/**
@@ -257,4 +260,27 @@ class CalendarImpl implements ICreateFromString, IHandleImipMessage {
 	public function getInvitationResponseServer(): InvitationResponseServer {
 		return new InvitationResponseServer(false);
 	}
+
+	/**
+	 * Export objects
+	 *
+	 * @since 32.0.0
+	 *
+	 * @return Generator<mixed, \Sabre\VObject\Component\VCalendar, mixed, mixed>
+	 */
+	public function export(?CalendarExportOptions $options = null): Generator {
+		foreach (
+			$this->backend->exportCalendar(
+				$this->calendarInfo['id'],
+				$this->backend::CALENDAR_TYPE_CALENDAR,
+				$options
+			) as $event
+		) {
+			$vObject = Reader::read($event['calendardata']);
+			if ($vObject instanceof VCalendar) {
+				yield $vObject;
+			}
+		}
+	}
+
 }

@@ -287,6 +287,10 @@ OC.L10N.register(
     "Pick a start time for {dayName}" : "Veldu upphafstíma fyrir {dayName}",
     "Pick a end time for {dayName}" : "Veldu lokatíma fyrir {dayName}",
     "Automatically set user status to \"Do not disturb\" outside of availability to mute all notifications." : "Setja stöðu notenda sjálfkrafa á \"Ekki ónáða\" utan þess lausa tíma sem viðkomandi er tiltækur, til að þagga niður í öllum tilkynningum.",
+    "Cancel" : "Hætta við",
+    "Import" : "Flytja inn",
+    "Error while saving settings" : "Villa við að vista stillingar",
+    "Reset to default" : "Endurstilla á sjálfgefið",
     "Availability" : "Aðgengileiki",
     "If you configure your working hours, other people will see when you are out of office when they book a meeting." : "Ef þú stillir vinnutímana þína, geta aðrir séð hvenær þú sért fjarverandi þegar þeir bóka fundi með þér.",
     "Absence" : "Fjarverandi",
@@ -307,10 +311,6 @@ OC.L10N.register(
     "Please contact the organizer directly." : "Hafðu samband beint við skipuleggjendurna.",
     "Are you accepting the invitation?" : "Ætlar þú að samþykkja boðið?",
     "Tentative" : "Bráðabirgða",
-    "Your attendance was updated successfully." : "Mætingarstaða þín var uppfærð.",
-    "Time:" : "Tími:",
-    "Could not open file" : "Gat ekki opnað skrá",
-    "Invalid chunk name" : "Ógilt heiti á bút",
-    "Could not rename part file assembled from chunks" : "Ekki var hægt að endurnefna hlutaskrá setta saman úr bútum"
+    "Your attendance was updated successfully." : "Mætingarstaða þín var uppfærð."
 },
 "nplurals=2; plural=(n % 10 != 1 || n % 100 == 11);");

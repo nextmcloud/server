@@ -107,7 +107,7 @@ Files: tests/data/integritycheck/htaccessWithValidModifiedContent/.htaccess
 Copyright: 2016 ownCloud, Inc., 2019 Nextcloud GmbH and Nextcloud contributors
 License: AGPL-3.0-only
 
-Files: core/img/favicon*.* core/img/logo/logo*.* tests/data/testimage.webp apps/testing/img/logo.png core/img/apps/spreed.svg
+Files: core/img/favicon*.* core/img/logo/logo*.* tests/data/testimage.webp tests/data/broken-video.webm apps/testing/img/logo.png core/img/apps/spreed.svg
 Copyright: 2016-2024 Nextcloud GmbH
 License: LicenseRef-NextcloudTrademarks
 
@@ -129,6 +129,10 @@ License: AGPL-3.0-or-later
 
 Files: build/stubs/pcntl.php build/stubs/zip.php
 Copyright: 2022 JetBrains
+License: Apache-2.0
+
+Files: build/stubs/excimer.php
+Copyright: 2019 Wikimedia Foundation
 License: Apache-2.0
 
 Files: core/js/mimetypelist.js core/js/core.json themes/example/core/img
@@ -165,6 +169,10 @@ License: AGPL-3.0-or-later
 
 Files: apps/dav/tests/unit/test_fixtures/caldav-search-limit-timerange-1.ics apps/dav/tests/unit/test_fixtures/caldav-search-limit-timerange-2.ics apps/dav/tests/unit/test_fixtures/caldav-search-limit-timerange-3.ics apps/dav/tests/unit/test_fixtures/caldav-search-limit-timerange-4.ics apps/dav/tests/unit/test_fixtures/caldav-search-limit-timerange-5.ics apps/dav/tests/unit/test_fixtures/caldav-search-limit-timerange-6.ics apps/dav/tests/unit/test_fixtures/caldav-search-missing-start-1.ics apps/dav/tests/unit/test_fixtures/caldav-search-missing-start-2.ics
 Copyright: 2023 Nextcloud GmbH and Nextcloud contributors
+License: AGPL-3.0-or-later
+
+Files: apps/dav/lib/ExampleContentFiles/exampleContact.vcf
+Copyright: 2025 Nextcloud GmbH and Nextcloud contributors
 License: AGPL-3.0-or-later
 
 Files: composer.json composer.lock .github/CODEOWNERS __tests__/tsconfig.json tsconfig.json build/integration/composer.* vendor-bin/*/composer.json vendor-bin/*/composer.lock apps/*/composer/composer.json apps/*/composer/composer.lock apps/*/composer/composer/installed.json
@@ -342,3 +350,7 @@ License: CC0-1.0
 Files: apps/theming/fonts/OpenDyslexic-Bold.otf apps/theming/fonts/OpenDyslexic-Regular.otf
 Copyright: 2012-2019 Abbie Gonzalez <https://abbiecod.es|support@abbiecod.es>, with Reserved Font Name OpenDyslexic.
 License: OFL-1.1-RFN
+
+Files: openapi.json .envrc flake.nix flake.lock
+Copyright: 2025 Nextcloud GmbH and Nextcloud contributors
+License: AGPL-3.0-or-later

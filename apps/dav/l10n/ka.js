@@ -192,6 +192,10 @@ OC.L10N.register(
     "Pick a start time for {dayName}" : "Pick a start time for {dayName}",
     "Pick a end time for {dayName}" : "Pick a end time for {dayName}",
     "Automatically set user status to \"Do not disturb\" outside of availability to mute all notifications." : "Automatically set user status to \"Do not disturb\" outside of availability to mute all notifications.",
+    "Cancel" : "Cancel",
+    "Import" : "Import",
+    "Error while saving settings" : "Error while saving settings",
+    "Reset to default" : "Reset to default",
     "Availability" : "Availability",
     "Absence" : "Absence",
     "Configure your next absence period." : "Configure your next absence period.",
@@ -211,10 +215,6 @@ OC.L10N.register(
     "Please contact the organizer directly." : "Please contact the organizer directly.",
     "Are you accepting the invitation?" : "Are you accepting the invitation?",
     "Tentative" : "Tentative",
-    "Your attendance was updated successfully." : "Your attendance was updated successfully.",
-    "Time:" : "Time:",
-    "Could not open file" : "Could not open file",
-    "Invalid chunk name" : "Invalid chunk name",
-    "Could not rename part file assembled from chunks" : "Could not rename part file assembled from chunks"
+    "Your attendance was updated successfully." : "Your attendance was updated successfully."
 },
 "nplurals=2; plural=(n!=1);");

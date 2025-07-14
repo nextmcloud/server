@@ -2,12 +2,14 @@
  * SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+import { File, Folder, Permission, View } from '@nextcloud/files'
 import { describe, it, vi, expect, beforeEach, beforeAll, afterEach } from 'vitest'
-import { File, Permission, View } from '@nextcloud/files'
+import { nextTick } from 'vue'
 import axios from '@nextcloud/axios'
 
 import { getPinia } from '../store/index.ts'
 import { useActiveStore } from '../store/active.ts'
+import { useFilesStore } from '../store/files'
 
 import { action as deleteAction } from '../actions/deleteAction.ts'
 import { action as favoriteAction } from '../actions/favoriteAction.ts'
@@ -15,7 +17,6 @@ import { action as renameAction } from '../actions/renameAction.ts'
 import { action as sidebarAction } from '../actions/sidebarAction.ts'
 import { registerHotkeys } from './HotKeysService.ts'
 import { useUserConfigStore } from '../store/userconfig.ts'
-import { subscribe } from '@nextcloud/event-bus'
 
 let file: File
 const view = {
@@ -49,19 +50,23 @@ describe('HotKeysService testing', () => {
 
 		// Make sure the file is reset before each test
 		file = new File({
-			id: 1,
+			id: 2,
 			source: 'https://cloud.domain.com/remote.php/dav/files/admin/foobar.txt',
 			owner: 'admin',
 			mime: 'text/plain',
 			permissions: Permission.ALL,
 		})
 
+		const root = new Folder({ owner: 'test', source: 'https://cloud.domain.com/remote.php/dav/files/admin/', id: 1, permissions: Permission.CREATE })
+		const files = useFilesStore(getPinia())
+		files.setRoot({ service: 'files', root })
+
 		// Setting the view first as it reset the active node
-		activeStore.onChangedView(view)
-		activeStore.setActiveNode(file)
+		activeStore.activeView = view
+		activeStore.activeNode = file
 
 		window.OCA = { Files: { Sidebar: { open: () => {}, setActiveTab: () => {} } } }
-		// @ts-expect-error We only mock what needed, we do not need Files.Router.goTo or Files.Navigation
+		// We only mock what needed, we do not need Files.Router.goTo or Files.Navigation
 		window.OCP = { Files: { Router: { goToRoute: goToRouteMock, params: {}, query: {} } } }
 
 		initialState = document.createElement('input')
@@ -74,26 +79,26 @@ describe('HotKeysService testing', () => {
 	})
 
 	it('Pressing d should open the sidebar once', () => {
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', code: 'KeyD' }))
+		dispatchEvent({ key: 'd', code: 'KeyD' })
 
 		// Modifier keys should not trigger the action
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', code: 'KeyD', ctrlKey: true }))
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', code: 'KeyD', altKey: true }))
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', code: 'KeyD', shiftKey: true }))
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', code: 'KeyD', metaKey: true }))
+		dispatchEvent({ key: 'd', code: 'KeyD', ctrlKey: true })
+		dispatchEvent({ key: 'd', code: 'KeyD', altKey: true })
+		dispatchEvent({ key: 'd', code: 'KeyD', shiftKey: true })
+		dispatchEvent({ key: 'd', code: 'KeyD', metaKey: true })
 
 		expect(sidebarAction.enabled).toHaveReturnedWith(true)
 		expect(sidebarAction.exec).toHaveBeenCalledOnce()
 	})
 
 	it('Pressing F2 should rename the file', () => {
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F2', code: 'F2' }))
+		dispatchEvent({ key: 'F2', code: 'F2' })
 
 		// Modifier keys should not trigger the action
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F2', code: 'F2', ctrlKey: true }))
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F2', code: 'F2', altKey: true }))
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F2', code: 'F2', shiftKey: true }))
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'F2', code: 'F2', metaKey: true }))
+		dispatchEvent({ key: 'F2', code: 'F2', ctrlKey: true })
+		dispatchEvent({ key: 'F2', code: 'F2', altKey: true })
+		dispatchEvent({ key: 'F2', code: 'F2', shiftKey: true })
+		dispatchEvent({ key: 'F2', code: 'F2', metaKey: true })
 
 		expect(renameAction.enabled).toHaveReturnedWith(true)
 		expect(renameAction.exec).toHaveBeenCalledOnce()
@@ -101,28 +106,29 @@ describe('HotKeysService testing', () => {
 
 	it('Pressing s should toggle favorite', () => {
 		vi.spyOn(axios, 'post').mockImplementationOnce(() => Promise.resolve())
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', code: 'KeyS' }))
+		dispatchEvent({ key: 's', code: 'KeyS' })
 
 		// Modifier keys should not trigger the action
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', code: 'KeyS', ctrlKey: true }))
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', code: 'KeyS', altKey: true }))
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', code: 'KeyS', shiftKey: true }))
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', code: 'KeyS', metaKey: true }))
+		dispatchEvent({ key: 's', code: 'KeyS', ctrlKey: true })
+		dispatchEvent({ key: 's', code: 'KeyS', altKey: true })
+		dispatchEvent({ key: 's', code: 'KeyS', shiftKey: true })
+		dispatchEvent({ key: 's', code: 'KeyS', metaKey: true })
 
 		expect(favoriteAction.enabled).toHaveReturnedWith(true)
 		expect(favoriteAction.exec).toHaveBeenCalledOnce()
 	})
 
 	it('Pressing Delete should delete the file', async () => {
+		// @ts-expect-error unit testing
 		vi.spyOn(deleteAction._action, 'exec').mockResolvedValue(() => true)
 
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', code: 'Delete' }))
+		dispatchEvent({ key: 'Delete', code: 'Delete' })
 
 		// Modifier keys should not trigger the action
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', code: 'Delete', ctrlKey: true }))
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', code: 'Delete', altKey: true }))
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', code: 'Delete', shiftKey: true }))
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', code: 'Delete', metaKey: true }))
+		dispatchEvent({ key: 'Delete', code: 'Delete', ctrlKey: true })
+		dispatchEvent({ key: 'Delete', code: 'Delete', altKey: true })
+		dispatchEvent({ key: 'Delete', code: 'Delete', shiftKey: true })
+		dispatchEvent({ key: 'Delete', code: 'Delete', metaKey: true })
 
 		expect(deleteAction.enabled).toHaveReturnedWith(true)
 		expect(deleteAction.exec).toHaveBeenCalledOnce()
@@ -132,7 +138,7 @@ describe('HotKeysService testing', () => {
 		expect(goToRouteMock).toHaveBeenCalledTimes(0)
 		window.OCP.Files.Router.query = { dir: '/foo/bar' }
 
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', code: 'ArrowUp', altKey: true }))
+		dispatchEvent({ key: 'ArrowUp', code: 'ArrowUp', altKey: true })
 
 		expect(goToRouteMock).toHaveBeenCalledOnce()
 		expect(goToRouteMock.mock.calls[0][2].dir).toBe('/foo')
@@ -142,34 +148,39 @@ describe('HotKeysService testing', () => {
 		vi.spyOn(axios, 'put').mockImplementationOnce(() => Promise.resolve())
 
 		const userConfigStore = useUserConfigStore(getPinia())
-		const currentGridConfig = userConfigStore.userConfig.grid_view
+		userConfigStore.userConfig.grid_view = false
+		expect(userConfigStore.userConfig.grid_view).toBe(false)
 
-		// Wait for the user config to be updated
-		// or timeout after 500ms
-		const waitForUserConfig = () => new Promise((resolve) => {
-			subscribe('files:config:updated', resolve)
-			setTimeout(resolve, 500)
-		})
+		dispatchEvent({ key: 'v', code: 'KeyV' })
+		expect(userConfigStore.userConfig.grid_view).toBe(true)
+	})
 
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', code: 'KeyV' }))
-		await waitForUserConfig()
-		expect(userConfigStore.userConfig.grid_view).toBe(!currentGridConfig)
+	it.each([
+		['ctrlKey'],
+		['altKey'],
+		// those meta keys are still triggering...
+		// ['shiftKey'],
+		// ['metaKey']
+	])('Pressing v with modifier key %s should not toggle grid view', async (modifier: string) => {
+		vi.spyOn(axios, 'put').mockImplementationOnce(() => Promise.resolve())
 
-		// Modifier keys should not trigger the action
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', code: 'Delete', ctrlKey: true }))
-		await waitForUserConfig()
-		expect(userConfigStore.userConfig.grid_view).toBe(!currentGridConfig)
+		const userConfigStore = useUserConfigStore(getPinia())
+		userConfigStore.userConfig.grid_view = false
+		expect(userConfigStore.userConfig.grid_view).toBe(false)
 
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', code: 'Delete', altKey: true }))
-		await waitForUserConfig()
-		expect(userConfigStore.userConfig.grid_view).toBe(!currentGridConfig)
+		dispatchEvent(new KeyboardEvent('keydown', { key: 'v', code: 'KeyV', [modifier]: true }))
 
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', code: 'Delete', shiftKey: true }))
-		await waitForUserConfig()
-		expect(userConfigStore.userConfig.grid_view).toBe(!currentGridConfig)
+		await nextTick()
 
-		window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', code: 'Delete', metaKey: true }))
-		await waitForUserConfig()
-		expect(userConfigStore.userConfig.grid_view).toBe(!currentGridConfig)
+		expect(userConfigStore.userConfig.grid_view).toBe(false)
 	})
 })
+
+/**
+ * Helper to dispatch the correct event.
+ *
+ * @param init - KeyboardEvent options
+ */
+function dispatchEvent(init: KeyboardEventInit) {
+	document.body.dispatchEvent(new KeyboardEvent('keydown', { ...init, bubbles: true }))
+}

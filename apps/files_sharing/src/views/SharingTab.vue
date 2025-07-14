@@ -50,7 +50,7 @@
 					:link-shares="linkShares"
 					:reshare="reshare"
 					:shares="shares"
-					:placeholder="t('files_sharing', 'Share with accounts and teams')"
+					:placeholder="internalShareInputPlaceholder"
 					@open-sharing-details="toggleShareDetailsView" />
 
 				<!-- other shares list -->
@@ -90,12 +90,17 @@
 					:file-info="fileInfo"
 					:link-shares="linkShares"
 					:is-external="true"
-					:placeholder="t('files_sharing', 'Email, federated cloud id')"
+					:placeholder="externalShareInputPlaceholder"
 					:reshare="reshare"
 					:shares="shares"
 					@open-sharing-details="toggleShareDetailsView" />
+				<!-- Non link external shares list -->
+				<SharingList v-if="!loading"
+					:shares="externalShares"
+					:file-info="fileInfo"
+					@open-sharing-details="toggleShareDetailsView" />
 				<!-- link shares list -->
-				<SharingLinkList v-if="!loading"
+				<SharingLinkList v-if="!loading && isLinkSharingAllowed"
 					ref="linkShareList"
 					:can-reshare="canReshare"
 					:file-info="fileInfo"
@@ -152,6 +157,7 @@
 
 <script>
 import { getCurrentUser } from '@nextcloud/auth'
+import { getCapabilities } from '@nextcloud/capabilities'
 import { orderBy } from '@nextcloud/files'
 import { loadState } from '@nextcloud/initial-state'
 import { generateOcsUrl } from '@nextcloud/router'
@@ -180,6 +186,7 @@ import SharingList from './SharingList.vue'
 import SharingDetailsTab from './SharingDetailsTab.vue'
 
 import ShareDetails from '../mixins/ShareDetails.js'
+import logger from '../services/logger.ts'
 
 export default {
 	name: 'SharingTab',
@@ -215,6 +222,7 @@ export default {
 			sharedWithMe: {},
 			shares: [],
 			linkShares: [],
+			externalShares: [],
 
 			sections: OCA.Sharing.ShareTabSections.getSections(),
 			projectsEnabled: loadState('core', 'projects_enabled', false),
@@ -235,12 +243,44 @@ export default {
 		 * @return {boolean}
 		 */
 		isSharedWithMe() {
-			return Object.keys(this.sharedWithMe).length > 0
+			return this.sharedWithMe !== null
+				&& this.sharedWithMe !== undefined
+		},
+
+		/**
+		 * Is link sharing allowed for the current user?
+		 *
+		 * @return {boolean}
+		 */
+		isLinkSharingAllowed() {
+			const currentUser = getCurrentUser()
+			if (!currentUser) {
+				return false
+			}
+
+			const capabilities = getCapabilities()
+			const publicSharing = capabilities.files_sharing?.public || {}
+			return publicSharing.enabled === true
 		},
 
 		canReshare() {
 			return !!(this.fileInfo.permissions & OC.PERMISSION_SHARE)
 				|| !!(this.reshare && this.reshare.hasSharePermission && this.config.isResharingAllowed)
+		},
+
+		internalShareInputPlaceholder() {
+			return this.config.showFederatedSharesAsInternal
+				? t('files_sharing', 'Share with accounts, teams, federated cloud IDs')
+				: t('files_sharing', 'Share with accounts and teams')
+		},
+
+		externalShareInputPlaceholder() {
+			if (!this.isLinkSharingAllowed) {
+				return t('files_sharing', 'Federated cloud ID')
+			}
+			return this.config.showFederatedSharesAsInternal
+				? t('files_sharing', 'Email')
+				: t('files_sharing', 'Email, federated cloud ID')
 		},
 	},
 
@@ -358,11 +398,23 @@ export default {
 					],
 				)
 
-				this.linkShares = shares.filter(share => share.type === ShareType.Link || share.type === ShareType.Email)
-				this.shares = shares.filter(share => share.type !== ShareType.Link && share.type !== ShareType.Email)
+				for (const share of shares) {
+					if ([ShareType.Link, ShareType.Email].includes(share.type)) {
+						this.linkShares.push(share)
+					} else if ([ShareType.Remote, ShareType.RemoteGroup].includes(share.type)) {
+						if (this.config.showFederatedSharesAsInternal) {
+							this.shares.push(share)
+						} else {
+							this.externalShares.push(share)
+						}
+					} else {
+						this.shares.push(share)
+					}
+				}
 
-				console.debug('Processed', this.linkShares.length, 'link share(s)')
-				console.debug('Processed', this.shares.length, 'share(s)')
+				logger.debug(`Processed ${this.linkShares.length} link share(s)`)
+				logger.debug(`Processed ${this.shares.length} share(s)`)
+				logger.debug(`Processed ${this.externalShares.length} external share(s)`)
 			}
 		},
 
@@ -423,6 +475,12 @@ export default {
 			// meaning: not from the ShareInput
 			if (share.type === ShareType.Email) {
 				this.linkShares.unshift(share)
+			} else if ([ShareType.Remote, ShareType.RemoteGroup].includes(share.type)) {
+				if (this.config.showFederatedSharesAsInternal) {
+					this.shares.unshift(share)
+				} else {
+					this.externalShares.unshift(share)
+				}
 			} else {
 				this.shares.unshift(share)
 			}

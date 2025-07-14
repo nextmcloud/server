@@ -9,6 +9,7 @@
 		:data-sources="nodes"
 		:grid-mode="userConfig.grid_view"
 		:extra-props="{
+			isMimeAvailable,
 			isMtimeAvailable,
 			isSizeAvailable,
 			nodes,
@@ -20,7 +21,9 @@
 		</template>
 
 		<template v-if="!isNoneSelected" #header-overlay>
-			<span class="files-list__selected">{{ t('files', '{count} selected', { count: selectedNodes.length }) }}</span>
+			<span class="files-list__selected">
+				{{ n('files', '{count} selected', '{count} selected', selectedNodes.length, { count: selectedNodes.length }) }}
+			</span>
 			<FilesListTableHeaderActions :current-view="currentView"
 				:selected-nodes="selectedNodes" />
 		</template>
@@ -39,15 +42,22 @@
 			<!-- Table header and sort buttons -->
 			<FilesListTableHeader ref="thead"
 				:files-list-width="fileListWidth"
+				:is-mime-available="isMimeAvailable"
 				:is-mtime-available="isMtimeAvailable"
 				:is-size-available="isSizeAvailable"
 				:nodes="nodes" />
+		</template>
+
+		<!-- Body replacement if no files are available -->
+		<template #empty>
+			<slot name="empty" />
 		</template>
 
 		<!-- Tfoot-->
 		<template #footer>
 			<FilesListTableFooter :current-view="currentView"
 				:files-list-width="fileListWidth"
+				:is-mime-available="isMimeAvailable"
 				:is-mtime-available="isMtimeAvailable"
 				:is-size-available="isSizeAvailable"
 				:nodes="nodes"
@@ -60,23 +70,22 @@
 import type { UserConfig } from '../types'
 import type { Node as NcNode } from '@nextcloud/files'
 import type { ComponentPublicInstance, PropType } from 'vue'
-import type { Location } from 'vue-router'
 
 import { Folder, Permission, View, getFileActions, FileType } from '@nextcloud/files'
 import { showError } from '@nextcloud/dialogs'
 import { subscribe, unsubscribe } from '@nextcloud/event-bus'
-import { translate as t } from '@nextcloud/l10n'
+import { n, t } from '@nextcloud/l10n'
 import { useHotKey } from '@nextcloud/vue/composables/useHotKey'
 import { defineComponent } from 'vue'
 
 import { action as sidebarAction } from '../actions/sidebarAction.ts'
+import { useActiveStore } from '../store/active.ts'
 import { useFileListHeaders } from '../composables/useFileListHeaders.ts'
 import { useFileListWidth } from '../composables/useFileListWidth.ts'
 import { useRouteParameters } from '../composables/useRouteParameters.ts'
-import { useActiveStore } from '../store/active.ts'
 import { useSelectionStore } from '../store/selection.js'
 import { useUserConfigStore } from '../store/userconfig.ts'
-import { getSummaryFor } from '../utils/fileUtils.ts'
+import logger from '../logger.ts'
 
 import FileEntry from './FileEntry.vue'
 import FileEntryGrid from './FileEntryGrid.vue'
@@ -86,7 +95,6 @@ import FilesListTableFooter from './FilesListTableFooter.vue'
 import FilesListTableHeader from './FilesListTableHeader.vue'
 import FilesListTableHeaderActions from './FilesListTableHeaderActions.vue'
 import VirtualList from './VirtualList.vue'
-import logger from '../logger.ts'
 
 export default defineComponent({
 	name: 'FilesListVirtual',
@@ -113,6 +121,10 @@ export default defineComponent({
 			type: Array as PropType<NcNode[]>,
 			required: true,
 		},
+		summary: {
+			type: String,
+			required: true,
+		},
 	},
 
 	setup() {
@@ -134,6 +146,7 @@ export default defineComponent({
 			selectionStore,
 			userConfigStore,
 
+			n,
 			t,
 		}
 	},
@@ -143,7 +156,6 @@ export default defineComponent({
 			FileEntry,
 			FileEntryGrid,
 			scrollToIndex: 0,
-			openFileId: null as number|null,
 		}
 	},
 
@@ -152,10 +164,16 @@ export default defineComponent({
 			return this.userConfigStore.userConfig
 		},
 
-		summary() {
-			return getSummaryFor(this.nodes)
+		isMimeAvailable() {
+			if (!this.userConfig.show_mime_column) {
+				return false
+			}
+			// Hide mime column on narrow screens
+			if (this.fileListWidth < 1024) {
+				return false
+			}
+			return this.nodes.some(node => node.mime !== undefined || node.mime !== 'application/octet-stream')
 		},
-
 		isMtimeAvailable() {
 			// Hide mtime column on narrow screens
 			if (this.fileListWidth < 768) {
@@ -202,39 +220,26 @@ export default defineComponent({
 		isNoneSelected() {
 			return this.selectedNodes.length === 0
 		},
+
+		isEmpty() {
+			return this.nodes.length === 0
+		},
 	},
 
 	watch: {
-		fileId: {
-			handler(fileId) {
-				this.scrollToFile(fileId, false)
-			},
-			immediate: true,
+		// If nodes gets populated and we have a fileId,
+		// an openFile or openDetails, we fire the appropriate actions.
+		isEmpty() {
+			this.handleOpenQueries()
 		},
-
-		openFile: {
-			handler(openFile) {
-				if (!openFile || !this.fileId) {
-					return
-				}
-
-				this.handleOpenFile(this.fileId)
-			},
-			immediate: true,
+		fileId() {
+			this.handleOpenQueries()
 		},
-
-		openDetails: {
-			handler(openDetails) {
-				// wait for scrolling and updating the actions to settle
-				this.$nextTick(() => {
-					if (!openDetails || !this.fileId) {
-						return
-					}
-
-					this.openSidebarForFile(this.fileId)
-				})
-			},
-			immediate: true,
+		openFile() {
+			this.handleOpenQueries()
+		},
+		openDetails() {
+			this.handleOpenQueries()
 		},
 	},
 
@@ -264,6 +269,33 @@ export default defineComponent({
 	},
 
 	methods: {
+		handleOpenQueries() {
+			// If the list is empty, or we don't have a fileId,
+			// there's nothing to be done.
+			if (this.isEmpty || !this.fileId) {
+				return
+			}
+
+			logger.debug('FilesListVirtual: checking for requested fileId, openFile or openDetails', {
+				nodes: this.nodes,
+				fileId: this.fileId,
+				openFile: this.openFile,
+				openDetails: this.openDetails,
+			})
+
+			if (this.openFile) {
+				this.handleOpenFile(this.fileId)
+			}
+
+			if (this.openDetails) {
+				this.openSidebarForFile(this.fileId)
+			}
+
+			if (this.fileId) {
+				this.scrollToFile(this.fileId, false)
+			}
+		},
+
 		openSidebarForFile(fileId) {
 			// Open the sidebar for the given URL fileid
 			// iif we just loaded the app.
@@ -273,7 +305,7 @@ export default defineComponent({
 				sidebarAction.exec(node, this.currentView, this.currentFolder.path)
 				return
 			}
-			logger.error(`Failed to open sidebar on file ${fileId}, file isn't cached yet !`, { fileId, node })
+			logger.warn(`Failed to open sidebar on file ${fileId}, file isn't cached yet !`, { fileId, node })
 		},
 
 		scrollToFile(fileId: number|null, warn = true) {
@@ -289,6 +321,7 @@ export default defineComponent({
 				}
 
 				this.scrollToIndex = Math.max(0, index)
+				logger.debug('Scrolling to file ' + fileId, { fileId, index })
 			}
 		},
 
@@ -300,7 +333,7 @@ export default defineComponent({
 			delete query.openfile
 			delete query.opendetails
 
-			this.activeStore.clearActiveNode()
+			this.activeStore.activeNode = undefined
 			window.OCP.Files.Router.goToRoute(
 				null,
 				{ ...this.$route.params, fileid: String(this.currentFolder.fileid ?? '') },
@@ -353,15 +386,13 @@ export default defineComponent({
 			}
 			// The file is either a folder or has no default action other than downloading
 			// in this case we need to open the details instead and remove the route from the history
-			const query = this.$route.query
-			delete query.openfile
-			query.opendetails = ''
-
 			logger.debug('Ignore `openfile` query and replacing with `opendetails` for ' + node.path, { node })
-			await this.$router.replace({
-				...(this.$route as Location),
-				query,
-			})
+			window.OCP.Files.Router.goToRoute(
+				null,
+				this.$route.params,
+				{ ...this.$route.query, openfile: undefined, opendetails: '' },
+				true, // silent update of the URL
+			)
 		},
 
 		onDragOver(event: DragEvent) {
@@ -434,7 +465,7 @@ export default defineComponent({
 			delete query.openfile
 			delete query.opendetails
 
-			this.activeStore.setActiveNode(node)
+			this.activeStore.activeNode = node
 
 			// Silent update of the URL
 			window.OCP.Files.Router.goToRoute(
@@ -459,6 +490,8 @@ export default defineComponent({
 	--icon-preview-size: 32px;
 
 	--fixed-block-start-position: var(--default-clickable-area);
+	display: flex;
+	flex-direction: column;
 	overflow: auto;
 	height: 100%;
 	will-change: scroll-position;
@@ -506,6 +539,13 @@ export default defineComponent({
 				// Hide the table header below the overlay
 				margin-block-start: calc(-1 * var(--row-height));
 			}
+
+			// Visually hide the table when there are no files
+			&--hidden {
+				visibility: hidden;
+				z-index: -1;
+				opacity: 0;
+			}
 		}
 
 		.files-list__filters {
@@ -537,6 +577,7 @@ export default defineComponent({
 			background-color: var(--color-main-background);
 			border-block-end: 1px solid var(--color-border);
 			height: var(--row-height);
+			flex: 0 0 var(--row-height);
 		}
 
 		.files-list__thead,
@@ -553,6 +594,16 @@ export default defineComponent({
 			position: sticky;
 			z-index: 10;
 			top: var(--fixed-block-start-position);
+		}
+
+		// Empty content
+		.files-list__empty {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			width: 100%;
+			height: 100%;
 		}
 
 		tr {
@@ -830,10 +881,12 @@ export default defineComponent({
 			margin-inline-end: 7px;
 		}
 
+		.files-list__row-mime,
 		.files-list__row-mtime,
 		.files-list__row-size {
 			color: var(--color-text-maxcontrast);
 		}
+
 		.files-list__row-size {
 			width: calc(var(--row-height) * 1.5);
 			// Right align content/text
@@ -842,6 +895,10 @@ export default defineComponent({
 
 		.files-list__row-mtime {
 			width: calc(var(--row-height) * 2);
+		}
+
+		.files-list__row-mime {
+			width: calc(var(--row-height) * 2.5);
 		}
 
 		.files-list__row-column-custom {
@@ -864,8 +921,8 @@ export default defineComponent({
 .files-list--grid tbody.files-list__tbody {
 	--item-padding: 16px;
 	--icon-preview-size: 166px;
-	--name-height: 32px;
-	--mtime-height: 16px;
+	--name-height: var(--default-clickable-area);
+	--mtime-height: calc(var(--font-size-small) + var(--default-grid-baseline));
 	--row-width: calc(var(--icon-preview-size) + var(--item-padding) * 2);
 	--row-height: calc(var(--icon-preview-size) + var(--name-height) + var(--mtime-height) + var(--item-padding) * 2);
 	--checkbox-padding: 0px;
@@ -947,7 +1004,7 @@ export default defineComponent({
 	.files-list__row-mtime {
 		width: var(--icon-preview-size);
 		height: var(--mtime-height);
-		font-size: calc(var(--default-font-size) - 4px);
+		font-size: var(--font-size-small);
 	}
 
 	.files-list__row-actions {
@@ -956,6 +1013,23 @@ export default defineComponent({
 		inset-block-end: calc(var(--mtime-height) / 2);
 		width: var(--clickable-area);
 		height: var(--clickable-area);
+	}
+}
+
+@media screen and (max-width: 768px) {
+	// there is no mtime
+	.files-list--grid tbody.files-list__tbody {
+		--mtime-height: 0px;
+
+		// so we move the action to the name
+		.files-list__row-actions {
+			inset-block-end: var(--item-padding);
+		}
+
+		// and we need to keep space on the name for the actions
+		.files-list__row-name-text {
+			padding-inline-end: var(--clickable-area) !important;
+		}
 	}
 }
 </style>

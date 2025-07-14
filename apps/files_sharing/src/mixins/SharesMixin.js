@@ -11,6 +11,7 @@ import { emit } from '@nextcloud/event-bus'
 import PQueue from 'p-queue'
 import debounce from 'debounce'
 
+import GeneratePassword from '../utils/GeneratePassword.ts'
 import Share from '../models/Share.ts'
 import SharesRequests from './ShareRequests.js'
 import Config from '../services/ConfigService.ts'
@@ -156,6 +157,26 @@ export default {
 			}
 			return null
 		},
+		/**
+		 * Is the current share password protected ?
+		 *
+		 * @return {boolean}
+		 */
+		isPasswordProtected: {
+			get() {
+				return this.config.enforcePasswordForPublicLink
+							|| !!this.share.password
+			},
+			async set(enabled) {
+				if (enabled) {
+					this.share.password = await GeneratePassword(true)
+					this.$set(this.share, 'newPassword', this.share.password)
+				} else {
+					this.share.password = ''
+					this.$delete(this.share, 'newPassword')
+				}
+			},
+		},
 	},
 
 	methods: {
@@ -213,8 +234,13 @@ export default {
 		 * @param {Date} date
 		 */
 		onExpirationChange(date) {
-			const formattedDate = date ? this.formatDateToString(new Date(date)) : ''
-			this.share.expireDate = formattedDate
+			if (!date) {
+				this.share.expireDate = null
+				this.$set(this.share, 'expireDate', null)
+				return
+			}
+			const parsedDate = (date instanceof Date) ? date : new Date(date)
+			this.share.expireDate = this.formatDateToString(parsedDate)
 		},
 
 		/**
@@ -278,14 +304,16 @@ export default {
 				// force value to string because that is what our
 				// share api controller accepts
 				propertyNames.forEach(name => {
-					if ((typeof this.share[name]) === 'object') {
+					if (this.share[name] === null || this.share[name] === undefined) {
+						properties[name] = ''
+					} else if ((typeof this.share[name]) === 'object') {
 						properties[name] = JSON.stringify(this.share[name])
 					} else {
 						properties[name] = this.share[name].toString()
 					}
 				})
 
-				this.updateQueue.add(async () => {
+				return this.updateQueue.add(async () => {
 					this.saving = true
 					this.errors = {}
 					try {
@@ -317,7 +345,6 @@ export default {
 						this.saving = false
 					}
 				})
-				return
 			}
 
 			// This share does not exists on the server yet

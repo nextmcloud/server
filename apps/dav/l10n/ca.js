@@ -252,7 +252,7 @@ OC.L10N.register(
     "Due on %s" : "Venç el %s",
     "System Address Book" : "Llibreta d'adreces del sistema",
     "The system address book contains contact information for all users in your instance." : "La llibreta d'adreces del sistema conté informació de contacte de tots els usuaris de la vostra instància.",
-    "Enable System Address Book" : "Activa la llibreta d'adreces del sistema",
+    "Enable System Address Book" : "Habilita la llibreta d'adreces del sistema",
     "DAV system address book" : "Llibreta d'adreces del sistema DAV",
     "No outstanding DAV system address book sync." : "No hi ha cap sincronització pendent de la llibreta d'adreces del sistema DAV.",
     "The DAV system address book sync has not run yet as your instance has more than 1000 users or because an error occurred. Please run it manually by calling \"occ dav:sync-system-addressbook\"." : "La sincronització de la llibreta d'adreces del sistema DAV encara no s'ha executat perquè la instància té més de 1000 usuaris o a causa d'un error. Executeu-la manualment amb «occ dav:sync-system-addressbook».",
@@ -290,6 +290,10 @@ OC.L10N.register(
     "Pick a start time for {dayName}" : "Trieu una hora d'inici per a {dayName}",
     "Pick a end time for {dayName}" : "Trieu una hora de finalització per a {dayName}",
     "Automatically set user status to \"Do not disturb\" outside of availability to mute all notifications." : "Estableix automàticament l'estat de l'usuari com a \"No molesteu” fora de la disponibilitat per a silenciar totes les notificacions.",
+    "Cancel" : "Cancel·la",
+    "Import" : "Importa",
+    "Error while saving settings" : "S'ha produït un error en desar els paràmetres",
+    "Reset to default" : "Reinicialitza els valors per defecte",
     "Availability" : "Disponibilitat",
     "If you configure your working hours, other people will see when you are out of office when they book a meeting." : "Si configureu el vostre horari laboral, la resta de persones veuran quan sou fora de l'oficina quan planifiquin una reunió.",
     "Absence" : "Absència",
@@ -310,10 +314,6 @@ OC.L10N.register(
     "Please contact the organizer directly." : "Contacteu amb l'organització directament.",
     "Are you accepting the invitation?" : "Accepteu la invitació?",
     "Tentative" : "Provisional",
-    "Your attendance was updated successfully." : "S'ha actualitzat correctament l'assistència.",
-    "Time:" : "Hora:",
-    "Could not open file" : "No s'ha pogut obrir el fitxer",
-    "Invalid chunk name" : "El nom del fragment no és vàlid",
-    "Could not rename part file assembled from chunks" : "No s'ha pogut canviar el nom del fitxer de part muntat a partir de fragments"
+    "Your attendance was updated successfully." : "S'ha actualitzat correctament l'assistència."
 },
 "nplurals=2; plural=(n != 1);");

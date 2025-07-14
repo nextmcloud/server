@@ -181,6 +181,9 @@ OC.L10N.register(
     "Pick a start time for {dayName}" : "Избери почетно време за {dayName}",
     "Pick a end time for {dayName}" : "Избери крајно време за {dayName}",
     "Automatically set user status to \"Do not disturb\" outside of availability to mute all notifications." : "Автоматско поставување на статус во \"Не вознемирувај\" недостапен за да ги занемите сите известувања.",
+    "Cancel" : "Откажи",
+    "Import" : "Увези",
+    "Reset to default" : "Ресетирај на стандардно",
     "Availability" : "Достапност",
     "If you configure your working hours, other people will see when you are out of office when they book a meeting." : "Ако ги поставите работните часови, другите корисници ќе можат да видат кога сте слободни за да можат да закажат состанок.",
     "Absence" : "Отсуство",
@@ -201,8 +204,6 @@ OC.L10N.register(
     "Please contact the organizer directly." : "Контактирајте го организаторот директно.",
     "Are you accepting the invitation?" : "Дали ја прифаќате поканата?",
     "Tentative" : "Прелиминарно",
-    "Your attendance was updated successfully." : "Вашето присуство е успешно ажурирано.",
-    "Time:" : "Време:",
-    "Could not open file" : "Неможе да се отвори датотеката"
+    "Your attendance was updated successfully." : "Вашето присуство е успешно ажурирано."
 },
 "nplurals=2; plural=(n % 10 == 1 && n % 100 != 11) ? 0 : 1;");

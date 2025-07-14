@@ -63,7 +63,7 @@ OC.L10N.register(
     "Upload new header logo" : "Завантажити новий логотип заголовка",
     "Favicon" : "Значок сайту",
     "Upload new favicon" : "Завантажити новий значок",
-    "User settings" : "Користувацькі налаштування",
+    "User settings" : "Налаштування користувача",
     "Disable user theming" : "Вимкнути можливість користувачів змінювати оформлення",
     "Although you can select and customize your instance, users can change their background and colors. If you want to enforce your customization, you can toggle this on." : "На додаток до встановлення оформлення вашої хмари користувачі також можуть змінювати тло та кольорову гаму. Тут ви можете встановити оформлення однаковим для всіх користувачів.",
     "Theming makes it possible to easily customize the look and feel of your instance and supported clients. This will be visible for all users." : "Оформлення дозволяє легко налаштувати зовнішній вигляд вашого сервера та підтримуваних клієнтів. Це будуть бачити всі користувачі.",
@@ -119,12 +119,7 @@ OC.L10N.register(
     "Reset to default" : "Скинути до типового",
     "Upload" : "Завантажити",
     "Remove background image" : "Вилучити зображення тла",
-    "Color" : "Колір",
     "Universal access is very important to us. We follow web standards and check to make everything usable also without mouse, and assistive software such as screenreaders. We aim to be compliant with the {guidelines}Web Content Accessibility Guidelines{linkend} 2.1 on AA level, with the high contrast theme even on AAA level." : "Для нас дуже важливо забезпечити доступ для всіх. Ми дотримуємось сучасних стандартів розробки у вебі, намагаємося забезпечити зручність користування без комп'ютерної миші, а також за допомогою допоміжного програмного забезпечення, наприклад, застосунки зчитування з екрана. Ми прагнемо відповідати {guidelines} Правилам доступу до вмісту у мережі {linkend} 2.1 на рівні AA, а з темою високої контрастності навіть на рівні AAA.",
-    ". Unable to apply the setting." : ". Не вдалося застосувати налаштування.",
-    "Background" : "Тло",
-    "Set a custom background" : "Встановити спеціальне зображення тла",
-    "Change color" : "Змінити колір",
-    "No background" : "Без тла"
+    ". Unable to apply the setting." : ". Не вдалося застосувати налаштування."
 },
 "nplurals=4; plural=(n % 1 == 0 && n % 10 == 1 && n % 100 != 11 ? 0 : n % 1 == 0 && n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 1 : n % 1 == 0 && (n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || (n % 100 >=11 && n % 100 <=14 )) ? 2: 3);");

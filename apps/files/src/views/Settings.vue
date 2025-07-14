@@ -9,6 +9,27 @@
 		@update:open="onClose">
 		<!-- Settings API-->
 		<NcAppSettingsSection id="settings" :name="t('files', 'Files settings')">
+			<fieldset class="files-settings__default-view"
+				data-cy-files-settings-setting="default_view">
+				<legend>
+					{{ t('files', 'Default view') }}
+				</legend>
+				<NcCheckboxRadioSwitch :model-value="userConfig.default_view"
+					name="default_view"
+					type="radio"
+					value="files"
+					@update:model-value="setConfig('default_view', $event)">
+					{{ t('files', 'All files') }}
+				</NcCheckboxRadioSwitch>
+				<NcCheckboxRadioSwitch :model-value="userConfig.default_view"
+					name="default_view"
+					type="radio"
+					value="personal"
+					@update:model-value="setConfig('default_view', $event)">
+					{{ t('files', 'Personal files') }}
+				</NcCheckboxRadioSwitch>
+			</fieldset>
+
 			<NcCheckboxRadioSwitch data-cy-files-settings-setting="sort_favorites_first"
 				:checked="userConfig.sort_favorites_first"
 				@update:checked="setConfig('sort_favorites_first', $event)">
@@ -24,16 +45,15 @@
 				@update:checked="setConfig('show_hidden', $event)">
 				{{ t('files', 'Show hidden files') }}
 			</NcCheckboxRadioSwitch>
+			<NcCheckboxRadioSwitch data-cy-files-settings-setting="show_mime_column"
+				:checked="userConfig.show_mime_column"
+				@update:checked="setConfig('show_mime_column', $event)">
+				{{ t('files', 'Show file type column') }}
+			</NcCheckboxRadioSwitch>
 			<NcCheckboxRadioSwitch data-cy-files-settings-setting="crop_image_previews"
 				:checked="userConfig.crop_image_previews"
 				@update:checked="setConfig('crop_image_previews', $event)">
 				{{ t('files', 'Crop image previews') }}
-			</NcCheckboxRadioSwitch>
-			<NcCheckboxRadioSwitch v-if="enableGridView"
-				data-cy-files-settings-setting="grid_view"
-				:checked="userConfig.grid_view"
-				@update:checked="setConfig('grid_view', $event)">
-				{{ t('files', 'Enable the grid view') }}
 			</NcCheckboxRadioSwitch>
 			<NcCheckboxRadioSwitch data-cy-files-settings-setting="folder_tree"
 				:checked="userConfig.folder_tree"
@@ -89,6 +109,11 @@
 				:checked="userConfig.show_dialog_file_extension"
 				@update:checked="setConfig('show_dialog_file_extension', $event)">
 				{{ t('files', 'Show a warning dialog when changing a file extension.') }}
+			</NcCheckboxRadioSwitch>
+			<NcCheckboxRadioSwitch type="switch"
+				:checked="userConfig.show_dialog_deletion"
+				@update:checked="setConfig('show_dialog_deletion', $event)">
+				{{ t('files', 'Show a warning dialog when deleting files.') }}
 			</NcCheckboxRadioSwitch>
 		</NcAppSettingsSection>
 
@@ -375,6 +400,12 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.files-settings {
+	&__default-view {
+		margin-bottom: 0.5rem;
+	}
+}
+
 .setting-link:hover {
 	text-decoration: underline;
 }

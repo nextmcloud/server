@@ -223,8 +223,8 @@ OC.L10N.register(
     "Absence cleared" : "Távollét törölve",
     "Failed to clear your absence settings" : "Nem sikerült a távolléti beállítások törlése",
     "First day" : "Első nap",
-    "Last day (inclusive)" : "Utols nap (beleértve)",
-    "Out of office replacement (optional)" : "Távolléti helyettesítő (opcionális)",
+    "Last day (inclusive)" : "Utolsó nap (beleértve)",
+    "Out of office replacement (optional)" : "Távolléti helyettesítő (nem kötelező)",
     "Name of the replacement" : "Helyettesítő neve",
     "No results." : "Nincs eredmény.",
     "Start typing." : "Kezdjen gépelni.",
@@ -244,6 +244,10 @@ OC.L10N.register(
     "Pick a start time for {dayName}" : "Válassz kezdő dátumot a {dayName}-hoz",
     "Pick a end time for {dayName}" : "Válassz vége dátumot a {dayName}-hoz",
     "Automatically set user status to \"Do not disturb\" outside of availability to mute all notifications." : "Az elérhetőségi időn túl, a felhasználói állapot automatikus beállítása „Ne zavarjanak” módba az összes értesítés némításához.",
+    "Cancel" : "Mégse",
+    "Import" : "Importálás",
+    "Error while saving settings" : "Hiba a beállítások mentése során",
+    "Reset to default" : "Visszaállítás alapértelmezettre",
     "Availability" : "Elérhetőség",
     "If you configure your working hours, other people will see when you are out of office when they book a meeting." : "Ha beállítja a munkaidejét, akkor más emberek a megbeszélések létrehozásakor látni fogják, hogy Ön mikor nem érhető el.",
     "Absence" : "Távollét",
@@ -264,10 +268,6 @@ OC.L10N.register(
     "Please contact the organizer directly." : "Vegye fel a kapcsolatot közvetlenül a szervezővel.",
     "Are you accepting the invitation?" : "Elfogadja az meghívást?",
     "Tentative" : "Feltételes",
-    "Your attendance was updated successfully." : "A részvétele frissítése sikeres.",
-    "Time:" : "Idő:",
-    "Could not open file" : "A fájl nem nyitható meg",
-    "Invalid chunk name" : "Érvénytelen darabnév",
-    "Could not rename part file assembled from chunks" : "Nem lehet átnevezni a darabokból összeállított részleges fájlt"
+    "Your attendance was updated successfully." : "A részvétele frissítése sikeres."
 },
 "nplurals=2; plural=(n != 1);");

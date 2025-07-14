@@ -38,7 +38,7 @@
 					<NcCheckboxRadioSwitch :button-variant="true"
 						data-cy-files-sharing-share-permissions-bundle="upload-edit"
 						:checked.sync="sharingPermission"
-						:value="bundledPermissions.ALL.toString()"
+						:value="allPermissions"
 						name="sharing_permission_radio"
 						type="radio"
 						button-variant-grouped="vertical"
@@ -226,19 +226,6 @@
 							{{ t('files_sharing', 'Delete') }}
 						</NcCheckboxRadioSwitch>
 					</section>
-					<div class="sharingTabDetailsView__delete">
-						<NcButton v-if="!isNewShare"
-							:aria-label="t('files_sharing', 'Delete share')"
-							:disabled="false"
-							:readonly="false"
-							type="tertiary"
-							@click.prevent="removeShare">
-							<template #icon>
-								<CloseIcon :size="16" />
-							</template>
-							{{ t('files_sharing', 'Delete share') }}
-						</NcButton>
-					</div>
 				</section>
 			</div>
 		</div>
@@ -249,8 +236,22 @@
 					@click="cancel">
 					{{ t('files_sharing', 'Cancel') }}
 				</NcButton>
+				<div class="sharingTabDetailsView__delete">
+					<NcButton v-if="!isNewShare"
+						:aria-label="t('files_sharing', 'Delete share')"
+						:disabled="false"
+						:readonly="false"
+						variant="tertiary"
+						@click.prevent="removeShare">
+						<template #icon>
+							<CloseIcon :size="20" />
+						</template>
+						{{ t('files_sharing', 'Delete share') }}
+					</NcButton>
+				</div>
 				<NcButton type="primary"
 					data-cy-files-sharing-share-editor-action="save"
+					:disabled="creating"
 					@click="saveShare">
 					{{ shareButtonText }}
 					<template v-if="creating" #icon>
@@ -399,6 +400,9 @@ export default {
 			}
 			}
 		},
+		allPermissions() {
+			return this.isFolder ? this.bundledPermissions.ALL.toString() : this.bundledPermissions.ALL_FILE.toString()
+		},
 		/**
 		 * Can the sharee edit the shared file ?
 		 */
@@ -493,26 +497,6 @@ export default {
 				this.share.expireDate = enabled
 					? this.formatDateToString(this.defaultExpiryDate)
 					: ''
-			},
-		},
-		/**
-		 * Is the current share password protected ?
-		 *
-		 * @return {boolean}
-		 */
-		isPasswordProtected: {
-			get() {
-				return this.config.enforcePasswordForPublicLink
-					|| !!this.share.password
-			},
-			async set(enabled) {
-				if (enabled) {
-					this.share.password = await GeneratePassword(true)
-					this.$set(this.share, 'newPassword', this.share.password)
-				} else {
-					this.share.password = ''
-					this.$delete(this.share, 'newPassword')
-				}
 			},
 		},
 		/**
@@ -731,8 +715,15 @@ export default {
 				[ATOMIC_PERMISSIONS.DELETE]: this.t('files_sharing', 'Delete'),
 			}
 
-			return [ATOMIC_PERMISSIONS.READ, ATOMIC_PERMISSIONS.CREATE, ATOMIC_PERMISSIONS.UPDATE, ...(this.resharingIsPossible ? [ATOMIC_PERMISSIONS.SHARE] : []), ATOMIC_PERMISSIONS.DELETE]
-				.filter((permission) => hasPermissions(this.share.permissions, permission))
+			const permissionsList = [
+				ATOMIC_PERMISSIONS.READ,
+				...(this.isFolder ? [ATOMIC_PERMISSIONS.CREATE] : []),
+				ATOMIC_PERMISSIONS.UPDATE,
+				...(this.resharingIsPossible ? [ATOMIC_PERMISSIONS.SHARE] : []),
+				...(this.isFolder ? [ATOMIC_PERMISSIONS.DELETE] : []),
+			]
+
+			return permissionsList.filter((permission) => hasPermissions(this.share.permissions, permission))
 				.map((permission, index) => index === 0
 					? translatedPermissions[permission]
 					: translatedPermissions[permission].toLocaleLowerCase(getLanguage()))
@@ -850,6 +841,13 @@ export default {
 			isReshareChecked = this.canReshare,
 		} = {}) {
 			// calc permissions if checked
+
+			if (!this.isFolder && (isCreateChecked || isDeleteChecked)) {
+				logger.debug('Ignoring create/delete permissions for file share — only available for folders')
+				isCreateChecked = false
+				isDeleteChecked = false
+			}
+
 			const permissions = 0
 				| (isReadChecked ? ATOMIC_PERMISSIONS.READ : 0)
 				| (isCreateChecked ? ATOMIC_PERMISSIONS.CREATE : 0)
@@ -872,8 +870,9 @@ export default {
 		async initializeAttributes() {
 
 			if (this.isNewShare) {
-				if (this.isPasswordEnforced && this.isPublicShare) {
+				if ((this.config.enableLinkPasswordByDefault || this.isPasswordEnforced) && this.isPublicShare) {
 					this.$set(this.share, 'newPassword', await GeneratePassword(true))
+					this.$set(this.share, 'password', this.share.newPassword)
 					this.advancedSectionAccordionExpanded = true
 				}
 				/* Set default expiration dates if configured */
@@ -906,8 +905,9 @@ export default {
 				this.advancedSectionAccordionExpanded = true
 			}
 
-			if (this.share.note) {
+			if (this.isValidShareAttribute(this.share.note)) {
 				this.writeNoteToRecipientIsChecked = true
+				this.advancedSectionAccordionExpanded = true
 			}
 
 		},
@@ -1003,12 +1003,35 @@ export default {
 					incomingShare.password = this.share.password
 				}
 
-				this.creating = true
-				const share = await this.addShare(incomingShare)
-				this.creating = false
+				let share
+				try {
+					this.creating = true
+					share = await this.addShare(incomingShare)
+				} catch (error) {
+					this.creating = false
+					// Error is already handled by ShareRequests mixin
+					return
+				}
+
+				// ugly hack to make code work - we need the id to be set but at the same time we need to keep values we want to update
+				this.share._share.id = share.id
+				await this.queueUpdate(...permissionsAndAttributes)
+				// Also a ugly hack to update the updated permissions
+				for (const prop of permissionsAndAttributes) {
+					if (prop in share && prop in this.share) {
+						try {
+							share[prop] = this.share[prop]
+						} catch {
+							share._share[prop] = this.share[prop]
+						}
+					}
+				}
+
 				this.share = share
+				this.creating = false
 				this.$emit('add:share', this.share)
 			} else {
+				// Let's update after creation as some attrs are only available after creation
 				this.$emit('update:share', this.share)
 				emit('update:share', this.share)
 				this.queueUpdate(...permissionsAndAttributes)
