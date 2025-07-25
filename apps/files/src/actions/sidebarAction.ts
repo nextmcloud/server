@@ -38,6 +38,7 @@ export const action = new FileAction({
 		try {
 			// Open sidebar and set active tab to sharing by default
 			window.OCA.Files.Sidebar.setActiveTab('sharing')
+			window.OCA.Files.Sidebar.setActiveTab('sharing-manage');
 
 			// TODO: migrate Sidebar to use a Node instead
 			await window.OCA.Files.Sidebar.open(node.path)
