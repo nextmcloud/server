@@ -1,9 +1,11 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
  * SPDX-License-Identifier: AGPL-3.0-only
  */
+
 namespace OCA\Files_External\Lib\Storage;
 
 use Icewind\SMB\ACL;
@@ -21,7 +23,7 @@ use Icewind\SMB\IFileInfo;
 use Icewind\SMB\Native\NativeServer;
 use Icewind\SMB\Options;
 use Icewind\SMB\ServerFactory;
-use Icewind\SMB\System;
+use Icewind\SMB\Wrapped\Server;
 use Icewind\Streams\CallbackWrapper;
 use Icewind\Streams\IteratorDirectory;
 use OC\Files\Filesystem;
@@ -92,17 +94,18 @@ class SMB extends Common implements INotifyStorage {
 			}
 			$this->logger = $params['logger'];
 		} else {
-			$this->logger = \OC::$server->get(LoggerInterface::class);
+			$this->logger = \OCP\Server::get(LoggerInterface::class);
 		}
 
 		$options = new Options();
 		if (isset($params['timeout'])) {
-			$timeout = (int)$params['timeout'];
+			$timeout = (int) $params['timeout'];
 			if ($timeout > 0) {
 				$options->setTimeout($timeout);
 			}
 		}
-		$serverFactory = new ServerFactory($options);
+		$system = \OCP\Server::get(SystemBridge::class);
+		$serverFactory = new ServerFactory($options, $system);
 		$this->server = $serverFactory->createServer($params['host'], $auth);
 		$this->share = $this->server->getShare(trim($params['share'], '/'));
 
@@ -208,7 +211,7 @@ class SMB extends Common implements INotifyStorage {
 		try {
 			$acls = $file->getAcls();
 		} catch (Exception $e) {
-			$this->logger->error('Error while getting file acls', ['exception' => $e]);
+			$this->logger->warning('Error while getting file acls', ['exception' => $e]);
 			return null;
 		}
 		foreach ($acls as $user => $acl) {
@@ -271,7 +274,7 @@ class SMB extends Common implements INotifyStorage {
 			}
 		} catch (ConnectException $e) {
 			$this->logger->error('Error while getting folder content', ['exception' => $e]);
-			throw new StorageNotAvailableException($e->getMessage(), (int)$e->getCode(), $e);
+			throw new StorageNotAvailableException($e->getMessage(), (int) $e->getCode(), $e);
 		} catch (NotFoundException $e) {
 			throw new \OCP\Files\NotFoundException($e->getMessage(), 0, $e);
 		}
@@ -351,7 +354,7 @@ class SMB extends Common implements INotifyStorage {
 			if ($retry) {
 				return $this->stat($path, false);
 			} else {
-				throw $e;
+				throw new StorageNotAvailableException($e->getMessage(), $e->getCode(), $e);
 			}
 		}
 		if ($this->remoteIsShare() && $this->isRootDir($path)) {
@@ -425,7 +428,7 @@ class SMB extends Common implements INotifyStorage {
 			return false;
 		} catch (ConnectException $e) {
 			$this->logger->error('Error while deleting file', ['exception' => $e]);
-			throw new StorageNotAvailableException($e->getMessage(), (int)$e->getCode(), $e);
+			throw new StorageNotAvailableException($e->getMessage(), (int) $e->getCode(), $e);
 		}
 	}
 
@@ -443,7 +446,7 @@ class SMB extends Common implements INotifyStorage {
 			return true;
 		} else {
 			$actualTime = $this->filemtime($path);
-			return $actualTime > $time;
+			return $actualTime > $time || $actualTime === 0;
 		}
 	}
 
@@ -459,6 +462,7 @@ class SMB extends Common implements INotifyStorage {
 				case 'r':
 				case 'rb':
 					if (!$this->file_exists($path)) {
+						$this->logger->warning('Failed to open ' . $path . ' on ' . $this->getId() . ', file doesn\'t exist.');
 						return false;
 					}
 					return $this->share->read($fullPath);
@@ -486,11 +490,13 @@ class SMB extends Common implements INotifyStorage {
 					}
 					if ($this->file_exists($path)) {
 						if (!$this->isUpdatable($path)) {
+							$this->logger->warning('Failed to open ' . $path . ' on ' . $this->getId() . ', file not updatable.');
 							return false;
 						}
 						$tmpFile = $this->getCachedFile($path);
 					} else {
 						if (!$this->isCreatable(dirname($path))) {
+							$this->logger->warning('Failed to open ' . $path . ' on ' . $this->getId() . ', parent directory not writable.');
 							return false;
 						}
 						$tmpFile = \OC::$server->getTempManager()->getTemporaryFile($ext);
@@ -505,14 +511,17 @@ class SMB extends Common implements INotifyStorage {
 			}
 			return false;
 		} catch (NotFoundException $e) {
+			$this->logger->warning('Failed to open ' . $path . ' on ' . $this->getId() . ', not found.', ['exception' => $e]);
 			return false;
 		} catch (ForbiddenException $e) {
+			$this->logger->warning('Failed to open ' . $path . ' on ' . $this->getId() . ', forbidden.', ['exception' => $e]);
 			return false;
 		} catch (OutOfSpaceException $e) {
-			throw new EntityTooLargeException("not enough available space to create file", 0, $e);
+			$this->logger->warning('Failed to open ' . $path . ' on ' . $this->getId() . ', out of space.', ['exception' => $e]);
+			throw new EntityTooLargeException('not enough available space to create file', 0, $e);
 		} catch (ConnectException $e) {
 			$this->logger->error('Error while opening file', ['exception' => $e]);
-			throw new StorageNotAvailableException($e->getMessage(), (int)$e->getCode(), $e);
+			throw new StorageNotAvailableException($e->getMessage(), (int) $e->getCode(), $e);
 		}
 	}
 
@@ -539,7 +548,7 @@ class SMB extends Common implements INotifyStorage {
 			return false;
 		} catch (ConnectException $e) {
 			$this->logger->error('Error while removing folder', ['exception' => $e]);
-			throw new StorageNotAvailableException($e->getMessage(), (int)$e->getCode(), $e);
+			throw new StorageNotAvailableException($e->getMessage(), (int) $e->getCode(), $e);
 		}
 	}
 
@@ -552,10 +561,10 @@ class SMB extends Common implements INotifyStorage {
 			}
 			return false;
 		} catch (OutOfSpaceException $e) {
-			throw new EntityTooLargeException("not enough available space to create file", 0, $e);
+			throw new EntityTooLargeException('not enough available space to create file', 0, $e);
 		} catch (ConnectException $e) {
 			$this->logger->error('Error while creating file', ['exception' => $e]);
-			throw new StorageNotAvailableException($e->getMessage(), (int)$e->getCode(), $e);
+			throw new StorageNotAvailableException($e->getMessage(), (int) $e->getCode(), $e);
 		}
 	}
 
@@ -652,7 +661,7 @@ class SMB extends Common implements INotifyStorage {
 			return true;
 		} catch (ConnectException $e) {
 			$this->logger->error('Error while creating folder', ['exception' => $e]);
-			throw new StorageNotAvailableException($e->getMessage(), (int)$e->getCode(), $e);
+			throw new StorageNotAvailableException($e->getMessage(), (int) $e->getCode(), $e);
 		} catch (Exception $e) {
 			return false;
 		}
@@ -663,7 +672,7 @@ class SMB extends Common implements INotifyStorage {
 			// Case sensitive filesystem doesn't matter for root directory
 			if ($this->caseSensitive === false && $path !== '') {
 				$filename = basename($path);
-				$siblings = $this->getDirectoryContent(dirname($this->buildPath($path)));
+				$siblings = $this->getDirectoryContent(dirname($path));
 				foreach ($siblings as $sibling) {
 					if ($sibling['name'] === $filename) {
 						return true;
@@ -678,7 +687,7 @@ class SMB extends Common implements INotifyStorage {
 		} catch (\OCP\Files\ForbiddenException $e) {
 			return false;
 		} catch (ConnectException $e) {
-			throw new StorageNotAvailableException($e->getMessage(), (int)$e->getCode(), $e);
+			throw new StorageNotAvailableException($e->getMessage(), (int) $e->getCode(), $e);
 		}
 	}
 
@@ -720,11 +729,9 @@ class SMB extends Common implements INotifyStorage {
 	/**
 	 * check if smbclient is installed
 	 */
-	public static function checkDependencies() {
-		return (
-			(bool)\OC_Helper::findBinaryPath('smbclient')
-			|| NativeServer::available(new System())
-		) ? true : ['smbclient'];
+	public static function checkDependencies(): array|bool {
+		$system = \OCP\Server::get(SystemBridge::class);
+		return Server::available($system) || NativeServer::available($system) ?: ['smbclient'];
 	}
 
 	/**

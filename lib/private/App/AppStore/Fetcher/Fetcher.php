@@ -1,11 +1,14 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 namespace OC\App\AppStore\Fetcher;
 
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ServerException;
 use OC\Files\AppData\Factory;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -55,7 +58,7 @@ abstract class Fetcher {
 	 */
 	protected function fetch($ETag, $content) {
 		$appstoreenabled = $this->config->getSystemValueBool('appstoreenabled', true);
-		if ((int)$this->config->getAppValue('settings', 'appstore-fetcher-lastFailure', '0') > time() - self::RETRY_AFTER_FAILURE_SECONDS) {
+		if ((int) $this->config->getAppValue('settings', 'appstore-fetcher-lastFailure', '0') > time() - self::RETRY_AFTER_FAILURE_SECONDS) {
 			return [];
 		}
 
@@ -85,8 +88,8 @@ abstract class Fetcher {
 		$client = $this->clientService->newClient();
 		try {
 			$response = $client->get($this->getEndpoint(), $options);
-		} catch (ConnectException $e) {
-			$this->config->setAppValue('settings', 'appstore-fetcher-lastFailure', (string)time());
+		} catch (ConnectException|ClientException|ServerException $e) {
+			$this->config->setAppValue('settings', 'appstore-fetcher-lastFailure', (string) time());
 			$this->logger->error('Failed to connect to the app store', ['exception' => $e]);
 			return [];
 		}
@@ -145,7 +148,7 @@ abstract class Fetcher {
 						$invalidateAfterSeconds = self::INVALIDATE_AFTER_SECONDS_UNSTABLE;
 					}
 
-					if ((int)$jsonBlob['timestamp'] > ($this->timeFactory->getTime() - $invalidateAfterSeconds)) {
+					if ((int) $jsonBlob['timestamp'] > ($this->timeFactory->getTime() - $invalidateAfterSeconds)) {
 						return $jsonBlob['data'];
 					}
 

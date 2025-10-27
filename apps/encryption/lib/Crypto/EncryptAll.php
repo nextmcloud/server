@@ -12,6 +12,7 @@ use OC\Files\View;
 use OCA\Encryption\KeyManager;
 use OCA\Encryption\Users\Setup;
 use OCA\Encryption\Util;
+use OCP\Files\FileInfo;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IUser;
@@ -20,6 +21,7 @@ use OCP\L10N\IFactory;
 use OCP\Mail\Headers\AutoSubmitted;
 use OCP\Mail\IMailer;
 use OCP\Security\ISecureRandom;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Helper\Table;
@@ -44,28 +46,28 @@ class EncryptAll {
 	/** @var Util */
 	protected $util;
 
-	/** @var array  */
+	/** @var array */
 	protected $userPasswords;
 
-	/** @var  IConfig */
+	/** @var IConfig */
 	protected $config;
 
 	/** @var IMailer */
 	protected $mailer;
 
-	/** @var  IL10N */
+	/** @var IL10N */
 	protected $l;
 
-	/** @var  IFactory */
+	/** @var IFactory */
 	protected $l10nFactory;
 
-	/** @var  QuestionHelper */
+	/** @var QuestionHelper */
 	protected $questionHelper;
 
-	/** @var  OutputInterface */
+	/** @var OutputInterface */
 	protected $output;
 
-	/** @var  InputInterface */
+	/** @var InputInterface */
 	protected $input;
 
 	/** @var ISecureRandom */
@@ -82,7 +84,8 @@ class EncryptAll {
 		IL10N $l,
 		IFactory $l10nFactory,
 		QuestionHelper $questionHelper,
-		ISecureRandom $secureRandom
+		ISecureRandom $secureRandom,
+		protected LoggerInterface $logger,
 	) {
 		$this->userSetup = $userSetup;
 		$this->userManager = $userManager;
@@ -203,7 +206,7 @@ class EncryptAll {
 				$userNo++;
 			}
 		}
-		$progress->setMessage("all files encrypted");
+		$progress->setMessage('all files encrypted');
 		$progress->finish();
 	}
 
@@ -244,33 +247,42 @@ class EncryptAll {
 		while ($root = array_pop($directories)) {
 			$content = $this->rootView->getDirectoryContent($root);
 			foreach ($content as $file) {
-				$path = $root . '/' . $file['name'];
-				if ($this->rootView->is_dir($path)) {
+				$path = $root . '/' . $file->getName();
+				if ($file->isShared()) {
+					$progress->setMessage("Skip shared file/folder $path");
+					$progress->advance();
+					continue;
+				} elseif ($file->getType() === FileInfo::TYPE_FOLDER) {
 					$directories[] = $path;
 					continue;
 				} else {
 					$progress->setMessage("encrypt files for user $userCount: $path");
 					$progress->advance();
-					if ($this->encryptFile($path) === false) {
-						$progress->setMessage("encrypt files for user $userCount: $path (already encrypted)");
+					try {
+						if ($this->encryptFile($file, $path) === false) {
+							$progress->setMessage("encrypt files for user $userCount: $path (already encrypted)");
+							$progress->advance();
+						}
+					} catch (\Exception $e) {
+						$progress->setMessage("Failed to encrypt path $path: " . $e->getMessage());
 						$progress->advance();
+						$this->logger->error(
+							'Failed to encrypt path {path}',
+							[
+								'user' => $uid,
+								'path' => $path,
+								'exception' => $e,
+							]
+						);
 					}
 				}
 			}
 		}
 	}
 
-	/**
-	 * encrypt file
-	 *
-	 * @param string $path
-	 * @return bool
-	 */
-	protected function encryptFile($path) {
-
+	protected function encryptFile(FileInfo $fileInfo, string $path): bool {
 		// skip already encrypted files
-		$fileInfo = $this->rootView->getFileInfo($path);
-		if ($fileInfo !== false && $fileInfo->isEncrypted()) {
+		if ($fileInfo->isEncrypted()) {
 			return true;
 		}
 
@@ -278,7 +290,14 @@ class EncryptAll {
 		$target = $path . '.encrypted.' . time();
 
 		try {
-			$this->rootView->copy($source, $target);
+			$copySuccess = $this->rootView->copy($source, $target);
+			if ($copySuccess === false) {
+				/* Copy failed, abort */
+				if ($this->rootView->file_exists($target)) {
+					$this->rootView->unlink($target);
+				}
+				throw new \Exception('Copy failed for ' . $source);
+			}
 			$this->rootView->rename($target, $source);
 		} catch (DecryptionFailedException $e) {
 			if ($this->rootView->file_exists($target)) {

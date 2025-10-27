@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2017 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -17,6 +18,7 @@ use OCA\DAV\DAV\Sharing\Plugin as SharingPlugin;
 use OCA\DAV\Events\CalendarDeletedEvent;
 use OCP\IConfig;
 use OCP\IL10N;
+use Psr\Log\NullLogger;
 use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\PropPatch;
 use Sabre\DAV\Xml\Property\Href;
@@ -519,7 +521,7 @@ EOD;
 		sort($stateLive['deleted']);
 		// test live state
 		$this->assertEquals($stateTest, $stateLive, 'Failed test delta sync state with events in calendar');
-		
+
 		/** modify/delete events in calendar */
 		$this->deleteEvent($calendarId, $event1);
 		$this->modifyEvent($calendarId, $event2, '20250701T140000Z', '20250701T150000Z');
@@ -733,7 +735,7 @@ EOS;
 
 			'last occurrence before unix epoch starts' => [0, 'lastOccurence', "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Sabre//Sabre VObject 4.3.0//EN\r\nCALSCALE:GREGORIAN\r\nBEGIN:VEVENT\r\nDTSTART;VALUE=DATE:19110324\r\nDTEND;VALUE=DATE:19110325\r\nDTSTAMP:20200927T180638Z\r\nUID:asdfasdfasdf@google.com\r\nCREATED:20200626T181848Z\r\nDESCRIPTION:Very old event\r\nLAST-MODIFIED:20200922T192707Z\r\nSUMMARY:Some old event\r\nTRANSP:OPAQUE\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"],
 
-			'first occurrence is found when not first VEVENT in group' => [(new DateTime('2020-09-01T110000', new DateTimeZone("America/Los_Angeles")))->getTimestamp(), 'firstOccurence', "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Sabre//Sabre VObject 4.3.0//EN\r\nCALSCALE:GREGORIAN\r\nBEGIN:VEVENT\r\nDTSTART;TZID=America/Los_Angeles:20201013T110000\r\nDTEND;TZID=America/Los_Angeles:20201013T120000\r\nDTSTAMP:20200927T180638Z\r\nUID:asdf0000@google.com\r\nRECURRENCE-ID;TZID=America/Los_Angeles:20201013T110000\r\nCREATED:20160330T034726Z\r\nLAST-MODIFIED:20200925T042014Z\r\nSTATUS:CONFIRMED\r\nTRANSP:OPAQUE\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nDTSTART;TZID=America/Los_Angeles:20200901T110000\r\nDTEND;TZID=America/Los_Angeles:20200901T120000\r\nRRULE:FREQ=WEEKLY;BYDAY=TU\r\nEXDATE;TZID=America/Los_Angeles:20200922T110000\r\nEXDATE;TZID=America/Los_Angeles:20200915T110000\r\nEXDATE;TZID=America/Los_Angeles:20200908T110000\r\nDTSTAMP:20200927T180638Z\r\nUID:asdf0000@google.com\r\nCREATED:20160330T034726Z\r\nLAST-MODIFIED:20200915T162810Z\r\nSTATUS:CONFIRMED\r\nTRANSP:OPAQUE\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"],
+			'first occurrence is found when not first VEVENT in group' => [(new DateTime('2020-09-01T110000', new DateTimeZone('America/Los_Angeles')))->getTimestamp(), 'firstOccurence', "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Sabre//Sabre VObject 4.3.0//EN\r\nCALSCALE:GREGORIAN\r\nBEGIN:VEVENT\r\nDTSTART;TZID=America/Los_Angeles:20201013T110000\r\nDTEND;TZID=America/Los_Angeles:20201013T120000\r\nDTSTAMP:20200927T180638Z\r\nUID:asdf0000@google.com\r\nRECURRENCE-ID;TZID=America/Los_Angeles:20201013T110000\r\nCREATED:20160330T034726Z\r\nLAST-MODIFIED:20200925T042014Z\r\nSTATUS:CONFIRMED\r\nTRANSP:OPAQUE\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nDTSTART;TZID=America/Los_Angeles:20200901T110000\r\nDTEND;TZID=America/Los_Angeles:20200901T120000\r\nRRULE:FREQ=WEEKLY;BYDAY=TU\r\nEXDATE;TZID=America/Los_Angeles:20200922T110000\r\nEXDATE;TZID=America/Los_Angeles:20200915T110000\r\nEXDATE;TZID=America/Los_Angeles:20200908T110000\r\nDTSTAMP:20200927T180638Z\r\nUID:asdf0000@google.com\r\nCREATED:20160330T034726Z\r\nLAST-MODIFIED:20200915T162810Z\r\nSTATUS:CONFIRMED\r\nTRANSP:OPAQUE\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n"],
 
 			'CLASS:PRIVATE' => [CalDavBackend::CLASSIFICATION_PRIVATE, 'classification', "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//dmfs.org//mimedir.icalendar//EN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nX-LIC-LOCATION:Europe/Berlin\r\nBEGIN:DAYLIGHT\r\nTZOFFSETFROM:+0100\r\nTZOFFSETTO:+0200\r\nTZNAME:CEST\r\nDTSTART:19700329T020000\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nEND:DAYLIGHT\r\nBEGIN:STANDARD\r\nTZOFFSETFROM:+0200\r\nTZOFFSETTO:+0100\r\nTZNAME:CET\r\nDTSTART:19701025T030000\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nBEGIN:VEVENT\r\nDTSTART;TZID=Europe/Berlin:20160419T130000\r\nSUMMARY:Test\r\nCLASS:PRIVATE\r\nTRANSP:OPAQUE\r\nSTATUS:CONFIRMED\r\nDTEND;TZID=Europe/Berlin:20160419T140000\r\nLAST-MODIFIED:20160419T074202Z\r\nDTSTAMP:20160419T074202Z\r\nCREATED:20160419T074202Z\r\nUID:2e468c48-7860-492e-bc52-92fa0daeeccf.1461051722310\r\nEND:VEVENT\r\nEND:VCALENDAR"],
 
@@ -1846,5 +1848,47 @@ EOD;
 		$this->assertEquals('Pasta Day', $results[1]['objects'][0]['SUMMARY'][0]);
 		$this->assertEquals('Missing DTSTART 1', $results[2]['objects'][0]['SUMMARY'][0]);
 		$this->assertEquals('Missing DTSTART 2', $results[3]['objects'][0]['SUMMARY'][0]);
+	}
+
+	public function testUnshare(): void {
+		$principalGroup = 'principal:' . self::UNIT_TEST_GROUP;
+		$principalUser = 'principal:' . self::UNIT_TEST_USER;
+
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')
+			->willReturnCallback(fn ($text, $parameters = []) => vsprintf($text, $parameters));
+		$config = $this->createMock(IConfig::class);
+		$logger = new NullLogger();
+
+		$this->principal->expects($this->exactly(2))
+			->method('findByUri')
+			->willReturnMap([
+				[$principalGroup, '', self::UNIT_TEST_GROUP],
+				[$principalUser, '', self::UNIT_TEST_USER],
+			]);
+		$this->groupManager->expects($this->once())
+			->method('groupExists')
+			->willReturn(true);
+		$this->dispatcher->expects($this->exactly(2))
+			->method('dispatchTyped');
+
+		$calendarId = $this->createTestCalendar();
+		$calendarInfo = $this->backend->getCalendarById($calendarId);
+
+		$calendar = new Calendar($this->backend, $calendarInfo, $l10n, $config, $logger);
+
+		$this->backend->updateShares(
+			shareable: $calendar,
+			add: [
+				['href' => $principalGroup, 'readOnly' => false]
+			],
+			remove: []
+		);
+
+		$this->backend->unshare(
+			shareable: $calendar,
+			principal: $principalUser
+		);
+
 	}
 }

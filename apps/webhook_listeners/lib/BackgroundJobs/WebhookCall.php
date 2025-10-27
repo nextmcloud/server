@@ -56,14 +56,14 @@ class WebhookCall extends QueuedJob {
 			}
 			$webhookUri = $webhookListener->getUri();
 			$exAppId = $webhookListener->getAppId();
-			if ($exAppId !== null && str_starts_with($webhookUri, "/")) {
+			if ($exAppId !== null && str_starts_with($webhookUri, '/')) {
 				// ExApp is awaiting a direct request to itself using AppAPI
 				if (!$this->appManager->isInstalled('app_api')) {
 					throw new RuntimeException('AppAPI is disabled or not installed.');
 				}
 				try {
 					$appApiFunctions = \OCP\Server::get(\OCA\AppAPI\PublicFunctions::class);
-				} catch (ContainerExceptionInterface | NotFoundExceptionInterface) {
+				} catch (ContainerExceptionInterface|NotFoundExceptionInterface) {
 					throw new RuntimeException('Could not get AppAPI public functions.');
 				}
 				$exApp = $appApiFunctions->getExApp($exAppId);
@@ -72,7 +72,8 @@ class WebhookCall extends QueuedJob {
 				} elseif (!$exApp['enabled']) {
 					throw new RuntimeException('ExApp ' . $exAppId . ' is disabled.');
 				}
-				$response = $appApiFunctions->exAppRequest($exAppId, $webhookUri, $webhookListener->getUserId(), $webhookListener->getHttpMethod(), [], $options);
+				$userId = ($data['user'] ?? [])['uid'] ?? null;
+				$response = $appApiFunctions->exAppRequest($exAppId, $webhookUri, $userId, $webhookListener->getHttpMethod(), [], $options);
 				if (is_array($response) && isset($response['error'])) {
 					throw new RuntimeException(sprintf('Error during request to ExApp(%s): %s', $exAppId, $response['error']));
 				}

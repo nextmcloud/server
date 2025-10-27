@@ -19,9 +19,9 @@ export function createShare(fileName: string, username: string, shareSettings: P
 	openSharingPanel(fileName)
 
 	cy.get('#app-sidebar-vue').within(() => {
-		cy.get('#sharing-search-input').clear()
 		cy.intercept({ times: 1, method: 'GET', url: '**/apps/files_sharing/api/v1/sharees?*' }).as('userSearch')
-		cy.get('#sharing-search-input').type(username)
+		cy.findByRole('combobox', { name: /Search for share recipients/i })
+			.type(`{selectAll}${username}`)
 		cy.wait('@userSearch')
 	})
 
@@ -76,6 +76,17 @@ export function updateShare(fileName: string, index: number, shareSettings: Part
 			} else {
 				// Force:true because the checkbox is hidden by the pretty UI.
 				cy.get('@updateCheckbox').uncheck({ force: true, scrollBehavior: 'nearest' })
+			}
+		}
+
+		if (shareSettings.create !== undefined) {
+			cy.get('[data-cy-files-sharing-share-permissions-checkbox="create"]').find('input').as('createCheckbox')
+			if (shareSettings.create) {
+				// Force:true because the checkbox is hidden by the pretty UI.
+				cy.get('@createCheckbox').check({ force: true, scrollBehavior: 'nearest' })
+			} else {
+				// Force:true because the checkbox is hidden by the pretty UI.
+				cy.get('@createCheckbox').uncheck({ force: true, scrollBehavior: 'nearest' })
 			}
 		}
 

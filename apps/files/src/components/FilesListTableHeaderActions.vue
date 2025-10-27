@@ -6,6 +6,7 @@
 	<div class="files-list__column files-list__row-actions-batch">
 		<NcActions ref="actionsMenu"
 			container="#app-content-vue"
+			:boundaries-element="boundariesElement"
 			:disabled="!!loading || areSomeNodesLoading"
 			:force-name="true"
 			:inline="inlineActions"
@@ -14,6 +15,7 @@
 			<NcActionButton v-for="action in enabledActions"
 				:key="action.id"
 				:class="'files-list__row-actions-batch-' + action.id"
+				:data-cy-files-list-selection-action="action.id"
 				@click="onActionClick(action)">
 				<template #icon>
 					<NcLoadingIcon v-if="loading === action.id" :size="18" />
@@ -78,10 +80,15 @@ export default defineComponent({
 		const actionsMenuStore = useActionsMenuStore()
 		const filesStore = useFilesStore()
 		const selectionStore = useSelectionStore()
+
+		const boundariesElement = document.getElementById('app-content-vue')
+
 		return {
 			actionsMenuStore,
 			filesStore,
 			selectionStore,
+
+			boundariesElement,
 		}
 	},
 
@@ -179,7 +186,7 @@ export default defineComponent({
 						return
 					}
 
-					showError(this.t('files', '"{displayName}" failed on some elements ', { displayName }))
+					showError(this.t('files', '"{displayName}" failed on some elements', { displayName }))
 					return
 				}
 

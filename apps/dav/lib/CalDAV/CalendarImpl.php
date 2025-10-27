@@ -11,6 +11,7 @@ namespace OCA\DAV\CalDAV;
 use OCA\DAV\CalDAV\Auth\CustomPrincipalPlugin;
 use OCA\DAV\CalDAV\InvitationResponse\InvitationResponseServer;
 use OCP\Calendar\Exceptions\CalendarException;
+use OCP\Calendar\ICalendarIsEnabled;
 use OCP\Calendar\ICreateFromString;
 use OCP\Calendar\IHandleImipMessage;
 use OCP\Constants;
@@ -24,7 +25,7 @@ use Sabre\VObject\Property;
 use Sabre\VObject\Reader;
 use function Sabre\Uri\split as uriSplit;
 
-class CalendarImpl implements ICreateFromString, IHandleImipMessage {
+class CalendarImpl implements ICreateFromString, IHandleImipMessage, ICalendarIsEnabled {
 	private CalDavBackend $backend;
 	private Calendar $calendar;
 	/** @var array<string, mixed> */
@@ -84,7 +85,7 @@ class CalendarImpl implements ICreateFromString, IHandleImipMessage {
 		/** @var VCalendar $vobj */
 		$vobj = Reader::read($timezoneProp);
 		$components = $vobj->getComponents();
-		if(empty($components)) {
+		if (empty($components)) {
 			return null;
 		}
 		/** @var VTimeZone $vtimezone */
@@ -96,7 +97,7 @@ class CalendarImpl implements ICreateFromString, IHandleImipMessage {
 	 * @param string $pattern which should match within the $searchProperties
 	 * @param array $searchProperties defines the properties within the query pattern should match
 	 * @param array $options - optional parameters:
-	 * 	['timerange' => ['start' => new DateTime(...), 'end' => new DateTime(...)]]
+	 *                       ['timerange' => ['start' => new DateTime(...), 'end' => new DateTime(...)]]
 	 * @param int|null $limit - limit number of search results
 	 * @param int|null $offset - offset for paging of search results
 	 * @return array an array of events/journals/todos which are arrays of key-value-pairs
@@ -130,6 +131,13 @@ class CalendarImpl implements ICreateFromString, IHandleImipMessage {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @since 30.0.12
+	 */
+	public function isEnabled(): bool {
+		return $this->calendarInfo['{http://owncloud.org/ns}calendar-enabled'] ?? true;
 	}
 
 	/**
@@ -233,7 +241,7 @@ class CalendarImpl implements ICreateFromString, IHandleImipMessage {
 		}
 		$iTipMessage->uid = isset($vEvent->{'UID'}) ? $vEvent->{'UID'}->getValue() : '';
 		$iTipMessage->component = 'VEVENT';
-		$iTipMessage->sequence = isset($vEvent->{'SEQUENCE'}) ? (int)$vEvent->{'SEQUENCE'}->getValue() : 0;
+		$iTipMessage->sequence = isset($vEvent->{'SEQUENCE'}) ? (int) $vEvent->{'SEQUENCE'}->getValue() : 0;
 		$iTipMessage->message = $vObject;
 		$server->server->emit('schedule', [$iTipMessage]);
 	}

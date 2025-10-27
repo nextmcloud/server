@@ -17,6 +17,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class SetConfig extends Base {
 	public function __construct(
 		SystemConfig $systemConfig,
+		private CastHelper $castHelper,
 	) {
 		parent::__construct($systemConfig);
 	}
@@ -57,7 +58,7 @@ class SetConfig extends Base {
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$configNames = $input->getArgument('name');
 		$configName = $configNames[0];
-		$configValue = $this->castValue($input->getOption('value'), $input->getOption('type'));
+		$configValue = $this->castHelper->castValue($input->getOption('value'), $input->getOption('type'));
 		$updateOnly = $input->getOption('update-only');
 
 		if (count($configNames) > 1) {
@@ -104,8 +105,8 @@ class SetConfig extends Base {
 					throw new \InvalidArgumentException('Non-numeric value specified');
 				}
 				return [
-					'value' => (double) $value,
-					'readable-value' => 'double ' . (double) $value,
+					'value' => (float) $value,
+					'readable-value' => 'double ' . (float) $value,
 				];
 
 			case 'boolean':
@@ -140,6 +141,13 @@ class SetConfig extends Base {
 				return [
 					'value' => $value,
 					'readable-value' => ($value === '') ? 'empty string' : 'string ' . $value,
+				];
+
+			case 'json':
+				$value = json_decode($value, true);
+				return [
+					'value' => $value,
+					'readable-value' => 'json ' . json_encode($value),
 				];
 
 			default:
@@ -183,7 +191,7 @@ class SetConfig extends Base {
 	 */
 	public function completeOptionValues($optionName, CompletionContext $context) {
 		if ($optionName === 'type') {
-			return ['string', 'integer', 'double', 'boolean'];
+			return ['string', 'integer', 'double', 'boolean', 'json', 'null'];
 		}
 		return parent::completeOptionValues($optionName, $context);
 	}

@@ -55,7 +55,7 @@ class Cache implements ICache {
 	protected array $partial = [];
 	protected string $storageId;
 	protected Storage $storageCache;
-	protected IMimeTypeLoader$mimetypeLoader;
+	protected IMimeTypeLoader $mimetypeLoader;
 	protected IDBConnection $connection;
 	protected SystemConfig $systemConfig;
 	protected LoggerInterface $logger;
@@ -151,29 +151,32 @@ class Cache implements ICache {
 	 */
 	public static function cacheEntryFromData($data, IMimeTypeLoader $mimetypeLoader) {
 		//fix types
-		$data['name'] = (string)$data['name'];
-		$data['path'] = (string)$data['path'];
-		$data['fileid'] = (int)$data['fileid'];
-		$data['parent'] = (int)$data['parent'];
+		$data['name'] = (string) $data['name'];
+		$data['path'] = (string) $data['path'];
+		$data['fileid'] = (int) $data['fileid'];
+		$data['parent'] = (int) $data['parent'];
 		$data['size'] = Util::numericToNumber($data['size']);
 		$data['unencrypted_size'] = Util::numericToNumber($data['unencrypted_size'] ?? 0);
-		$data['mtime'] = (int)$data['mtime'];
-		$data['storage_mtime'] = (int)$data['storage_mtime'];
-		$data['encryptedVersion'] = (int)$data['encrypted'];
-		$data['encrypted'] = (bool)$data['encrypted'];
+		$data['mtime'] = (int) $data['mtime'];
+		$data['storage_mtime'] = (int) $data['storage_mtime'];
+		$data['encryptedVersion'] = (int) $data['encrypted'];
+		$data['encrypted'] = (bool) $data['encrypted'];
 		$data['storage_id'] = $data['storage'];
-		$data['storage'] = (int)$data['storage'];
+		$data['storage'] = (int) $data['storage'];
 		$data['mimetype'] = $mimetypeLoader->getMimetypeById($data['mimetype']);
 		$data['mimepart'] = $mimetypeLoader->getMimetypeById($data['mimepart']);
 		if ($data['storage_mtime'] == 0) {
 			$data['storage_mtime'] = $data['mtime'];
 		}
-		$data['permissions'] = (int)$data['permissions'];
+		if (isset($data['f_permissions'])) {
+			$data['scan_permissions'] = $data['f_permissions'];
+		}
+		$data['permissions'] = (int) $data['permissions'];
 		if (isset($data['creation_time'])) {
-			$data['creation_time'] = (int)$data['creation_time'];
+			$data['creation_time'] = (int) $data['creation_time'];
 		}
 		if (isset($data['upload_time'])) {
-			$data['upload_time'] = (int)$data['upload_time'];
+			$data['upload_time'] = (int) $data['upload_time'];
 		}
 		return new CacheEntry($data);
 	}
@@ -472,7 +475,7 @@ class Cache implements ICache {
 		$id = $result->fetchOne();
 		$result->closeCursor();
 
-		return $id === false ? -1 : (int)$id;
+		return $id === false ? -1 : (int) $id;
 	}
 
 	/**
@@ -486,7 +489,7 @@ class Cache implements ICache {
 			return -1;
 		} else {
 			$parent = $this->getParentPath($file);
-			return (int)$this->getId($parent);
+			return (int) $this->getId($parent);
 		}
 	}
 
@@ -658,7 +661,7 @@ class Cache implements ICache {
 
 			$sourceData = $sourceCache->get($sourcePath);
 			if (!$sourceData) {
-				throw new \Exception('Invalid source storage path: ' . $sourcePath);
+				throw new \Exception('Source path not found in cache: ' . $sourcePath);
 			}
 
 			$shardDefinition = $this->connection->getShardDefinition('filecache');
@@ -835,7 +838,7 @@ class Cache implements ICache {
 		$result->closeCursor();
 
 		if ($size !== false) {
-			if ((int)$size === -1) {
+			if ((int) $size === -1) {
 				return self::SHALLOW;
 			} else {
 				return self::COMPLETE;
@@ -864,7 +867,7 @@ class Cache implements ICache {
 	 * search for files by mimetype
 	 *
 	 * @param string $mimetype either a full mimetype to search ('text/plain') or only the first part of a mimetype ('image')
-	 *        where it will search for all mimetypes in the group ('image/*')
+	 *                         where it will search for all mimetypes in the group ('image/*')
 	 * @return ICacheEntry[] an array of cache entries where the mimetype matches the search
 	 */
 	public function searchByMime($mimetype) {
@@ -917,10 +920,10 @@ class Cache implements ICache {
 				->from('filecache')
 				->whereParent($fileId)
 				->whereStorageId($this->getNumericStorageId())
-				->andWhere($query->expr()->lt('size', $query->createNamedParameter(0, IQueryBuilder::PARAM_INT)));
+				->andWhere($query->expr()->eq('size', $query->createNamedParameter(-1, IQueryBuilder::PARAM_INT)));
 
 			$result = $query->execute();
-			$size = (int)$result->fetchOne();
+			$size = (int) $result->fetchOne();
 			$result->closeCursor();
 
 			return $size;
@@ -1044,7 +1047,7 @@ class Cache implements ICache {
 		$result->closeCursor();
 
 		return array_map(function ($id) {
-			return (int)$id;
+			return (int) $id;
 		}, $files);
 	}
 
@@ -1058,28 +1061,19 @@ class Cache implements ICache {
 	 * @return string|false the path of the folder or false when no folder matched
 	 */
 	public function getIncomplete() {
-		// we select the fileid here first instead of directly selecting the path since this helps mariadb/mysql
-		// to use the correct index.
-		// The overhead of this should be minimal since the cost of selecting the path by id should be much lower
-		// than the cost of finding an item with size < 0
 		$query = $this->getQueryBuilder();
-		$query->select('fileid')
+		$query->select('path')
 			->from('filecache')
 			->whereStorageId($this->getNumericStorageId())
-			->andWhere($query->expr()->lt('size', $query->createNamedParameter(0, IQueryBuilder::PARAM_INT)))
+			->andWhere($query->expr()->eq('size', $query->createNamedParameter(-1, IQueryBuilder::PARAM_INT)))
 			->orderBy('fileid', 'DESC')
 			->setMaxResults(1);
 
 		$result = $query->execute();
-		$id = $result->fetchOne();
+		$path = $result->fetchOne();
 		$result->closeCursor();
 
-		if ($id === false) {
-			return false;
-		}
-
-		$path = $this->getPathById($id);
-		return $path ?? false;
+		return $path === false ? false : (string) $path;
 	}
 
 	/**
@@ -1103,7 +1097,7 @@ class Cache implements ICache {
 			return null;
 		}
 
-		return (string)$path;
+		return (string) $path;
 	}
 
 	/**
@@ -1159,7 +1153,7 @@ class Cache implements ICache {
 	 */
 	public function copyFromCache(ICache $sourceCache, ICacheEntry $sourceEntry, string $targetPath): int {
 		if ($sourceEntry->getId() < 0) {
-			throw new \RuntimeException("Invalid source cache entry on copyFromCache");
+			throw new \RuntimeException('Invalid source cache entry on copyFromCache');
 		}
 		$data = $this->cacheEntryToArray($sourceEntry);
 
@@ -1170,7 +1164,7 @@ class Cache implements ICache {
 
 		$fileId = $this->put($targetPath, $data);
 		if ($fileId <= 0) {
-			throw new \RuntimeException("Failed to copy to " . $targetPath . " from cache with source data " . json_encode($data) . " ");
+			throw new \RuntimeException('Failed to copy to ' . $targetPath . ' from cache with source data ' . json_encode($data) . ' ');
 		}
 		if ($sourceEntry->getMimeType() === ICacheEntry::DIRECTORY_MIMETYPE) {
 			$folderContent = $sourceCache->getFolderContentsById($sourceEntry->getId());
@@ -1183,7 +1177,7 @@ class Cache implements ICache {
 	}
 
 	private function cacheEntryToArray(ICacheEntry $entry): array {
-		return [
+		$data = [
 			'size' => $entry->getSize(),
 			'mtime' => $entry->getMTime(),
 			'storage_mtime' => $entry->getStorageMTime(),
@@ -1196,6 +1190,10 @@ class Cache implements ICache {
 			'upload_time' => $entry->getUploadTime(),
 			'metadata_etag' => $entry->getMetadataEtag(),
 		];
+		if ($entry instanceof CacheEntry && isset($entry['scan_permissions'])) {
+			$data['permissions'] = $entry['scan_permissions'];
+		}
+		return $data;
 	}
 
 	public function getQueryFilterForStorage(): ISearchOperator {

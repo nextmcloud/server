@@ -38,8 +38,9 @@ class UserStatusAutomation extends TimedJob {
 		private IUserManager $userManager) {
 		parent::__construct($timeFactory);
 
-		// Interval 0 might look weird, but the last_checked is always moved
-		// to the next time we need this and then it's 0 seconds ago.
+		// interval = 0 might look odd, but it's intentional. last_run is set to
+		// the user's next available time, so the job runs immediately when
+		// that time comes.
 		$this->setInterval(0);
 	}
 
@@ -55,14 +56,14 @@ class UserStatusAutomation extends TimedJob {
 
 		$userId = $argument['userId'];
 		$user = $this->userManager->get($userId);
-		if($user === null) {
+		if ($user === null) {
 			return;
 		}
 
 		$ooo = $this->coordinator->getCurrentOutOfOfficeData($user);
 
 		$continue = $this->processOutOfOfficeData($user, $ooo);
-		if($continue === false) {
+		if ($continue === false) {
 			return;
 		}
 
@@ -150,7 +151,7 @@ class UserStatusAutomation extends TimedJob {
 					$effectiveEnd = \DateTime::createFromImmutable($originalEnd)->sub(new \DateInterval('P7D'));
 
 					try {
-						$it = new RRuleIterator((string)$available->RRULE, $effectiveStart);
+						$it = new RRuleIterator((string) $available->RRULE, $effectiveStart);
 						$it->fastForward($lastMidnight);
 
 						$startToday = $it->current();
@@ -196,7 +197,7 @@ class UserStatusAutomation extends TimedJob {
 			return;
 		}
 
-		if(!$hasDndForOfficeHours) {
+		if (!$hasDndForOfficeHours) {
 			// Office hours are not set to DND, so there is nothing to do.
 			return;
 		}
@@ -207,7 +208,7 @@ class UserStatusAutomation extends TimedJob {
 	}
 
 	private function processOutOfOfficeData(IUser $user, ?IOutOfOfficeData $ooo): bool {
-		if(empty($ooo)) {
+		if (empty($ooo)) {
 			// Reset the user status if the absence doesn't exist
 			$this->logger->debug('User has no OOO period in effect, reverting DND status if applicable');
 			$this->manager->revertUserStatus($user->getUID(), IUserStatus::MESSAGE_OUT_OF_OFFICE, IUserStatus::DND);
@@ -215,12 +216,12 @@ class UserStatusAutomation extends TimedJob {
 			return true;
 		}
 
-		if(!$this->coordinator->isInEffect($ooo)) {
+		if (!$this->coordinator->isInEffect($ooo)) {
 			// Reset the user status if the absence is (no longer) in effect
 			$this->logger->debug('User has no OOO period in effect, reverting DND status if applicable');
 			$this->manager->revertUserStatus($user->getUID(), IUserStatus::MESSAGE_OUT_OF_OFFICE, IUserStatus::DND);
 
-			if($ooo->getStartDate() > $this->time->getTime()) {
+			if ($ooo->getStartDate() > $this->time->getTime()) {
 				// Set the next run to take place at the start of the ooo period if it is in the future
 				// This might be overwritten if there is an availability setting, but we can't determine
 				// if this is the case here

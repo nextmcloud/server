@@ -105,11 +105,11 @@ class Directory extends \OCA\DAV\Connector\Sabre\Node implements \Sabre\DAV\ICol
 
 			// only allow 1 process to upload a file at once but still allow reading the file while writing the part file
 			$node->acquireLock(ILockingProvider::LOCK_SHARED);
-			$this->fileView->lockFile($path . '.upload.part', ILockingProvider::LOCK_EXCLUSIVE);
+			$this->fileView->lockFile($this->path . '/' . $name . '.upload.part', ILockingProvider::LOCK_EXCLUSIVE);
 
 			$result = $node->put($data);
 
-			$this->fileView->unlockFile($path . '.upload.part', ILockingProvider::LOCK_EXCLUSIVE);
+			$this->fileView->unlockFile($this->path . '/' . $name . '.upload.part', ILockingProvider::LOCK_EXCLUSIVE);
 			$node->releaseLock(ILockingProvider::LOCK_SHARED);
 			return $result;
 		} catch (\OCP\Files\StorageNotAvailableException $e) {
@@ -294,7 +294,7 @@ class Directory extends \OCA\DAV\Connector\Sabre\Node implements \Sabre\DAV\ICol
 		}
 		$relativePath = $this->fileView->getRelativePath($this->info->getPath());
 		if ($relativePath === null) {
-			$this->getLogger()->warning("error while getting quota as the relative path cannot be found");
+			$this->getLogger()->warning('error while getting quota as the relative path cannot be found');
 			return [0, 0];
 		}
 
@@ -311,13 +311,13 @@ class Directory extends \OCA\DAV\Connector\Sabre\Node implements \Sabre\DAV\ICol
 			];
 			return $this->quotaInfo;
 		} catch (\OCP\Files\NotFoundException $e) {
-			$this->getLogger()->warning("error while getting quota into", ['exception' => $e]);
+			$this->getLogger()->warning('error while getting quota into', ['exception' => $e]);
 			return [0, 0];
 		} catch (\OCP\Files\StorageNotAvailableException $e) {
-			$this->getLogger()->warning("error while getting quota into", ['exception' => $e]);
+			$this->getLogger()->warning('error while getting quota into', ['exception' => $e]);
 			return [0, 0];
 		} catch (NotPermittedException $e) {
-			$this->getLogger()->warning("error while getting quota into", ['exception' => $e]);
+			$this->getLogger()->warning('error while getting quota into', ['exception' => $e]);
 			return [0, 0];
 		}
 	}
@@ -445,7 +445,13 @@ class Directory extends \OCA\DAV\Connector\Sabre\Node implements \Sabre\DAV\ICol
 					throw new InvalidPath($ex->getMessage());
 				}
 
-				return $this->fileView->copy($sourcePath, $destinationPath);
+				$copyOkay = $this->fileView->copy($sourcePath, $destinationPath);
+
+				if (!$copyOkay) {
+					throw new \Sabre\DAV\Exception\Forbidden('Copy did not proceed');
+				}
+
+				return true;
 			} catch (StorageNotAvailableException $e) {
 				throw new ServiceUnavailable($e->getMessage(), $e->getCode(), $e);
 			} catch (ForbiddenException $ex) {

@@ -288,8 +288,9 @@ $CONFIG = [
 
 /**
  * The directory where the skeleton files are located. These files will be
- * copied to the data directory of new users. Leave empty to not copy any
- * skeleton files.
+ * copied to the data directory of new users. Set empty string to not copy any
+ * skeleton files. If unset and templatedirectory is empty string, shipped
+ * templates will be used to create a template directory for the user.
  * ``{lang}`` can be used as a placeholder for the language of the user.
  * If the directory does not exist, it falls back to non dialect (from ``de_DE``
  * to ``de``). If that does not exist either, it falls back to ``default``
@@ -298,18 +299,16 @@ $CONFIG = [
  */
 'skeletondirectory' => '/path/to/nextcloud/core/skeleton',
 
-
 /**
  * The directory where the template files are located. These files will be
- * copied to the template directory of new users. Leave empty to not copy any
+ * copied to the template directory of new users. Set empty string to not copy any
  * template files.
  * ``{lang}`` can be used as a placeholder for the language of the user.
  * If the directory does not exist, it falls back to non dialect (from ``de_DE``
  * to ``de``). If that does not exist either, it falls back to ``default``
  *
- * If this is not set creating a template directory will only happen if no custom
- * ``skeletondirectory`` is defined, otherwise the shipped templates will be used
- * to create a template directory for the user.
+ * To disable creating a template directory, set both skeletondirectory and
+ * templatedirectory to empty strings.
  */
 'templatedirectory' => '/path/to/nextcloud/templates',
 
@@ -421,6 +420,16 @@ $CONFIG = [
 'ratelimit.protection.enabled' => true,
 
 /**
+ * Size of subnet used to normalize IPv6
+ *
+ * For Brute Force Protection and Rate Limiting, IPv6 are truncated using subnet size.
+ * It defaults to /56 but you can set it between /32 and /64
+ *
+ * Defaults to ``56``
+ */
+'security.ipv6_normalized_subnet_size' => 56,
+
+/**
  * By default, WebAuthn is available, but it can be explicitly disabled by admins
  */
 'auth.webauthn.enabled' => true,
@@ -493,7 +502,7 @@ $CONFIG = [
 
 /**
  * Enable SMTP class debugging.
- * NOTE: ``loglevel`` will likely need to be adjusted too. See docs: 
+ * NOTE: ``loglevel`` will likely need to be adjusted too. See docs:
  *   https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/email_configuration.html#enabling-debug-mode
  *
  * Defaults to ``false``
@@ -654,7 +663,7 @@ $CONFIG = [
  * are generated within Nextcloud using any kind of command line tools (cron or
  * occ). The value should contain the full base URL:
  * ``https://www.example.com/nextcloud``
- * Please make sure to set the value to the URL that your users mainly use to access this Nextcloud. 
+ * Please make sure to set the value to the URL that your users mainly use to access this Nextcloud.
  * Otherwise there might be problems with the URL generation via cron.
  *
  * Defaults to ``''`` (empty string)
@@ -1314,18 +1323,18 @@ $CONFIG = [
 /**
  * custom path for ffmpeg binary
  *
- * Defaults to ``null`` and falls back to searching ``avconv`` and ``ffmpeg`` 
+ * Defaults to ``null`` and falls back to searching ``avconv`` and ``ffmpeg``
  * in the configured ``PATH`` environment
  */
 'preview_ffmpeg_path' => '/usr/bin/ffmpeg',
 
 /**
  * Set the URL of the Imaginary service to send image previews to.
- * Also requires the ``OC\Preview\Imaginary`` provider to be enabled in the 
- * ``enabledPreviewProviders`` array, to create previews for these mimetypes: bmp, 
+ * Also requires the ``OC\Preview\Imaginary`` provider to be enabled in the
+ * ``enabledPreviewProviders`` array, to create previews for these mimetypes: bmp,
  * x-bitmap, png, jpeg, gif, heic, heif, svg+xml, tiff, webp and illustrator.
  *
- * If you want Imaginary to also create preview images from PDF Documents, you 
+ * If you want Imaginary to also create preview images from PDF Documents, you
  * have to add the ``OC\Preview\ImaginaryPDF`` provider as well.
  *
  * See https://github.com/h2non/imaginary
@@ -1522,7 +1531,7 @@ $CONFIG = [
  *
  * Defaults to ``none``
  */
-'memcache.local' => '\OC\Memcache\APCu',
+'memcache.local' => '\\OC\\Memcache\\APCu',
 
 /**
  * Memory caching backend for distributed data
@@ -1532,7 +1541,7 @@ $CONFIG = [
  *
  * Defaults to ``none``
  */
-'memcache.distributed' => '\OC\Memcache\Memcached',
+'memcache.distributed' => '\\OC\\Memcache\\Memcached',
 
 /**
  * Connection details for redis to use for memory caching in a single server configuration.
@@ -1970,6 +1979,17 @@ $CONFIG = [
 'mysql.collation' => null,
 
 /**
+ * PostgreSQL SSL connection
+ */
+'pgsql_ssl' => [
+	'mode' => '',
+	'cert' => '',
+	'rootcert' => '',
+	'key' => '',
+	'crl' => '',
+],
+
+/**
  * Database types that are supported for installation.
  *
  * Available:
@@ -2057,9 +2077,9 @@ $CONFIG = [
 /**
  * Deny extensions from being used for filenames.
  * Matching existing files can no longer be updated and in matching folders no files can be created anymore.
- * 
+ *
  * The '.part' extension is always forbidden, as this is used internally by Nextcloud.
- * 
+ *
  * Defaults to ``array('.filepart', '.part')``
  */
 'forbidden_filename_extensions' => ['.part', '.filepart'],
@@ -2078,6 +2098,14 @@ $CONFIG = [
  * E.g. dark, dark-highcontrast, default, light, light-highcontrast, opendyslexic
  */
 'enforce_theme' => '',
+
+
+/**
+ * This setting allows to disable the PWA functionality that allows browsers to open web applications in dedicated windows.
+ *
+ * Defaults to ``true``
+ */
+'theming.standalone_window.enabled' => true,
 
 /**
  * The default cipher for encrypting files. Currently supported are:
@@ -2112,6 +2140,15 @@ $CONFIG = [
  * Defaults to ``2.3.0``
  */
 'minimum.supported.desktop.version' => '2.3.0',
+
+/**
+ * The maximum Nextcloud desktop client version that will be allowed to sync with
+ * this server instance. All connections made from later clients will be denied
+ * by the server.
+ *
+ * Defaults to 99.99.99
+ */
+'maximum.supported.desktop.version' => '99.99.99',
 
 /**
  * Option to allow local storage to contain symlinks.

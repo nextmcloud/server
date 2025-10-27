@@ -136,7 +136,8 @@ abstract class AUserData extends OCSController {
 			$additionalEmails = $additionalEmailScopes = [];
 			$emailCollection = $userAccount->getPropertyCollection(IAccountManager::COLLECTION_EMAIL);
 			foreach ($emailCollection->getProperties() as $property) {
-				$additionalEmails[] = $property->getValue();
+				$email = mb_strtolower(trim($property->getValue()));
+				$additionalEmails[] = $email;
 				if ($includeScopes) {
 					$additionalEmailScopes[] = $property->getScope();
 				}
@@ -274,7 +275,7 @@ abstract class AUserData extends OCSController {
 			];
 		} catch (\Exception $e) {
 			\OC::$server->get(\Psr\Log\LoggerInterface::class)->error(
-				"Could not load storage info for {user}",
+				'Could not load storage info for {user}',
 				[
 					'app' => 'provisioning_api',
 					'user' => $userId,

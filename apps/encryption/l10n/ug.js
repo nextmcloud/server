@@ -35,8 +35,6 @@ OC.L10N.register(
     "Cannot decrypt this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "بۇ ھۆججەتنى يېشىش مۇمكىن ئەمەس ، بەلكىم بۇ ئورتاق ھۆججەت بولۇشى مۇمكىن. ھۆججەت ئىگىسىدىن ھۆججەتنى سىز بىلەن ئورتاقلىشىشنى تەلەپ قىلىڭ.",
     "Cannot read this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "بۇ ھۆججەتنى ئوقۇيالمايدۇ ، بەلكىم بۇ ئورتاق ھۆججەت بولۇشى مۇمكىن. ھۆججەت ئىگىسىدىن ھۆججەتنى سىز بىلەن ئورتاقلىشىشنى تەلەپ قىلىڭ.",
     "Default encryption module" : "كۆڭۈلدىكى مەخپىيلەشتۈرۈش مودۇلى",
-    "Default encryption module for server-side encryption" : "مۇلازىمېتىر تەرەپ شىفىرلاشنىڭ كۆڭۈلدىكى مەخپىيلەشتۈرۈش مودۇلى",
-    "In order to use this encryption module you need to enable server-side encryption in the admin settings. Once enabled this module will encrypt all your files transparently. The encryption is based on AES 256 keys.\nThe module will not touch existing files, only new files will be encrypted after server-side encryption was enabled. It is also not possible to disable the encryption again and switch back to an unencrypted system.\nPlease read the documentation to know all implications before you decide to enable server-side encryption." : "بۇ مەخپىيلەشتۈرۈش مودۇلىنى ئىشلىتىش ئۈچۈن ، باشقۇرۇش تەڭشەكلىرىدە مۇلازىمېتىر تەرەپ مەخپىيلەشتۈرۈشنى قوزغىتىشىڭىز كېرەك. بۇ مودۇل قوزغىتىلغاندىن كېيىن بارلىق ھۆججەتلىرىڭىزنى ئوچۇق شىفىرلايدۇ. شىفىرلاش AES 256 كۇنۇپكىسىنى ئاساس قىلغان.\nبۇ بۆلەك مەۋجۇت ھۆججەتلەرگە تەگمەيدۇ ، پەقەت يېڭى ھۆججەتلەر مۇلازىمېتىر تەرەپ شىفىرلانغاندىن كېيىن شىفىرلىنىدۇ. مەخپىيلەشتۈرۈشنى قايتا چەكلەش ۋە شىفىرلانمىغان سىستېمىغا قايتىش مۇمكىن ئەمەس.\nمۇلازىمېتىرنى مەخپىيلەشتۈرۈشنى قارار قىلىشتىن ئىلگىرى بارلىق تەسىرلەرنى بىلىش ئۈچۈن ھۆججەتلەرنى ئوقۇڭ.",
     "Encryption app is enabled but your keys are not initialized, please log-out and log-in again" : "شىفىرلاش دېتالى قوزغىتىلغان ، ئەمما ئاچقۇچلىرىڭىز دەسلەپكى قەدەمدە قوزغىتىلمىغان ، قايتا كىرىپ قايتا كىرىڭ",
     "Encrypt the home storage" : "ئۆي ئامبىرىنى مەخپىيلەشتۈرۈڭ",
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "بۇ تاللاشنى قوزغىتىش ئاساسلىق ساقلاش بوشلۇقىدا ساقلانغان بارلىق ھۆججەتلەرنى مەخپىيلەشتۈرىدۇ ، بولمىسا پەقەت سىرتقى ساقلىغۇچتىكى ھۆججەتلەرلا شىفىرلىنىدۇ",
@@ -53,7 +51,6 @@ OC.L10N.register(
     "Basic encryption module" : "ئاساسىي مەخپىيلەشتۈرۈش مودۇلى",
     "Your private key password no longer matches your log-in password." : "شەخسىي ئاچقۇچ پارولىڭىز كىرىش پارولىڭىزغا ماس كەلمەيدۇ.",
     "Set your old private key password to your current log-in password:" : "كونا شەخسىي پارولىڭىزنى نۆۋەتتىكى كىرىش پارولىڭىزغا تەڭشەڭ:",
-    " If you don't remember your old password you can ask your administrator to recover your files." : " كونا پارولىڭىزنى ئېسىڭىزدە تۇتمىسىڭىز باشقۇرغۇچىڭىزدىن ھۆججەتلىرىڭىزنى ئەسلىگە كەلتۈرۈشنى تەلەپ قىلسىڭىز بولىدۇ.",
     "Old log-in password" : "كونا كىرىش پارولى",
     "Current log-in password" : "نۆۋەتتىكى كىرىش پارولى",
     "Update Private Key Password" : "شەخسىي ئاچقۇچ پارولىنى يېڭىلاڭ",
@@ -61,6 +58,7 @@ OC.L10N.register(
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "بۇ تاللانمىنى قوزغاتسىڭىز مەخپىي شىفىرلانغان ھۆججەتلەرنى مەخپىي شىفىرىڭىز يوقاپ كەتكەن ئەھۋال ئاستىدا قايتا زىيارەت قىلالايسىز",
     "Enabled" : "قوزغىتىلدى",
     "Disabled" : "چەكلەنگەن",
-    "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "ئەسلىگە كەلتۈرۈش ئاچقۇچى ھۆججەتلەرنى مەخپىيلەشتۈرۈش ئۈچۈن ئىشلىتىلىدىغان قوشۇمچە شىفىرلاش ئاچقۇچى. ئەگەر ئىشلەتكۈچى مەخپىي نومۇرىنى ئۇنتۇپ قالسا ، ئىشلەتكۈچىنىڭ ھۆججەتلىرىنى ئەسلىگە كەلتۈرەلەيدۇ."
+    "Default encryption module for server-side encryption" : "مۇلازىمېتىر تەرەپ شىفىرلاشنىڭ كۆڭۈلدىكى مەخپىيلەشتۈرۈش مودۇلى",
+    "In order to use this encryption module you need to enable server-side encryption in the admin settings. Once enabled this module will encrypt all your files transparently. The encryption is based on AES 256 keys.\nThe module will not touch existing files, only new files will be encrypted after server-side encryption was enabled. It is also not possible to disable the encryption again and switch back to an unencrypted system.\nPlease read the documentation to know all implications before you decide to enable server-side encryption." : "بۇ مەخپىيلەشتۈرۈش مودۇلىنى ئىشلىتىش ئۈچۈن ، باشقۇرۇش تەڭشەكلىرىدە مۇلازىمېتىر تەرەپ مەخپىيلەشتۈرۈشنى قوزغىتىشىڭىز كېرەك. بۇ مودۇل قوزغىتىلغاندىن كېيىن بارلىق ھۆججەتلىرىڭىزنى ئوچۇق شىفىرلايدۇ. شىفىرلاش AES 256 كۇنۇپكىسىنى ئاساس قىلغان.\nبۇ بۆلەك مەۋجۇت ھۆججەتلەرگە تەگمەيدۇ ، پەقەت يېڭى ھۆججەتلەر مۇلازىمېتىر تەرەپ شىفىرلانغاندىن كېيىن شىفىرلىنىدۇ. مەخپىيلەشتۈرۈشنى قايتا چەكلەش ۋە شىفىرلانمىغان سىستېمىغا قايتىش مۇمكىن ئەمەس.\nمۇلازىمېتىرنى مەخپىيلەشتۈرۈشنى قارار قىلىشتىن ئىلگىرى بارلىق تەسىرلەرنى بىلىش ئۈچۈن ھۆججەتلەرنى ئوقۇڭ."
 },
 "nplurals=2; plural=(n != 1);");

@@ -31,7 +31,6 @@ OC.L10N.register(
     "Cannot decrypt this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Nepavyksta iššifruoti šio failo, tikriausiai, tai yra bendrinamas failas. Paprašykite failo savininko iš naujo pradėti bendrinti su jumis šį failą.",
     "Cannot read this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Nepavyksta perskaityti šio failo, tikriausiai, tai yra bendrinamas failas. Paprašykite failo savininko iš naujo pradėti bendrinti su jumis šį failą.",
     "Default encryption module" : "Numatytasis šifravimo modulis",
-    "Default encryption module for server-side encryption" : "Numatytas šifravimo modulis serverio šifravimui.",
     "Encryption app is enabled but your keys are not initialized, please log-out and log-in again" : "Šifravimo programėlė yra įjungta, tačiau jūsų raktai nėra inicijuoti. Atsijunkite ir dar kartą prisijunkite",
     "Encrypt the home storage" : "Šifruoti saugyklą",
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "Įjungus šią parinktį, bus užšifruoti visi pagrindinėje saugykloje saugomi failai. Priešingu atveju bus užšifruoti tik išorinėje saugykloje esantys failai",
@@ -47,7 +46,6 @@ OC.L10N.register(
     "Basic encryption module" : "Pagrindinis šifravimo modulis",
     "Your private key password no longer matches your log-in password." : "Jūsų privačiojo rakto slaptažodis daugiau nebeatitinka jūsų prisijungimo slaptažodžio.",
     "Set your old private key password to your current log-in password:" : "Nustatykite savo senąjį privačiojo rakto slaptažodį į savo dabartinį prisijungimo slaptažodį:",
-    " If you don't remember your old password you can ask your administrator to recover your files." : "Jei nepamenate savo seno slaptažodžio, galite paprašyti sistemos administratoriaus atkurti jūsų duomenis.",
     "Old log-in password" : "Senas prisijungimo slaptažodis",
     "Current log-in password" : "Dabartinis prisijungimo slaptažodis",
     "Update Private Key Password" : "Atnaujinti privačiojo rakto slaptažodį",
@@ -55,6 +53,6 @@ OC.L10N.register(
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "Šios parinkties įjungimas leis jums iš naujo gauti prieigą prie savo užšifruotų duomenų tuo atveju, jei prarasite slaptažodį",
     "Enabled" : "Įjungta",
     "Disabled" : "Išjungta",
-    "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "Atkūrimo raktas yra papildomas šifravimo raktas, kuris naudojamas failų šifravimui. Jis leidžia atkurti naudotojo failus tuo atveju, jei naudotojas pamirš savo slaptažodį."
+    "Default encryption module for server-side encryption" : "Numatytas šifravimo modulis serverio šifravimui."
 },
 "nplurals=4; plural=(n % 10 == 1 && (n % 100 > 19 || n % 100 < 11) ? 0 : (n % 10 >= 2 && n % 10 <=9) && (n % 100 > 19 || n % 100 < 11) ? 1 : n % 1 != 0 ? 2: 3);");

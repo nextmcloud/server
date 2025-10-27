@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2018-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -95,6 +96,20 @@ class Expiration {
 	}
 
 	/**
+	 * Get minimal retention obligation as a timestamp
+	 *
+	 * @return int|false
+	 */
+	public function getMinAgeAsTimestamp() {
+		$minAge = false;
+		if ($this->isEnabled() && $this->minAge !== self::NO_OBLIGATION) {
+			$time = $this->timeFactory->getTime();
+			$minAge = $time - ($this->minAge * 86400);
+		}
+		return $minAge;
+	}
+
+	/**
 	 * @return bool|int
 	 */
 	public function getMaxAgeAsTimestamp() {
@@ -129,13 +144,13 @@ class Expiration {
 			$this->canPurgeToSaveSpace = true;
 		} elseif ($minValue !== 'auto' && $maxValue === 'auto') {
 			// Keep for X days but delete anytime if space needed
-			$this->minAge = (int)$minValue;
+			$this->minAge = (int) $minValue;
 			$this->maxAge = self::NO_OBLIGATION;
 			$this->canPurgeToSaveSpace = true;
 		} elseif ($minValue === 'auto' && $maxValue !== 'auto') {
 			// Delete anytime if space needed, Delete all older than max automatically
 			$this->minAge = self::NO_OBLIGATION;
-			$this->maxAge = (int)$maxValue;
+			$this->maxAge = (int) $maxValue;
 			$this->canPurgeToSaveSpace = true;
 		} elseif ($minValue !== 'auto' && $maxValue !== 'auto') {
 			// Delete all older than max OR older than min if space needed
@@ -145,8 +160,8 @@ class Expiration {
 				$maxValue = $minValue;
 			}
 
-			$this->minAge = (int)$minValue;
-			$this->maxAge = (int)$maxValue;
+			$this->minAge = (int) $minValue;
+			$this->maxAge = (int) $maxValue;
 			$this->canPurgeToSaveSpace = false;
 		}
 	}

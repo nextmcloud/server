@@ -100,7 +100,7 @@ class RecentContactMapper extends QBMapper {
 			return null;
 		}
 
-		return (int)$row['last_contact'];
+		return (int) $row['last_contact'];
 	}
 
 	public function cleanUp(int $olderThan): void {
@@ -109,6 +109,16 @@ class RecentContactMapper extends QBMapper {
 		$delete = $qb
 			->delete($this->getTableName())
 			->where($qb->expr()->lt('last_contact', $qb->createNamedParameter($olderThan)));
+
+		$delete->executeStatement();
+	}
+
+	public function deleteByUserId(string $uid): void {
+		$qb = $this->db->getQueryBuilder();
+
+		$delete = $qb
+			->delete($this->getTableName())
+			->where($qb->expr()->eq('actor_uid', $qb->createNamedParameter($uid)));
 
 		$delete->executeStatement();
 	}

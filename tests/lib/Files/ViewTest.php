@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -20,6 +21,7 @@ use OCP\Cache\CappedMemoryCache;
 use OCP\Constants;
 use OCP\Files\Config\IMountProvider;
 use OCP\Files\FileInfo;
+use OCP\Files\ForbiddenException;
 use OCP\Files\GenericFileException;
 use OCP\Files\Mount\IMountManager;
 use OCP\Files\Storage\IStorage;
@@ -1179,7 +1181,10 @@ class ViewTest extends \Test\TestCase {
 			->getMock();
 
 		$storage2->method('writeStream')
-			->willThrowException(new GenericFileException("Failed to copy stream"));
+			->willThrowException(new GenericFileException('Failed to copy stream'));
+
+		$storage2->method('fopen')
+			->willReturn(false);
 
 		$storage1->mkdir('sub');
 		$storage1->file_put_contents('foo.txt', '0123456789ABCDEFGH');
@@ -1639,10 +1644,7 @@ class ViewTest extends \Test\TestCase {
 		$this->assertTrue($view->rename('mount2', 'sub/moved_mount'), 'Can move a mount point into a subdirectory');
 	}
 
-	/**
-	 * Test that moving a mount point into another is forbidden
-	 */
-	public function testMoveMountPointIntoAnother() {
+	public function testMoveMountPointOverwrite(): void {
 		self::loginAsUser($this->user);
 
 		[$mount1, $mount2] = $this->createTestMovableMountPoints([
@@ -1658,8 +1660,28 @@ class ViewTest extends \Test\TestCase {
 
 		$view = new View('/' . $this->user . '/files/');
 
-		$this->assertFalse($view->rename('mount1', 'mount2'), 'Cannot overwrite another mount point');
-		$this->assertFalse($view->rename('mount1', 'mount2/sub'), 'Cannot move a mount point into another');
+		$this->expectException(ForbiddenException::class);
+		$view->rename('mount1', 'mount2');
+	}
+
+	public function testMoveMountPointIntoMount(): void {
+		self::loginAsUser($this->user);
+
+		[$mount1, $mount2] = $this->createTestMovableMountPoints([
+			$this->user . '/files/mount1',
+			$this->user . '/files/mount2',
+		]);
+
+		$mount1->expects($this->never())
+			->method('moveMount');
+
+		$mount2->expects($this->never())
+			->method('moveMount');
+
+		$view = new View('/' . $this->user . '/files/');
+
+		$this->expectException(ForbiddenException::class);
+		$view->rename('mount1', 'mount2/sub');
 	}
 
 	/**
@@ -1701,9 +1723,24 @@ class ViewTest extends \Test\TestCase {
 			->setNode($shareDir);
 		$shareManager->createShare($share);
 
-		$this->assertFalse($view->rename('mount1', 'shareddir'), 'Cannot overwrite shared folder');
-		$this->assertFalse($view->rename('mount1', 'shareddir/sub'), 'Cannot move mount point into shared folder');
-		$this->assertFalse($view->rename('mount1', 'shareddir/sub/sub2'), 'Cannot move mount point into shared subfolder');
+		try {
+			$view->rename('mount1', 'shareddir');
+			$this->fail('Cannot overwrite shared folder');
+		} catch (ForbiddenException $e) {
+
+		}
+		try {
+			$view->rename('mount1', 'shareddir/sub');
+			$this->fail('Cannot move mount point into shared folder');
+		} catch (ForbiddenException $e) {
+
+		}
+		try {
+			$view->rename('mount1', 'shareddir/sub/sub2');
+			$this->fail('Cannot move mount point into shared subfolder');
+		} catch (ForbiddenException $e) {
+
+		}
 		$this->assertTrue($view->rename('mount2', 'shareddir notshared/sub'), 'Can move mount point into a similarly named but non-shared folder');
 
 		$shareManager->deleteShare($share);
@@ -1844,7 +1881,7 @@ class ViewTest extends \Test\TestCase {
 	 * @param int $expectedLockDuring expected lock during operation
 	 * @param int $expectedLockAfter expected lock during post hooks
 	 * @param int $expectedStrayLock expected lock after returning, should
-	 * be null (unlock) for most operations
+	 *                               be null (unlock) for most operations
 	 */
 	public function testLockBasicOperation(
 		$operation,
@@ -1999,7 +2036,7 @@ class ViewTest extends \Test\TestCase {
 		$path
 	) {
 		if ($operation === 'touch') {
-			$this->markTestSkipped("touch handles storage exceptions internally");
+			$this->markTestSkipped('touch handles storage exceptions internally');
 		}
 		$view = new View('/' . $this->user . '/files/');
 
@@ -2119,7 +2156,7 @@ class ViewTest extends \Test\TestCase {
 	 *
 	 * @param string $operation operation to be done on the view
 	 * @param int $expectedLockTypeSourceDuring expected lock type on source file during
-	 * the operation
+	 *                                          the operation
 	 */
 	public function testLockFileRename($operation, $expectedLockTypeSourceDuring) {
 		$view = new View('/' . $this->user . '/files/');
@@ -2304,7 +2341,7 @@ class ViewTest extends \Test\TestCase {
 	 * @param string $viewOperation operation to be done on the view
 	 * @param string $storageOperation operation to be mocked on the storage
 	 * @param int $expectedLockTypeSourceDuring expected lock type on source file during
-	 * the operation
+	 *                                          the operation
 	 */
 	public function testLockFileRenameCrossStorage($viewOperation, $storageOperation, $expectedLockTypeSourceDuring) {
 		$view = new View('/' . $this->user . '/files/');
@@ -2338,6 +2375,7 @@ class ViewTest extends \Test\TestCase {
 		Filesystem::mount($storage2, [], $this->user . '/files/substorage');
 		$storage->mkdir('files');
 		$view->file_put_contents($sourcePath, 'meh');
+		$storage2->getUpdater()->update('');
 
 		$storage->expects($this->never())
 			->method($storageOperation);
@@ -2442,7 +2480,7 @@ class ViewTest extends \Test\TestCase {
 	 * @param int $lockTypePre variable to receive lock type that was active in the pre-hook
 	 * @param int $lockTypePost variable to receive lock type that was active in the post-hook
 	 * @param bool $onMountPoint true to check the mount point instead of the
-	 * mounted storage
+	 *                           mounted storage
 	 */
 	private function connectMockHooks($hookType, $view, $path, &$lockTypePre, &$lockTypePost, $onMountPoint = false) {
 		if ($hookType === null) {
@@ -2490,7 +2528,7 @@ class ViewTest extends \Test\TestCase {
 	 * @param View $view view
 	 * @param string $path path
 	 * @param bool $onMountPoint true to check the mount point instead of the
-	 * mounted storage
+	 *                           mounted storage
 	 *
 	 * @return int lock type or null if file was not locked
 	 */
@@ -2781,5 +2819,13 @@ class ViewTest extends \Test\TestCase {
 		$this->assertEquals('folder', $folderData[0]['name']);
 		$this->assertEquals('foo.png', $folderData[1]['name']);
 		$this->assertEquals('foo.txt', $folderData[2]['name']);
+	}
+
+	public function testCopyPreservesContent() {
+		$viewUser1 = new View('/' . 'userId' . '/files');
+		$viewUser1->mkdir('');
+		$viewUser1->file_put_contents('foo.txt', 'foo');
+		$viewUser1->copy('foo.txt', 'bar.txt');
+		$this->assertEquals('foo', $viewUser1->file_get_contents('bar.txt'));
 	}
 }

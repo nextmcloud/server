@@ -9,9 +9,10 @@ declare(strict_types=1);
 namespace OCA\DAV\CalDAV;
 
 use OCP\Calendar\ICalendar;
+use OCP\Calendar\ICalendarIsEnabled;
 use OCP\Constants;
 
-class CachedSubscriptionImpl implements ICalendar {
+class CachedSubscriptionImpl implements ICalendar, ICalendarIsEnabled {
 	private CalDavBackend $backend;
 	private CachedSubscription $calendar;
 	/** @var array<string, mixed> */
@@ -62,7 +63,7 @@ class CachedSubscriptionImpl implements ICalendar {
 	 * @param string $pattern which should match within the $searchProperties
 	 * @param array $searchProperties defines the properties within the query pattern should match
 	 * @param array $options - optional parameters:
-	 * 	['timerange' => ['start' => new DateTime(...), 'end' => new DateTime(...)]]
+	 *                       ['timerange' => ['start' => new DateTime(...), 'end' => new DateTime(...)]]
 	 * @param int|null $limit - limit number of search results
 	 * @param int|null $offset - offset for paging of search results
 	 * @return array an array of events/journals/todos which are arrays of key-value-pairs
@@ -88,6 +89,13 @@ class CachedSubscriptionImpl implements ICalendar {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @since 30.0.12
+	 */
+	public function isEnabled(): bool {
+		return $this->calendarInfo['{http://owncloud.org/ns}calendar-enabled'] ?? true;
 	}
 
 	public function isDeleted(): bool {

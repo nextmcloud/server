@@ -10,6 +10,7 @@ namespace OCA\DAV\Tests\unit\CardDAV;
 use OCA\DAV\CardDAV\AddressBook;
 use OCA\DAV\CardDAV\AddressBookImpl;
 use OCA\DAV\CardDAV\CardDavBackend;
+use OCA\DAV\Db\PropertyMapper;
 use OCP\IURLGenerator;
 use Sabre\VObject\Component\VCard;
 use Sabre\VObject\Property\Text;
@@ -17,23 +18,26 @@ use Sabre\VObject\Property\Text;
 use Test\TestCase;
 
 class AddressBookImplTest extends TestCase {
-	/** @var AddressBookImpl  */
+	/** @var AddressBookImpl */
 	private $addressBookImpl;
 
-	/** @var  array */
+	/** @var array */
 	private $addressBookInfo;
 
-	/** @var  AddressBook | \PHPUnit\Framework\MockObject\MockObject */
+	/** @var AddressBook | \PHPUnit\Framework\MockObject\MockObject */
 	private $addressBook;
 
 	/** @var IURLGenerator | \PHPUnit\Framework\MockObject\MockObject */
 	private $urlGenerator;
 
-	/** @var  CardDavBackend | \PHPUnit\Framework\MockObject\MockObject */
+	/** @var CardDavBackend | \PHPUnit\Framework\MockObject\MockObject */
 	private $backend;
 
-	/** @var  VCard | \PHPUnit\Framework\MockObject\MockObject */
+	/** @var VCard | \PHPUnit\Framework\MockObject\MockObject */
 	private $vCard;
+
+	/** @var PropertyMapper | \PHPUnit\Framework\MockObject\MockObject */
+	private $propertyMapper;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -50,17 +54,21 @@ class AddressBookImplTest extends TestCase {
 			->disableOriginalConstructor()->getMock();
 		$this->vCard = $this->createMock(VCard::class);
 		$this->urlGenerator = $this->createMock(IURLGenerator::class);
+		$this->propertyMapper = $this->createMock(PropertyMapper::class);
 
 		$this->addressBookImpl = new AddressBookImpl(
 			$this->addressBook,
 			$this->addressBookInfo,
 			$this->backend,
-			$this->urlGenerator
+			$this->urlGenerator,
+			$this->propertyMapper,
+			null
 		);
 	}
 
 	public function testGetKey(): void {
-		$this->assertSame($this->addressBookInfo['id'],
+		$this->assertIsString($this->addressBookImpl->getKey());
+		$this->assertSame((string) $this->addressBookInfo['id'],
 			$this->addressBookImpl->getKey());
 	}
 
@@ -78,6 +86,8 @@ class AddressBookImplTest extends TestCase {
 					$this->addressBookInfo,
 					$this->backend,
 					$this->urlGenerator,
+					$this->propertyMapper,
+					null
 				]
 			)
 			->setMethods(['vCard2Array', 'readCard'])
@@ -124,6 +134,8 @@ class AddressBookImplTest extends TestCase {
 					$this->addressBookInfo,
 					$this->backend,
 					$this->urlGenerator,
+					$this->propertyMapper,
+					null
 				]
 			)
 			->setMethods(['vCard2Array', 'createUid', 'createEmptyVCard'])
@@ -174,6 +186,8 @@ class AddressBookImplTest extends TestCase {
 					$this->addressBookInfo,
 					$this->backend,
 					$this->urlGenerator,
+					$this->propertyMapper,
+					null
 				]
 			)
 			->setMethods(['vCard2Array', 'createUid', 'createEmptyVCard', 'readCard'])
@@ -211,6 +225,8 @@ class AddressBookImplTest extends TestCase {
 					$this->addressBookInfo,
 					$this->backend,
 					$this->urlGenerator,
+					$this->propertyMapper,
+					null
 				]
 			)
 			->setMethods(['vCard2Array', 'createUid', 'createEmptyVCard', 'readCard'])
@@ -249,14 +265,15 @@ class AddressBookImplTest extends TestCase {
 	public function dataTestGetPermissions() {
 		return [
 			[[], 0],
-			[[['privilege' => '{DAV:}read']], 1],
-			[[['privilege' => '{DAV:}write']], 6],
-			[[['privilege' => '{DAV:}all']], 31],
-			[[['privilege' => '{DAV:}read'],['privilege' => '{DAV:}write']], 7],
-			[[['privilege' => '{DAV:}read'],['privilege' => '{DAV:}all']], 31],
-			[[['privilege' => '{DAV:}all'],['privilege' => '{DAV:}write']], 31],
-			[[['privilege' => '{DAV:}read'],['privilege' => '{DAV:}write'],['privilege' => '{DAV:}all']], 31],
-			[[['privilege' => '{DAV:}all'],['privilege' => '{DAV:}read'],['privilege' => '{DAV:}write']], 31],
+			[[['privilege' => '{DAV:}read', 'principal' => 'principals/system/system']], 1],
+			[[['privilege' => '{DAV:}read', 'principal' => 'principals/system/system'], ['privilege' => '{DAV:}write', 'principal' => 'principals/someone/else']], 1],
+			[[['privilege' => '{DAV:}write', 'principal' => 'principals/system/system']], 6],
+			[[['privilege' => '{DAV:}all', 'principal' => 'principals/system/system']], 31],
+			[[['privilege' => '{DAV:}read', 'principal' => 'principals/system/system'],['privilege' => '{DAV:}write', 'principal' => 'principals/system/system']], 7],
+			[[['privilege' => '{DAV:}read', 'principal' => 'principals/system/system'],['privilege' => '{DAV:}all', 'principal' => 'principals/system/system']], 31],
+			[[['privilege' => '{DAV:}all', 'principal' => 'principals/system/system'],['privilege' => '{DAV:}write', 'principal' => 'principals/system/system']], 31],
+			[[['privilege' => '{DAV:}read', 'principal' => 'principals/system/system'],['privilege' => '{DAV:}write', 'principal' => 'principals/system/system'],['privilege' => '{DAV:}all', 'principal' => 'principals/system/system']], 31],
+			[[['privilege' => '{DAV:}all', 'principal' => 'principals/system/system'],['privilege' => '{DAV:}read', 'principal' => 'principals/system/system'],['privilege' => '{DAV:}write', 'principal' => 'principals/system/system']], 31],
 		];
 	}
 
@@ -292,6 +309,8 @@ class AddressBookImplTest extends TestCase {
 					$this->addressBookInfo,
 					$this->backend,
 					$this->urlGenerator,
+					$this->propertyMapper,
+					null
 				]
 			)
 			->setMethods(['getUid'])
@@ -488,7 +507,9 @@ class AddressBookImplTest extends TestCase {
 			$this->addressBook,
 			$addressBookInfo,
 			$this->backend,
-			$this->urlGenerator
+			$this->urlGenerator,
+			$this->propertyMapper,
+			null
 		);
 
 		$this->assertTrue($addressBookImpl->isSystemAddressBook());
@@ -507,7 +528,9 @@ class AddressBookImplTest extends TestCase {
 			$this->addressBook,
 			$addressBookInfo,
 			$this->backend,
-			$this->urlGenerator
+			$this->urlGenerator,
+			$this->propertyMapper,
+			'user2'
 		);
 
 		$this->assertFalse($addressBookImpl->isSystemAddressBook());
@@ -527,7 +550,9 @@ class AddressBookImplTest extends TestCase {
 			$this->addressBook,
 			$addressBookInfo,
 			$this->backend,
-			$this->urlGenerator
+			$this->urlGenerator,
+			$this->propertyMapper,
+			'user2'
 		);
 
 		$this->assertFalse($addressBookImpl->isSystemAddressBook());

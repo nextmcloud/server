@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -51,7 +52,7 @@ class AccessTest extends TestCase {
 	private $userManager;
 	/** @var Helper|\PHPUnit\Framework\MockObject\MockObject */
 	private $helper;
-	/** @var  IConfig|\PHPUnit\Framework\MockObject\MockObject */
+	/** @var IConfig|\PHPUnit\Framework\MockObject\MockObject */
 	private $config;
 	/** @var IUserManager|\PHPUnit\Framework\MockObject\MockObject */
 	private $ncUserManager;
@@ -612,7 +613,8 @@ class AccessTest extends TestCase {
 
 		$this->prepareMocksForSearchTests($base, $fakeConnection, $fakeSearchResultResource, $fakeLdapEntries);
 
-		$this->connection->expects($this->exactly($fakeLdapEntries['count']))
+		// Called twice per user, for userExists and userExistsOnLdap
+		$this->connection->expects($this->exactly(2 * $fakeLdapEntries['count']))
 			->method('writeToCache')
 			->with($this->stringStartsWith('userExists'), true);
 

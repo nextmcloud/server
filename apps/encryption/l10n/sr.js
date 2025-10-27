@@ -35,8 +35,6 @@ OC.L10N.register(
     "Cannot decrypt this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Овај фајл не може да се дешифрује, то је вероватно дељени фајл. Молимо вас да замолите власника да га поново подели са вама.",
     "Cannot read this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Овај фајл не може да се прочита, то је вероватно дељени фајл. Молимо вас да замолите власника да га поново подели са вама.",
     "Default encryption module" : "Подразумевани модул за шифровање",
-    "Default encryption module for server-side encryption" : "Подразумевани модул за шифровање на серверској страни",
-    "In order to use this encryption module you need to enable server-side encryption in the admin settings. Once enabled this module will encrypt all your files transparently. The encryption is based on AES 256 keys.\nThe module will not touch existing files, only new files will be encrypted after server-side encryption was enabled. It is also not possible to disable the encryption again and switch back to an unencrypted system.\nPlease read the documentation to know all implications before you decide to enable server-side encryption." : "Да бисте користили овај модул, морате на серверској страни омогућити шифровање у администраторским поставкама. Једном укључен, овај модул ће шифровати све фајлове транспарентно. Шифровање је базирано на AES 256 кључевима.\nМодул неће дирати постојеће фајлове, само ће нови фајлови бити шифровани након укључења шифровања на серверској страни. Такође, шифровање не може да се искључи и да врати се на нешифровани систем.\nПрочитајте документацију да бисте сазнали све импликације пре него што се одлучите да укључите шифровање на серверу.",
     "Encryption app is enabled but your keys are not initialized, please log-out and log-in again" : "Апликација за шифровање је укључена али кључеви још нису иницијализовани. Одјавите се и поново се пријавите.",
     "Encrypt the home storage" : "Шифровање главног складишта",
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "Укључивање ове опције ће шифровати све фајлове на главном складишту. У супротном ће само фајлови на спољашњем складишту бити шифровани",
@@ -53,7 +51,7 @@ OC.L10N.register(
     "Basic encryption module" : "Основни модул за шифровање",
     "Your private key password no longer matches your log-in password." : "Лозинка вашег личног кључа више није иста као ваша лозинка за пријаву.",
     "Set your old private key password to your current log-in password:" : "Поставите стару лозинку личног кључа као тренутну лозинку за пријаву:",
-    " If you don't remember your old password you can ask your administrator to recover your files." : "Ако се не сећате старе лозинке, можете затражити од администратора да опорави ваше фајлове.",
+    "If you do not remember your old password you can ask your administrator to recover your files." : "Ако се не сећате старе лозинке, можете затражити од администратора да опорави ваше фајлове.",
     "Old log-in password" : "Стара лозинка за пријаву",
     "Current log-in password" : "Тренутна лозинка за пријаву",
     "Update Private Key Password" : "Ажурирај лозинку личног кључа",
@@ -61,6 +59,7 @@ OC.L10N.register(
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "Укључивање ове опције омогућиће поновно добијање приступа вашим шифрованим фајловима у случају губитка лозинке",
     "Enabled" : "укључено",
     "Disabled" : "искључено",
-    "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "Кључ за опоравак је додатни шифрарски кључ који се користи за шифровање фајлова. Он омогућава опоравак корисничких фајлова ако корисник заборави своју лозинку."
+    "Default encryption module for server-side encryption" : "Подразумевани модул за шифровање на серверској страни",
+    "In order to use this encryption module you need to enable server-side encryption in the admin settings. Once enabled this module will encrypt all your files transparently. The encryption is based on AES 256 keys.\nThe module will not touch existing files, only new files will be encrypted after server-side encryption was enabled. It is also not possible to disable the encryption again and switch back to an unencrypted system.\nPlease read the documentation to know all implications before you decide to enable server-side encryption." : "Да бисте користили овај модул, морате на серверској страни омогућити шифровање у администраторским поставкама. Једном укључен, овај модул ће шифровати све фајлове транспарентно. Шифровање је базирано на AES 256 кључевима.\nМодул неће дирати постојеће фајлове, само ће нови фајлови бити шифровани након укључења шифровања на серверској страни. Такође, шифровање не може да се искључи и да врати се на нешифровани систем.\nПрочитајте документацију да бисте сазнали све импликације пре него што се одлучите да укључите шифровање на серверу."
 },
 "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);");

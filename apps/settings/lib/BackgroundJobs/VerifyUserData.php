@@ -20,7 +20,7 @@ use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
 
 class VerifyUserData extends Job {
-	/** @var  bool */
+	/** @var bool */
 	private bool $retainJob = true;
 
 	/** @var int max number of attempts to send the request */
@@ -57,7 +57,7 @@ class VerifyUserData extends Job {
 	}
 
 	protected function run($argument) {
-		$try = (int)$argument['try'] + 1;
+		$try = (int) $argument['try'] + 1;
 
 		switch ($argument['type']) {
 			case IAccountManager::PROPERTY_WEBSITE:
@@ -120,9 +120,11 @@ class VerifyUserData extends Job {
 	}
 
 	protected function verifyViaLookupServer(array $argument, string $dataType): bool {
-		if (empty($this->lookupServerUrl) ||
-			$this->config->getAppValue('files_sharing', 'lookupServerUploadEnabled', 'yes') !== 'yes' ||
-			$this->config->getSystemValue('has_internet_connection', true) === false) {
+		// TODO: Consider to enable for non-global-scale setups by checking 'files_sharing', 'lookupServerUploadEnabled'
+		if (!$this->config->getSystemValueBool('gs.enabled', false)
+			|| empty($this->lookupServerUrl)
+			|| $this->config->getSystemValue('has_internet_connection', true) === false
+		) {
 			return true;
 		}
 
@@ -204,7 +206,7 @@ class VerifyUserData extends Job {
 				'data' => $argument['data'],
 				'type' => $argument['type'],
 				'uid' => $argument['uid'],
-				'try' => (int)$argument['try'] + 1,
+				'try' => (int) $argument['try'] + 1,
 				'lastRun' => time()
 			]
 		);
@@ -217,7 +219,7 @@ class VerifyUserData extends Job {
 	 * @return bool
 	 */
 	protected function shouldRun(array $argument) {
-		$lastRun = (int)$argument['lastRun'];
+		$lastRun = (int) $argument['lastRun'];
 		return ((time() - $lastRun) > $this->interval);
 	}
 

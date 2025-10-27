@@ -4,13 +4,15 @@
  */
 import type { Folder, Node } from '@nextcloud/files'
 
+import { FileType, View, getNavigation } from '@nextcloud/files'
+import { getCanonicalLocale, getLanguage, t } from '@nextcloud/l10n'
+import { getFavoriteNodes } from '@nextcloud/files/dav'
 import { subscribe } from '@nextcloud/event-bus'
-import { FileType, View, getFavoriteNodes, getNavigation } from '@nextcloud/files'
-import { getLanguage, translate as t } from '@nextcloud/l10n'
-import { client } from '../services/WebdavClient.ts'
+
 import FolderSvg from '@mdi/svg/svg/folder.svg?raw'
 import StarSvg from '@mdi/svg/svg/star.svg?raw'
 
+import { client } from '../services/WebdavClient.ts'
 import { getContents } from '../services/Favorites'
 import { hashCode } from '../utils/hashUtils'
 import logger from '../logger'
@@ -65,7 +67,7 @@ export const registerFavoritesView = async () => {
 	favoriteFoldersViews.forEach(view => Navigation.register(view))
 
 	/**
-	 * Update favourites navigation when a new folder is added
+	 * Update favorites navigation when a new folder is added
 	 */
 	subscribe('files:favorites:added', (node: Node) => {
 		if (node.type !== FileType.Folder) {
@@ -99,7 +101,7 @@ export const registerFavoritesView = async () => {
 	})
 
 	/**
-	 * Update favourites navigation when a folder is renamed
+	 * Update favorites navigation when a folder is renamed
 	 */
 	subscribe('files:node:renamed', (node: Node) => {
 		if (node.type !== FileType.Folder) {
@@ -118,7 +120,7 @@ export const registerFavoritesView = async () => {
 	 * update the order property of the existing views
 	 */
 	const updateAndSortViews = function() {
-		favoriteFolders.sort((a, b) => a.path.localeCompare(b.path, getLanguage(), { ignorePunctuation: true }))
+		favoriteFolders.sort((a, b) => a.basename.localeCompare(b.basename, [getLanguage(), getCanonicalLocale()], { ignorePunctuation: true, numeric: true, usage: 'sort' }))
 		favoriteFolders.forEach((folder, index) => {
 			const view = favoriteFoldersViews.find((view) => view.id === generateIdFromPath(folder.path))
 			if (view) {
@@ -176,4 +178,6 @@ export const registerFavoritesView = async () => {
 		removePathFromFavorites(favoriteFolder.path)
 		addToFavorites(node)
 	}
+
+	updateAndSortViews()
 }

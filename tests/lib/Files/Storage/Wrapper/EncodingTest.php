@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2019-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -240,4 +241,12 @@ class EncodingTest extends \Test\Files\Storage\Storage {
 		$entry = $this->instance->getMetaData('/test/' . self::NFD_NAME);
 		$this->assertEquals(self::NFC_NAME, $entry['name']);
 	}
+
+	/**
+	 * Regression test of https://github.com/nextcloud/server/issues/50431
+	 */
+	public function testNoMetadata() {
+		$this->assertNull($this->instance->getMetaData('/test/null'));
+	}
+
 }

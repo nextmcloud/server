@@ -32,6 +32,7 @@ Usage:
 
 Arguments:
   job-classes                  Optional job class list to only run those jobs
+                               Providing a class will ignore the time-sensitivity restriction
 
 Options:
   -h, --help                 Display this help message' . PHP_EOL;
@@ -91,16 +92,16 @@ Options:
 
 		// the cron job must be executed with the right user
 		if (!function_exists('posix_getuid')) {
-			echo "The posix extensions are required - see https://www.php.net/manual/en/book.posix.php" . PHP_EOL;
+			echo 'The posix extensions are required - see https://www.php.net/manual/en/book.posix.php' . PHP_EOL;
 			exit(1);
 		}
 
 		$user = posix_getuid();
 		$configUser = fileowner(OC::$configDir . 'config.php');
 		if ($user !== $configUser) {
-			echo "Console has to be executed with the user that owns the file config/config.php" . PHP_EOL;
-			echo "Current user id: " . $user . PHP_EOL;
-			echo "Owner id of config.php: " . $configUser . PHP_EOL;
+			echo 'Console has to be executed with the user that owns the file config/config.php' . PHP_EOL;
+			echo 'Current user id: ' . $user . PHP_EOL;
+			echo 'Owner id of config.php: ' . $configUser . PHP_EOL;
 			exit(1);
 		}
 
@@ -110,10 +111,14 @@ Options:
 			$appConfig->setValueString('core', 'backgroundjobs_mode', 'cron');
 		}
 
+		// a specific job class list can optionally be given as argument
+		$jobClasses = array_slice($argv, 1);
+		$jobClasses = empty($jobClasses) ? null : $jobClasses;
+
 		// Low-load hours
 		$onlyTimeSensitive = false;
 		$startHour = $config->getSystemValueInt('maintenance_window_start', 100);
-		if ($startHour <= 23) {
+		if ($jobClasses === null && $startHour <= 23) {
 			$date = new \DateTime('now', new \DateTimeZone('UTC'));
 			$currentHour = (int) $date->format('G');
 			$endHour = $startHour + 4;
@@ -141,9 +146,6 @@ Options:
 		$endTime = time() + 14 * 60;
 
 		$executedJobs = [];
-		// a specific job class list can optionally be given as argument
-		$jobClasses = array_slice($argv, 1);
-		$jobClasses = empty($jobClasses) ? null : $jobClasses;
 
 		while ($job = $jobList->getNext($onlyTimeSensitive, $jobClasses)) {
 			if (isset($executedJobs[$job->getId()])) {

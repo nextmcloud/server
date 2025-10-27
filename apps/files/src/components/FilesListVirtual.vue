@@ -21,14 +21,16 @@
 		</template>
 
 		<template v-if="!isNoneSelected" #header-overlay>
-			<span class="files-list__selected">{{ t('files', '{count} selected', { count: selectedNodes.length }) }}</span>
+			<span class="files-list__selected">
+				{{ n('files', '{count} selected', '{count} selected', selectedNodes.length, { count: selectedNodes.length }) }}
+			</span>
 			<FilesListTableHeaderActions :current-view="currentView"
 				:selected-nodes="selectedNodes" />
 		</template>
 
 		<template #before>
 			<!-- Headers -->
-			<FilesListHeader v-for="header in sortedHeaders"
+			<FilesListHeader v-for="header in headers"
 				:key="header.id"
 				:current-folder="currentFolder"
 				:current-view="currentView"
@@ -58,21 +60,23 @@
 </template>
 
 <script lang="ts">
+import type { UserConfig } from '../types.ts'
 import type { Node as NcNode } from '@nextcloud/files'
 import type { ComponentPublicInstance, PropType } from 'vue'
-import type { UserConfig } from '../types'
+import type { Location } from 'vue-router'
 
-import { getFileListHeaders, Folder, View, getFileActions, FileType } from '@nextcloud/files'
+import { Folder, View, getFileActions, FileType } from '@nextcloud/files'
 import { showError } from '@nextcloud/dialogs'
-import { translate as t } from '@nextcloud/l10n'
 import { subscribe, unsubscribe } from '@nextcloud/event-bus'
+import { n, t } from '@nextcloud/l10n'
 import { defineComponent } from 'vue'
 
 import { action as sidebarAction } from '../actions/sidebarAction.ts'
+import { useFileListHeaders } from '../composables/useFileListHeaders.ts'
 import { useRouteParameters } from '../composables/useRouteParameters.ts'
-import { getSummaryFor } from '../utils/fileUtils'
 import { useSelectionStore } from '../store/selection.js'
 import { useUserConfigStore } from '../store/userconfig.ts'
+import { getSummaryFor } from '../utils/fileUtils.ts'
 
 import FileEntry from './FileEntry.vue'
 import FileEntryGrid from './FileEntryGrid.vue'
@@ -80,10 +84,10 @@ import FilesListHeader from './FilesListHeader.vue'
 import FilesListTableFooter from './FilesListTableFooter.vue'
 import FilesListTableHeader from './FilesListTableHeader.vue'
 import filesListWidthMixin from '../mixins/filesListWidth.ts'
+import FileListFilters from './FileListFilters.vue'
+import FilesListTableHeaderActions from './FilesListTableHeaderActions.vue'
 import VirtualList from './VirtualList.vue'
 import logger from '../logger.ts'
-import FilesListTableHeaderActions from './FilesListTableHeaderActions.vue'
-import FileListFilters from './FileListFilters.vue'
 
 export default defineComponent({
 	name: 'FilesListVirtual',
@@ -123,10 +127,14 @@ export default defineComponent({
 
 		return {
 			fileId,
+			headers: useFileListHeaders(),
 			openFile,
 
 			userConfigStore,
 			selectionStore,
+
+			n,
+			t,
 		}
 	},
 
@@ -134,7 +142,6 @@ export default defineComponent({
 		return {
 			FileEntry,
 			FileEntryGrid,
-			headers: getFileListHeaders(),
 			scrollToIndex: 0,
 			openFileId: null as number|null,
 		}
@@ -246,7 +253,10 @@ export default defineComponent({
 				if (node && sidebarAction?.enabled?.([node], this.currentView)) {
 					logger.debug('Opening sidebar on file ' + node.path, { node })
 					sidebarAction.exec(node, this.currentView, this.currentFolder.path)
+					return
 				}
+
+				logger.error(`Failed to open sidebar on file ${fileId}, file isn't cached yet !`, { fileId, node })
 			}
 		},
 
@@ -267,7 +277,7 @@ export default defineComponent({
 
 		unselectFile() {
 			// If the Sidebar is closed and if openFile is false, remove the file id from the URL
-			if (!this.openFile && OCA.Files.Sidebar.file === '') {
+			if (!this.openFile && window.OCA.Files.Sidebar.file === '') {
 				window.OCP.Files.Router.goToRoute(
 					null,
 					{ ...this.$route.params, fileid: String(this.currentFolder.fileid ?? '') },
@@ -280,30 +290,45 @@ export default defineComponent({
 		 * Handle opening a file (e.g. by ?openfile=true)
 		 * @param fileId File to open
 		 */
-		handleOpenFile(fileId: number|null) {
-			if (fileId === null || this.openFileId === fileId) {
-				return
-			}
-
+		async handleOpenFile(fileId: number) {
 			const node = this.nodes.find(n => n.fileid === fileId) as NcNode
-			if (node === undefined || node.type === FileType.Folder) {
+			if (node === undefined) {
 				return
 			}
 
-			logger.debug('Opening file ' + node.path, { node })
-			this.openFileId = fileId
-			const defaultAction = getFileActions()
-				// Get only default actions (visible and hidden)
-				.filter(action => !!action?.default)
-				// Find actions that are either always enabled or enabled for the current node
-				.filter((action) => !action.enabled || action.enabled([node], this.currentView))
-				// Sort enabled default actions by order
-				.sort((a, b) => (a.order || 0) - (b.order || 0))
-				// Get the first one
-				.at(0)
-			// Some file types do not have a default action (e.g. they can only be downloaded)
-			// So if there is an enabled default action, so execute it
-			defaultAction?.exec(node, this.currentView, this.currentFolder.path)
+			if (node.type === FileType.File) {
+				const defaultAction = getFileActions()
+					// Get only default actions (visible and hidden)
+					.filter((action) => !!action?.default)
+					// Find actions that are either always enabled or enabled for the current node
+					.filter((action) => !action.enabled || action.enabled([node], this.currentView))
+					.filter((action) => action.id !== 'download')
+					// Sort enabled default actions by order
+					.sort((a, b) => (a.order || 0) - (b.order || 0))
+					// Get the first one
+					.at(0)
+
+				// Some file types do not have a default action (e.g. they can only be downloaded)
+				// So if there is an enabled default action, so execute it
+				if (defaultAction) {
+					logger.debug('Opening file ' + node.path, { node })
+					return await defaultAction.exec(node, this.currentView, this.currentFolder.path)
+				}
+			}
+			// The file is either a folder or has no default action other than downloading
+			// in this case we need to open the details instead and remove the route from the history
+			const query = this.$route.query
+			delete query.openfile
+			query.opendetails = ''
+
+			logger.debug('Ignore `openfile` query and replacing with `opendetails` for ' + node.path, { node })
+			await this.$router.replace({
+				...(this.$route as Location),
+				query,
+			})
+			// Remove if we backport https://github.com/nextcloud/server/pull/49432 to Nextcloud 30
+			// otherwise this will still set the correct URL and result in the same view with this
+			this.openSidebarForFile(this.fileId)
 		},
 
 		onDragOver(event: DragEvent) {
@@ -333,8 +358,6 @@ export default defineComponent({
 				tableElement.scrollTop = tableElement.scrollTop + 25
 			}
 		},
-
-		t,
 	},
 })
 </script>
@@ -437,7 +460,6 @@ export default defineComponent({
 			flex-direction: column;
 			width: 100%;
 			background-color: var(--color-main-background);
-
 		}
 
 		// Table header
@@ -740,12 +762,11 @@ export default defineComponent({
 
 <style lang="scss">
 // Grid mode
-tbody.files-list__tbody.files-list__tbody--grid {
-	--half-clickable-area: calc(var(--clickable-area) / 2);
+.files-list--grid tbody.files-list__tbody {
 	--item-padding: 16px;
 	--icon-preview-size: 166px;
-	--name-height: 32px;
-	--mtime-height: 16px;
+	--name-height: var(--default-clickable-area);
+	--mtime-height: calc(var(--font-size-small) + var(--default-grid-baseline));
 	--row-width: calc(var(--icon-preview-size) + var(--item-padding) * 2);
 	--row-height: calc(var(--icon-preview-size) + var(--name-height) + var(--mtime-height) + var(--item-padding) * 2);
 	--checkbox-padding: 0px;
@@ -828,15 +849,32 @@ tbody.files-list__tbody.files-list__tbody--grid {
 	.files-list__row-mtime {
 		width: var(--icon-preview-size);
 		height: var(--mtime-height);
-		font-size: calc(var(--default-font-size) - 4px);
+		font-size: var(--font-size-small);
 	}
 
 	.files-list__row-actions {
 		position: absolute;
-		right: calc(var(--half-clickable-area) / 2);
-		bottom: calc(var(--mtime-height) / 2);
+		inset-inline-end: calc(var(--clickable-area) / 4);
+		inset-block-end: calc(var(--mtime-height) / 2);
 		width: var(--clickable-area);
 		height: var(--clickable-area);
+	}
+}
+
+@media screen and (max-width: 768px) {
+	// there is no mtime
+	.files-list--grid tbody.files-list__tbody {
+		--mtime-height: 0px;
+
+		// so we move the action to the name
+		.files-list__row-actions {
+			inset-block-end: var(--item-padding);
+		}
+
+		// and we need to keep space on the name for the actions
+		.files-list__row-name-text {
+			padding-inline-end: var(--clickable-area) !important;
+		}
 	}
 }
 </style>

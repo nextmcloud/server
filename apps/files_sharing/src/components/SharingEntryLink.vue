@@ -67,10 +67,10 @@
 				{{ config.enforcePasswordForPublicLink ? t('files_sharing', 'Password protection (enforced)') : t('files_sharing', 'Password protection') }}
 			</NcActionCheckbox>
 
-			<NcActionInput v-if="pendingEnforcedPassword || share.password"
+			<NcActionInput v-if="pendingEnforcedPassword || isPasswordProtected"
 				class="share-link-password"
 				:label="t('files_sharing', 'Enter a password')"
-				:value.sync="share.password"
+				:value.sync="share.newPassword"
 				:disabled="saving"
 				:required="config.enableLinkPasswordByDefault || config.enforcePasswordForPublicLink"
 				:minlength="isPasswordPolicyEnabled && config.passwordPolicy.minLength"
@@ -85,12 +85,13 @@
 				:checked.sync="defaultExpirationDateEnabled"
 				:disabled="pendingEnforcedExpirationDate || saving"
 				class="share-link-expiration-date-checkbox"
-				@change="onDefaultExpirationDateEnabledChange">
-				{{ config.enforcePasswordForPublicLink ? t('files_sharing', 'Enable link expiration (enforced)') : t('files_sharing', 'Enable link expiration') }}
+				@update:model-value="onExpirationDateToggleUpdate">
+				{{ config.isDefaultExpireDateEnforced ? t('files_sharing', 'Enable link expiration (enforced)') : t('files_sharing', 'Enable link expiration') }}
 			</NcActionCheckbox>
 
 			<!-- expiration date -->
 			<NcActionInput v-if="(pendingDefaultExpirationDate || pendingEnforcedExpirationDate) && defaultExpirationDateEnabled"
+				data-cy-files-sharing-expiration-date-input
 				class="share-link-expire-date"
 				:label="pendingEnforcedExpirationDate ? t('files_sharing', 'Enter expiration date (enforced)') : t('files_sharing', 'Enter expiration date')"
 				:disabled="saving"
@@ -100,13 +101,15 @@
 				type="date"
 				:min="dateTomorrow"
 				:max="maxExpirationDateEnforced"
-				@input="onExpirationChange /* let's not submit when picked, the user might want to still edit or copy the password */">
+				@update:model-value="onExpirationChange"
+				@change="expirationDateChanged">
 				<template #icon>
 					<IconCalendarBlank :size="20" />
 				</template>
 			</NcActionInput>
 
-			<NcActionButton @click.prevent.stop="onNewLinkShare(true)">
+			<NcActionButton :disabled="pendingEnforcedPassword && !share.newPassword"
+				@click.prevent.stop="onNewLinkShare(true)">
 				<template #icon>
 					<CheckIcon :size="20" />
 				</template>
@@ -218,7 +221,6 @@ import { emit } from '@nextcloud/event-bus'
 import { generateUrl } from '@nextcloud/router'
 import { showError, showSuccess } from '@nextcloud/dialogs'
 import { ShareType } from '@nextcloud/sharing'
-import Vue from 'vue'
 import VueQrcode from '@chenfengyuan/vue-qrcode'
 
 import NcActionButton from '@nextcloud/vue/dist/Components/NcActionButton.js'
@@ -374,23 +376,6 @@ export default {
 			}
 			return null
 		},
-		/**
-		 * Is the current share password protected ?
-		 *
-		 * @return {boolean}
-		 */
-		isPasswordProtected: {
-			get() {
-				return this.config.enforcePasswordForPublicLink
-					|| !!this.share.password
-			},
-			async set(enabled) {
-				// TODO: directly save after generation to make sure the share is always protected
-				Vue.set(this.share, 'password', enabled ? await GeneratePassword(true) : '')
-				Vue.set(this.share, 'newPassword', this.share.password)
-			},
-		},
-
 		passwordExpirationTime() {
 			if (this.share.passwordExpirationTime === null) {
 				return null
@@ -589,6 +574,9 @@ export default {
 	},
 	mounted() {
 		this.defaultExpirationDateEnabled = this.config.defaultExpirationDate instanceof Date
+		if (this.share && this.isNewShare) {
+			this.share.expireDate = this.defaultExpirationDateEnabled ? this.formatDateToString(this.config.defaultExpirationDate) : ''
+		}
 	},
 
 	methods: {
@@ -643,6 +631,7 @@ export default {
 
 				// create share & close menu
 				const share = new Share(shareDefaults)
+				share.newPassword = share.password
 				const component = await new Promise(resolve => {
 					this.$emit('add:share', share, resolve)
 				})
@@ -707,7 +696,7 @@ export default {
 					path,
 					shareType: ShareType.Link,
 					password: share.password,
-					expireDate: share.expireDate,
+					expireDate: share.expireDate ?? '',
 					attributes: JSON.stringify(this.fileInfo.shareAttributes),
 					// we do not allow setting the publicUpload
 					// before the share creation.
@@ -835,7 +824,7 @@ export default {
 		 */
 		onPasswordSubmit() {
 			if (this.hasUnsavedPassword) {
-				this.share.password = this.share.newPassword.trim()
+				this.share.newPassword = this.share.newPassword.trim()
 				this.queueUpdate('password')
 			}
 		},
@@ -850,7 +839,7 @@ export default {
 		 */
 		onPasswordProtectedByTalkChange() {
 			if (this.hasUnsavedPassword) {
-				this.share.password = this.share.newPassword.trim()
+				this.share.newPassword = this.share.newPassword.trim()
 			}
 
 			this.queueUpdate('sendPasswordByTalk', 'password')
@@ -863,8 +852,18 @@ export default {
 			this.onPasswordSubmit()
 			this.onNoteSubmit()
 		},
-		onDefaultExpirationDateEnabledChange(enabled) {
+
+		/**
+		 * @param enabled True if expiration is enabled
+		 */
+		onExpirationDateToggleUpdate(enabled) {
 			this.share.expireDate = enabled ? this.formatDateToString(this.config.defaultExpirationDate) : ''
+		},
+
+		expirationDateChanged(event) {
+			const value = event?.target?.value
+			const isValid = !!value && !isNaN(new Date(value).getTime())
+			this.defaultExpirationDateEnabled = isValid
 		},
 
 		/**

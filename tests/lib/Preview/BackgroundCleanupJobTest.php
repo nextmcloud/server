@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2018 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-only
@@ -110,7 +111,7 @@ class BackgroundCleanupJobTest extends \Test\TestCase {
 
 		foreach ($fileIds as $fileId) {
 			try {
-				$previewRoot->getFolder((string)$fileId);
+				$previewRoot->getFolder((string) $fileId);
 			} catch (NotFoundException $e) {
 				continue;
 			}
@@ -188,16 +189,47 @@ class BackgroundCleanupJobTest extends \Test\TestCase {
 		$f1->newFile('foo.jpg', 'foo');
 		$f2 = $appdata->newFolder('123456782');
 		$f2->newFile('foo.jpg', 'foo');
-		$f2 = $appdata->newFolder((string)PHP_INT_MAX - 1);
+		$f2 = $appdata->newFolder((string) PHP_INT_MAX - 1);
 		$f2->newFile('foo.jpg', 'foo');
 
+		/*
+		 * Cleanup of OldPreviewLocations should only remove numeric folders on AppData level,
+		 * therefore these files should stay untouched.
+		 */
+		$appdata->getFolder('/')->newFile('not-a-directory', 'foo');
+		$appdata->getFolder('/')->newFile('133742', 'bar');
+
 		$appdata = \OC::$server->getAppDataDir('preview');
+		// AppData::getDirectoryListing filters all non-folders
 		$this->assertSame(3, count($appdata->getDirectoryListing()));
+		try {
+			$appdata->getFolder('/')->getFile('not-a-directory');
+		} catch (NotFoundException) {
+			$this->fail('Could not find file \'not-a-directory\'');
+		}
+		try {
+			$appdata->getFolder('/')->getFile('133742');
+		} catch (NotFoundException) {
+			$this->fail('Could not find file \'133742\'');
+		}
 
 		$job = new BackgroundCleanupJob($this->timeFactory, $this->connection, $this->getRoot(), $this->mimeTypeLoader, true);
 		$job->run([]);
 
 		$appdata = \OC::$server->getAppDataDir('preview');
+
+		// Check if the files created above are still present
+		// Remember: AppData::getDirectoryListing filters all non-folders
 		$this->assertSame(0, count($appdata->getDirectoryListing()));
+		try {
+			$appdata->getFolder('/')->getFile('not-a-directory');
+		} catch (NotFoundException) {
+			$this->fail('Could not find file \'not-a-directory\'');
+		}
+		try {
+			$appdata->getFolder('/')->getFile('133742');
+		} catch (NotFoundException) {
+			$this->fail('Could not find file \'133742\'');
+		}
 	}
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2017 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -15,6 +16,7 @@ use OCP\Files\IMimeTypeLoader;
 use OCP\Files\Search\ISearchBinaryOperator;
 use OCP\Files\Search\ISearchComparison;
 use OCP\Files\Search\ISearchOperator;
+use OCP\FilesMetadata\IFilesMetadataManager;
 use Test\TestCase;
 
 /**
@@ -24,8 +26,11 @@ class SearchBuilderTest extends TestCase {
 	/** @var IQueryBuilder */
 	private $builder;
 
-	/** @var IMimeTypeLoader|\PHPUnit\Framework\MockObject\MockObject */
+	/** @var IMimeTypeLoader&\PHPUnit\Framework\MockObject\MockObject */
 	private $mimetypeLoader;
+
+	/** @var IFilesMetadataManager&\PHPUnit\Framework\MockObject\MockObject */
+	private $filesMetadataManager;
 
 	/** @var SearchBuilder */
 	private $searchBuilder;
@@ -37,6 +42,7 @@ class SearchBuilderTest extends TestCase {
 		parent::setUp();
 		$this->builder = \OC::$server->getDatabaseConnection()->getQueryBuilder();
 		$this->mimetypeLoader = $this->createMock(IMimeTypeLoader::class);
+		$this->filesMetadataManager = $this->createMock(IFilesMetadataManager::class);
 
 		$this->mimetypeLoader->expects($this->any())
 			->method('getId')
@@ -60,7 +66,7 @@ class SearchBuilderTest extends TestCase {
 				[6, 'image']
 			]);
 
-		$this->searchBuilder = new SearchBuilder($this->mimetypeLoader);
+		$this->searchBuilder = new SearchBuilder($this->mimetypeLoader, $this->filesMetadataManager);
 		$this->numericStorageId = 10000;
 
 		$this->builder->select(['fileid'])

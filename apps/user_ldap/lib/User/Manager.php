@@ -106,6 +106,7 @@ class Manager {
 	/**
 	 * @brief checks whether the Access instance has been set
 	 * @throws \Exception if Access has not been set
+	 * @psalm-assert !null $this->access
 	 * @return null
 	 */
 	private function checkAccess() {
@@ -119,7 +120,7 @@ class Manager {
 	 * email, displayname, or others.
 	 *
 	 * @param bool $minimal - optional, set to true to skip attributes with big
-	 * payload
+	 *                      payload
 	 * @return string[]
 	 */
 	public function getAttributes($minimal = false) {
@@ -143,7 +144,7 @@ class Manager {
 			$this->access->getConnection()->ldapAttributeBirthDate,
 		];
 
-		$homeRule = (string)$this->access->getConnection()->homeFolderNamingRule;
+		$homeRule = (string) $this->access->getConnection()->homeFolderNamingRule;
 		if (str_starts_with($homeRule, 'attr:')) {
 			$attributes[] = substr($homeRule, strlen('attr:'));
 		}
@@ -159,7 +160,7 @@ class Manager {
 
 		$attributes = array_reduce($attributes,
 			function ($list, $attribute) {
-				$attribute = strtolower(trim((string)$attribute));
+				$attribute = strtolower(trim((string) $attribute));
 				if (!empty($attribute) && !in_array($attribute, $list)) {
 					$list[] = $attribute;
 				}
@@ -180,7 +181,7 @@ class Manager {
 	public function isDeletedUser($id) {
 		$isDeleted = $this->ocConfig->getUserValue(
 			$id, 'user_ldap', 'isDeleted', 0);
-		return (int)$isDeleted === 1;
+		return (int) $isDeleted === 1;
 	}
 
 	/**
@@ -236,5 +237,38 @@ class Manager {
 		}
 
 		return $this->createInstancyByUserName($id);
+	}
+
+	/**
+	 * @brief Checks whether a User object by its DN or Nextcloud username exists
+	 * @param string $id the DN or username of the user
+	 * @throws \Exception when connection could not be established
+	 */
+	public function exists($id): bool {
+		$this->checkAccess();
+		$this->logger->debug('Checking if {id} exists', ['id' => $id]);
+		if (isset($this->usersByDN[$id])) {
+			return true;
+		} elseif (isset($this->usersByUid[$id])) {
+			return true;
+		}
+
+		if ($this->access->stringResemblesDN($id)) {
+			$this->logger->debug('{id} looks like a dn', ['id' => $id]);
+			$uid = $this->access->dn2username($id);
+			if ($uid !== false) {
+				return true;
+			}
+		}
+
+		// Most likely a uid. Check whether it is a deleted user
+		if ($this->isDeletedUser($id)) {
+			return true;
+		}
+		$dn = $this->access->username2dn($id);
+		if ($dn !== false) {
+			return true;
+		}
+		return false;
 	}
 }

@@ -15,6 +15,7 @@ use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Files\Events\Node\NodeDeletedEvent;
+use OCP\Files\Events\Node\NodeRenamedEvent;
 use OCP\Share\Events\ShareCreatedEvent;
 use OCP\Share\Events\ShareDeletedEvent;
 
@@ -27,6 +28,7 @@ class FileReferenceEventListener implements IEventListener {
 
 	public static function register(IEventDispatcher $eventDispatcher): void {
 		$eventDispatcher->addServiceListener(NodeDeletedEvent::class, FileReferenceEventListener::class);
+		$eventDispatcher->addServiceListener(NodeRenamedEvent::class, FileReferenceEventListener::class);
 		$eventDispatcher->addServiceListener(ShareDeletedEvent::class, FileReferenceEventListener::class);
 		$eventDispatcher->addServiceListener(ShareCreatedEvent::class, FileReferenceEventListener::class);
 	}
@@ -40,13 +42,16 @@ class FileReferenceEventListener implements IEventListener {
 				return;
 			}
 
-			$this->manager->invalidateCache((string)$event->getNode()->getId());
+			$this->manager->invalidateCache((string) $event->getNode()->getId());
+		}
+		if ($event instanceof NodeRenamedEvent) {
+			$this->manager->invalidateCache((string) $event->getTarget()->getId());
 		}
 		if ($event instanceof ShareDeletedEvent) {
-			$this->manager->invalidateCache((string)$event->getShare()->getNodeId());
+			$this->manager->invalidateCache((string) $event->getShare()->getNodeId());
 		}
 		if ($event instanceof ShareCreatedEvent) {
-			$this->manager->invalidateCache((string)$event->getShare()->getNodeId());
+			$this->manager->invalidateCache((string) $event->getShare()->getNodeId());
 		}
 	}
 }

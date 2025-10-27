@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2022 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -6,6 +7,7 @@
  */
 namespace OCA\DAV;
 
+use OC\Files\Filesystem;
 use OCA\DAV\AppInfo\PluginManager;
 use OCA\DAV\BulkUpload\BulkUploadPlugin;
 use OCA\DAV\CalDAV\BirthdayService;
@@ -43,13 +45,14 @@ use OCA\DAV\DAV\PublicAuth;
 use OCA\DAV\DAV\ViewOnlyPlugin;
 use OCA\DAV\Events\SabrePluginAddEvent;
 use OCA\DAV\Events\SabrePluginAuthInitEvent;
-use OCA\DAV\Files\ErrorPagePlugin;
+use OCA\DAV\Files\BrowserErrorPagePlugin;
 use OCA\DAV\Files\LazySearchBackend;
 use OCA\DAV\Profiler\ProfilerPlugin;
 use OCA\DAV\Provisioning\Apple\AppleProvisioningPlugin;
 use OCA\DAV\SystemTag\SystemTagPlugin;
 use OCA\DAV\Upload\ChunkingPlugin;
 use OCA\DAV\Upload\ChunkingV2Plugin;
+use OCP\Accounts\IAccountManager;
 use OCP\AppFramework\Http\Response;
 use OCP\Diagnostics\IEventLogger;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -127,7 +130,8 @@ class Server {
 		$bearerAuthBackend = new BearerAuth(
 			\OC::$server->getUserSession(),
 			\OC::$server->getSession(),
-			\OC::$server->getRequest()
+			\OC::$server->getRequest(),
+			\OC::$server->getConfig(),
 		);
 		$authPlugin->addBackend($bearerAuthBackend);
 		// because we are throwing exceptions this plugin has to be the last one
@@ -222,7 +226,9 @@ class Server {
 			$this->server->addPlugin(new FakeLockerPlugin());
 		}
 
-		$this->server->addPlugin(new ErrorPagePlugin($this->request, \OC::$server->getConfig()));
+		if (BrowserErrorPagePlugin::isBrowserRequest($request)) {
+			$this->server->addPlugin(new BrowserErrorPagePlugin());
+		}
 
 		$lazySearchBackend = new LazySearchBackend();
 		$this->server->addPlugin(new SearchPlugin($lazySearchBackend));
@@ -248,6 +254,7 @@ class Server {
 						\OCP\Server::get(IPreview::class),
 						\OCP\Server::get(IUserSession::class),
 						\OCP\Server::get(IFilenameValidator::class),
+						\OCP\Server::get(IAccountManager::class),
 						false,
 						$config->getSystemValueBool('debug', false) === false,
 					)
@@ -315,6 +322,7 @@ class Server {
 						\OC::$server->getAppManager()
 					));
 					$lazySearchBackend->setBackend(new \OCA\DAV\Files\FileSearchBackend(
+						$this->server,
 						$this->server->tree,
 						$user,
 						\OC::$server->getRootFolder(),

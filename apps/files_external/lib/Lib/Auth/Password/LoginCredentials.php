@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2018-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2015 ownCloud, Inc.
@@ -7,6 +8,7 @@
 namespace OCA\Files_External\Lib\Auth\Password;
 
 use OCA\Files_External\Lib\Auth\AuthMechanism;
+use OCA\Files_External\Lib\DefinitionParameter;
 use OCA\Files_External\Lib\InsufficientDataForMeaningfulAnswerException;
 use OCA\Files_External\Lib\StorageConfig;
 use OCA\Files_External\Listener\StorePasswordListener;
@@ -58,6 +60,10 @@ class LoginCredentials extends AuthMechanism {
 			->setScheme(self::SCHEME_PASSWORD)
 			->setText($l->t('Log-in credentials, save in database'))
 			->addParameters([
+				(new DefinitionParameter('password', $l->t('Password')))
+					->setType(DefinitionParameter::VALUE_PASSWORD)
+					->setFlag(DefinitionParameter::FLAG_HIDDEN)
+					->setFlag(DefinitionParameter::FLAG_OPTIONAL),
 			]);
 
 		$eventDispatcher->addServiceListener(UserLoggedInEvent::class, StorePasswordListener::class);
@@ -100,7 +106,7 @@ class LoginCredentials extends AuthMechanism {
 		}
 		$credentials = $this->getCredentials($user);
 
-		$loginKey = $storage->getBackendOption("login_ldap_attr");
+		$loginKey = $storage->getBackendOption('login_ldap_attr');
 		if ($loginKey) {
 			$backend = $user->getBackend();
 			if ($backend instanceof IUserBackend && $backend->getBackendName() === 'LDAP') {

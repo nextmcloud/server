@@ -29,7 +29,6 @@ OC.L10N.register(
     "Missing Signature" : "חתימה חסרה",
     "one-time password for server-side-encryption" : "סיסמא חד פעמית עבור הצפנת צד השרת",
     "Default encryption module" : "מודול ההצפנה כבררת מחדל",
-    "Default encryption module for server-side encryption" : "מודול הצפנה כבררת מחדל להצפנה מצד השרת",
     "Encryption app is enabled but your keys are not initialized, please log-out and log-in again" : "יישומון ההצפנה פעיל אך המפתחות שלך לא אותחלו, נא לצאת מהחשבון ולהיכנס שוב.",
     "Encrypt the home storage" : "הצפנת אחסון הבית",
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "הפעלת אפשרות זו מצפינה את כל הקבצים המאוחסנים באחסון המרכזי, אחרת רק הקבצים המאוחסנים בהתקנים חיצוניים יוצפנו",
@@ -45,7 +44,6 @@ OC.L10N.register(
     "Basic encryption module" : "מודול הצפנה בסיסי",
     "Your private key password no longer matches your log-in password." : "סיסמת המפתח האישי שלך כבר אינה מתאימה לסיסמת ההתחברות שלך.",
     "Set your old private key password to your current log-in password:" : "יש להחליף את סיסמת המפתח האישי הישנה בסיסמת ההתחברות הנוכחית:",
-    " If you don't remember your old password you can ask your administrator to recover your files." : "אם הסיסמא הישנה נשכחה ניתן לפנות למנהל על מנת שישחזר את הקבצים שלך.",
     "Old log-in password" : "סיסמת התחברות ישנה",
     "Current log-in password" : "סיסמת התחברות נוכחית",
     "Update Private Key Password" : "עדכון סיסמת המפתח האישי",
@@ -53,6 +51,6 @@ OC.L10N.register(
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "הפעלת אפשרות זו תאפשר לך לקבל מחדש גישה לקבצים המוצפנים שלך במקרה שסיסמא נשכחת",
     "Enabled" : "מופעל",
     "Disabled" : "מנוטרל",
-    "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "מפתח השחזור הנו מפתח הצפנה נוסף לשימוש לצורך הצפנת הקבצים. הוא מאפשר את שחזור קבצי המשתמש אם המשתמש שוכח את הסיסמא שלו."
+    "Default encryption module for server-side encryption" : "מודול הצפנה כבררת מחדל להצפנה מצד השרת"
 },
 "nplurals=3; plural=(n == 1 && n % 1 == 0) ? 0 : (n == 2 && n % 1 == 0) ? 1: 2;");

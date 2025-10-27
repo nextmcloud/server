@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -151,12 +152,12 @@ class Application extends App {
 				true
 			);
 
-			$event->addMissingIndex(
+			$event->replaceIndex(
 				'cards_properties',
-				'cards_prop_abid',
-				['addressbookid'],
-				[],
-				true
+				['cards_prop_abid'],
+				'cards_prop_abid_name_value',
+				['addressbookid', 'name', 'value'],
+				false,
 			);
 
 			$event->addMissingIndex(
@@ -229,6 +230,12 @@ class Application extends App {
 				'systemtag_object_mapping',
 				'systag_by_objectid',
 				['objectid']
+			);
+
+			$event->addMissingUniqueIndex(
+				'vcategory',
+				'unique_category_per_user',
+				['uid', 'type', 'category']
 			);
 		});
 

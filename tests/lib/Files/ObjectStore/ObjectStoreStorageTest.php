@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -261,5 +262,18 @@ class ObjectStoreStorageTest extends Storage {
 
 		$this->assertTrue($cache->inCache('new.txt'));
 		$this->assertEquals(\OCP\Constants::PERMISSION_ALL, $instance->getPermissions('new.txt'));
+	}
+
+	public function testCopyFolderSize(): void {
+		$cache = $this->instance->getCache();
+
+		$this->instance->mkdir('source');
+		$this->instance->file_put_contents('source/test.txt', 'foo');
+		$this->instance->getUpdater()->update('source/test.txt');
+		$this->assertEquals(3, $cache->get('source')->getSize());
+
+		$this->assertTrue($this->instance->copy('source', 'target'));
+
+		$this->assertEquals(3, $cache->get('target')->getSize());
 	}
 }

@@ -44,7 +44,7 @@ class OC_Helper {
 	 */
 	public static function humanFileSize(int|float $bytes): string {
 		if ($bytes < 0) {
-			return "?";
+			return '?';
 		}
 		if ($bytes < 1024) {
 			return "$bytes B";
@@ -99,7 +99,7 @@ class OC_Helper {
 			'p' => 1024 * 1024 * 1024 * 1024 * 1024,
 		];
 
-		$bytes = (float)$str;
+		$bytes = (float) $str;
 
 		if (preg_match('#([kmgtp]?b?)$#si', $str, $matches) && isset($bytes_array[$matches[1]])) {
 			$bytes *= $bytes_array[$matches[1]];
@@ -127,7 +127,7 @@ class OC_Helper {
 			}
 			$files = scandir($src);
 			foreach ($files as $file) {
-				if ($file != "." && $file != "..") {
+				if ($file != '.' && $file != '..') {
 					self::copyr("$src/$file", "$dest/$file");
 				}
 			}
@@ -195,21 +195,21 @@ class OC_Helper {
 	 * @param bool $path
 	 * @internal param string $program name
 	 * @internal param string $optional search path, defaults to $PATH
-	 * @return bool    true if executable program found in path
+	 * @return bool true if executable program found in path
 	 */
 	public static function canExecute($name, $path = false) {
 		// path defaults to PATH from environment if not set
 		if ($path === false) {
-			$path = getenv("PATH");
+			$path = getenv('PATH');
 		}
 		// we look for an executable file of that name
-		$exts = [""];
-		$check_fn = "is_executable";
+		$exts = [''];
+		$check_fn = 'is_executable';
 		// Default check will be done with $path directories :
-		$dirs = explode(PATH_SEPARATOR, $path);
+		$dirs = explode(PATH_SEPARATOR, (string) $path);
 		// WARNING : We have to check if open_basedir is enabled :
 		$obd = OC::$server->get(IniGetWrapper::class)->getString('open_basedir');
-		if ($obd != "none") {
+		if ($obd != 'none') {
 			$obd_values = explode(PATH_SEPARATOR, $obd);
 			if (count($obd_values) > 0 and $obd_values[0]) {
 				// open_basedir is in effect !
@@ -516,13 +516,13 @@ class OC_Helper {
 				$free = 0.0;
 			}
 		} catch (\Exception $e) {
-			if ($path === "") {
+			if ($path === '') {
 				throw $e;
 			}
 			/** @var LoggerInterface $logger */
 			$logger = \OC::$server->get(LoggerInterface::class);
-			$logger->warning("Error while getting quota info, using root quota", ['exception' => $e]);
-			$rootInfo = self::getStorageInfo("");
+			$logger->warning('Error while getting quota info, using root quota', ['exception' => $e]);
+			$rootInfo = self::getStorageInfo('');
 			$memcache->set($cacheKey, $rootInfo, 5 * 60);
 			return $rootInfo;
 		}
@@ -541,10 +541,17 @@ class OC_Helper {
 			$relative = 0;
 		}
 
-		/** @var string $ownerId */
+		/*
+		 * \OCA\Files_Sharing\External\Storage returns the cloud ID as the owner for the storage.
+		 * It is unnecessary to query the user manager for the display name, as it won't have this information.
+		 */
+		$isRemoteShare = $storage->instanceOfStorage(\OCA\Files_Sharing\External\Storage::class);
+
 		$ownerId = $storage->getOwner($path);
+		$hasOwnerId = $ownerId !== false && $ownerId !== null;
 		$ownerDisplayName = '';
-		if ($ownerId) {
+
+		if ($isRemoteShare === false && $hasOwnerId) {
 			$ownerDisplayName = \OC::$server->getUserManager()->getDisplayName($ownerId) ?? '';
 		}
 
@@ -566,9 +573,9 @@ class OC_Helper {
 			'mountPoint' => trim($mountPoint, '/'),
 		];
 
-		if ($ownerId && $path === '/') {
+		if ($isRemoteShare === false && $hasOwnerId && $path === '/') {
 			// If path is root, store this as last known quota usage for this user
-			\OCP\Server::get(\OCP\IConfig::class)->setUserValue($ownerId, 'files', 'lastSeenQuotaUsage', (string)$relative);
+			\OCP\Server::get(\OCP\IConfig::class)->setUserValue($ownerId, 'files', 'lastSeenQuotaUsage', (string) $relative);
 		}
 
 		$memcache->set($cacheKey, $info, 5 * 60);

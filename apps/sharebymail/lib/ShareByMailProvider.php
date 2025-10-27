@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -127,7 +128,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 
 		if ($initiatorEMailAddress === null && !$allowPasswordByMail) {
 			throw new \Exception(
-				$this->l->t("We cannot send you the auto-generated password. Please set a valid email address in your personal settings and try again.")
+				$this->l->t('We cannot send you the auto-generated password. Please set a valid email address in your personal settings and try again.')
 			);
 		}
 
@@ -247,7 +248,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 		});
 
 		if (count($validEmails) === 0) {
-			$this->removeShareFromTable((int)$shareId);
+			$this->removeShareFromTable((int) $shareId);
 			$e = new HintException('Failed to send share by mail. Could not find a valid email address: ' . join(', ', $emails),
 				$this->l->t('Failed to send share by email. Got an invalid email address'));
 			$this->logger->error('Failed to send share by mail. Could not find a valid email address ' . join(', ', $emails), [
@@ -282,14 +283,14 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 				'app' => 'sharebymail',
 				'exception' => $hintException,
 			]);
-			$this->removeShareFromTable((int)$shareId);
+			$this->removeShareFromTable((int) $shareId);
 			throw $hintException;
 		} catch (\Exception $e) {
 			$this->logger->error('Failed to send share by mail.', [
 				'app' => 'sharebymail',
 				'exception' => $e,
 			]);
-			$this->removeShareFromTable((int)$shareId);
+			$this->removeShareFromTable((int) $shareId);
 			throw new HintException(
 				'Failed to send share by mail',
 				$this->l->t('Failed to send share by email'),
@@ -342,7 +343,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 		}
 
 		if ($expiration !== null) {
-			$dateString = (string)$this->l->l('date', $expiration, ['width' => 'medium']);
+			$dateString = (string) $this->l->l('date', $expiration, ['width' => 'medium']);
 			$emailTemplate->addBodyListItem(
 				$this->l->t('This share is valid until %s at midnight', [$dateString]),
 				$this->l->t('Expiration:'),
@@ -424,7 +425,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 		$initiatorDisplayName = ($initiatorUser instanceof IUser) ? $initiatorUser->getDisplayName() : $initiator;
 		$initiatorEmailAddress = ($initiatorUser instanceof IUser) ? $initiatorUser->getEMailAddress() : null;
 
-		$plainBodyPart = $this->l->t("%1\$s shared %2\$s with you.\nYou should have already received a separate mail with a link to access it.\n", [$initiatorDisplayName, $filename]);
+		$plainBodyPart = $this->l->t('%1$s shared %2$s with you. You should have already received a separate mail with a link to access it.', [$initiatorDisplayName, $filename]);
 		$htmlBodyPart = $this->l->t('%1$s shared %2$s with you. You should have already received a separate mail with a link to access it.', [$initiatorDisplayName, $filename]);
 
 		$message = $this->mailer->createMessage();
@@ -565,11 +566,11 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 		$initiator = $this->userManager->get($share->getSharedBy());
 		$initiatorEMailAddress = ($initiator instanceof IUser) ? $initiator->getEMailAddress() : null;
 		$initiatorDisplayName = ($initiator instanceof IUser) ? $initiator->getDisplayName() : $share->getSharedBy();
-		$shareWith = $share->getSharedWith();
+		$shareWith = implode(', ', $this->getSharedWithEmails($share));
 
 		if ($initiatorEMailAddress === null) {
 			throw new \Exception(
-				$this->l->t("We cannot send you the auto-generated password. Please set a valid email address in your personal settings and try again.")
+				$this->l->t('We cannot send you the auto-generated password. Please set a valid email address in your personal settings and try again.')
 			);
 		}
 
@@ -694,10 +695,10 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 			->setValue('password_expiration_time', $qb->createNamedParameter($passwordExpirationTime, IQueryBuilder::PARAM_DATE))
 			->setValue('password_by_talk', $qb->createNamedParameter($sendPasswordByTalk, IQueryBuilder::PARAM_BOOL))
 			->setValue('stime', $qb->createNamedParameter(time()))
-			->setValue('hide_download', $qb->createNamedParameter((int)$hideDownload, IQueryBuilder::PARAM_INT))
+			->setValue('hide_download', $qb->createNamedParameter((int) $hideDownload, IQueryBuilder::PARAM_INT))
 			->setValue('label', $qb->createNamedParameter($label))
 			->setValue('note', $qb->createNamedParameter($note))
-			->setValue('mail_send', $qb->createNamedParameter((int)$mailSend, IQueryBuilder::PARAM_INT));
+			->setValue('mail_send', $qb->createNamedParameter((int) $mailSend, IQueryBuilder::PARAM_INT));
 
 		// set share attributes
 		$shareAttributes = $this->formatShareAttributes($attributes);
@@ -749,9 +750,9 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 			->set('password_by_talk', $qb->createNamedParameter($share->getSendPasswordByTalk(), IQueryBuilder::PARAM_BOOL))
 			->set('expiration', $qb->createNamedParameter($share->getExpirationDate(), IQueryBuilder::PARAM_DATE))
 			->set('note', $qb->createNamedParameter($share->getNote()))
-			->set('hide_download', $qb->createNamedParameter((int)$share->getHideDownload(), IQueryBuilder::PARAM_INT))
+			->set('hide_download', $qb->createNamedParameter((int) $share->getHideDownload(), IQueryBuilder::PARAM_INT))
 			->set('attributes', $qb->createNamedParameter($shareAttributes))
-			->set('mail_send', $qb->createNamedParameter((int)$share->getMailSend(), IQueryBuilder::PARAM_INT))
+			->set('mail_send', $qb->createNamedParameter((int) $share->getMailSend(), IQueryBuilder::PARAM_INT))
 			->executeStatement();
 
 		if ($originalShare->getNote() !== $share->getNote() && $share->getNote() !== '') {
@@ -782,7 +783,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 		} catch (\Exception $e) {
 		}
 
-		$this->removeShareFromTable((int)$share->getId());
+		$this->removeShareFromTable((int) $share->getId());
 	}
 
 	/**
@@ -990,24 +991,24 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 	 */
 	protected function createShareObject(array $data): IShare {
 		$share = new Share($this->rootFolder, $this->userManager);
-		$share->setId((int)$data['id'])
-			->setShareType((int)$data['share_type'])
-			->setPermissions((int)$data['permissions'])
+		$share->setId((int) $data['id'])
+			->setShareType((int) $data['share_type'])
+			->setPermissions((int) $data['permissions'])
 			->setTarget($data['file_target'])
-			->setMailSend((bool)$data['mail_send'])
+			->setMailSend((bool) $data['mail_send'])
 			->setNote($data['note'])
 			->setToken($data['token']);
 
 		$shareTime = new \DateTime();
-		$shareTime->setTimestamp((int)$data['stime']);
+		$shareTime->setTimestamp((int) $data['stime']);
 		$share->setShareTime($shareTime);
 		$share->setSharedWith($data['share_with'] ?? '');
 		$share->setPassword($data['password']);
 		$passwordExpirationTime = \DateTime::createFromFormat('Y-m-d H:i:s', $data['password_expiration_time'] ?? '');
 		$share->setPasswordExpirationTime($passwordExpirationTime !== false ? $passwordExpirationTime : null);
-		$share->setLabel($data['label']);
-		$share->setSendPasswordByTalk((bool)$data['password_by_talk']);
-		$share->setHideDownload((bool)$data['hide_download']);
+		$share->setLabel($data['label'] ?? '');
+		$share->setSendPasswordByTalk((bool) $data['password_by_talk']);
+		$share->setHideDownload((bool) $data['hide_download']);
 
 		if ($data['uid_initiator'] !== null) {
 			$share->setShareOwner($data['uid_owner']);
@@ -1015,7 +1016,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 		} else {
 			//OLD SHARE
 			$share->setSharedBy($data['uid_owner']);
-			$path = $this->getNode($share->getSharedBy(), (int)$data['file_source']);
+			$path = $this->getNode($share->getSharedBy(), (int) $data['file_source']);
 
 			$owner = $path->getOwner();
 			$share->setShareOwner($owner->getUID());
@@ -1030,7 +1031,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 
 		$share = $this->updateShareAttributes($share, $data['attributes']);
 
-		$share->setNodeId((int)$data['file_source']);
+		$share->setNodeId((int) $data['file_source']);
 		$share->setNodeType($data['item_type']);
 
 		$share->setProviderId($this->identifier());
@@ -1111,10 +1112,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 		$qb = $this->dbConnection->getQueryBuilder();
 		$qb->select('*')
 			->from('share', 's')
-			->andWhere($qb->expr()->orX(
-				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
-				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
-			))
+			->andWhere($qb->expr()->in('item_type', $qb->createNamedParameter(['file', 'folder'], IQueryBuilder::PARAM_STR_ARRAY)))
 			->andWhere(
 				$qb->expr()->eq('share_type', $qb->createNamedParameter(IShare::TYPE_EMAIL))
 			);
@@ -1163,10 +1161,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 			->from('share')
 			->where($qb->expr()->eq('share_type', $qb->createNamedParameter(IShare::TYPE_EMAIL)))
 			->andWhere($qb->expr()->in('file_source', $qb->createNamedParameter($ids, IQueryBuilder::PARAM_INT_ARRAY)))
-			->andWhere($qb->expr()->orX(
-				$qb->expr()->eq('item_type', $qb->createNamedParameter('file')),
-				$qb->expr()->eq('item_type', $qb->createNamedParameter('folder'))
-			));
+			->andWhere($qb->expr()->in('item_type', $qb->createNamedParameter(['file', 'folder'], IQueryBuilder::PARAM_STR_ARRAY)));
 		$cursor = $qb->executeQuery();
 
 		$public = false;

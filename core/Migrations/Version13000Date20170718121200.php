@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2017 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -657,6 +658,7 @@ class Version13000Date20170718121200 extends SimpleMigrationStep {
 			$table->addIndex(['uid'], 'uid_index');
 			$table->addIndex(['type'], 'type_index');
 			$table->addIndex(['category'], 'category_index');
+			$table->addUniqueIndex(['uid', 'type', 'category'], 'unique_category_per_user');
 		}
 
 		if (!$schema->hasTable('vcategory_to_object')) {
@@ -730,6 +732,8 @@ class Version13000Date20170718121200 extends SimpleMigrationStep {
 			$table->setPrimaryKey(['objecttype', 'objectid', 'systemtagid'], 'som_pk');
 			//			$table->addUniqueIndex(['objecttype', 'objectid', 'systemtagid'], 'mapping');
 			$table->addIndex(['systemtagid', 'objecttype'], 'systag_by_tagid');
+			// systag_by_objectid was added later and might be missing in older deployments
+			$table->addIndex(['objectid'], 'systag_by_objectid');
 		}
 
 		if (!$schema->hasTable('systemtag_group')) {

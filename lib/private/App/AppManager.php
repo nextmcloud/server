@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -736,8 +737,12 @@ class AppManager implements IAppManager {
 
 	public function getAppVersion(string $appId, bool $useCache = true): string {
 		if (!$useCache || !isset($this->appVersions[$appId])) {
-			$appInfo = $this->getAppInfo($appId);
-			$this->appVersions[$appId] = ($appInfo !== null && isset($appInfo['version'])) ? $appInfo['version'] : '0';
+			if ($appId === 'core') {
+				$this->appVersions[$appId] = \OC_Util::getVersionString();
+			} else {
+				$appInfo = $this->getAppInfo($appId);
+				$this->appVersions[$appId] = ($appInfo !== null && isset($appInfo['version'])) ? $appInfo['version'] : '0';
+			}
 		}
 		return $this->appVersions[$appId];
 	}
@@ -878,10 +883,12 @@ class AppManager implements IAppManager {
 
 	public function isBackendRequired(string $backend): bool {
 		foreach ($this->appInfos as $appInfo) {
-			foreach ($appInfo['dependencies']['backend'] as $appBackend) {
-				if ($backend === $appBackend) {
-					return true;
-				}
+			if (
+				isset($appInfo['dependencies']['backend'])
+				&& is_array($appInfo['dependencies']['backend'])
+				&& in_array($backend, $appInfo['dependencies']['backend'], true)
+			) {
+				return true;
 			}
 		}
 

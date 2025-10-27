@@ -84,7 +84,7 @@ interface IRequest {
 	 * @since 13.0.1
 	 * @since 28.0.0 The regex has a group matching the version number
 	 */
-	public const USER_AGENT_THUNDERBIRD_ADDON = '/^Mozilla\/5\.0 \([A-Za-z ]+\) Nextcloud\-Thunderbird v([^ ]*).*$/';
+	public const USER_AGENT_THUNDERBIRD_ADDON = '/^Filelink for \*cloud\/([1-9]\d*\.\d+\.\d+)$/';
 
 	/**
 	 * @since 26.0.0
@@ -108,11 +108,11 @@ interface IRequest {
 	 * @psalm-taint-source input
 	 *
 	 * @param string $key the key which you want to access in the URL Parameter
-	 *                     placeholder, $_POST or $_GET array.
-	 *                     The priority how they're returned is the following:
-	 *                     1. URL parameters
-	 *                     2. POST parameters
-	 *                     3. GET parameters
+	 *                    placeholder, $_POST or $_GET array.
+	 *                    The priority how they're returned is the following:
+	 *                    1. URL parameters
+	 *                    2. POST parameters
+	 *                    3. GET parameters
 	 * @param mixed $default If the key is not found, this value will be returned
 	 * @return mixed the content of the array
 	 * @since 6.0.0

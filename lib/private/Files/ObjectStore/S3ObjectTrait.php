@@ -107,27 +107,52 @@ trait S3ObjectTrait {
 	 * @throws \Exception when something goes wrong, message will be logged
 	 */
 	protected function writeMultiPart(string $urn, StreamInterface $stream, ?string $mimetype = null): void {
-		$uploader = new MultipartUploader($this->getConnection(), $stream, [
-			'bucket' => $this->bucket,
-			'concurrency' => $this->concurrency,
-			'key' => $urn,
-			'part_size' => $this->uploadPartSize,
-			'params' => [
-				'ContentType' => $mimetype,
-				'StorageClass' => $this->storageClass,
-			] + $this->getSSECParameters(),
-		]);
+		$attempts = 0;
+		$uploaded = false;
+		$concurrency = $this->concurrency;
+		$exception = null;
+		$state = null;
 
-		try {
-			$uploader->upload();
-		} catch (S3MultipartUploadException $e) {
+		// retry multipart upload once with concurrency at half on failure
+		while (!$uploaded && $attempts <= 1) {
+			$uploader = new MultipartUploader($this->getConnection(), $stream, [
+				'bucket' => $this->bucket,
+				'concurrency' => $concurrency,
+				'key' => $urn,
+				'part_size' => $this->uploadPartSize,
+				'state' => $state,
+				'params' => [
+					'ContentType' => $mimetype,
+					'StorageClass' => $this->storageClass,
+				] + $this->getSSECParameters(),
+			]);
+
+			try {
+				$uploader->upload();
+				$uploaded = true;
+			} catch (S3MultipartUploadException $e) {
+				$exception = $e;
+				$attempts++;
+
+				if ($concurrency > 1) {
+					$concurrency = round($concurrency / 2);
+				}
+
+				if ($stream->isSeekable()) {
+					$stream->rewind();
+				}
+			}
+		}
+
+		if (!$uploaded) {
 			// if anything goes wrong with multipart, make sure that you don´t poison and
 			// slow down s3 bucket with orphaned fragments
-			$uploadInfo = $e->getState()->getId();
-			if ($e->getState()->isInitiated() && (array_key_exists('UploadId', $uploadInfo))) {
+			$uploadInfo = $exception->getState()->getId();
+			if ($exception->getState()->isInitiated() && (array_key_exists('UploadId', $uploadInfo))) {
 				$this->getConnection()->abortMultipartUpload($uploadInfo);
 			}
-			throw new \OCA\DAV\Connector\Sabre\Exception\BadGateway("Error while uploading to S3 bucket", 0, $e);
+
+			throw new \OCA\DAV\Connector\Sabre\Exception\BadGateway('Error while uploading to S3 bucket', 0, $exception);
 		}
 	}
 
@@ -140,20 +165,45 @@ trait S3ObjectTrait {
 	 * @since 7.0.0
 	 */
 	public function writeObject($urn, $stream, ?string $mimetype = null) {
+		$canSeek = fseek($stream, 0, SEEK_CUR) === 0;
 		$psrStream = Utils::streamFor($stream);
 
-		// ($psrStream->isSeekable() && $psrStream->getSize() !== null) evaluates to true for a On-Seekable stream
-		// so the optimisation does not apply
-		$buffer = new Psr7\Stream(fopen("php://memory", 'rwb+'));
-		Utils::copyToStream($psrStream, $buffer, $this->putSizeLimit);
-		$buffer->seek(0);
-		if ($buffer->getSize() < $this->putSizeLimit) {
-			// buffer is fully seekable, so use it directly for the small upload
-			$this->writeSingle($urn, $buffer, $mimetype);
+
+		$size = $psrStream->getSize();
+		if ($size === null || !$canSeek) {
+			// The s3 single-part upload requires the size to be known for the stream.
+			// So for input streams that don't have a known size, we need to copy (part of)
+			// the input into a temporary stream so the size can be determined
+			$buffer = new Psr7\Stream(fopen('php://temp', 'rw+'));
+			Utils::copyToStream($psrStream, $buffer, $this->putSizeLimit);
+			$buffer->seek(0);
+			if ($buffer->getSize() < $this->putSizeLimit) {
+				// buffer is fully seekable, so use it directly for the small upload
+				$this->writeSingle($urn, $buffer, $mimetype);
+			} else {
+				if ($psrStream->isSeekable()) {
+					// If the body is seekable, just rewind the body.
+					$psrStream->rewind();
+					$loadStream = $psrStream;
+				} else {
+					// If the body is non-seekable, stitch the rewind the buffer and
+					// the partially read body together into one stream. This avoids
+					// unnecessary disk usage and does not require seeking on the
+					// original stream.
+					$buffer->rewind();
+					$loadStream = new Psr7\AppendStream([$buffer, $psrStream]);
+				}
+
+				$this->writeMultiPart($urn, $loadStream, $mimetype);
+			}
 		} else {
-			$loadStream = new Psr7\AppendStream([$buffer, $psrStream]);
-			$this->writeMultiPart($urn, $loadStream, $mimetype);
+			if ($size < $this->putSizeLimit) {
+				$this->writeSingle($urn, $psrStream, $mimetype);
+			} else {
+				$this->writeMultiPart($urn, $psrStream, $mimetype);
+			}
 		}
+		$psrStream->close();
 	}
 
 	/**
@@ -179,18 +229,18 @@ trait S3ObjectTrait {
 			'Key' => $from,
 		] + $this->getSSECParameters());
 
-		$size = (int)($sourceMetadata->get('Size') ?? $sourceMetadata->get('ContentLength'));
+		$size = (int) ($sourceMetadata->get('Size') ?? $sourceMetadata->get('ContentLength'));
 
 		if ($this->useMultipartCopy && $size > $this->copySizeLimit) {
 			$copy = new MultipartCopy($this->getConnection(), [
-				"source_bucket" => $this->getBucket(),
-				"source_key" => $from
+				'source_bucket' => $this->getBucket(),
+				'source_key' => $from
 			], array_merge([
-				"bucket" => $this->getBucket(),
-				"key" => $to,
-				"acl" => "private",
-				"params" => $this->getSSECParameters() + $this->getSSECParameters(true),
-				"source_metadata" => $sourceMetadata
+				'bucket' => $this->getBucket(),
+				'key' => $to,
+				'acl' => 'private',
+				'params' => $this->getSSECParameters() + $this->getSSECParameters(true),
+				'source_metadata' => $sourceMetadata
 			], $options));
 			$copy->copy();
 		} else {

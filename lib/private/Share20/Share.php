@@ -66,13 +66,12 @@ class Share implements IShare {
 	private $shareTime;
 	/** @var bool */
 	private $mailSend;
-	/** @var string */
-	private $label = '';
 	/** @var ICacheEntry|null */
 	private $nodeCacheEntry;
 	/** @var bool */
 	private $hideDownload = false;
 
+	private string $label = '';
 	private bool $noExpirationDate = false;
 
 	public function __construct(
@@ -87,7 +86,7 @@ class Share implements IShare {
 	public function setId($id) {
 		/** @var mixed $id Let's be safe until strong typing */
 		if (is_int($id)) {
-			$id = (string)$id;
+			$id = (string) $id;
 		}
 
 		if (!is_string($id)) {
@@ -191,7 +190,7 @@ class Share implements IShare {
 		}
 
 		if ($this->fileId === null) {
-			throw new NotFoundException("Share source not found");
+			throw new NotFoundException('Share source not found');
 		} else {
 			return $this->fileId;
 		}

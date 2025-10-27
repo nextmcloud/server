@@ -13,12 +13,14 @@ OC.L10N.register(
     "Invalid password value" : "無效的密碼值",
     "An email address is required, to send a password link to the user." : "電子郵件地址必填，用來寄送密碼連結給使用者。",
     "Required email address was not provided" : "未提供必要的電子郵件地址",
+    "User creation failed" : "使用者建立失敗",
     "Invalid quota value: %1$s" : "無效的空間限額值：%1$s",
     "Invalid quota value. %1$s is exceeding the maximum quota" : "無效的空間限額值。%1$s 超過了最大空間限額",
     "Unlimited quota is forbidden on this instance" : "此站台禁止無限空間限額",
     "Setting the password is not supported by the users backend" : "使用者後端不支援設定密碼",
     "Invalid language" : "無效的語言",
     "Invalid locale" : "無效的地區設定",
+    "Invalid timezone" : "無效時區",
     "Invalid first day of week" : "無效的一週第一天",
     "Cannot remove yourself from the admin group" : "無法將您自己從管理員群組移除",
     "Cannot remove yourself from this group as you are a sub-admin" : "因為您是子管理員，因此無法將自己從該群組中移除",
@@ -28,6 +30,7 @@ OC.L10N.register(
     "User is not a sub-admin of this group" : "使用者不是該群組的子管理員",
     "Email address not available" : "電子郵件地址不可用",
     "Sending email failed" : "傳送電子郵件失敗",
+    "Logged in account is not mail address owner" : "登入帳號並非郵件地址所有者",
     "Email confirmation" : "電子郵件確認",
     "To enable the email address %s please click the button below." : "若要啟用電子郵件地址 %s，請點擊下方按鈕。",
     "Confirm" : "確認",
@@ -38,9 +41,6 @@ OC.L10N.register(
     "Email confirmation successful" : "電子郵件確認成功",
     "Provisioning API" : "Provisioning API",
     "This application enables a set of APIs that external systems can use to manage accounts, groups and apps." : "此應用程式啟用了一組 API，外部系統可以使用其來管理帳號、群組與應用程式。",
-    "This application enables a set of APIs that external systems can use to create, edit, delete and query account\n\t\tattributes, query, set and remove groups, set quota and query total storage used in Nextcloud. Group admin accounts\n\t\tcan also query Nextcloud and perform the same functions as an admin for groups they manage. The API also enables\n\t\tan admin to query for active Nextcloud applications, application info, and to enable or disable an app remotely.\n\t\tOnce the app is enabled, HTTP requests can be used via a Basic Auth header to perform any of the functions\n\t\tlisted above. More information is available in the Provisioning API documentation, including example calls\n\t\tand server responses." : "此應用程式啟用了一組 API，外部系統可以使用其來建立、編輯、刪除與查詢帳號\n\t\t屬性，查詢、設定與移除群組，設定配額與查詢 Nextcloud 中使用的總儲存空間。群組管理員帳號\n\t\t也可以用其來查詢 Nextcloud，並在其管理的群組中執行與系統管理員相同的動作。這組 API 也讓\n\t\t管理員可以查詢作用中的 Nextcloud 應用程式、應用程式資訊，以及遠端啟用或停用應用程式。\n\t\t應用程式啟用後，可以使用基本驗證標頭來使用 HTTP 請求執行上面\n\t\t列出的任何功能。更多資訊在 Provisioning API 的文件中提供，包含範例呼叫\n\t\t與伺服器回應。",
-    "Logged in user must be an administrator or have authorization to edit this setting." : "登入的使用者必須為管理員，或是有權編輯此設定的使用者。",
-    "This application enables a set of APIs that external systems can use to manage users, groups and apps." : "此應用程式啟用了一組 API，讓外部系統可以用來管理使用者、群組與應用程式。",
-    "This application enables a set of APIs that external systems can use to create, edit, delete and query user\n\t\tattributes, query, set and remove groups, set quota and query total storage used in Nextcloud. Group admin users\n\t\tcan also query Nextcloud and perform the same functions as an admin for groups they manage. The API also enables\n\t\tan admin to query for active Nextcloud applications, application info, and to enable or disable an app remotely.\n\t\tOnce the app is enabled, HTTP requests can be used via a Basic Auth header to perform any of the functions\n\t\tlisted above. More information is available in the Provisioning API documentation, including example calls\n\t\tand server responses." : "此應用程式啟用了一組 API，讓外部系統可以用來\n\t\t建立、編輯、刪除與查詢使用者的特性、查詢，設定以及移除群組、設定配額等，還有\n\t\t查詢 Nextcloud 中使用的總計儲存空間。群組管理員使用者也可以用來查詢 Nextcloud，\n\t\t並在其管理的群組中執行與系統管理員相同的動作。這組 API 也讓管理員可以查詢\n\t\t作用中的 Nextcloud 應用程式、應用程式資訊，以及遠端啟用或停用應用程式。\n\t\t應用程式啟用後，可以使用基本認證標頭來使用 HTTP 請求執行上面列出的任何功能。\n\t\t更多資訊在 Provisioning API 的文件中提供，包含範例呼叫與伺服器回應。"
+    "This application enables a set of APIs that external systems can use to create, edit, delete and query account\n\t\tattributes, query, set and remove groups, set quota and query total storage used in Nextcloud. Group admin accounts\n\t\tcan also query Nextcloud and perform the same functions as an admin for groups they manage. The API also enables\n\t\tan admin to query for active Nextcloud applications, application info, and to enable or disable an app remotely.\n\t\tOnce the app is enabled, HTTP requests can be used via a Basic Auth header to perform any of the functions\n\t\tlisted above. More information is available in the Provisioning API documentation, including example calls\n\t\tand server responses." : "此應用程式啟用了一組 API，外部系統可以使用其來建立、編輯、刪除與查詢帳號\n\t\t屬性，查詢、設定與移除群組，設定配額與查詢 Nextcloud 中使用的總儲存空間。群組管理員帳號\n\t\t也可以用其來查詢 Nextcloud，並在其管理的群組中執行與系統管理員相同的動作。這組 API 也讓\n\t\t管理員可以查詢作用中的 Nextcloud 應用程式、應用程式資訊，以及遠端啟用或停用應用程式。\n\t\t應用程式啟用後，可以使用基本驗證標頭來使用 HTTP 請求執行上面\n\t\t列出的任何功能。更多資訊在 Provisioning API 的文件中提供，包含範例呼叫\n\t\t與伺服器回應。"
 },
 "nplurals=1; plural=0;");

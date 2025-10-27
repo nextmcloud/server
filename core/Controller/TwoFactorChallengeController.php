@@ -25,6 +25,7 @@ use OCP\IRequest;
 use OCP\ISession;
 use OCP\IURLGenerator;
 use OCP\IUserSession;
+use OCP\Util;
 use Psr\Log\LoggerInterface;
 
 #[OpenAPI(scope: OpenAPI::SCOPE_IGNORE)]
@@ -89,6 +90,7 @@ class TwoFactorChallengeController extends Controller {
 			'logout_url' => $this->getLogoutUrl(),
 			'hasSetupProviders' => !empty($setupProviders),
 		];
+		Util::addScript('core', 'twofactor-request-token');
 		return new StandaloneTemplateResponse($this->appName, 'twofactorselectchallenge', $data, 'guest');
 	}
 
@@ -123,7 +125,7 @@ class TwoFactorChallengeController extends Controller {
 		if ($this->session->exists('two_factor_auth_error')) {
 			$this->session->remove('two_factor_auth_error');
 			$error = true;
-			$errorMessage = $this->session->get("two_factor_auth_error_message");
+			$errorMessage = $this->session->get('two_factor_auth_error_message');
 			$this->session->remove('two_factor_auth_error_message');
 		}
 		$tmpl = $provider->getTemplate($user);
@@ -141,6 +143,7 @@ class TwoFactorChallengeController extends Controller {
 		if ($provider instanceof IProvidesCustomCSP) {
 			$response->setContentSecurityPolicy($provider->getCSP());
 		}
+		Util::addScript('core', 'twofactor-request-token');
 		return $response;
 	}
 
@@ -204,6 +207,7 @@ class TwoFactorChallengeController extends Controller {
 			'redirect_url' => $redirect_url,
 		];
 
+		Util::addScript('core', 'twofactor-request-token');
 		return new StandaloneTemplateResponse($this->appName, 'twofactorsetupselection', $data, 'guest');
 	}
 
@@ -235,6 +239,7 @@ class TwoFactorChallengeController extends Controller {
 			'template' => $tmpl->fetchPage(),
 		];
 		$response = new StandaloneTemplateResponse($this->appName, 'twofactorsetupchallenge', $data, 'guest');
+		Util::addScript('core', 'twofactor-request-token');
 		return $response;
 	}
 

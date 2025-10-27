@@ -49,7 +49,7 @@ class BackgroundCleanupJob extends TimedJob {
 	public function run($argument) {
 		foreach ($this->getDeletedFiles() as $fileId) {
 			try {
-				$preview = $this->previewFolder->getFolder((string)$fileId);
+				$preview = $this->previewFolder->getFolder((string) $fileId);
 				$preview->delete();
 			} catch (NotFoundException $e) {
 				// continue
@@ -77,13 +77,13 @@ class BackgroundCleanupJob extends TimedJob {
 				$qb->expr()->castColumn('a.name', IQueryBuilder::PARAM_INT), 'b.fileid'
 			))
 			->where(
-				$qb->expr()->isNull('b.fileid')
-			)->andWhere(
-				$qb->expr()->eq('a.storage', $qb->createNamedParameter($this->previewFolder->getStorageId()))
-			)->andWhere(
-				$qb->expr()->eq('a.parent', $qb->createNamedParameter($this->previewFolder->getId()))
-			)->andWhere(
-				$qb->expr()->like('a.name', $qb->createNamedParameter('__%'))
+				$qb->expr()->andX(
+					$qb->expr()->isNull('b.fileid'),
+					$qb->expr()->eq('a.storage', $qb->createNamedParameter($this->previewFolder->getStorageId())),
+					$qb->expr()->eq('a.parent', $qb->createNamedParameter($this->previewFolder->getId())),
+					$qb->expr()->like('a.name', $qb->createNamedParameter('__%')),
+					$qb->expr()->eq('a.mimetype', $qb->createNamedParameter($this->mimeTypeLoader->getId('httpd/unix-directory')))
+				)
 			);
 
 		if (!$this->isCLI) {
@@ -196,7 +196,7 @@ class BackgroundCleanupJob extends TimedJob {
 			if (count($rows) > 0) {
 				$minId = $rows[count($rows) - 1]['fileid'];
 				yield array_map(function ($row) {
-					return (int)$row['name'];
+					return (int) $row['name'];
 				}, $rows);
 			} else {
 				break;

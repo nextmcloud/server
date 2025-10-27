@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -98,6 +99,41 @@ class DetectionTest extends \Test\TestCase {
 		$result = $this->detection->detectString('/data/data.tar.gz');
 		$expected = 'text/plain';
 		$this->assertEquals($expected, $result);
+	}
+
+	public function dataMimeTypeCustom(): array {
+		return [
+			['123', 'foobar/123'],
+			['a123', 'foobar/123'],
+			['bar', 'foobar/bar'],
+		];
+	}
+
+	/**
+	 * @dataProvider dataMimeTypeCustom
+	 *
+	 * @param string $ext
+	 * @param string $mime
+	 */
+	public function testDetectMimeTypeCustom(string $ext, string $mime): void {
+		$confDir = sys_get_temp_dir();
+		file_put_contents($confDir . '/mimetypemapping.dist.json', json_encode([]));
+
+		/** @var IURLGenerator $urlGenerator */
+		$urlGenerator = $this->getMockBuilder(IURLGenerator::class)
+			->disableOriginalConstructor()
+			->getMock();
+
+		/** @var LoggerInterface $logger */
+		$logger = $this->createMock(LoggerInterface::class);
+
+		// Create new mapping file
+		file_put_contents($confDir . '/mimetypemapping.dist.json', json_encode([$ext => [$mime]]));
+
+		$detection = new Detection($urlGenerator, $logger, $confDir, $confDir);
+		$mappings = $detection->getAllMappings();
+		$this->assertArrayHasKey($ext, $mappings);
+		$this->assertEquals($mime, $detection->detectPath('foo.' . $ext));
 	}
 
 	public function dataGetSecureMimeType(): array {

@@ -35,8 +35,6 @@ OC.L10N.register(
     "Cannot decrypt this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Tento súbor nie je možné rozšifrovať, môže ísť o súbor zdieľaný iným užívateľom. Požiadajte majiteľa súboru, aby vám ho zozdieľal ešte raz.",
     "Cannot read this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Tento súbor nie je možné prečítať, môže ísť o súbor zdieľaný iným užívateľom. Požiadajte majiteľa súboru, aby vám ho zozdieľal ešte raz.",
     "Default encryption module" : "Predvolený šifrovací modul",
-    "Default encryption module for server-side encryption" : "Predvolený šifrovací modul pre šifrovanie na strane servra",
-    "In order to use this encryption module you need to enable server-side encryption in the admin settings. Once enabled this module will encrypt all your files transparently. The encryption is based on AES 256 keys.\nThe module will not touch existing files, only new files will be encrypted after server-side encryption was enabled. It is also not possible to disable the encryption again and switch back to an unencrypted system.\nPlease read the documentation to know all implications before you decide to enable server-side encryption." : "Pre použitie tohoto šifrovacieho modulu musíte povoliť šifrovanie na strane servra v nastaveniach správcu. Po povolení tento modul zašifruje transparentne všetky vaše súbory. Šifrovanie je založené na kľúčoch AES 256.\nModul nezmení existujúce súbory, zašifrované budú iba nové súbory po povolení šifrovania na strane servra. Šifrovanie nie je možné opätovne vypnúť a prepnúť naspäť do nešifroveného systému.\nProsím, prečítajte si dokumentáciu, aby ste poznali všetky dôsledky predtým, než sa rozhodnete povoliť šifrovanie na strane servra.",
     "Encryption app is enabled but your keys are not initialized, please log-out and log-in again" : "Aplikácia pre šifrovanie je povolená, ale vaše kľúče nie sú inicializované. Odhláste sa a znovu sa prihláste.",
     "Encrypt the home storage" : "Šifrovať domáce úložisko",
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "Zapnutím tejto voľby zašifrujete všetky súbory v hlavnom úložisku, v opačnom prípade zašifrujete iba súbory na externom úložisku.",
@@ -53,7 +51,7 @@ OC.L10N.register(
     "Basic encryption module" : "Základný šifrovací modul",
     "Your private key password no longer matches your log-in password." : "Heslo vášho súkromného kľúča sa nezhoduje v vašim prihlasovacím heslom.",
     "Set your old private key password to your current log-in password:" : "Zmeňte si vaše staré heslo súkromného kľúča na rovnaké, aké je vaše aktuálne prihlasovacie heslo:",
-    " If you don't remember your old password you can ask your administrator to recover your files." : "Ak si nepamätáte svoje staré heslo, môžete požiadať administrátora o obnovenie svojich súborov.",
+    "If you do not remember your old password you can ask your administrator to recover your files." : "Ak si nepamätáte svoje staré heslo, môžete požiadať administrátora o obnovenie vašich súborov.",
     "Old log-in password" : "Staré prihlasovacie heslo",
     "Current log-in password" : "Súčasné prihlasovacie heslo",
     "Update Private Key Password" : "Aktualizovať heslo súkromného kľúča",
@@ -61,6 +59,7 @@ OC.L10N.register(
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "Povolenie Vám umožní znovu získať prístup k Vašim zašifrovaným súborom, ak stratíte heslo",
     "Enabled" : "Povolené",
     "Disabled" : "Zakázané",
-    "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "Záchranný kľúč je ďalší šifrovací kľúč, ktorý sa používa na šifrovanie súborov. Umožňuje záchranu súborov používateľa ak zabudne svoje heslo."
+    "Default encryption module for server-side encryption" : "Predvolený šifrovací modul pre šifrovanie na strane servra",
+    "In order to use this encryption module you need to enable server-side encryption in the admin settings. Once enabled this module will encrypt all your files transparently. The encryption is based on AES 256 keys.\nThe module will not touch existing files, only new files will be encrypted after server-side encryption was enabled. It is also not possible to disable the encryption again and switch back to an unencrypted system.\nPlease read the documentation to know all implications before you decide to enable server-side encryption." : "Pre použitie tohoto šifrovacieho modulu musíte povoliť šifrovanie na strane servra v nastaveniach správcu. Po povolení tento modul zašifruje transparentne všetky vaše súbory. Šifrovanie je založené na kľúčoch AES 256.\nModul nezmení existujúce súbory, zašifrované budú iba nové súbory po povolení šifrovania na strane servra. Šifrovanie nie je možné opätovne vypnúť a prepnúť naspäť do nešifroveného systému.\nProsím, prečítajte si dokumentáciu, aby ste poznali všetky dôsledky predtým, než sa rozhodnete povoliť šifrovanie na strane servra."
 },
 "nplurals=4; plural=(n % 1 == 0 && n == 1 ? 0 : n % 1 == 0 && n >= 2 && n <= 4 ? 1 : n % 1 != 0 ? 2: 3);");

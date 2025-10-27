@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2017 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2017 ownCloud GmbH
@@ -194,14 +195,14 @@ class MigrationService {
 		preg_match('/(\d+)Date(\d+)/', basename($a), $matchA);
 		preg_match('/(\d+)Date(\d+)/', basename($b), $matchB);
 		if (!empty($matchA) && !empty($matchB)) {
-			$versionA = (int)$matchA[1];
-			$versionB = (int)$matchB[1];
+			$versionA = (int) $matchA[1];
+			$versionB = (int) $matchB[1];
 			if ($versionA !== $versionB) {
 				return ($versionA < $versionB) ? -1 : 1;
 			}
-			return ($matchA[2] < $matchB[2]) ? -1 : 1;
+			return strnatcmp($matchA[2], $matchB[2]);
 		}
-		return (basename($a) < basename($b)) ? -1 : 1;
+		return strnatcmp(basename($a), basename($b));
 	}
 
 	/**
@@ -250,7 +251,7 @@ class MigrationService {
 
 		$toBeExecuted = [];
 		foreach ($availableMigrations as $v) {
-			if ($to !== 'latest' && $v > $to) {
+			if ($to !== 'latest' && ($this->sortMigrations($v, $to) > 0)) {
 				continue;
 			}
 			if ($this->shallBeExecuted($v, $knownMigrations)) {
@@ -345,7 +346,7 @@ class MigrationService {
 			return null;
 		}
 
-		return (string)$versions[$offset + $delta];
+		return (string) $versions[$offset + $delta];
 	}
 
 	private function getCurrentVersion(): string {

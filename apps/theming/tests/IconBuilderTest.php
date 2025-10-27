@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -13,7 +14,6 @@ use OCA\Theming\Util;
 use OCP\App\IAppManager;
 use OCP\Files\NotFoundException;
 use OCP\IConfig;
-use PHPUnit\Framework\Error\Warning;
 use Test\TestCase;
 
 class IconBuilderTest extends TestCase {
@@ -84,7 +84,7 @@ class IconBuilderTest extends TestCase {
 			->with('global/images')
 			->willThrowException(new NotFoundException());
 
-		$expectedIcon = new \Imagick(realpath(dirname(__FILE__)). "/data/" . $file);
+		$expectedIcon = new \Imagick(realpath(dirname(__FILE__)). '/data/' . $file);
 		$icon = $this->iconBuilder->renderAppIcon($app, 512);
 
 		$this->assertEquals(true, $icon->valid());
@@ -113,7 +113,7 @@ class IconBuilderTest extends TestCase {
 			->with('global/images')
 			->willThrowException(new NotFoundException());
 
-		$expectedIcon = new \Imagick(realpath(dirname(__FILE__)). "/data/" . $file);
+		$expectedIcon = new \Imagick(realpath(dirname(__FILE__)). '/data/' . $file);
 		$icon = new \Imagick();
 		$icon->readImageBlob($this->iconBuilder->getTouchIcon($app));
 
@@ -146,7 +146,7 @@ class IconBuilderTest extends TestCase {
 			->with('global/images')
 			->willThrowException(new NotFoundException());
 
-		$expectedIcon = new \Imagick(realpath(dirname(__FILE__)). "/data/" . $file);
+		$expectedIcon = new \Imagick(realpath(dirname(__FILE__)). '/data/' . $file);
 		$actualIcon = $this->iconBuilder->getFavicon($app);
 
 		$icon = new \Imagick();
@@ -164,8 +164,7 @@ class IconBuilderTest extends TestCase {
 
 	public function testGetFaviconNotFound() {
 		$this->checkImagick();
-		$this->expectWarning(Warning::class);
-		$util = $this->getMockBuilder(Util::class)->disableOriginalConstructor()->getMock();
+		$util = $this->createMock(Util::class);
 		$iconBuilder = new IconBuilder($this->themingDefaults, $util, $this->imageManager);
 		$this->imageManager->expects($this->once())
 			->method('shouldReplaceIcons')
@@ -178,8 +177,7 @@ class IconBuilderTest extends TestCase {
 
 	public function testGetTouchIconNotFound() {
 		$this->checkImagick();
-		$this->expectWarning(Warning::class);
-		$util = $this->getMockBuilder(Util::class)->disableOriginalConstructor()->getMock();
+		$util = $this->createMock(Util::class);
 		$iconBuilder = new IconBuilder($this->themingDefaults, $util, $this->imageManager);
 		$util->expects($this->once())
 			->method('getAppIcon')
@@ -189,8 +187,7 @@ class IconBuilderTest extends TestCase {
 
 	public function testColorSvgNotFound() {
 		$this->checkImagick();
-		$this->expectWarning(Warning::class);
-		$util = $this->getMockBuilder(Util::class)->disableOriginalConstructor()->getMock();
+		$util = $this->createMock(Util::class);
 		$iconBuilder = new IconBuilder($this->themingDefaults, $util, $this->imageManager);
 		$util->expects($this->once())
 			->method('getAppImage')

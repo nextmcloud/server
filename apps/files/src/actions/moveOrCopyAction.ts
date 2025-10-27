@@ -4,7 +4,7 @@
  */
 import type { Folder, Node, View } from '@nextcloud/files'
 import type { IFilePickerButton } from '@nextcloud/dialogs'
-import type { FileStat, ResponseDataDetailed } from 'webdav'
+import type { FileStat, ResponseDataDetailed, WebDAVClientError } from 'webdav'
 import type { MoveCopyResult } from './moveOrCopyActionUtils'
 
 import { isAxiosError } from '@nextcloud/axios'
@@ -165,7 +165,18 @@ export const handleCopyMoveNodeTo = async (node: Node, destination: Folder, meth
 				}
 				// getting here means either no conflict, file was renamed to keep both files
 				// in a conflict, or the selected file was chosen to be kept during the conflict
-				await client.moveFile(currentPath, join(destinationPath, node.basename))
+				try {
+					await client.moveFile(currentPath, join(destinationPath, node.basename))
+				} catch (error) {
+					const parser = new DOMParser()
+					const text = await (error as WebDAVClientError).response?.text()
+					const message = parser.parseFromString(text ?? '', 'text/xml')
+						.querySelector('message')?.textContent
+					if (message) {
+						showError(message)
+					}
+					throw error
+				}
 				// Delete the node as it will be fetched again
 				// when navigating to the destination folder
 				emit('files:node:deleted', node)
@@ -215,6 +226,9 @@ async function openFilePickerForAction(
 			// We only want to show folders in the file picker
 			// We don't want to show encrypted folders in the file picker
 			return !(n.attributes?.['type'] !== "directory" || n.attributes?.['is-encrypted'] === 1)
+		.setCanPick((n) => {
+			const hasCreatePermissions = (n.permissions & Permission.CREATE) === Permission.CREATE
+			return hasCreatePermissions
 		})
 		.setMimeTypeFilter([])
 		.setMultiSelect(false)
@@ -231,7 +245,6 @@ async function openFilePickerForAction(
 					label: target ? t('files', 'Copy to {target}', { target }, undefined, { escape: false, sanitize: false }) : t('files', 'Copy'),
 					type: 'primary',
 					icon: CopyIconSvg,
-					disabled: selection.some((node) => (node.permissions & Permission.CREATE) === 0),
 					async callback(destination: Node[]) {
 						resolve({
 							destination: destination[0] as Folder,
@@ -249,6 +262,11 @@ async function openFilePickerForAction(
 
 			if (paths.includes(path)) {
 				// You cannot move a file/folder onto itself
+				return buttons
+			}
+
+			if (selection.some((node) => (node.permissions & Permission.CREATE) === 0)) {
+				// Missing 'CREATE' permissions for selected destination
 				return buttons
 			}
 

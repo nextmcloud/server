@@ -22,7 +22,7 @@ OC.L10N.register(
     "The current log-in password was not correct, please try again." : "O actual contrasinal de acceso non é correcto, ténteo de novo.",
     "Private key password successfully updated." : "O contrasinal da chave privada foi actualizada correctamente.",
     "Invalid private key for encryption app. Please update your private key password in your personal settings to recover access to your encrypted files." : "A chave privada para a aplicación de cifrado non é correcta. Actualice o contrasinal da súa chave privada nos seus axustes persoais para recuperar o acceso aos seus ficheiros cifrados.",
-    "Encryption App is enabled, but your keys are not initialized. Please log-out and log-in again." : "A aplicación de cifrado está activada, mais non foron preparadas as lhaves. Saia da sesión e volva acceder de novo",
+    "Encryption App is enabled, but your keys are not initialized. Please log-out and log-in again." : "A aplicación de cifrado está activada, mais non foron preparadas as chaves. Saia da sesión e volva acceder de novo",
     "Please enable server side encryption in the admin settings in order to use the encryption module." : "Active o cifrado no lado do servidor nos axustes de administración para poder usar o módulo de cifrado.",
     "Encryption app is enabled and ready" : " A aplicación de cifrado está activada e preparada",
     "Bad Signature" : "Sinatura errónea",
@@ -35,8 +35,6 @@ OC.L10N.register(
     "Cannot decrypt this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Non foi posíbel descifrar o ficheiro, probabelmente tratase dun ficheiro compartido. Pídalle ao propietario do ficheiro que  volva compartir o ficheiro con Vde.",
     "Cannot read this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Non foi posíbel ler o ficheiro, probabelmente tratase dun ficheiro compartido. Pídalle ao propietario do ficheiro que  volva compartir o ficheiro con Vde.",
     "Default encryption module" : "Módulo de cifrado predeterminado",
-    "Default encryption module for server-side encryption" : "Módulo de cifrado predeterminado para o cifrado no lado do servidor",
-    "In order to use this encryption module you need to enable server-side encryption in the admin settings. Once enabled this module will encrypt all your files transparently. The encryption is based on AES 256 keys.\nThe module will not touch existing files, only new files will be encrypted after server-side encryption was enabled. It is also not possible to disable the encryption again and switch back to an unencrypted system.\nPlease read the documentation to know all implications before you decide to enable server-side encryption." : "Para usar este módulo de cifrado é preciso activar o cifrado no lado do servidor nos axustes de administración. Una vez activado este módulo cifrará todos os seus ficheiros de xeito transparente. O cifrado basease en chave AES 256.\nO módulo non tocará os ficheiros existentes, só se cifran os ficheiros novos após que se active o cifrado no lado do servidor. Tampouco é posíbel desactivar o cifrado e volver a un sistema sen cifrar.\nLea a documentación para coñecer todas as implicacións antes de decidir activar o cifrado no lado do servidor.",
     "Encryption app is enabled but your keys are not initialized, please log-out and log-in again" : "A aplicación de cifrado está activada, mais as súas chaves non foron preparadas, saia da sesión e volva acceder de novo",
     "Encrypt the home storage" : "Cifrar o almacenamento persoal",
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "Ao activar esta opción cífranse todos os ficheiros almacenados no almacenamento principal, senón só  se cifran os ficheiros do almacenamento externo.",
@@ -53,7 +51,7 @@ OC.L10N.register(
     "Basic encryption module" : "Módulo de cifrado básico",
     "Your private key password no longer matches your log-in password." : "O seu contrasinal da chave privada non coincide co seu contrasinal de acceso.",
     "Set your old private key password to your current log-in password:" : "Estabeleza o seu contrasinal antigo da chave privada ao seu contrasinal de acceso actual:",
-    " If you don't remember your old password you can ask your administrator to recover your files." : "Se non lembra o seu antigo contrasinal pode pedirllo á administración desta instancia. para recuperar os seus ficheiros.",
+    "If you do not remember your old password you can ask your administrator to recover your files." : "Se non lembra o seu contrasinal antigo pode pedirllo á administración desta instancia. para recuperar os seus ficheiros.",
     "Old log-in password" : "Contrasinal antigo de acceso",
     "Current log-in password" : "Contrasinal actual de acceso",
     "Update Private Key Password" : "Actualizar o contrasinal da chave privada",
@@ -61,6 +59,7 @@ OC.L10N.register(
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "Ao activar esta opción permitiráselle volver obter acceso aos ficheiros cifrados no caso de perda do contrasinal",
     "Enabled" : "Activado",
     "Disabled" : "Desactivado",
-    "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "A chave de recuperación é unha chave de cifrado adicional que se utiliza para cifrar ficheiros. Permite a recuperación de ficheiros dun usuario se o usuario esquece o seu contrasinal."
+    "Default encryption module for server-side encryption" : "Módulo de cifrado predeterminado para o cifrado no lado do servidor",
+    "In order to use this encryption module you need to enable server-side encryption in the admin settings. Once enabled this module will encrypt all your files transparently. The encryption is based on AES 256 keys.\nThe module will not touch existing files, only new files will be encrypted after server-side encryption was enabled. It is also not possible to disable the encryption again and switch back to an unencrypted system.\nPlease read the documentation to know all implications before you decide to enable server-side encryption." : "Para usar este módulo de cifrado é preciso activar o cifrado no lado do servidor nos axustes de administración. Una vez activado este módulo cifrará todos os seus ficheiros de xeito transparente. O cifrado basease en chave AES 256.\nO módulo non tocará os ficheiros existentes, só se cifran os ficheiros novos após que se active o cifrado no lado do servidor. Tampouco é posíbel desactivar o cifrado e volver a un sistema sen cifrar.\nLea a documentación para coñecer todas as implicacións antes de decidir activar o cifrado no lado do servidor."
 },
 "nplurals=2; plural=(n != 1);");

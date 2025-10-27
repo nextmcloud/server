@@ -9,7 +9,9 @@ namespace OCA\DAV\Connector\Sabre;
 
 use OC\AppFramework\Http\Request;
 use OC\FilesMetadata\Model\FilesMetadata;
+use OC\User\NoUserException;
 use OCA\DAV\Connector\Sabre\Exception\InvalidPath;
+use OCP\Accounts\IAccountManager;
 use OCP\Constants;
 use OCP\Files\ForbiddenException;
 use OCP\Files\IFilenameValidator;
@@ -88,6 +90,7 @@ class FilesPlugin extends ServerPlugin {
 		private IPreview $previewManager,
 		private IUserSession $userSession,
 		private IFilenameValidator $validator,
+		private IAccountManager $accountManager,
 		private bool $isPublic = false,
 		private bool $downloadAttachment = true,
 	) {
@@ -357,9 +360,32 @@ class FilesPlugin extends ServerPlugin {
 				$owner = $node->getOwner();
 				if (!$owner) {
 					return null;
-				} else {
+				}
+
+				// Get current user to see if we're in a public share or not
+				$user = $this->userSession->getUser();
+
+				// If the user is logged in, we can return the display name
+				if ($user !== null) {
 					return $owner->getDisplayName();
 				}
+
+				// Check if the user published their display name
+				try {
+					$ownerAccount = $this->accountManager->getAccount($owner);
+				} catch (NoUserException) {
+					// do not lock process if owner is not local
+					return null;
+				}
+
+				$ownerNameProperty = $ownerAccount->getProperty(IAccountManager::PROPERTY_DISPLAYNAME);
+
+				// Since we are not logged in, we need to have at least the published scope
+				if ($ownerNameProperty->getScope() === IAccountManager::SCOPE_PUBLISHED) {
+					return $owner->getDisplayName();
+				}
+
+				return null;
 			});
 
 			$propFind->handle(self::HAS_PREVIEW_PROPERTYNAME, function () use ($node) {
@@ -588,13 +614,19 @@ class FilesPlugin extends ServerPlugin {
 				$mutation,
 				function (mixed $value) use ($accessRight, $knownMetadata, $node, $mutation, $filesMetadataManager): bool {
 					/** @var FilesMetadata $metadata */
-					$metadata = $filesMetadataManager->getMetadata((int)$node->getFileId(), true);
+					$metadata = $filesMetadataManager->getMetadata((int) $node->getFileId(), true);
 					$metadata->setStorageId($node->getNode()->getStorage()->getCache()->getNumericStorageId());
 					$metadataKey = substr($mutation, strlen(self::FILE_METADATA_PREFIX));
 
 					// confirm metadata key is editable via PROPPATCH
 					if ($knownMetadata->getEditPermission($metadataKey) < $accessRight) {
 						throw new FilesMetadataException('you do not have enough rights to update \'' . $metadataKey . '\' on this node');
+					}
+
+					if ($value === null) {
+						$metadata->unset($metadataKey);
+						$filesMetadataManager->saveMetadata($metadata);
+						return true;
 					}
 
 					// If the metadata is unknown, it defaults to string.

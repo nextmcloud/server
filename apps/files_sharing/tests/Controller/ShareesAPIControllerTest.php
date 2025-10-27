@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -12,6 +13,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCS\OCSBadRequestException;
 use OCP\Collaboration\Collaborators\ISearch;
+use OCP\GlobalScale\IConfig as GlobalScaleIConfig;
 use OCP\IConfig;
 use OCP\IRequest;
 use OCP\IURLGenerator;
@@ -39,7 +41,7 @@ class ShareesAPIControllerTest extends TestCase {
 	/** @var IManager|MockObject */
 	protected $shareManager;
 
-	/** @var  ISearch|MockObject */
+	/** @var ISearch|MockObject */
 	protected $collaboratorSearch;
 
 	/** @var IConfig|MockObject */
@@ -230,14 +232,14 @@ class ShareesAPIControllerTest extends TestCase {
 		$perPage = $getData['perPage'] ?? 200;
 		$shareType = $getData['shareType'] ?? null;
 
+		$globalConfig = $this->createMock(GlobalScaleIConfig::class);
+		$globalConfig->expects(self::once())
+			->method('isGlobalScaleEnabled')
+			->willReturn(true);
+		$this->overwriteService(GlobalScaleIConfig::class, $globalConfig);
+
 		/** @var IConfig|MockObject $config */
 		$config = $this->createMock(IConfig::class);
-		$config->expects($this->exactly(1))
-			->method('getAppValue')
-			->with($this->anything(), $this->anything(), $this->anything())
-			->willReturnMap([
-				['files_sharing', 'lookupServerEnabled', 'yes', 'yes'],
-			]);
 
 		$this->shareManager->expects($this->once())
 			->method('allowGroupSharing')

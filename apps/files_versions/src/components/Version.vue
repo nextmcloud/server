@@ -10,7 +10,7 @@
 		<!-- Icon -->
 		<template #icon>
 			<div v-if="!(loadPreview || previewLoaded)" class="version__image" />
-			<img v-else-if="(isCurrent || version.hasPreview) && !previewErrored"
+			<img v-else-if="version.previewUrl && !previewErrored"
 				:src="version.previewUrl"
 				alt=""
 				decoding="async"
@@ -30,18 +30,24 @@
 			<div class="version__info">
 				<div v-if="versionLabel"
 					class="version__info__label"
+					data-cy-files-version-label
 					:title="versionLabel">
 					{{ versionLabel }}
 				</div>
-				<div v-if="versionAuthor" class="version__info">
+				<div v-if="versionAuthor"
+					class="version__info"
+					data-cy-files-version-author-name>
 					<span v-if="versionLabel">•</span>
 					<NcAvatar class="avatar"
 						:user="version.author"
-						:size="16"
-						:disable-menu="true"
-						:disable-tooltip="true"
+						:size="20"
+						disable-menu
+						disable-tooltip
 						:show-user-status="false" />
-					<div>{{ versionAuthor }}</div>
+					<div class="version__info__author_name"
+						:title="versionAuthor">
+						{{ versionAuthor }}
+					</div>
 				</div>
 			</div>
 		</template>
@@ -52,7 +58,7 @@
 				<NcDateTime class="version__info__date"
 					relative-time="short"
 					:timestamp="version.mtime" />
-				<!-- Separate dot to improve alignement -->
+				<!-- Separate dot to improve alignment -->
 				<span>•</span>
 				<span>{{ humanReadableSize }}</span>
 			</div>
@@ -114,6 +120,14 @@
 import type { PropType } from 'vue'
 import type { Version } from '../utils/versions'
 
+import { getCurrentUser } from '@nextcloud/auth'
+import { Permission, formatFileSize } from '@nextcloud/files'
+import { loadState } from '@nextcloud/initial-state'
+import { t } from '@nextcloud/l10n'
+import { joinPaths } from '@nextcloud/paths'
+import { getRootUrl } from '@nextcloud/router'
+import { defineComponent } from 'vue'
+
 import BackupRestore from 'vue-material-design-icons/BackupRestore.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import Download from 'vue-material-design-icons/Download.vue'
@@ -127,15 +141,6 @@ import NcAvatar from '@nextcloud/vue/dist/Components/NcAvatar.js'
 import NcDateTime from '@nextcloud/vue/dist/Components/NcDateTime.js'
 import NcListItem from '@nextcloud/vue/dist/Components/NcListItem.js'
 import Tooltip from '@nextcloud/vue/dist/Directives/Tooltip.js'
-
-import { getRootUrl, generateOcsUrl } from '@nextcloud/router'
-import { joinPaths } from '@nextcloud/paths'
-import { loadState } from '@nextcloud/initial-state'
-import { Permission, formatFileSize } from '@nextcloud/files'
-import { translate as t } from '@nextcloud/l10n'
-import { defineComponent } from 'vue'
-
-import axios from '@nextcloud/axios'
 
 const hasPermission = (permissions: number, permission: number): boolean => (permissions & permission) !== 0
 
@@ -198,7 +203,6 @@ export default defineComponent({
 			previewLoaded: false,
 			previewErrored: false,
 			capabilities: loadState('core', 'capabilities', { files: { version_labeling: false, version_deletion: false } }),
-			versionAuthor: '',
 		}
 	},
 
@@ -223,6 +227,16 @@ export default defineComponent({
 			}
 
 			return label
+		},
+
+		versionAuthor() {
+			if (!this.version.author || !this.version.authorName) {
+				return ''
+			}
+			if (this.version.author === getCurrentUser()?.uid) {
+				return t('files_versions', 'You')
+			}
+			return this.version.authorName ?? this.version.author
 		},
 
 		downloadURL(): string {
@@ -268,10 +282,6 @@ export default defineComponent({
 		},
 	},
 
-	created() {
-		this.fetchDisplayName()
-	},
-
 	methods: {
 		labelUpdate() {
 			this.$emit('label-update-request')
@@ -289,22 +299,9 @@ export default defineComponent({
 			this.$emit('delete', this.version)
 		},
 
-		async fetchDisplayName() {
-			// check to make sure that we have a valid author - in case database did not migrate, null author, etc.
-			if (this.version.author) {
-				try {
-					const { data } = await axios.get(generateOcsUrl(`/cloud/users/${this.version.author}`))
-					this.versionAuthor = data.ocs.data.displayname
-				} catch (e) {
-					// Promise got rejected - default to null author to not try to load author profile
-					this.versionAuthor = null
-				}
-			}
-		},
-
 		click() {
 			if (!this.canView) {
-				window.location = this.downloadURL
+				window.location.href = this.downloadURL
 				return
 			}
 			this.$emit('click', { version: this.version })
@@ -334,10 +331,17 @@ export default defineComponent({
 		gap: 0.5rem;
 		color: var(--color-main-text);
 		font-weight: 500;
+		overflow: hidden;
 
 		&__label {
 			font-weight: 700;
 			// Fix overflow on narrow screens
+			overflow: hidden;
+			text-overflow: ellipsis;
+			min-width: 110px;
+		}
+
+		&__author_name {
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}

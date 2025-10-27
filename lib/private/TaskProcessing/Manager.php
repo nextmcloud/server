@@ -31,6 +31,8 @@ use OCP\Files\Node;
 use OCP\Files\NotPermittedException;
 use OCP\Files\SimpleFS\ISimpleFile;
 use OCP\Http\Client\IClientService;
+use OCP\ICache;
+use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IServerContainer;
@@ -68,7 +70,7 @@ class Manager implements IManager {
 	public const LEGACY_PREFIX_TEXTTOIMAGE = 'legacy:TextToImage:';
 	public const LEGACY_PREFIX_SPEECHTOTEXT = 'legacy:SpeechToText:';
 
-	/** @var list<IProvider>|null  */
+	/** @var list<IProvider>|null */
 	private ?array $providers = null;
 
 	/**
@@ -77,6 +79,10 @@ class Manager implements IManager {
 	private ?array $availableTaskTypes = null;
 
 	private IAppData $appData;
+	private ?array $preferences = null;
+	private ?array $providersById = null;
+	private ICache $distributedCache;
+
 	public function __construct(
 		private IConfig $config,
 		private Coordinator $coordinator,
@@ -91,8 +97,10 @@ class Manager implements IManager {
 		private IUserMountCache $userMountCache,
 		private IClientService $clientService,
 		private IAppManager $appManager,
+		ICacheFactory $cacheFactory,
 	) {
 		$this->appData = $appDataFactory->get('core');
+		$this->distributedCache = $cacheFactory->createDistributed('task_processing::');
 	}
 
 
@@ -175,7 +183,7 @@ class Manager implements IManager {
 					}
 					try {
 						return ['output' => $this->provider->process($input['input'])];
-					} catch(\RuntimeException $e) {
+					} catch (\RuntimeException $e) {
 						throw new ProcessingException($e->getMessage(), 0, $e);
 					}
 				}
@@ -306,7 +314,7 @@ class Manager implements IManager {
 				public function process(?string $userId, array $input, callable $reportProgress): array {
 					try {
 						$folder = $this->appData->getFolder('text2image');
-					} catch(\OCP\Files\NotFoundException) {
+					} catch (\OCP\Files\NotFoundException) {
 						$folder = $this->appData->newFolder('text2image');
 					}
 					$resources = [];
@@ -698,12 +706,23 @@ class Manager implements IManager {
 
 	public function getPreferredProvider(string $taskTypeId) {
 		try {
-			$preferences = json_decode($this->config->getAppValue('core', 'ai.taskprocessing_provider_preferences', 'null'), associative: true, flags: JSON_THROW_ON_ERROR);
+			if ($this->preferences === null) {
+				$this->preferences = $this->distributedCache->get('ai.taskprocessing_provider_preferences');
+				if ($this->preferences === null) {
+					$this->preferences = json_decode($this->config->getAppValue('core', 'ai.taskprocessing_provider_preferences', 'null'), associative: true, flags: JSON_THROW_ON_ERROR);
+					$this->distributedCache->set('ai.taskprocessing_provider_preferences', $this->preferences, 60 * 3);
+				}
+			}
+
 			$providers = $this->getProviders();
-			if (isset($preferences[$taskTypeId])) {
-				$provider = current(array_values(array_filter($providers, fn ($provider) => $provider->getId() === $preferences[$taskTypeId])));
-				if ($provider !== false) {
-					return $provider;
+			if (isset($this->preferences[$taskTypeId])) {
+				$providersById = $this->providersById ?? array_reduce($providers, static function (array $carry, IProvider $provider) {
+					$carry[$provider->getId()] = $provider;
+					return $carry;
+				}, []);
+				$this->providersById = $providersById;
+				if (isset($providersById[$this->preferences[$taskTypeId]])) {
+					return $providersById[$this->preferences[$taskTypeId]];
 				}
 			}
 			// By default, use the first available provider
@@ -719,6 +738,12 @@ class Manager implements IManager {
 	}
 
 	public function getAvailableTaskTypes(): array {
+		if ($this->availableTaskTypes === null) {
+			$cachedValue = $this->distributedCache->get('available_task_types_v2');
+			if ($cachedValue !== null) {
+				$this->availableTaskTypes = unserialize($cachedValue);
+			}
+		}
 		if ($this->availableTaskTypes === null) {
 			$taskTypes = $this->_getTaskTypes();
 
@@ -750,6 +775,7 @@ class Manager implements IManager {
 			}
 
 			$this->availableTaskTypes = $availableTaskTypes;
+			$this->distributedCache->set('available_task_types_v2', serialize($this->availableTaskTypes), 60);
 		}
 
 		return $this->availableTaskTypes;
@@ -935,7 +961,7 @@ class Manager implements IManager {
 				$task->setEndedAt(time());
 				$error = 'The task was processed successfully but the provider\'s output doesn\'t pass validation against the task type\'s outputShape spec and/or the provider\'s own optionalOutputShape spec';
 				$task->setErrorMessage($error);
-				$this->logger->error($error, ['exception' => $e]);
+				$this->logger->error($error . ' Output was: ' . var_export($result, true), ['exception' => $e]);
 			} catch (NotPermittedException $e) {
 				$task->setProgress(1);
 				$task->setStatus(Task::STATUS_FAILED);
@@ -952,7 +978,11 @@ class Manager implements IManager {
 				$this->logger->error($error, ['exception' => $e]);
 			}
 		}
-		$taskEntity = \OC\TaskProcessing\Db\Task::fromPublicTask($task);
+		try {
+			$taskEntity = \OC\TaskProcessing\Db\Task::fromPublicTask($task);
+		} catch (\JsonException $e) {
+			throw new \OCP\TaskProcessing\Exception\Exception('The task was processed successfully but the provider\'s output could not be encoded as JSON for the database.', 0, $e);
+		}
 		try {
 			$this->taskMapper->update($taskEntity);
 			$this->runWebhook($task);
@@ -995,7 +1025,7 @@ class Manager implements IManager {
 		}
 		$newInputOutput = [];
 		$spec = array_reduce($specs, fn ($carry, $spec) => $carry + $spec, []);
-		foreach($spec as $key => $descriptor) {
+		foreach ($spec as $key => $descriptor) {
 			$type = $descriptor->getShapeType();
 			if (!isset($input[$key])) {
 				continue;
@@ -1006,14 +1036,14 @@ class Manager implements IManager {
 			}
 			if (EShapeType::getScalarType($type) === $type) {
 				// is scalar
-				$node = $this->validateFileId((int)$input[$key]);
+				$node = $this->validateFileId((int) $input[$key]);
 				$this->validateUserAccessToFile($input[$key], $userId);
 				$newInputOutput[$key] = $node;
 			} else {
 				// is list
 				$newInputOutput[$key] = [];
 				foreach ($input[$key] as $item) {
-					$node = $this->validateFileId((int)$item);
+					$node = $this->validateFileId((int) $item);
 					$this->validateUserAccessToFile($item, $userId);
 					$newInputOutput[$key][] = $node;
 				}
@@ -1087,7 +1117,7 @@ class Manager implements IManager {
 			$folder = $this->appData->newFolder('TaskProcessing');
 		}
 		$spec = array_reduce($specs, fn ($carry, $spec) => $carry + $spec, []);
-		foreach($spec as $key => $descriptor) {
+		foreach ($spec as $key => $descriptor) {
 			$type = $descriptor->getShapeType();
 			if (!isset($output[$key])) {
 				continue;
@@ -1232,7 +1262,7 @@ class Manager implements IManager {
 	private function validateOutputFileIds(array $output, ...$specs): array {
 		$newOutput = [];
 		$spec = array_reduce($specs, fn ($carry, $spec) => $carry + $spec, []);
-		foreach($spec as $key => $descriptor) {
+		foreach ($spec as $key => $descriptor) {
 			$type = $descriptor->getShapeType();
 			if (!isset($output[$key])) {
 				continue;
@@ -1317,9 +1347,9 @@ class Manager implements IManager {
 			];
 			try {
 				$client->request($httpMethod, $uri, $options);
-			} catch (ClientException | ServerException $e) {
+			} catch (ClientException|ServerException $e) {
 				$this->logger->warning('Task processing HTTP webhook failed for task ' . $task->getId() . '. Request failed', ['exception' => $e]);
-			} catch (\Exception | \Throwable $e) {
+			} catch (\Exception|\Throwable $e) {
 				$this->logger->warning('Task processing HTTP webhook failed for task ' . $task->getId() . '. Unknown error', ['exception' => $e]);
 			}
 		} elseif (str_starts_with($method, 'AppAPI:') && str_starts_with($uri, '/')) {

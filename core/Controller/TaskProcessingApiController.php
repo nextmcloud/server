@@ -13,11 +13,9 @@ namespace OC\Core\Controller;
 use OC\Core\ResponseDefinitions;
 use OC\Files\SimpleFS\SimpleFile;
 use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\ApiRoute;
 use OCP\AppFramework\Http\Attribute\ExAppRequired;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
-use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\Attribute\UserRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\DataResponse;
@@ -64,7 +62,7 @@ class TaskProcessingApiController extends \OCP\AppFramework\OCSController {
 	 *
 	 * 200: Task types returned
 	 */
-	#[PublicPage]
+	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/tasktypes', root: '/taskprocessing')]
 	public function taskTypes(): DataResponse {
 		$taskTypes = array_map(function (array $tt) {
@@ -115,9 +113,8 @@ class TaskProcessingApiController extends \OCP\AppFramework\OCSController {
 	 * 412: Scheduling task is not possible
 	 * 401: Cannot schedule task because it references files in its input that the user doesn't have access to
 	 */
-	#[PublicPage]
 	#[UserRateLimit(limit: 20, period: 120)]
-	#[AnonRateLimit(limit: 5, period: 120)]
+	#[NoAdminRequired]
 	#[ApiRoute(verb: 'POST', url: '/schedule', root: '/taskprocessing')]
 	public function schedule(
 		array $input, string $type, string $appId, string $customId = '',
@@ -158,7 +155,7 @@ class TaskProcessingApiController extends \OCP\AppFramework\OCSController {
 	 * 200: Task returned
 	 * 404: Task not found
 	 */
-	#[PublicPage]
+	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/task/{id}', root: '/taskprocessing')]
 	public function getTask(int $id): DataResponse {
 		try {
@@ -513,24 +510,51 @@ class TaskProcessingApiController extends \OCP\AppFramework\OCSController {
 	#[ApiRoute(verb: 'GET', url: '/tasks_provider/next', root: '/taskprocessing')]
 	public function getNextScheduledTask(array $providerIds, array $taskTypeIds): DataResponse {
 		try {
+			$providerIdsBasedOnTaskTypesWithNull = array_unique(array_map(function ($taskTypeId) {
+				try {
+					return $this->taskProcessingManager->getPreferredProvider($taskTypeId)->getId();
+				} catch (Exception) {
+					return null;
+				}
+			}, $taskTypeIds));
+
+			$providerIdsBasedOnTaskTypes = array_filter($providerIdsBasedOnTaskTypesWithNull, fn ($providerId) => $providerId !== null);
+
 			// restrict $providerIds to providers that are configured as preferred for the passed task types
-			$providerIds = array_values(array_intersect(array_unique(array_map(fn ($taskTypeId) => $this->taskProcessingManager->getPreferredProvider($taskTypeId)->getId(), $taskTypeIds)), $providerIds));
+			$possibleProviderIds = array_values(array_intersect($providerIdsBasedOnTaskTypes, $providerIds));
+
 			// restrict $taskTypeIds to task types that can actually be run by one of the now restricted providers
-			$taskTypeIds = array_values(array_filter($taskTypeIds, fn ($taskTypeId) => in_array($this->taskProcessingManager->getPreferredProvider($taskTypeId)->getId(), $providerIds, true)));
-			if (count($providerIds) === 0 || count($taskTypeIds) === 0) {
+			$possibleTaskTypeIds = array_values(array_filter($taskTypeIds, function ($taskTypeId) use ($possibleProviderIds) {
+				try {
+					$providerForTaskType = $this->taskProcessingManager->getPreferredProvider($taskTypeId)->getId();
+				} catch (Exception) {
+					// no provider found for task type
+					return false;
+				}
+				return in_array($providerForTaskType, $possibleProviderIds, true);
+			}));
+
+			if (count($possibleProviderIds) === 0 || count($possibleTaskTypeIds) === 0) {
 				throw new NotFoundException();
 			}
 
 			$taskIdsToIgnore = [];
 			while (true) {
-				$task = $this->taskProcessingManager->getNextScheduledTask($taskTypeIds, $taskIdsToIgnore);
-				$provider = $this->taskProcessingManager->getPreferredProvider($task->getTaskTypeId());
-				if (in_array($provider->getId(), $providerIds, true)) {
-					if ($this->taskProcessingManager->lockTask($task)) {
-						break;
+				// Until we find a task whose task type is set to be provided by the providers requested with this request
+				// Or no scheduled task is found anymore (given the taskIds to ignore)
+				$task = $this->taskProcessingManager->getNextScheduledTask($possibleTaskTypeIds, $taskIdsToIgnore);
+				try {
+					$provider = $this->taskProcessingManager->getPreferredProvider($task->getTaskTypeId());
+					if (in_array($provider->getId(), $possibleProviderIds, true)) {
+						if ($this->taskProcessingManager->lockTask($task)) {
+							break;
+						}
 					}
+				} catch (Exception) {
+					// There is no provider set for the task type of this task
+					// proceed to ignore this task
 				}
-				$taskIdsToIgnore[] = (int)$task->getId();
+				$taskIdsToIgnore[] = (int) $task->getId();
 			}
 
 			/** @var CoreTaskProcessingTask $json */

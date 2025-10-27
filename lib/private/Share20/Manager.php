@@ -212,6 +212,17 @@ class Manager implements IManager {
 			throw new \InvalidArgumentException('A share requires permissions');
 		}
 
+		// Permissions must be valid
+		if ($share->getPermissions() < 0 || $share->getPermissions() > \OCP\Constants::PERMISSION_ALL) {
+			throw new \InvalidArgumentException($this->l->t('Valid permissions are required for sharing'));
+		}
+
+		// Single file shares should never have delete or create permissions
+		if (($share->getNode() instanceof File)
+			&& (($share->getPermissions() & (\OCP\Constants::PERMISSION_CREATE | \OCP\Constants::PERMISSION_DELETE)) !== 0)) {
+			throw new \InvalidArgumentException($this->l->t('File shares cannot have create or delete permissions'));
+		}
+
 		$permissions = 0;
 		$nodesForUser = $userFolder->getById($share->getNodeId());
 		foreach ($nodesForUser as $node) {
@@ -281,7 +292,7 @@ class Manager implements IManager {
 
 		// If $expirationDate is falsy, noExpirationDate is true and expiration not enforced
 		// Then skip expiration date validation as null is accepted
-		if(!$share->getNoExpirationDate() || $isEnforced) {
+		if (!$share->getNoExpirationDate() || $isEnforced) {
 			if ($expirationDate !== null) {
 				$expirationDate->setTimezone($this->dateTimeZone->getTimeZone());
 				$expirationDate->setTime(0, 0, 0);
@@ -305,7 +316,7 @@ class Manager implements IManager {
 			if ($fullId === null && $expirationDate === null && $defaultExpireDate) {
 				$expirationDate = new \DateTime('now', $this->dateTimeZone->getTimeZone());
 				$expirationDate->setTime(0, 0, 0);
-				$days = (int)$this->config->getAppValue('core', $configProp, (string)$defaultExpireDays);
+				$days = (int) $this->config->getAppValue('core', $configProp, (string) $defaultExpireDays);
 				if ($days > $defaultExpireDays) {
 					$days = $defaultExpireDays;
 				}
@@ -361,7 +372,7 @@ class Manager implements IManager {
 
 		// If $expirationDate is falsy, noExpirationDate is true and expiration not enforced
 		// Then skip expiration date validation as null is accepted
-		if(!($share->getNoExpirationDate() && !$isEnforced)) {
+		if (!($share->getNoExpirationDate() && !$isEnforced)) {
 			if ($expirationDate !== null) {
 				$expirationDate->setTimezone($this->dateTimeZone->getTimeZone());
 				$expirationDate->setTime(0, 0, 0);
@@ -386,7 +397,7 @@ class Manager implements IManager {
 				$expirationDate = new \DateTime('now', $this->dateTimeZone->getTimeZone());
 				$expirationDate->setTime(0, 0, 0);
 
-				$days = (int)$this->config->getAppValue('core', 'link_defaultExpDays', (string)$this->shareApiLinkDefaultExpireDays());
+				$days = (int) $this->config->getAppValue('core', 'link_defaultExpDays', (string) $this->shareApiLinkDefaultExpireDays());
 				if ($days > $this->shareApiLinkDefaultExpireDays()) {
 					$days = $this->shareApiLinkDefaultExpireDays();
 				}
@@ -589,7 +600,7 @@ class Manager implements IManager {
 			$mounts = $this->mountManager->findIn($path->getPath());
 			foreach ($mounts as $mount) {
 				if ($mount->getStorage()->instanceOfStorage('\OCA\Files_Sharing\ISharedStorage')) {
-					throw new \InvalidArgumentException('Path contains files shared with you');
+					throw new \InvalidArgumentException('You cannot share a folder that contains other shares');
 				}
 			}
 		}
@@ -707,12 +718,12 @@ class Manager implements IManager {
 			}
 
 			// Generate the target
-			$defaultShareFolder = $this->config->getSystemValue('share_folder', '/');
-			$allowCustomShareFolder = $this->config->getSystemValueBool('sharing.allow_custom_share_folder', true);
-			if ($allowCustomShareFolder) {
-				$shareFolder = $this->config->getUserValue($share->getSharedWith(), Application::APP_ID, 'share_folder', $defaultShareFolder);
-			} else {
-				$shareFolder = $defaultShareFolder;
+			$shareFolder = $this->config->getSystemValue('share_folder', '/');
+			if ($share->getShareType() === IShare::TYPE_USER) {
+				$allowCustomShareFolder = $this->config->getSystemValueBool('sharing.allow_custom_share_folder', true);
+				if ($allowCustomShareFolder) {
+					$shareFolder = $this->config->getUserValue($share->getSharedWith(), Application::APP_ID, 'share_folder', $shareFolder);
+				}
 			}
 
 			$target = $shareFolder . '/' . $share->getNode()->getName();
@@ -947,7 +958,7 @@ class Manager implements IManager {
 	 *
 	 * @param IShare $share the share to update its password.
 	 * @param IShare $originalShare the original share to compare its
-	 *        password with.
+	 *                              password with.
 	 * @return boolean whether the password was updated or not.
 	 */
 	private function updateSharePasswordIfNeeded(IShare $share, IShare $originalShare) {
@@ -1072,7 +1083,12 @@ class Manager implements IManager {
 
 		foreach ($userIds as $userId) {
 			foreach ($shareTypes as $shareType) {
-				$provider = $this->factory->getProviderForType($shareType);
+				try {
+					$provider = $this->factory->getProviderForType($shareType);
+				} catch (ProviderException $e) {
+					continue;
+				}
+
 				if ($node instanceof Folder) {
 					/* We need to get all shares by this user to get subshares */
 					$shares = $provider->getSharesBy($userId, $shareType, null, false, -1, 0);
@@ -1203,7 +1219,7 @@ class Manager implements IManager {
 	public function getSharesInFolder($userId, Folder $node, $reshares = false, $shallow = true) {
 		$providers = $this->factory->getAllProviders();
 		if (!$shallow) {
-			throw new \Exception("non-shallow getSharesInFolder is no longer supported");
+			throw new \Exception('non-shallow getSharesInFolder is no longer supported');
 		}
 
 		return array_reduce($providers, function ($shares, IShareProvider $provider) use ($userId, $node, $reshares) {
@@ -1525,8 +1541,14 @@ class Manager implements IManager {
 	 * @inheritdoc
 	 */
 	public function groupDeleted($gid) {
-		$provider = $this->factory->getProviderForType(IShare::TYPE_GROUP);
-		$provider->groupDeleted($gid);
+		foreach ([IShare::TYPE_GROUP, IShare::TYPE_REMOTE_GROUP] as $type) {
+			try {
+				$provider = $this->factory->getProviderForType($type);
+			} catch (ProviderException $e) {
+				continue;
+			}
+			$provider->groupDeleted($gid);
+		}
 
 		$excludedGroups = $this->config->getAppValue('core', 'shareapi_exclude_groups_list', '');
 		if ($excludedGroups === '') {
@@ -1546,8 +1568,14 @@ class Manager implements IManager {
 	 * @inheritdoc
 	 */
 	public function userDeletedFromGroup($uid, $gid) {
-		$provider = $this->factory->getProviderForType(IShare::TYPE_GROUP);
-		$provider->userDeletedFromGroup($uid, $gid);
+		foreach ([IShare::TYPE_GROUP, IShare::TYPE_REMOTE_GROUP] as $type) {
+			try {
+				$provider = $this->factory->getProviderForType($type);
+			} catch (ProviderException $e) {
+				continue;
+			}
+			$provider->userDeletedFromGroup($uid, $gid);
+		}
 	}
 
 	/**
@@ -1715,7 +1743,7 @@ class Manager implements IManager {
 			$excludedGroups = json_decode($this->config->getAppValue('core', 'shareapi_allow_links_exclude_groups', '[]'));
 			if ($excludedGroups) {
 				$userGroups = $this->groupManager->getUserGroupIds($user);
-				return !(bool)array_intersect($excludedGroups, $userGroups);
+				return !(bool) array_intersect($excludedGroups, $userGroups);
 			}
 		}
 
@@ -1735,7 +1763,7 @@ class Manager implements IManager {
 			$user = $this->userSession->getUser();
 			if ($user) {
 				$userGroups = $this->groupManager->getUserGroupIds($user);
-				if ((bool)array_intersect($excludedGroups, $userGroups)) {
+				if ((bool) array_intersect($excludedGroups, $userGroups)) {
 					return false;
 				}
 			}
@@ -1770,7 +1798,7 @@ class Manager implements IManager {
 	 * @return int
 	 */
 	public function shareApiLinkDefaultExpireDays() {
-		return (int)$this->config->getAppValue('core', 'shareapi_expire_after_n_days', '7');
+		return (int) $this->config->getAppValue('core', 'shareapi_expire_after_n_days', '7');
 	}
 
 	/**
@@ -1817,7 +1845,7 @@ class Manager implements IManager {
 	 * @return int
 	 */
 	public function shareApiInternalDefaultExpireDays(): int {
-		return (int)$this->config->getAppValue('core', 'shareapi_internal_expire_after_n_days', '7');
+		return (int) $this->config->getAppValue('core', 'shareapi_internal_expire_after_n_days', '7');
 	}
 
 	/**
@@ -1826,7 +1854,7 @@ class Manager implements IManager {
 	 * @return int
 	 */
 	public function shareApiRemoteDefaultExpireDays(): int {
-		return (int)$this->config->getAppValue('core', 'shareapi_remote_expire_after_n_days', '7');
+		return (int) $this->config->getAppValue('core', 'shareapi_remote_expire_after_n_days', '7');
 	}
 
 	/**

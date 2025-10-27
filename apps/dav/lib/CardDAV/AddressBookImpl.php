@@ -7,15 +7,16 @@
  */
 namespace OCA\DAV\CardDAV;
 
+use OCA\DAV\Db\PropertyMapper;
 use OCP\Constants;
-use OCP\IAddressBook;
+use OCP\IAddressBookEnabled;
 use OCP\IURLGenerator;
 use Sabre\VObject\Component\VCard;
 use Sabre\VObject\Property;
 use Sabre\VObject\Reader;
 use Sabre\VObject\UUIDUtil;
 
-class AddressBookImpl implements IAddressBook {
+class AddressBookImpl implements IAddressBookEnabled {
 
 	/** @var CardDavBackend */
 	private $backend;
@@ -29,6 +30,12 @@ class AddressBookImpl implements IAddressBook {
 	/** @var IURLGenerator */
 	private $urlGenerator;
 
+	/** @var PropertyMapper */
+	private $propertyMapper;
+
+	/** @var ?string */
+	private $userId;
+
 	/**
 	 * AddressBookImpl constructor.
 	 *
@@ -36,16 +43,22 @@ class AddressBookImpl implements IAddressBook {
 	 * @param array $addressBookInfo
 	 * @param CardDavBackend $backend
 	 * @param IUrlGenerator $urlGenerator
+	 * @param PropertyMapper $propertyMapper
+	 * @param ?string $userId
 	 */
 	public function __construct(
 		AddressBook $addressBook,
 		array $addressBookInfo,
 		CardDavBackend $backend,
-		IURLGenerator $urlGenerator) {
+		IURLGenerator $urlGenerator,
+		PropertyMapper $propertyMapper,
+		?string $userId = null) {
 		$this->addressBook = $addressBook;
 		$this->addressBookInfo = $addressBookInfo;
 		$this->backend = $backend;
 		$this->urlGenerator = $urlGenerator;
+		$this->propertyMapper = $propertyMapper;
+		$this->userId = $userId;
 	}
 
 	/**
@@ -53,7 +66,7 @@ class AddressBookImpl implements IAddressBook {
 	 * @since 5.0.0
 	 */
 	public function getKey() {
-		return $this->addressBookInfo['id'];
+		return (string) $this->addressBookInfo['id'];
 	}
 
 	/**
@@ -78,19 +91,19 @@ class AddressBookImpl implements IAddressBook {
 	 * @param string $pattern which should match within the $searchProperties
 	 * @param array $searchProperties defines the properties within the query pattern should match
 	 * @param array $options Options to define the output format and search behavior
-	 * 	- 'types' boolean (since 15.0.0) If set to true, fields that come with a TYPE property will be an array
-	 *    example: ['id' => 5, 'FN' => 'Thomas Tanghus', 'EMAIL' => ['type => 'HOME', 'value' => 'g@h.i']]
-	 * 	- 'escape_like_param' - If set to false wildcards _ and % are not escaped
-	 * 	- 'limit' - Set a numeric limit for the search results
-	 * 	- 'offset' - Set the offset for the limited search results
-	 * 	- 'wildcard' - Whether the search should use wildcards
+	 *                       - 'types' boolean (since 15.0.0) If set to true, fields that come with a TYPE property will be an array
+	 *                       example: ['id' => 5, 'FN' => 'Thomas Tanghus', 'EMAIL' => ['type => 'HOME', 'value' => 'g@h.i']]
+	 *                       - 'escape_like_param' - If set to false wildcards _ and % are not escaped
+	 *                       - 'limit' - Set a numeric limit for the search results
+	 *                       - 'offset' - Set the offset for the limited search results
+	 *                       - 'wildcard' - Whether the search should use wildcards
 	 * @psalm-param array{types?: bool, escape_like_param?: bool, limit?: int, offset?: int, wildcard?: bool} $options
 	 * @return array an array of contacts which are arrays of key-value-pairs
-	 *  example result:
-	 *  [
-	 *		['id' => 0, 'FN' => 'Thomas Müller', 'EMAIL' => 'a@b.c', 'GEO' => '37.386013;-122.082932'],
-	 *		['id' => 5, 'FN' => 'Thomas Tanghus', 'EMAIL' => ['d@e.f', 'g@h.i']]
-	 *	]
+	 *               example result:
+	 *               [
+	 *               ['id' => 0, 'FN' => 'Thomas Müller', 'EMAIL' => 'a@b.c', 'GEO' => '37.386013;-122.082932'],
+	 *               ['id' => 5, 'FN' => 'Thomas Tanghus', 'EMAIL' => ['d@e.f', 'g@h.i']]
+	 *               ]
 	 * @since 5.0.0
 	 */
 	public function search($pattern, $searchProperties, $options) {
@@ -131,13 +144,13 @@ class AddressBookImpl implements IAddressBook {
 					if (is_string($entry)) {
 						$property = $vCard->createProperty($key, $entry);
 					} else {
-						if (($key === "ADR" || $key === "PHOTO") && is_string($entry["value"])) {
-							$entry["value"] = stripslashes($entry["value"]);
-							$entry["value"] = explode(';', $entry["value"]);
+						if (($key === 'ADR' || $key === 'PHOTO') && is_string($entry['value'])) {
+							$entry['value'] = stripslashes($entry['value']);
+							$entry['value'] = explode(';', $entry['value']);
 						}
-						$property = $vCard->createProperty($key, $entry["value"]);
-						if (isset($entry["type"])) {
-							$property->add('TYPE', $entry["type"]);
+						$property = $vCard->createProperty($key, $entry['value']);
+						if (isset($entry['type'])) {
+							$property->add('TYPE', $entry['type']);
 						}
 					}
 					$vCard->add($property);
@@ -164,6 +177,10 @@ class AddressBookImpl implements IAddressBook {
 		$permissions = $this->addressBook->getACL();
 		$result = 0;
 		foreach ($permissions as $permission) {
+			if ($this->addressBookInfo['principaluri'] !== $permission['principal']) {
+				continue;
+			}
+
 			switch ($permission['privilege']) {
 				case '{DAV:}read':
 					$result |= Constants::PERMISSION_READ;
@@ -322,5 +339,26 @@ class AddressBookImpl implements IAddressBook {
 			$this->addressBookInfo['uri'] === 'system' ||
 			$this->addressBookInfo['{DAV:}displayname'] === $this->urlGenerator->getBaseUrl()
 		);
+	}
+
+	public function isEnabled(): bool {
+		if (!$this->userId) {
+			return true;
+		}
+
+		if ($this->isSystemAddressBook()) {
+			$user = $this->userId ;
+			$uri = 'z-server-generated--system';
+		} else {
+			$user = str_replace('principals/users/', '', $this->addressBookInfo['principaluri']);
+			$uri = $this->addressBookInfo['uri'];
+		}
+		
+		$path = 'addressbooks/users/' . $user . '/' . $uri;
+		$properties = $this->propertyMapper->findPropertyByPathAndName($user, $path, '{http://owncloud.org/ns}enabled');
+		if (count($properties) > 0) {
+			return (bool) $properties[0]->getPropertyvalue();
+		}
+		return true;
 	}
 }

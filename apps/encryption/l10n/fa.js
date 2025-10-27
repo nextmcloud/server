@@ -35,8 +35,6 @@ OC.L10N.register(
     "Cannot decrypt this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Cannot decrypt this file, probably this is a shared file. Please ask the file owner to reshare the file with you.",
     "Cannot read this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Cannot read this file, probably this is a shared file. Please ask the file owner to reshare the file with you.",
     "Default encryption module" : "ماژول رمزگذاری پیش فرض",
-    "Default encryption module for server-side encryption" : "ماژول رمزگذاری پیش فرض برای رمزگذاری سمت سرور",
-    "In order to use this encryption module you need to enable server-side encryption in the admin settings. Once enabled this module will encrypt all your files transparently. The encryption is based on AES 256 keys.\nThe module will not touch existing files, only new files will be encrypted after server-side encryption was enabled. It is also not possible to disable the encryption again and switch back to an unencrypted system.\nPlease read the documentation to know all implications before you decide to enable server-side encryption." : "In order to use this encryption module you need to enable server-side encryption in the admin settings. Once enabled this module will encrypt all your files transparently. The encryption is based on AES 256 keys.\nThe module will not touch existing files, only new files will be encrypted after server-side encryption was enabled. It is also not possible to disable the encryption again and switch back to an unencrypted system.\nPlease read the documentation to know all implications before you decide to enable server-side encryption.",
     "Encryption app is enabled but your keys are not initialized, please log-out and log-in again" : "برنامه رمزگذاری فعال شده است، اما کلیدهای شما ساخته نشده‌اند. لطفاً از حساب کاربری‌تان خارج و دوباره وارد شوید",
     "Encrypt the home storage" : "رمزگذاری حافظه اصلی",
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "با فعال کردن این گزینه، فایل های ذخیره شده در حافظه اصلی رمزگذاری می شود؛ در غیر این صورت فقط پرونده های موجود در حافظه خارجی رمزگذاری می شوند.",
@@ -52,7 +50,6 @@ OC.L10N.register(
     "Basic encryption module" : "ماژول رمزگذاری اولیه",
     "Your private key password no longer matches your log-in password." : "رمز عبور محافظت شده شما با رمز عبور وارد شده مطابقت ندارد.",
     "Set your old private key password to your current log-in password:" : "رمز عبور قبلی خود را بر روی رمز ورود فعلی تنظیم کنید.",
-    " If you don't remember your old password you can ask your administrator to recover your files." : "اگر رمزعبور قدیمی را فراموش کرده اید میتوانید از مدیر خود برای بازیابی فایل هایتان درخواست نمایید.",
     "Old log-in password" : "رمزعبور قدیمی",
     "Current log-in password" : "رمزعبور فعلی",
     "Update Private Key Password" : "به روز رسانی رمزعبور کلید خصوصی",
@@ -60,6 +57,7 @@ OC.L10N.register(
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "فعال کردن این گزینه به شما اجازه خواهد داد در صورت از دست دادن رمزعبور به فایل های رمزگذاری شده خود دسترسی داشته باشید.",
     "Enabled" : "فعال شده",
     "Disabled" : "غیرفعال شده",
-    "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "کلید بازیابی یک کلید رمزگذاری اضافی است که برای رمزگذاری پرونده ها استفاده می شود. اگر کاربر رمزعبور خود را فراموش کند ، امکان بازیابی پرونده های کاربر را فراهم می کند."
+    "Default encryption module for server-side encryption" : "ماژول رمزگذاری پیش فرض برای رمزگذاری سمت سرور",
+    "In order to use this encryption module you need to enable server-side encryption in the admin settings. Once enabled this module will encrypt all your files transparently. The encryption is based on AES 256 keys.\nThe module will not touch existing files, only new files will be encrypted after server-side encryption was enabled. It is also not possible to disable the encryption again and switch back to an unencrypted system.\nPlease read the documentation to know all implications before you decide to enable server-side encryption." : "In order to use this encryption module you need to enable server-side encryption in the admin settings. Once enabled this module will encrypt all your files transparently. The encryption is based on AES 256 keys.\nThe module will not touch existing files, only new files will be encrypted after server-side encryption was enabled. It is also not possible to disable the encryption again and switch back to an unencrypted system.\nPlease read the documentation to know all implications before you decide to enable server-side encryption."
 },
 "nplurals=2; plural=(n > 1);");

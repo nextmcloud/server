@@ -96,7 +96,7 @@ class TextProcessingApiController extends \OCP\AppFramework\OCSController {
 	 * 400: Scheduling task is not possible
 	 * 412: Scheduling task is not possible
 	 */
-	#[PublicPage]
+	#[NoAdminRequired]
 	#[UserRateLimit(limit: 20, period: 120)]
 	#[AnonRateLimit(limit: 5, period: 120)]
 	#[ApiRoute(verb: 'POST', url: '/schedule', root: '/textprocessing')]
@@ -109,7 +109,7 @@ class TextProcessingApiController extends \OCP\AppFramework\OCSController {
 		try {
 			try {
 				$this->textProcessingManager->runOrScheduleTask($task);
-			} catch(TaskFailureException) {
+			} catch (TaskFailureException) {
 				// noop, because the task object has the failure status set already, we just return the task json
 			}
 
@@ -136,7 +136,7 @@ class TextProcessingApiController extends \OCP\AppFramework\OCSController {
 	 * 200: Task returned
 	 * 404: Task not found
 	 */
-	#[PublicPage]
+	#[NoAdminRequired]
 	#[ApiRoute(verb: 'GET', url: '/task/{id}', root: '/textprocessing')]
 	public function getTask(int $id): DataResponse {
 		try {

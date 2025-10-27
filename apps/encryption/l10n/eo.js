@@ -29,7 +29,6 @@ OC.L10N.register(
     "Missing Signature" : "Mankanta subskribo",
     "one-time password for server-side-encryption" : "unuuza pasvorto por ĉeservila ĉifrado",
     "Default encryption module" : "Defaŭlta ĉifra modulo",
-    "Default encryption module for server-side encryption" : "Defaŭlta ĉifra modulo por ĉeservila ĉifrado",
     "Encryption app is enabled but your keys are not initialized, please log-out and log-in again" : "Ĉifra aplikaĵo estas ŝaltita, sed viaj ŝlosiloj ne uziĝas. Bv. elsaluti kaj re-ensaluti.",
     "Encrypt the home storage" : "Ĉifri la ĉefkonservejon",
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "Ebligi tiun opcion ĉifras ĉiujn dosierojn de la ĉefkonservejo, alie nur dosieroj en ekstera konservejo ĉifriĝos.",
@@ -45,7 +44,6 @@ OC.L10N.register(
     "Basic encryption module" : "Bazĉifrada modulo",
     "Your private key password no longer matches your log-in password." : "La pasvorto de via privata ŝlosilo ne plu kongruas kun via ensaluta pasvorto.",
     "Set your old private key password to your current log-in password:" : "Agordi la pasvorton de via antaŭa privata ŝlosilo al via nuna ensaluta pasvorto:",
-    " If you don't remember your old password you can ask your administrator to recover your files." : "Se vi ne memoras vian antaŭan pasvorton, vi povas peti al via administranto restaŭri viajn dosierojn.",
     "Old log-in password" : "Malnova ensaluta pasvorto",
     "Current log-in password" : "Nuna ensaluta pasvorto",
     "Update Private Key Password" : "Ĝisdatigi la pasvorton de la malpublika ŝlosilo",
@@ -53,6 +51,6 @@ OC.L10N.register(
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "Ŝalti tiun opcion ebligas al vi rehavi aliron al viaj ĉifritaj dosierojn okaze de pasvorta perdo.",
     "Enabled" : "Ŝaltita",
     "Disabled" : "Malŝaltita",
-    "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "La restaŭroŝlosilo estas kroma ĉifroŝlosilo, kiu uziĝas por ĉifri dosierojn. Ĝi ebligas restaŭron el dosieroj de uzanto, se la uzanto forgesas sian pasvorton."
+    "Default encryption module for server-side encryption" : "Defaŭlta ĉifra modulo por ĉeservila ĉifrado"
 },
 "nplurals=2; plural=(n != 1);");

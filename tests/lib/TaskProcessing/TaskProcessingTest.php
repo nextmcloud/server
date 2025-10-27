@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -21,6 +22,7 @@ use OCP\Files\Config\ICachedMountInfo;
 use OCP\Files\Config\IUserMountCache;
 use OCP\Files\IRootFolder;
 use OCP\Http\Client\IClientService;
+use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IServerContainer;
@@ -351,7 +353,7 @@ class SuccessfulTextToImageProvider implements \OCP\TextToImage\IProvider {
 
 	public function generate(string $prompt, array $resources): void {
 		$this->ran = true;
-		foreach($resources as $resource) {
+		foreach ($resources as $resource) {
 			fwrite($resource, 'test');
 		}
 	}
@@ -475,6 +477,7 @@ class TaskProcessingTest extends \Test\TestCase {
 			$this->userMountCache,
 			\OC::$server->get(IClientService::class),
 			\OC::$server->get(IAppManager::class),
+			\OC::$server->get(ICacheFactory::class),
 		);
 	}
 

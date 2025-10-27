@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2019-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud GmbH.
@@ -7,10 +8,10 @@
 namespace OCA\Files_Trashbin\Command;
 
 use OCA\Files_Trashbin\Expiration;
-use OCA\Files_Trashbin\Helper;
 use OCA\Files_Trashbin\Trashbin;
 use OCP\IUser;
 use OCP\IUserManager;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
@@ -33,7 +34,8 @@ class ExpireTrash extends Command {
 	 * @param IUserManager|null $userManager
 	 * @param Expiration|null $expiration
 	 */
-	public function __construct(?IUserManager $userManager = null,
+	public function __construct(private LoggerInterface $logger,
+		?IUserManager $userManager = null,
 		?Expiration $expiration = null) {
 		parent::__construct();
 
@@ -53,9 +55,10 @@ class ExpireTrash extends Command {
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output): int {
+		$minAge = $this->expiration->getMinAgeAsTimestamp();
 		$maxAge = $this->expiration->getMaxAgeAsTimestamp();
-		if (!$maxAge) {
-			$output->writeln("Auto expiration is configured - keeps files and folders in the trash bin for 30 days and automatically deletes anytime after that if space is needed (note: files may not be deleted if space is not needed)");
+		if ($minAge === false && $maxAge === false) {
+			$output->writeln('Auto expiration is configured - keeps files and folders in the trash bin for 30 days and automatically deletes anytime after that if space is needed (note: files may not be deleted if space is not needed)');
 			return 1;
 		}
 
@@ -74,10 +77,12 @@ class ExpireTrash extends Command {
 		} else {
 			$p = new ProgressBar($output);
 			$p->start();
-			$this->userManager->callForSeenUsers(function (IUser $user) use ($p) {
+
+			$users = $this->userManager->getSeenUsers();
+			foreach ($users as $user) {
 				$p->advance();
 				$this->expireTrashForUser($user);
-			});
+			}
 			$p->finish();
 			$output->writeln('');
 		}
@@ -85,12 +90,15 @@ class ExpireTrash extends Command {
 	}
 
 	public function expireTrashForUser(IUser $user) {
-		$uid = $user->getUID();
-		if (!$this->setupFS($uid)) {
-			return;
+		try {
+			$uid = $user->getUID();
+			if (!$this->setupFS($uid)) {
+				return;
+			}
+			Trashbin::expire($uid);
+		} catch (\Throwable $e) {
+			$this->logger->error('Error while expiring trashbin for user ' . $user->getUID(), ['exception' => $e]);
 		}
-		$dirContent = Helper::getTrashFiles('/', $uid, 'mtime');
-		Trashbin::deleteExpiredFiles($dirContent, $uid);
 	}
 
 	/**

@@ -1,4 +1,6 @@
 <?php
+
+declare(strict_types=1);
 /**
  * SPDX-FileCopyrightText: 2017 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -9,6 +11,7 @@ $expectedFiles = [
 	'..',
 	'.devcontainer',
 	'.editorconfig',
+	'.envrc',
 	'.eslintignore',
 	'.eslintrc.js',
 	'.git',
@@ -24,7 +27,6 @@ $expectedFiles = [
 	'.npmignore',
 	'.php-cs-fixer.dist.php',
 	'.pre-commit-config.yaml',
-	'.reuse',
 	'.scrutinizer.yml',
 	'.tag',
 	'.tx',
@@ -40,6 +42,7 @@ $expectedFiles = [
 	'DESIGN.md',
 	'Makefile',
 	'README.md',
+	'REUSE.toml',
 	'SECURITY.md',
 	'apps',
 	'autotest-checkers.sh',
@@ -60,6 +63,8 @@ $expectedFiles = [
 	'cypress.d.ts',
 	'cypress',
 	'dist',
+	'flake.lock',
+	'flake.nix',
 	'index.html',
 	'index.php',
 	'jest.config.ts',

@@ -40,7 +40,7 @@ describe('files: Select all files', { testIsolation: true }, () => {
 
 		selectAllFiles()
 
-		cy.get('.files-list__selected').should('have.text', '7 selected')
+		cy.get('.files-list__selected').should('contain.text', '7 selected')
 		cy.get('[data-cy-files-list-row-checkbox]').findByRole('checkbox').should('be.checked')
 
 		deselectAllFiles()
@@ -59,18 +59,18 @@ describe('files: Select all files', { testIsolation: true }, () => {
 
 		randomFiles.forEach(name => selectRowForFile(name))
 
-		cy.get('.files-list__selected').should('have.text', `${randomFiles.length} selected`)
+		cy.get('.files-list__selected').should('contain.text', `${randomFiles.length} selected`)
 		cy.get('[data-cy-files-list-row-checkbox] input[type="checkbox"]:checked').should('have.length', randomFiles.length)
 	})
 
 	it('Can select range of files with shift key', () => {
 		cy.get('[data-cy-files-list-row-checkbox]').should('have.length', filesCount)
 		selectRowForFile('audio.mp3')
-		cy.window().trigger('keydown', { shiftKey: true })
+		cy.window().trigger('keydown', { shiftKey: true, key: 'Shift' })
 		selectRowForFile('readme.md', { shiftKey: true })
-		cy.window().trigger('keyup', { shiftKey: false })
+		cy.window().trigger('keyup', { shiftKey: false, key: 'Shift' })
 
-		cy.get('.files-list__selected').should('have.text', '4 selected')
+		cy.get('.files-list__selected').should('contain.text', '4 selected')
 		cy.get('[data-cy-files-list-row-checkbox] input[type="checkbox"]:checked').should('have.length', 4)
 
 	})

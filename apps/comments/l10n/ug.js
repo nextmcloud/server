@@ -17,20 +17,19 @@ OC.L10N.register(
     "Delete comment" : "باھانى ئۆچۈرۈڭ",
     "Cancel edit" : "تەھرىرلەشنى ئەمەلدىن قالدۇرۇڭ",
     "New comment" : "يېڭى باھا",
-    "Write a comment …" : "باھا يېزىڭ…",
     "Post comment" : "ئىنكاس يېزىڭ",
     "@ for mentions, : for emoji, / for smart picker" : "@ تىلغا ئېلىش ئۈچۈن ،: emoji ئۈچۈن ، / ئەقلىي ئىقتىدارلىق تاللىغۇچ ئۈچۈن",
     "Could not reload comments" : "ئىنكاسلارنى قايتا يۈكلىيەلمىدى",
+    "Failed to mark comments as read" : "ئىنكاسلارنى ئوقۇشقا بەلگە قويمىدى",
+    "Unable to load the comments list" : "باھا تىزىملىكىنى يۈكلىيەلمىدى",
     "No comments yet, start the conversation!" : "تېخى باھا يوق ، سۆھبەتنى باشلاڭ!",
     "No more messages" : "باشقا ئۇچۇر يوق",
     "Retry" : "قايتا سىناڭ",
-    "Failed to mark comments as read" : "ئىنكاسلارنى ئوقۇشقا بەلگە قويمىدى",
-    "Unable to load the comments list" : "باھا تىزىملىكىنى يۈكلىيەلمىدى",
     "Comment" : "باھا",
     "An error occurred while trying to edit the comment" : "باھانى تەھرىرلىمەكچى بولغاندا خاتالىق كۆرۈلدى",
     "Comment deleted" : "باھا ئۆچۈرۈلدى",
     "An error occurred while trying to delete the comment" : "باھانى ئۆچۈرمەكچى بولغاندا خاتالىق كۆرۈلدى",
     "An error occurred while trying to create the comment" : "باھا قۇرماقچى بولغاندا خاتالىق كۆرۈلدى",
-    "You were mentioned on \"{file}\", in a comment by a user that has since been deleted" : "سىز ئۆچۈرۈلگەن ئىشلەتكۈچىنىڭ ئىزاھاتىدا سىز \"{file}\" دە تىلغا ئېلىندى"
+    "Write a comment …" : "باھا يېزىڭ…"
 },
 "nplurals=2; plural=(n != 1);");

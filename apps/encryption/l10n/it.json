@@ -30,7 +30,6 @@
     "Cannot decrypt this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Impossibile decifrare questo file, probabilmente è un file condiviso. Chiedi al proprietario del file di condividere nuovamente il file con te.",
     "Cannot read this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Impossibile leggere questo file, probabilmente è un file condiviso. Chiedi al proprietario del file di condividere nuovamente il file con te.",
     "Default encryption module" : "Modulo di cifratura predefinito",
-    "Default encryption module for server-side encryption" : "Modulo di cifratura predefinito per la cifratura lato server",
     "Encryption app is enabled but your keys are not initialized, please log-out and log-in again" : "L'applicazione di cifratura è abilitata, ma le chiavi non sono state inizializzate, disconnettiti ed effettua nuovamente l'accesso",
     "Encrypt the home storage" : "Cifra l'archiviazione principale",
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "L'abilitazione di questa opzione cifra tutti i file memorizzati sull'archiviazione principale, altrimenti saranno cifrati solo i file sull'archiviazione esterna.",
@@ -46,7 +45,6 @@
     "Basic encryption module" : "Modulo di cifratura base",
     "Your private key password no longer matches your log-in password." : "La password della chiave privata non corrisponde più alla password di accesso.",
     "Set your old private key password to your current log-in password:" : "Imposta la vecchia password della chiave privata sull'attuale password di accesso:",
-    " If you don't remember your old password you can ask your administrator to recover your files." : "Se non ricordi la vecchia password puoi chiedere al tuo amministratore di recuperare i file.",
     "Old log-in password" : "Vecchia password di accesso",
     "Current log-in password" : "Password di accesso attuale",
     "Update Private Key Password" : "Aggiorna la password della chiave privata",
@@ -54,6 +52,6 @@
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "L'abilitazione di questa opzione ti consentirà di accedere nuovamente ai file cifrati in caso di perdita della password",
     "Enabled" : "Abilitata",
     "Disabled" : "Disabilitata",
-    "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "La chiave di ripristino è una chiave di cifratura aggiuntiva utilizzata per cifrare i file. Consente di ripristinare i file di un utente se l'utente dimentica la propria password."
+    "Default encryption module for server-side encryption" : "Modulo di cifratura predefinito per la cifratura lato server"
 },"pluralForm" :"nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;"
 }

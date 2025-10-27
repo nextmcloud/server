@@ -213,12 +213,8 @@ class Calendar extends \Sabre\CalDAV\Calendar implements IRestorable, IShareable
 	}
 
 	public function delete() {
-		if (isset($this->calendarInfo['{http://owncloud.org/ns}owner-principal']) &&
-			$this->calendarInfo['{http://owncloud.org/ns}owner-principal'] !== $this->calendarInfo['principaluri']) {
-			$principal = 'principal:' . parent::getOwner();
-			$this->caldavBackend->updateShares($this, [], [
-				$principal
-			]);
+		if ($this->isShared()) {
+			$this->caldavBackend->unshare($this, 'principal:' . $this->getPrincipalURI());
 			return;
 		}
 
@@ -390,9 +386,14 @@ class Calendar extends \Sabre\CalDAV\Calendar implements IRestorable, IShareable
 		if (!($sourceNode instanceof CalendarObject)) {
 			return false;
 		}
-
 		try {
-			return $this->caldavBackend->moveCalendarObject($sourceNode->getCalendarId(), (int)$this->calendarInfo['id'], $sourceNode->getId(), $sourceNode->getOwner(), $this->getOwner());
+			return $this->caldavBackend->moveCalendarObject(
+				$sourceNode->getOwner(),
+				$sourceNode->getId(),
+				$this->getOwner(),
+				$this->getResourceId(),
+				$targetName,
+			);
 		} catch (Exception $e) {
 			$this->logger->error('Could not move calendar object: ' . $e->getMessage(), ['exception' => $e]);
 			return false;

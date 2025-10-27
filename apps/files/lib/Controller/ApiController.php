@@ -28,8 +28,11 @@ use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Http\StreamResponse;
 use OCP\Files\File;
 use OCP\Files\Folder;
+use OCP\Files\InvalidPathException;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
+use OCP\Files\NotPermittedException;
+use OCP\Files\Storage\ISharedStorage;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IPreview;
@@ -87,20 +90,28 @@ class ApiController extends Controller {
 		}
 
 		try {
-			$file = $this->userFolder->get($file);
-			if ($file instanceof Folder) {
+			$file = $this->userFolder?->get($file);
+			if ($file === null
+				|| !($file instanceof File)
+				|| ($file->getId() <= 0)
+			) {
 				throw new NotFoundException();
 			}
 
-			if ($file->getId() <= 0) {
-				return new DataResponse(['message' => 'File not found.'], Http::STATUS_NOT_FOUND);
+			// Validate the user is allowed to download the file (preview is some kind of download)
+			$storage = $file->getStorage();
+			if ($storage->instanceOfStorage(ISharedStorage::class)) {
+				/** @var ISharedStorage $storage */
+				$attributes = $storage->getShare()->getAttributes();
+				if ($attributes !== null && $attributes->getAttribute('permissions', 'download') === false) {
+					throw new NotFoundException();
+				}
 			}
 
-			/** @var File $file */
 			$preview = $this->previewManager->getPreview($file, $x, $y, true);
 
 			return new FileDisplayResponse($preview, Http::STATUS_OK, ['Content-Type' => $preview->getMimeType()]);
-		} catch (NotFoundException $e) {
+		} catch (NotFoundException|NotPermittedException|InvalidPathException) {
 			return new DataResponse(['message' => 'File not found.'], Http::STATUS_NOT_FOUND);
 		} catch (\Exception $e) {
 			return new DataResponse([], Http::STATUS_BAD_REQUEST);
@@ -328,7 +339,7 @@ class ApiController extends Controller {
 	#[NoAdminRequired]
 	public function setViewConfig(string $view, string $key, $value): JSONResponse {
 		try {
-			$this->viewConfig->setConfig($view, $key, (string)$value);
+			$this->viewConfig->setConfig($view, $key, (string) $value);
 		} catch (\InvalidArgumentException $e) {
 			return new JSONResponse(['message' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
 		}
@@ -357,7 +368,7 @@ class ApiController extends Controller {
 	#[NoAdminRequired]
 	public function setConfig(string $key, $value): JSONResponse {
 		try {
-			$this->userConfig->setConfig($key, (string)$value);
+			$this->userConfig->setConfig($key, (string) $value);
 		} catch (\InvalidArgumentException $e) {
 			return new JSONResponse(['message' => $e->getMessage()], Http::STATUS_BAD_REQUEST);
 		}

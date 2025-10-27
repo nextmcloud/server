@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2017 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -19,6 +20,7 @@ use OCP\AppFramework\Http\StandaloneTemplateResponse;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Defaults;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\ISession;
@@ -57,6 +59,8 @@ class ClientFlowLoginControllerTest extends TestCase {
 	private $eventDispatcher;
 	/** @var ITimeFactory|\PHPUnit\Framework\MockObject\MockObject */
 	private $timeFactory;
+	/** @var IConfig|\PHPUnit\Framework\MockObject\MockObject */
+	private $config;
 
 	/** @var ClientFlowLoginController */
 	private $clientFlowLoginController;
@@ -83,6 +87,7 @@ class ClientFlowLoginControllerTest extends TestCase {
 		$this->crypto = $this->createMock(ICrypto::class);
 		$this->eventDispatcher = $this->createMock(IEventDispatcher::class);
 		$this->timeFactory = $this->createMock(ITimeFactory::class);
+		$this->config = $this->createMock(IConfig::class);
 
 		$this->clientFlowLoginController = new ClientFlowLoginController(
 			'core',
@@ -98,7 +103,8 @@ class ClientFlowLoginControllerTest extends TestCase {
 			$this->accessTokenMapper,
 			$this->crypto,
 			$this->eventDispatcher,
-			$this->timeFactory
+			$this->timeFactory,
+			$this->config,
 		);
 	}
 
@@ -173,7 +179,8 @@ class ClientFlowLoginControllerTest extends TestCase {
 				'serverHost' => 'https://example.com',
 				'oauthState' => 'OauthStateToken',
 				'user' => '',
-				'direct' => 0
+				'direct' => 0,
+				'providedRedirectUri' => '',
 			],
 			'guest'
 		);
@@ -243,7 +250,8 @@ class ClientFlowLoginControllerTest extends TestCase {
 				'serverHost' => 'https://example.com',
 				'oauthState' => 'OauthStateToken',
 				'user' => '',
-				'direct' => 0
+				'direct' => 0,
+				'providedRedirectUri' => '',
 			],
 			'guest'
 		);

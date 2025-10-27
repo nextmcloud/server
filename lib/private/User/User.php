@@ -155,6 +155,7 @@ class User implements IUser {
 	 */
 	public function setSystemEMailAddress(string $mailAddress): void {
 		$oldMailAddress = $this->getSystemEMailAddress();
+		$mailAddress = mb_strtolower(trim($mailAddress));
 
 		if ($mailAddress === '') {
 			$this->config->deleteUserValue($this->uid, 'settings', 'email');
@@ -177,6 +178,7 @@ class User implements IUser {
 	 * @inheritDoc
 	 */
 	public function setPrimaryEMailAddress(string $mailAddress): void {
+		$mailAddress = mb_strtolower(trim($mailAddress));
 		if ($mailAddress === '') {
 			$this->config->deleteUserValue($this->uid, 'settings', 'primary_email');
 			return;
@@ -223,7 +225,7 @@ class User implements IUser {
 		if ($now - $previousLogin > 60) {
 			$this->lastLogin = time();
 			$this->config->setUserValue(
-				$this->uid, 'login', 'lastLogin', (string)$this->lastLogin);
+				$this->uid, 'login', 'lastLogin', (string) $this->lastLogin);
 		}
 
 		return $firstTimeLogin;
@@ -428,6 +430,11 @@ class User implements IUser {
 		return $this->backend->implementsActions(Backend::SET_DISPLAYNAME);
 	}
 
+	public function canChangeEmail(): bool {
+		// Fallback to display name value to avoid changing behavior with the new option.
+		return $this->config->getSystemValueBool('allow_user_to_change_email', $this->config->getSystemValueBool('allow_user_to_change_display_name', true));
+	}
+
 	/**
 	 * check if the user is enabled
 	 *
@@ -491,14 +498,16 @@ class User implements IUser {
 	 * @inheritDoc
 	 */
 	public function getSystemEMailAddress(): ?string {
-		return $this->config->getUserValue($this->uid, 'settings', 'email', null);
+		$email = $this->config->getUserValue($this->uid, 'settings', 'email', null);
+		return $email ? mb_strtolower(trim($email)) : null;
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function getPrimaryEMailAddress(): ?string {
-		return $this->config->getUserValue($this->uid, 'settings', 'primary_email', null);
+		$email = $this->config->getUserValue($this->uid, 'settings', 'primary_email', null);
+		return $email ? mb_strtolower(trim($email)) : null;
 	}
 
 	/**

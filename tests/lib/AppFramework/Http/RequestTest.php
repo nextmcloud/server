@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -496,7 +497,7 @@ class RequestTest extends \Test\TestCase {
 			'method' => 'PUT',
 			'server' => [
 				'CONTENT_TYPE' => 'image/png',
-				'CONTENT_LENGTH' => (string)strlen($data)
+				'CONTENT_LENGTH' => (string) strlen($data)
 			],
 		];
 
@@ -1155,7 +1156,7 @@ class RequestTest extends \Test\TestCase {
 				'1.0.0',
 			],
 			[
-				'Mozilla/5.0 (Linux) Nextcloud-Thunderbird v1.0.0',
+				'Filelink for *cloud/1.0.0',
 				Request::USER_AGENT_THUNDERBIRD_ADDON,
 				'1.0.0',
 			],

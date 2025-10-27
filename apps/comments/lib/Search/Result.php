@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2018 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -37,6 +38,10 @@ class Result extends BaseResult {
 	 * @deprecated 20.0.0
 	 */
 	public $fileName;
+	/**
+	 * @deprecated 20.0.0
+	 */
+	public int $fileId;
 
 	/**
 	 * @throws NotFoundException
@@ -47,6 +52,7 @@ class Result extends BaseResult {
 		IComment $comment,
 		string $authorName,
 		string $path,
+		int $fileId,
 	) {
 		parent::__construct(
 			$comment->getId(),
@@ -59,6 +65,7 @@ class Result extends BaseResult {
 		$this->authorName = $authorName;
 		$this->fileName = basename($path);
 		$this->path = $this->getVisiblePath($path);
+		$this->fileId = $fileId;
 	}
 
 	/**

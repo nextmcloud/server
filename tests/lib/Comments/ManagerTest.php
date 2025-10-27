@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -1098,6 +1099,7 @@ class ManagerTest extends TestCase {
 	 * @return IComment[]
 	 */
 	private function proccessComments(array $data): array {
+		$this->connection->beginTransaction();
 		/** @var IComment[] */
 		$comments = [];
 		foreach ($data as $comment) {
@@ -1113,6 +1115,7 @@ class ManagerTest extends TestCase {
 			$comment = $this->testSave($message, $actorId, $verb, $parentId, $id);
 			$comments[$comment->getMessage() . '#' . $comment->getActorId()] = $comment;
 		}
+		$this->connection->commit();
 		return $comments;
 	}
 

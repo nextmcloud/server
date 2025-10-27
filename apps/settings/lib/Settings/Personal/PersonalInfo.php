@@ -148,6 +148,7 @@ class PersonalInfo implements ISettings {
 		$accountParameters = [
 			'avatarChangeSupported' => $user->canChangeAvatar(),
 			'displayNameChangeSupported' => $user->canChangeDisplayName(),
+			'emailChangeSupported' => $user->canChangeEmail(),
 			'federationEnabled' => $federationEnabled,
 			'lookupServerUploadEnabled' => $lookupServerUploadEnabled,
 		];
@@ -197,8 +198,8 @@ class PersonalInfo implements ISettings {
 
 	/**
 	 * @return int whether the form should be rather on the top or bottom of
-	 * the admin section. The forms are arranged in ascending order of the
-	 * priority values. It is required to return a value between 0 and 100.
+	 *             the admin section. The forms are arranged in ascending order of the
+	 *             priority values. It is required to return a value between 0 and 100.
 	 *
 	 * E.g.: 70
 	 * @since 9.1
@@ -250,7 +251,7 @@ class PersonalInfo implements ISettings {
 		$emailMap = [
 			'primaryEmail' => $systemEmail,
 			'additionalEmails' => $additionalEmails,
-			'notificationEmail' => (string)$account->getUser()->getPrimaryEMailAddress(),
+			'notificationEmail' => (string) $account->getUser()->getPrimaryEMailAddress(),
 		];
 
 		return $emailMap;
@@ -300,8 +301,8 @@ class PersonalInfo implements ISettings {
 		}
 
 		$uid = $user->getUID();
-		$userLocaleString = $this->config->getUserValue($uid, 'core', 'locale', $this->l10nFactory->findLocale());
 		$userLang = $this->config->getUserValue($uid, 'core', 'lang', $this->l10nFactory->findLanguage());
+		$userLocaleString = $this->config->getUserValue($uid, 'core', 'locale', $this->l10nFactory->findLocale($userLang));
 		$localeCodes = $this->l10nFactory->findAvailableLocales();
 		$userLocale = array_filter($localeCodes, fn ($value) => $userLocaleString === $value['code']);
 

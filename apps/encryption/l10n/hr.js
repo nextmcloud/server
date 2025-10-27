@@ -31,7 +31,6 @@ OC.L10N.register(
     "Cannot decrypt this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Ovu datoteku nije moguće dešifrirati, vjerojatno je riječ o dijeljenoj datoteci. Zatražite od vlasnika datoteke da je ponovo podijeli s vama.",
     "Cannot read this file, probably this is a shared file. Please ask the file owner to reshare the file with you." : "Ovu datoteku nije moguće čitati, vjerojatno je riječ o dijeljenoj datoteci. Zatražite od vlasnika datoteke da je ponovo podijeli s vama.",
     "Default encryption module" : "Zadani modul za šifriranje",
-    "Default encryption module for server-side encryption" : "Zadani modul za šifriranje na poslužitelju",
     "Encryption app is enabled but your keys are not initialized, please log-out and log-in again" : "Aplikacija za šifriranje je omogućena, ali se ključevi nisu inicijalizirali, odjavite se i ponovno se prijavite",
     "Encrypt the home storage" : "Šifrirajte kućnu pohranu",
     "Enabling this option encrypts all files stored on the main storage, otherwise only files on external storage will be encrypted" : "Omogućavanjem ove opcije šifriraju se sve datoteke smještene u glavnoj pohrani, a u protivnom se šifriraju samo datoteke u vanjskoj pohrani",
@@ -47,7 +46,6 @@ OC.L10N.register(
     "Basic encryption module" : "Osnovni modul za šifriranje",
     "Your private key password no longer matches your log-in password." : "Zaporka vašeg privatnog ključa više se ne podudara s vašom zaporkom za prijavu.",
     "Set your old private key password to your current log-in password:" : "Promijenite svoju staru zaporku privatnog ključa u postojeću zaporku za prijavu:",
-    " If you don't remember your old password you can ask your administrator to recover your files." : "Ako se ne sjećate svoje stare zaporke, zatražite od administratora da oporavi vaše datoteke.",
     "Old log-in password" : "Stara zaporka za prijavu",
     "Current log-in password" : "Aktualna zaporka za prijavu",
     "Update Private Key Password" : "Ažuriraj zaporku privatnog ključa",
@@ -55,6 +53,6 @@ OC.L10N.register(
     "Enabling this option will allow you to reobtain access to your encrypted files in case of password loss" : "U slučaju gubitka zaporke, aktiviranje ove mogućnosti ponovno će vam pribaviti pristup vašim šifriranim datotekama",
     "Enabled" : "Omogućeno",
     "Disabled" : "Onemogućeno",
-    "The recovery key is an extra encryption key that is used to encrypt files. It allows recovery of a user's files if the user forgets his or her password." : "Ključ za oporavak dodatni je ključ za šifriranje koji se upotrebljava za šifriranje datoteka. Omogućuje oporavak datoteka kada korisnik zaboravi svoju zaporku."
+    "Default encryption module for server-side encryption" : "Zadani modul za šifriranje na poslužitelju"
 },
 "nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;");

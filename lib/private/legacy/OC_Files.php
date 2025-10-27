@@ -13,6 +13,7 @@ use OCP\Files\Events\BeforeDirectFileDownloadEvent;
 use OCP\Files\Events\BeforeZipCreatedEvent;
 use OCP\Files\IRootFolder;
 use OCP\Lock\ILockingProvider;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class for file server access
@@ -29,7 +30,7 @@ class OC_Files {
 
 	private static function getBoundary(): string {
 		if (empty(self::$multipartBoundary)) {
-			self::$multipartBoundary = md5((string)mt_rand());
+			self::$multipartBoundary = md5((string) mt_rand());
 		}
 		return self::$multipartBoundary;
 	}
@@ -43,7 +44,7 @@ class OC_Files {
 		OC_Response::setContentDispositionHeader($name, 'attachment');
 		header('Content-Transfer-Encoding: binary', true);
 		header('Expires: 0');
-		header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
+		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 		$fileSize = \OC\Files\Filesystem::filesize($filename);
 		$type = \OC::$server->getMimeTypeDetector()->getSecureMimeType(\OC\Files\Filesystem::getMimeType($filename));
 		if ($fileSize > -1) {
@@ -108,7 +109,6 @@ class OC_Files {
 				}
 			}
 
-			self::lockFiles($view, $dir, $files);
 			$numberOfFiles = 0;
 			$fileSize = 0;
 
@@ -131,7 +131,11 @@ class OC_Files {
 				}
 			}
 
-			//Dispatch an event to see if any apps have problem with download
+			// Lock the files AFTER we retrieved the files infos
+			// this allows us to ensure they're still available
+			self::lockFiles($view, $dir, $files);
+
+			// Dispatch an event to see if any apps have problem with download
 			$event = new BeforeZipCreatedEvent($dir, is_array($files) ? $files : [$files]);
 			$dispatcher = \OCP\Server::get(IEventDispatcher::class);
 			$dispatcher->dispatchTyped($event);
@@ -143,7 +147,7 @@ class OC_Files {
 			OC_Util::obEnd();
 
 			$streamer->sendHeaders($name);
-			$executionTime = (int)OC::$server->get(IniGetWrapper::class)->getNumeric('max_execution_time');
+			$executionTime = (int) OC::$server->get(IniGetWrapper::class)->getNumeric('max_execution_time');
 			if (!str_contains(@ini_get('disable_functions'), 'set_time_limit')) {
 				@set_time_limit(0);
 			}
@@ -202,12 +206,15 @@ class OC_Files {
 			die();
 		} catch (\Exception $ex) {
 			self::unlockAllTheFiles($dir, $files, $getType, $view, $filename);
-			OC::$server->getLogger()->logException($ex);
-			$l = \OC::$server->getL10N('lib');
-			$hint = method_exists($ex, 'getHint') ? $ex->getHint() : '';
-			if ($event && $event->getErrorMessage() !== null) {
+			$logger = \OCP\Server::get(LoggerInterface::class);
+			$logger->error($ex->getMessage(), ['exception' => $ex]);
+			$l = \OCP\Server::get(\OCP\L10N\IFactory::class)->get('lib');
+
+			$hint = ($ex instanceof \OCP\HintException) ? $ex->getHint() : '';
+			if (isset($event) && $event->getErrorMessage() !== null) {
 				$hint .= ' ' . $event->getErrorMessage();
 			}
+
 			\OC_Template::printErrorPage($l->t('Cannot download file'), $hint, 200);
 		}
 	}
@@ -335,8 +342,8 @@ class OC_Files {
 
 					foreach ($rangeArray as $range) {
 						echo "\r\n--".self::getBoundary()."\r\n".
-						 "Content-type: ".$type."\r\n".
-						 "Content-range: bytes ".$range['from']."-".$range['to']."/".$range['size']."\r\n\r\n";
+						 'Content-type: '.$type."\r\n".
+						 'Content-range: bytes '.$range['from'].'-'.$range['to'].'/'.$range['size']."\r\n\r\n";
 						$view->readfilePart($filename, $range['from'], $range['to']);
 					}
 					echo "\r\n--".self::getBoundary()."--\r\n";

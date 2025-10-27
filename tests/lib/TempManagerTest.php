@@ -33,8 +33,8 @@ class TempManagerTest extends \Test\TestCase {
 	}
 
 	/**
-	 * @param  ?LoggerInterface $logger
-	 * @param  ?IConfig $config
+	 * @param ?LoggerInterface $logger
+	 * @param ?IConfig $config
 	 * @return \OC\TempManager
 	 */
 	protected function getManager($logger = null, $config = null) {
@@ -154,34 +154,23 @@ class TempManagerTest extends \Test\TestCase {
 		$this->assertFalse($manager->getTemporaryFolder());
 	}
 
-	public function testBuildFileNameWithPostfix() {
+	public function testGenerateTemporaryPathWithPostfix(): void {
 		$logger = $this->createMock(LoggerInterface::class);
 		$tmpManager = self::invokePrivate(
 			$this->getManager($logger),
-			'buildFileNameWithSuffix',
-			['/tmp/myTemporaryFile', 'postfix']
+			'generateTemporaryPath',
+			['postfix']
 		);
 
-		$this->assertEquals('/tmp/myTemporaryFile-.postfix', $tmpManager);
+		$this->assertStringEndsWith('.postfix', $tmpManager);
 	}
 
-	public function testBuildFileNameWithoutPostfix() {
+	public function testGenerateTemporaryPathTraversal(): void {
 		$logger = $this->createMock(LoggerInterface::class);
 		$tmpManager = self::invokePrivate(
 			$this->getManager($logger),
-			'buildFileNameWithSuffix',
-			['/tmp/myTemporaryFile', '']
-		);
-
-		$this->assertEquals('/tmp/myTemporaryFile', $tmpManager);
-	}
-
-	public function testBuildFileNameWithSuffixPathTraversal() {
-		$logger = $this->createMock(LoggerInterface::class);
-		$tmpManager = self::invokePrivate(
-			$this->getManager($logger),
-			'buildFileNameWithSuffix',
-			['foo', '../Traversal\\../FileName']
+			'generateTemporaryPath',
+			['../Traversal\\../FileName']
 		);
 
 		$this->assertStringEndsNotWith('./Traversal\\../FileName', $tmpManager);

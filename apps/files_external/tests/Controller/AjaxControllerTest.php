@@ -1,4 +1,5 @@
 <?php
+
 /**
  * SPDX-FileCopyrightText: 2016 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
@@ -10,6 +11,7 @@ use OCA\Files_External\Lib\Auth\Password\GlobalAuth;
 use OCA\Files_External\Lib\Auth\PublicKey\RSA;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IGroupManager;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -28,6 +30,8 @@ class AjaxControllerTest extends TestCase {
 	private $groupManager;
 	/** @var AjaxController */
 	private $ajaxController;
+	/** @var IL10N */
+	private $l10n;
 
 	protected function setUp(): void {
 		$this->request = $this->createMock(IRequest::class);
@@ -39,6 +43,7 @@ class AjaxControllerTest extends TestCase {
 			->getMock();
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->groupManager = $this->createMock(IGroupManager::class);
+		$this->l10n = $this->createMock(IL10N::class);
 
 		$this->ajaxController = new AjaxController(
 			'files_external',
@@ -46,8 +51,18 @@ class AjaxControllerTest extends TestCase {
 			$this->rsa,
 			$this->globalAuth,
 			$this->userSession,
-			$this->groupManager
+			$this->groupManager,
+			$this->l10n,
 		);
+
+		$this->l10n->expects($this->any())
+			->method('t')
+			->willReturnCallback(function ($string, $args) {
+				if (!is_array($args)) {
+					$args = [$args];
+				}
+				return vsprintf($string, $args);
+			});
 
 		parent::setUp();
 	}
@@ -87,7 +102,9 @@ class AjaxControllerTest extends TestCase {
 			->expects($this->never())
 			->method('saveAuth');
 
-		$this->assertSame(false, $this->ajaxController->saveGlobalCredentials('UidOfTestUser', 'test', 'password'));
+		$response = $this->ajaxController->saveGlobalCredentials('UidOfTestUser', 'test', 'password');
+		$this->assertSame($response->getStatus(), 403);
+		$this->assertSame('Permission denied', $response->getData()['message']);
 	}
 
 	public function testSaveGlobalCredentialsAsAdminForSelf() {
@@ -105,7 +122,8 @@ class AjaxControllerTest extends TestCase {
 			->method('saveAuth')
 			->with('MyAdminUid', 'test', 'password');
 
-		$this->assertSame(true, $this->ajaxController->saveGlobalCredentials('MyAdminUid', 'test', 'password'));
+		$response = $this->ajaxController->saveGlobalCredentials('MyAdminUid', 'test', 'password');
+		$this->assertSame($response->getStatus(), 200);
 	}
 
 	public function testSaveGlobalCredentialsAsNormalUserForSelf() {
@@ -120,7 +138,8 @@ class AjaxControllerTest extends TestCase {
 			->method('saveAuth')
 			->with('MyUserUid', 'test', 'password');
 
-		$this->assertSame(true, $this->ajaxController->saveGlobalCredentials('MyUserUid', 'test', 'password'));
+		$response = $this->ajaxController->saveGlobalCredentials('MyUserUid', 'test', 'password');
+		$this->assertSame($response->getStatus(), 200);
 	}
 
 	public function testSaveGlobalCredentialsAsNormalUserForAnotherUser() {
@@ -135,6 +154,8 @@ class AjaxControllerTest extends TestCase {
 			->expects($this->never())
 			->method('saveAuth');
 
-		$this->assertSame(false, $this->ajaxController->saveGlobalCredentials('AnotherUserUid', 'test', 'password'));
+		$response = $this->ajaxController->saveGlobalCredentials('AnotherUserUid', 'test', 'password');
+		$this->assertSame($response->getStatus(), 403);
+		$this->assertSame('Permission denied', $response->getData()['message']);
 	}
 }

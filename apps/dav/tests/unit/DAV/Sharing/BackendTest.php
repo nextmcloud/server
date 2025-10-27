@@ -214,10 +214,7 @@ class BackendTest extends TestCase {
 			'getResourceId' => 42,
 		]);
 		$remove = [
-			[
-				'href' => 'principal:principals/users/bob',
-				'readOnly' => true,
-			]
+			'principal:principals/users/bob',
 		];
 		$principal = 'principals/users/bob';
 
@@ -229,9 +226,6 @@ class BackendTest extends TestCase {
 		$this->calendarService->expects(self::once())
 			->method('deleteShare')
 			->with($shareable->getResourceId(), $principal);
-		$this->calendarService->expects(self::once())
-			->method('hasGroupShare')
-			->willReturn(false);
 		$this->calendarService->expects(self::never())
 			->method('unshare');
 
@@ -244,10 +238,7 @@ class BackendTest extends TestCase {
 			'getResourceId' => 42,
 		]);
 		$remove = [
-			[
-				'href' => 'principal:principals/users/bob',
-				'readOnly' => true,
-			]
+			'principal:principals/users/bob',
 		];
 		$oldShares = [
 			[
@@ -269,13 +260,8 @@ class BackendTest extends TestCase {
 		$this->calendarService->expects(self::once())
 			->method('deleteShare')
 			->with($shareable->getResourceId(), 'principals/users/bob');
-		$this->calendarService->expects(self::once())
-			->method('hasGroupShare')
-			->with($oldShares)
-			->willReturn(true);
-		$this->calendarService->expects(self::once())
-			->method('unshare')
-			->with($shareable->getResourceId(), 'principals/users/bob');
+		$this->calendarService->expects(self::never())
+			->method('unshare');
 
 		$this->backend->updateShares($shareable, [], $remove, $oldShares);
 	}
@@ -303,7 +289,7 @@ class BackendTest extends TestCase {
 
 		$this->shareCache->expects(self::once())
 			->method('get')
-			->with((string)$resourceId)
+			->with((string) $resourceId)
 			->willReturn(null);
 		$this->calendarService->expects(self::once())
 			->method('getShares')
@@ -315,7 +301,7 @@ class BackendTest extends TestCase {
 			->willReturn(['uri' => $principal, '{DAV:}displayname' => 'bob']);
 		$this->shareCache->expects(self::once())
 			->method('set')
-			->with((string)$resourceId, $expected);
+			->with((string) $resourceId, $expected);
 
 		$result = $this->backend->getShares($resourceId);
 		$this->assertEquals($expected, $result);
@@ -351,7 +337,7 @@ class BackendTest extends TestCase {
 
 		$this->shareCache->expects(self::once())
 			->method('get')
-			->with((string)$resourceId)
+			->with((string) $resourceId)
 			->willReturn(null);
 		$service->expects(self::once())
 			->method('getShares')
@@ -363,7 +349,7 @@ class BackendTest extends TestCase {
 			->willReturn(['uri' => $principal, '{DAV:}displayname' => 'bob']);
 		$this->shareCache->expects(self::once())
 			->method('set')
-			->with((string)$resourceId, $expected);
+			->with((string) $resourceId, $expected);
 
 		$result = $backend->getShares($resourceId);
 		$this->assertEquals($expected, $result);
