@@ -34,6 +34,7 @@ use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
 use OCP\Security\ISecureRandom;
 use OCP\Server;
+use PHPUnit\Framework\Attributes\Group;
 
 if (version_compare(\PHPUnit\Runner\Version::id(), 10, '>=')) {
 	trait OnNotSuccessfulTestTrait {
@@ -336,6 +337,12 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase {
 		self::tearDownAfterClassCleanStrayHooks();
 		self::tearDownAfterClassCleanStrayLocks();
 
+		// Ensure we start with fresh instances of some classes to reduce side-effects between tests
+		unset(\OC::$server[\OC\Files\AppData\Factory::class]);
+		unset(\OC::$server[\OC\App\AppStore\Fetcher\AppFetcher::class]);
+		unset(\OC::$server[\OC\Installer::class]);
+		unset(\OC::$server[\OC\Updater::class]);
+
 		/** @var SetupManager $setupManager */
 		$setupManager = Server::get(SetupManager::class);
 		$setupManager->tearDown();
@@ -363,7 +370,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase {
 	 */
 	protected static function tearDownAfterClassCleanShares(IQueryBuilder $queryBuilder) {
 		$queryBuilder->delete('share')
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -373,7 +380,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase {
 	 */
 	protected static function tearDownAfterClassCleanStorages(IQueryBuilder $queryBuilder) {
 		$queryBuilder->delete('storages')
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -384,7 +391,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase {
 	protected static function tearDownAfterClassCleanFileCache(IQueryBuilder $queryBuilder) {
 		$queryBuilder->delete('filecache')
 			->runAcrossAllShards()
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -545,11 +552,22 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase {
 
 		$r = new \ReflectionClass($this);
 		$doc = $r->getDocComment();
+
+		if (class_exists(Group::class)) {
+			$attributes = array_map(function (\ReflectionAttribute $attribute) {
+				/** @var Group $group */
+				$group = $attribute->newInstance();
+				return $group->name();
+			}, $r->getAttributes(Group::class));
+			if (count($attributes) > 0) {
+				return $attributes;
+			}
+		}
 		preg_match_all('#@group\s+(.*?)\n#s', $doc, $annotations);
 		return $annotations[1] ?? [];
 	}
 
-	protected function IsDatabaseAccessAllowed() {
+	protected function IsDatabaseAccessAllowed(): bool {
 		$annotations = $this->getGroupAnnotations();
 		if (isset($annotations)) {
 			if (in_array('DB', $annotations) || in_array('SLOWDB', $annotations)) {

@@ -2,8 +2,8 @@
  * SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
-/* eslint-disable jsdoc/require-jsdoc */
-import { triggerActionForFile } from '../files/FilesUtils'
+
+import { triggerActionForFile } from '../files/FilesUtils.ts'
 
 export interface ShareSetting {
 	read: boolean
@@ -125,8 +125,8 @@ export function updateShare(fileName: string, index: number, shareSettings: Part
 export function openSharingPanel(fileName: string) {
 	triggerActionForFile(fileName, 'details')
 
-	cy.get('#app-sidebar-vue')
-		.get('[aria-controls="tab-sharing"]')
+	cy.get('[data-cy-sidebar]')
+		.find('[aria-controls="tab-sharing"]')
 		.click()
 }
 
@@ -140,10 +140,11 @@ type FileRequestOptions = {
 
 /**
  * Create a file request for a folder
+ *
  * @param path The path of the folder, leading slash is required
  * @param options The options for the file request
  */
-export const createFileRequest = (path: string, options: FileRequestOptions = {}) => {
+export function createFileRequest(path: string, options: FileRequestOptions = {}) {
 	if (!path.startsWith('/')) {
 		throw new Error('Path must start with a slash')
 	}

@@ -6,7 +6,9 @@
  */
 namespace OC\App\AppStore\Fetcher;
 
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ServerException;
 use OC\Files\AppData\Factory;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -56,7 +58,7 @@ abstract class Fetcher {
 	 *
 	 * @return array
 	 */
-	protected function fetch($ETag, $content) {
+	protected function fetch($ETag, $content, $allowUnstable = false) {
 		$appstoreenabled = $this->config->getSystemValueBool('appstoreenabled', true);
 		if ((int)$this->config->getAppValue('settings', 'appstore-fetcher-lastFailure', '0') > time() - self::RETRY_AFTER_FAILURE_SECONDS) {
 			return [];
@@ -67,7 +69,7 @@ abstract class Fetcher {
 		}
 
 		$options = [
-			'timeout' => 60,
+			'timeout' => (int)$this->config->getAppValue('settings', 'appstore-timeout', '120')
 		];
 
 		if ($ETag !== '') {
@@ -88,7 +90,7 @@ abstract class Fetcher {
 		$client = $this->clientService->newClient();
 		try {
 			$response = $client->get($this->getEndpoint(), $options);
-		} catch (ConnectException $e) {
+		} catch (ConnectException|ClientException|ServerException $e) {
 			$this->config->setAppValue('settings', 'appstore-fetcher-lastFailure', (string)time());
 			$this->logger->error('Failed to connect to the app store', ['exception' => $e]);
 			return [];

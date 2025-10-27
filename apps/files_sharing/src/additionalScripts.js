@@ -4,12 +4,8 @@
  */
 import { getCSPNonce } from '@nextcloud/auth'
 
-import './share.js'
-import './sharebreadcrumbview.js'
-import './style/sharebreadcrumb.scss'
 import './collaborationresourceshandler.js'
 
-// eslint-disable-next-line camelcase
 __webpack_nonce__ = getCSPNonce()
 
 window.OCA.Sharing = OCA.Sharing

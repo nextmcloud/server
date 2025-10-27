@@ -11,7 +11,7 @@ OC.L10N.register(
     "Set file reminders" : "Dosya anımsatıcıları ayarla",
     "**📣 File reminders**\n\nSet file reminders.\n\nNote: to use the `File reminders` app, ensure that the `Notifications` app is installed and enabled. The `Notifications` app provides the necessary APIs for the `File reminders` app to work correctly." : "**📣 Dosya anımsatıcıları**\n\nDosya anımsatıcıları ayarlayın.\n\nNot: `Dosya anımsatıcıları` uygulamasını kullanmak için `Bildirimler` uygulamasının kurulmuş ve etkinleştirilmiş olduğundan emin olun. `Bildirimler` uygulaması `Dosya anımsatıcıları` uygulamasının doğru çalışması için gerekli API uygulamalarını sağlar.",
     "Set reminder for \"{fileName}\"" : "\"{fileName}\" için anımsatıcı ayarla",
-    "Set reminder at custom date & time" : "Özel bir tarih ve saat için anımsatıcı ayarla",
+    "Reminder at custom date & time" : "Özel bir tarih ve saat için anımsatıcı",
     "Clear reminder" : "Anımsatıcıyı temizle",
     "Please choose a valid date & time" : "Lütfen geçerli bir tarih ve saat seçin",
     "Reminder set for \"{fileName}\"" : "\"{fileName}\" için anımsatıcı ayarlandı",
@@ -22,7 +22,7 @@ OC.L10N.register(
     "Cancel" : "İptal",
     "Set reminder" : "Anımsatıcı ayarla",
     "Reminder set" : "Anımsatıcı ayarlandı",
-    "Set custom reminder" : "Özel anımsatıcı ayarla",
+    "Custom reminder" : "Özel anımsatıcı",
     "Later today" : "Bugün daha sonra",
     "Set reminder for later today" : "Bugün daha sonrası için anımsatıcı ayarla",
     "Tomorrow" : "Yarın",
@@ -32,6 +32,8 @@ OC.L10N.register(
     "Next week" : "Sonraki hafta",
     "Set reminder for next week" : "Gelecek hafta için anımsatıcı ayarla",
     "This files_reminder can work properly." : "Bu files_reminder düzgün çalışabilir.",
-    "The files_reminder app needs the notification app to work properly. You should either enable notifications or disable files_reminder." : "files_reminders uygulamasının düzgün çalışması için Bildirimler uygulaması gereklidir. Bildirimler uygulamasını kullanıma alın ya da files_reminder uygulamasını kullanımdan kaldırın."
+    "The files_reminder app needs the notification app to work properly. You should either enable notifications or disable files_reminder." : "files_reminders uygulamasının düzgün çalışması için Bildirimler uygulaması gereklidir. Bildirimler uygulamasını kullanıma alın ya da files_reminder uygulamasını kullanımdan kaldırın.",
+    "Set reminder at custom date & time" : "Özel bir tarih ve saat için anımsatıcı ayarla",
+    "Set custom reminder" : "Özel anımsatıcı ayarla"
 },
 "nplurals=2; plural=(n > 1);");

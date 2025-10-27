@@ -90,11 +90,11 @@ class ManagerTest extends TestCase {
 		$this->testMountProvider = new MountProvider(Server::get(IDBConnection::class), function () {
 			return $this->manager;
 		}, new CloudIdManager(
+			$this->createMock(ICacheFactory::class),
+			$this->createMock(IEventDispatcher::class),
 			$this->contactsManager,
 			$this->createMock(IURLGenerator::class),
 			$this->userManager,
-			$this->createMock(ICacheFactory::class),
-			$this->createMock(IEventDispatcher::class)
 		));
 
 		$group1 = $this->createMock(IGroup::class);
@@ -116,9 +116,7 @@ class ManagerTest extends TestCase {
 
 	protected function tearDown(): void {
 		// clear the share external table to avoid side effects
-		$query = Server::get(IDBConnection::class)->prepare('DELETE FROM `*PREFIX*share_external`');
-		$result = $query->execute();
-		$result->closeCursor();
+		Server::get(IDBConnection::class)->getQueryBuilder()->delete('share_external')->executeStatement();
 
 		parent::tearDown();
 	}

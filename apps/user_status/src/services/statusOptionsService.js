@@ -10,13 +10,16 @@ import { translate as t } from '@nextcloud/l10n'
  *
  * @return {object[]}
  */
-const getAllStatusOptions = () => {
+function getAllStatusOptions() {
 	return [{
 		type: 'online',
 		label: t('user_status', 'Online'),
 	}, {
 		type: 'away',
 		label: t('user_status', 'Away'),
+	}, {
+		type: 'busy',
+		label: t('user_status', 'Busy'),
 	}, {
 		type: 'dnd',
 		label: t('user_status', 'Do not disturb'),

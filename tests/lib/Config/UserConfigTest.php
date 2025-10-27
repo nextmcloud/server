@@ -7,11 +7,14 @@ declare(strict_types=1);
  */
 namespace Test\lib\Config;
 
-use NCU\Config\Exceptions\TypeConflictException;
-use NCU\Config\Exceptions\UnknownKeyException;
-use NCU\Config\IUserConfig;
-use NCU\Config\ValueType;
+use OC\Config\ConfigManager;
+use OC\Config\PresetManager;
 use OC\Config\UserConfig;
+use OCP\Config\Exceptions\TypeConflictException;
+use OCP\Config\Exceptions\UnknownKeyException;
+use OCP\Config\IUserConfig;
+use OCP\Config\ValueType;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\Security\ICrypto;
@@ -29,8 +32,11 @@ use Test\TestCase;
 class UserConfigTest extends TestCase {
 	protected IDBConnection $connection;
 	private IConfig $config;
+	private ConfigManager $configManager;
+	private PresetManager $presetManager;
 	private LoggerInterface $logger;
 	private ICrypto $crypto;
+	private IEventDispatcher $dispatcher;
 	private array $originalPreferences;
 
 	/**
@@ -173,8 +179,11 @@ class UserConfigTest extends TestCase {
 
 		$this->connection = Server::get(IDBConnection::class);
 		$this->config = Server::get(IConfig::class);
+		$this->configManager = Server::get(ConfigManager::class);
+		$this->presetManager = Server::get(PresetManager::class);
 		$this->logger = Server::get(LoggerInterface::class);
 		$this->crypto = Server::get(ICrypto::class);
+		$this->dispatcher = Server::get(IEventDispatcher::class);
 
 		// storing current preferences and emptying the data table
 		$sql = $this->connection->getQueryBuilder();
@@ -282,8 +291,11 @@ class UserConfigTest extends TestCase {
 		$userConfig = new UserConfig(
 			$this->connection,
 			$this->config,
+			$this->configManager,
+			$this->presetManager,
 			$this->logger,
 			$this->crypto,
+			$this->dispatcher
 		);
 		$msg = ' generateUserConfig() failed to confirm cache status';
 

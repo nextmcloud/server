@@ -12,6 +12,8 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use Generator;
 use OCA\DAV\AppInfo\Application;
+use OCA\DAV\CalDAV\Federation\FederatedCalendarEntity;
+use OCA\DAV\CalDAV\Federation\FederatedCalendarMapper;
 use OCA\DAV\CalDAV\Sharing\Backend;
 use OCA\DAV\Connector\Sabre\Principal;
 use OCA\DAV\DAV\Sharing\IShareable;
@@ -41,6 +43,8 @@ use OCP\Calendar\Exceptions\CalendarException;
 use OCP\DB\Exception;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\ICache;
+use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IUserManager;
@@ -110,6 +114,7 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 
 	public const CALENDAR_TYPE_CALENDAR = 0;
 	public const CALENDAR_TYPE_SUBSCRIPTION = 1;
+	public const CALENDAR_TYPE_FEDERATED = 2;
 
 	public const PERSONAL_CALENDAR_URI = 'personal';
 	public const PERSONAL_CALENDAR_NAME = 'Personal';
@@ -199,6 +204,8 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 	private string $dbObjectInvitationsTable = 'calendar_invitations';
 	private array $cachedObjects = [];
 
+	private readonly ICache $publishStatusCache;
+
 	public function __construct(
 		private IDBConnection $db,
 		private Principal $principalBackend,
@@ -208,8 +215,11 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 		private IEventDispatcher $dispatcher,
 		private IConfig $config,
 		private Sharing\Backend $calendarSharingBackend,
+		private FederatedCalendarMapper $federatedCalendarMapper,
+		ICacheFactory $cacheFactory,
 		private bool $legacyEndpoint = false,
 	) {
+		$this->publishStatusCache = $cacheFactory->createInMemory();
 	}
 
 	/**
@@ -535,7 +545,7 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 				'{' . Plugin::NS_CALDAV . '}supported-calendar-component-set' => new SupportedCalendarComponentSet($components),
 				'{' . Plugin::NS_CALDAV . '}schedule-calendar-transp' => new ScheduleCalendarTransp($row['transparent']?'transparent':'opaque'),
 				'{' . \OCA\DAV\DAV\Sharing\Plugin::NS_OWNCLOUD . '}owner-principal' => $this->convertPrincipal($row['principaluri'], $this->legacyEndpoint),
-				'{' . \OCA\DAV\DAV\Sharing\Plugin::NS_OWNCLOUD . '}read-only' => (int)$row['access'] === Backend::ACCESS_READ,
+				'{' . \OCA\DAV\DAV\Sharing\Plugin::NS_OWNCLOUD . '}read-only' => true,
 				'{' . \OCA\DAV\DAV\Sharing\Plugin::NS_OWNCLOUD . '}public' => (int)$row['access'] === self::ACCESS_PUBLIC,
 			];
 
@@ -600,7 +610,7 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 			'{' . Plugin::NS_CALDAV . '}supported-calendar-component-set' => new SupportedCalendarComponentSet($components),
 			'{' . Plugin::NS_CALDAV . '}schedule-calendar-transp' => new ScheduleCalendarTransp($row['transparent']?'transparent':'opaque'),
 			'{' . \OCA\DAV\DAV\Sharing\Plugin::NS_OWNCLOUD . '}owner-principal' => $this->convertPrincipal($row['principaluri'], !$this->legacyEndpoint),
-			'{' . \OCA\DAV\DAV\Sharing\Plugin::NS_OWNCLOUD . '}read-only' => (int)$row['access'] === Backend::ACCESS_READ,
+			'{' . \OCA\DAV\DAV\Sharing\Plugin::NS_OWNCLOUD . '}read-only' => true,
 			'{' . \OCA\DAV\DAV\Sharing\Plugin::NS_OWNCLOUD . '}public' => (int)$row['access'] === self::ACCESS_PUBLIC,
 		];
 
@@ -919,6 +929,8 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 	 * @return void
 	 */
 	public function deleteCalendar($calendarId, bool $forceDeletePermanently = false) {
+		$this->publishStatusCache->remove((string)$calendarId);
+
 		$this->atomic(function () use ($calendarId, $forceDeletePermanently): void {
 			// The calendar is deleted right away if this is either enforced by the caller
 			// or the special contacts birthday calendar or when the preference of an empty
@@ -1408,10 +1420,12 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 				$shares = $this->getShares($calendarId);
 
 				$this->dispatcher->dispatchTyped(new CalendarObjectCreatedEvent($calendarId, $calendarRow, $shares, $objectRow));
-			} else {
+			} elseif ($calendarType === self::CALENDAR_TYPE_SUBSCRIPTION) {
 				$subscriptionRow = $this->getSubscriptionById($calendarId);
 
 				$this->dispatcher->dispatchTyped(new CachedCalendarObjectCreatedEvent($calendarId, $subscriptionRow, [], $objectRow));
+			} elseif ($calendarType === self::CALENDAR_TYPE_FEDERATED) {
+				// TODO: implement custom event for federated calendars
 			}
 
 			return '"' . $extraData['etag'] . '"';
@@ -1468,10 +1482,12 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 					$shares = $this->getShares($calendarId);
 
 					$this->dispatcher->dispatchTyped(new CalendarObjectUpdatedEvent($calendarId, $calendarRow, $shares, $objectRow));
-				} else {
+				} elseif ($calendarType === self::CALENDAR_TYPE_SUBSCRIPTION) {
 					$subscriptionRow = $this->getSubscriptionById($calendarId);
 
 					$this->dispatcher->dispatchTyped(new CachedCalendarObjectUpdatedEvent($calendarId, $subscriptionRow, [], $objectRow));
+				} elseif ($calendarType === self::CALENDAR_TYPE_FEDERATED) {
+					// TODO: implement custom event for federated calendars
 				}
 			}
 
@@ -1978,6 +1994,8 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 
 		if (isset($calendarInfo['source'])) {
 			$calendarType = self::CALENDAR_TYPE_SUBSCRIPTION;
+		} elseif (isset($calendarInfo['federated'])) {
+			$calendarType = self::CALENDAR_TYPE_FEDERATED;
 		} else {
 			$calendarType = self::CALENDAR_TYPE_CALENDAR;
 		}
@@ -2424,7 +2442,7 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 	 * @param string $uid
 	 * @return string|null
 	 */
-	public function getCalendarObjectByUID($principalUri, $uid) {
+	public function getCalendarObjectByUID($principalUri, $uid, $calendarUri = null) {
 		$query = $this->db->getQueryBuilder();
 		$query->selectAlias('c.uri', 'calendaruri')->selectAlias('co.uri', 'objecturi')
 			->from('calendarobjects', 'co')
@@ -2432,6 +2450,11 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 			->where($query->expr()->eq('c.principaluri', $query->createNamedParameter($principalUri)))
 			->andWhere($query->expr()->eq('co.uid', $query->createNamedParameter($uid)))
 			->andWhere($query->expr()->isNull('co.deleted_at'));
+
+		if ($calendarUri !== null) {
+			$query->andWhere($query->expr()->eq('c.uri', $query->createNamedParameter($calendarUri)));
+		}
+
 		$stmt = $query->executeQuery();
 		$row = $stmt->fetch();
 		$stmt->closeCursor();
@@ -3192,6 +3215,10 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 		return $this->calendarSharingBackend->getShares($resourceId);
 	}
 
+	public function getSharesByShareePrincipal(string $principal): array {
+		return $this->calendarSharingBackend->getSharesByShareePrincipal($principal);
+	}
+
 	public function preloadShares(array $resourceIds): void {
 		$this->calendarSharingBackend->preloadShares($resourceIds);
 	}
@@ -3202,7 +3229,7 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 	 * @return string|null
 	 */
 	public function setPublishStatus($value, $calendar) {
-		return $this->atomic(function () use ($value, $calendar) {
+		$publishStatus = $this->atomic(function () use ($value, $calendar) {
 			$calendarId = $calendar->getResourceId();
 			$calendarData = $this->getCalendarById($calendarId);
 
@@ -3230,13 +3257,21 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 			$this->dispatcher->dispatchTyped(new CalendarUnpublishedEvent($calendarId, $calendarData));
 			return null;
 		}, $this->db);
+
+		$this->publishStatusCache->set((string)$calendar->getResourceId(), $publishStatus ?? false);
+		return $publishStatus;
 	}
 
 	/**
 	 * @param Calendar $calendar
-	 * @return mixed
+	 * @return string|false
 	 */
 	public function getPublishStatus($calendar) {
+		$cached = $this->publishStatusCache->get((string)$calendar->getResourceId());
+		if ($cached !== null) {
+			return $cached;
+		}
+
 		$query = $this->db->getQueryBuilder();
 		$result = $query->select('publicuri')
 			->from('dav_shares')
@@ -3244,9 +3279,46 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 			->andWhere($query->expr()->eq('access', $query->createNamedParameter(self::ACCESS_PUBLIC)))
 			->executeQuery();
 
-		$row = $result->fetch();
+		$publishStatus = $result->fetchOne();
 		$result->closeCursor();
-		return $row ? reset($row) : false;
+
+		$this->publishStatusCache->set((string)$calendar->getResourceId(), $publishStatus);
+		return $publishStatus;
+	}
+
+	/**
+	 * @param int[] $resourceIds
+	 */
+	public function preloadPublishStatuses(array $resourceIds): void {
+		$query = $this->db->getQueryBuilder();
+		$result = $query->select('resourceid', 'publicuri')
+			->from('dav_shares')
+			->where($query->expr()->in(
+				'resourceid',
+				$query->createNamedParameter($resourceIds, IQueryBuilder::PARAM_INT_ARRAY),
+				IQueryBuilder::PARAM_INT_ARRAY,
+			))
+			->andWhere($query->expr()->eq(
+				'access',
+				$query->createNamedParameter(self::ACCESS_PUBLIC, IQueryBuilder::PARAM_INT),
+				IQueryBuilder::PARAM_INT,
+			))
+			->executeQuery();
+
+		$hasPublishStatuses = [];
+		while ($row = $result->fetch()) {
+			$this->publishStatusCache->set((string)$row['resourceid'], $row['publicuri']);
+			$hasPublishStatuses[(int)$row['resourceid']] = true;
+		}
+
+		// Also remember resources with no publish status
+		foreach ($resourceIds as $resourceId) {
+			if (!isset($hasPublishStatuses[$resourceId])) {
+				$this->publishStatusCache->set((string)$resourceId, false);
+			}
+		}
+
+		$result->closeCursor();
 	}
 
 	/**
@@ -3565,7 +3637,9 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 			$uri = $calendarInfo['principaluri'];
 		}
 
-		$principalInformation = $this->principalBackend->getPrincipalByPath($uri);
+		$principalInformation = $this->principalBackend->getPrincipalPropertiesByPath($uri, [
+			'{DAV:}displayname',
+		]);
 		if (isset($principalInformation['{DAV:}displayname'])) {
 			$calendarInfo[$displaynameKey] = $principalInformation['{DAV:}displayname'];
 		}
@@ -3686,5 +3760,21 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 				));
 			}
 		}, $this->db);
+	}
+
+	/**
+	 * @return array<string, mixed>[]
+	 */
+	public function getFederatedCalendarsForUser(string $principalUri): array {
+		$federatedCalendars = $this->federatedCalendarMapper->findByPrincipalUri($principalUri);
+		return array_map(
+			static fn (FederatedCalendarEntity $entity) => $entity->toCalendarInfo(),
+			$federatedCalendars,
+		);
+	}
+
+	public function getFederatedCalendarByUri(string $principalUri, string $uri): ?array {
+		$federatedCalendar = $this->federatedCalendarMapper->findByUri($principalUri, $uri);
+		return $federatedCalendar?->toCalendarInfo();
 	}
 }

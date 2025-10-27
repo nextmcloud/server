@@ -34,11 +34,9 @@ OC.L10N.register(
     "Share with me through my #Nextcloud Federated Cloud ID, see {url}" : "Comparte conmigo a través de mi identificador de nube federada de #Nextcloud, vea {url}",
     "Share with me through my #Nextcloud Federated Cloud ID" : "Compartir conmigo a través de mi ID de Nube Federada #Nextcloud",
     "Share with me via Nextcloud" : "Compartir conmigo vía Nextcloud",
-    "Cloud ID copied to the clipboard" : "Identificador de nube copiado al portapapeles",
-    "Copy to clipboard" : "Copiar al portapapeles",
+    "Copy" : "Copiar",
     "Copied!" : "¡Copiado!",
     "Federated Cloud" : "Nube Federada",
-    "You can share with anyone who uses a Nextcloud server or other Open Cloud Mesh (OCM) compatible servers and services! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com" : "¡Puede compartir con cualquier persona que use un servidor Nextcloud u otros servidores y servicios compatibles con Open Cloud Mesh (OCM)!. Sólo ponga el identificador de nube federada en el diálogo de compartir. Tiene la forma: persona@nube.ejemplo.com",
     "Share it so your friends can share files with you:" : "Compártelo para que tus amigos puedan compartir archivos contigo:",
     "Facebook" : "Facebook",
     "X (formerly Twitter)" : "X (anteriormente Twitter)",
@@ -48,6 +46,9 @@ OC.L10N.register(
     "Add remote share" : "Agregar elemento compartido remoto",
     "Remote share" : "Elemento compartido remoto",
     "Do you want to add the remote share {name} from {owner}@{remote}?" : "¿Desea agregar el elemento compartido remoto {name} de {owner}@{remote}?",
-    "Remote share password" : "Contraseña del elemento compartido remoto"
+    "Remote share password" : "Contraseña del elemento compartido remoto",
+    "Cloud ID copied to the clipboard" : "Identificador de nube copiado al portapapeles",
+    "Copy to clipboard" : "Copiar al portapapeles",
+    "You can share with anyone who uses a Nextcloud server or other Open Cloud Mesh (OCM) compatible servers and services! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com" : "¡Puede compartir con cualquier persona que use un servidor Nextcloud u otros servidores y servicios compatibles con Open Cloud Mesh (OCM)!. Sólo ponga el identificador de nube federada en el diálogo de compartir. Tiene la forma: persona@nube.ejemplo.com"
 },
 "nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;");

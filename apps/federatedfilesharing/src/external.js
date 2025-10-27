@@ -3,6 +3,7 @@
  * SPDX-FileCopyrightText: 2014-2016 ownCloud, Inc.
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+
 import axios, { isAxiosError } from '@nextcloud/axios'
 import { showError, showInfo } from '@nextcloud/dialogs'
 import { subscribe } from '@nextcloud/event-bus'
@@ -35,8 +36,7 @@ window.OCA.Sharing.showAddExternalDialog = function(share, passwordProtected, ca
 		.replace(/\/$/, '') // remove trailing slash
 
 	showRemoteShareDialog(name, owner, remote, passwordProtected)
-		.then((result, password) => callback(result, { ...share, password }))
-		// eslint-disable-next-line n/no-callback-literal
+		.then((password) => callback(true, { ...share, password }))
 		.catch(() => callback(false, share))
 }
 
@@ -83,7 +83,6 @@ function processIncomingShareFromUrl() {
 
 	// manually add server-to-server share
 	if (params.remote && params.token && params.name) {
-
 		const callbackAddShare = (result, share) => {
 			if (result === false) {
 				return

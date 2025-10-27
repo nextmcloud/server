@@ -46,13 +46,14 @@ class MountProvider implements IMountProvider {
 	 * @return IMountPoint[]
 	 */
 	public function getMountsForUser(IUser $user, IStorageFactory $loader) {
-		$shares = $this->shareManager->getSharedWith($user->getUID(), IShare::TYPE_USER, null, -1);
-		$shares = array_merge($shares, $this->shareManager->getSharedWith($user->getUID(), IShare::TYPE_GROUP, null, -1));
-		$shares = array_merge($shares, $this->shareManager->getSharedWith($user->getUID(), IShare::TYPE_CIRCLE, null, -1));
-		$shares = array_merge($shares, $this->shareManager->getSharedWith($user->getUID(), IShare::TYPE_ROOM, null, -1));
-		$shares = array_merge($shares, $this->shareManager->getSharedWith($user->getUID(), IShare::TYPE_DECK, null, -1));
-		$shares = array_merge($shares, $this->shareManager->getSharedWith($user->getUID(), IShare::TYPE_SCIENCEMESH, null, -1));
-
+		$shares = array_merge(
+			$this->shareManager->getSharedWith($user->getUID(), IShare::TYPE_USER, null, -1),
+			$this->shareManager->getSharedWith($user->getUID(), IShare::TYPE_GROUP, null, -1),
+			$this->shareManager->getSharedWith($user->getUID(), IShare::TYPE_CIRCLE, null, -1),
+			$this->shareManager->getSharedWith($user->getUID(), IShare::TYPE_ROOM, null, -1),
+			$this->shareManager->getSharedWith($user->getUID(), IShare::TYPE_DECK, null, -1),
+			$this->shareManager->getSharedWith($user->getUID(), IShare::TYPE_SCIENCEMESH, null, -1),
+		);
 
 		// filter out excluded shares and group shares that includes self
 		$shares = array_filter($shares, function (IShare $share) use ($user) {
@@ -61,7 +62,7 @@ class MountProvider implements IMountProvider {
 
 		$superShares = $this->buildSuperShares($shares, $user);
 
-		$otherMounts = $this->mountManager->getAll();
+		$allMounts = $this->mountManager->getAll();
 		$mounts = [];
 		$view = new View('/' . $user->getUID() . '/files');
 		$ownerViews = [];
@@ -92,7 +93,7 @@ class MountProvider implements IMountProvider {
 				$shareId = (int)$parentShare->getId();
 				$mount = new SharedMount(
 					'\OCA\Files_Sharing\SharedStorage',
-					array_merge($mounts, $otherMounts),
+					$allMounts,
 					[
 						'user' => $user->getUID(),
 						// parent share
@@ -115,9 +116,9 @@ class MountProvider implements IMountProvider {
 				$event = new ShareMountedEvent($mount);
 				$this->eventDispatcher->dispatchTyped($event);
 
-				$mounts[$mount->getMountPoint()] = $mount;
+				$mounts[$mount->getMountPoint()] = $allMounts[$mount->getMountPoint()] = $mount;
 				foreach ($event->getAdditionalMounts() as $additionalMount) {
-					$mounts[$additionalMount->getMountPoint()] = $additionalMount;
+					$allMounts[$additionalMount->getMountPoint()] = $mounts[$additionalMount->getMountPoint()] = $additionalMount;
 				}
 			} catch (\Exception $e) {
 				$this->logger->error(

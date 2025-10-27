@@ -2,14 +2,14 @@
  * SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+
 import type { Navigation, View } from '@nextcloud/files'
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { defineComponent } from 'vue'
-
-import { useNavigation } from './useNavigation'
 import * as nextcloudFiles from '@nextcloud/files'
+import { mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent } from 'vue'
+import { useNavigation } from './useNavigation.ts'
 
 // Just a wrapper so we can test the composable
 const TestComponent = defineComponent({
@@ -35,7 +35,7 @@ describe('Composables: useNavigation', () => {
 
 		it('should return null without active navigation', () => {
 			const wrapper = mount(TestComponent)
-			expect((wrapper.vm as unknown as { currentView: View | null}).currentView).toBe(null)
+			expect((wrapper.vm as unknown as { currentView: View | null }).currentView).toBe(null)
 		})
 
 		it('should return already active navigation', async () => {
@@ -44,7 +44,7 @@ describe('Composables: useNavigation', () => {
 			navigation.setActive(view)
 			// Now the navigation is already set it should take the active navigation
 			const wrapper = mount(TestComponent)
-			expect((wrapper.vm as unknown as { currentView: View | null}).currentView).toBe(view)
+			expect((wrapper.vm as unknown as { currentView: View | null }).currentView).toBe(view)
 		})
 
 		it('should be reactive on updating active navigation', async () => {
@@ -53,11 +53,11 @@ describe('Composables: useNavigation', () => {
 			const wrapper = mount(TestComponent)
 
 			// no active navigation
-			expect((wrapper.vm as unknown as { currentView: View | null}).currentView).toBe(null)
+			expect((wrapper.vm as unknown as { currentView: View | null }).currentView).toBe(null)
 
 			navigation.setActive(view)
 			// Now the navigation is set it should take the active navigation
-			expect((wrapper.vm as unknown as { currentView: View | null}).currentView).toBe(view)
+			expect((wrapper.vm as unknown as { currentView: View | null }).currentView).toBe(view)
 		})
 	})
 
@@ -69,7 +69,7 @@ describe('Composables: useNavigation', () => {
 
 		it('should return empty array without registered views', () => {
 			const wrapper = mount(TestComponent)
-			expect((wrapper.vm as unknown as { views: View[]}).views).toStrictEqual([])
+			expect((wrapper.vm as unknown as { views: View[] }).views).toStrictEqual([])
 		})
 
 		it('should return already registered views', () => {
@@ -78,7 +78,7 @@ describe('Composables: useNavigation', () => {
 			navigation.register(view)
 			// now mount and check that the view is listed
 			const wrapper = mount(TestComponent)
-			expect((wrapper.vm as unknown as { views: View[]}).views).toStrictEqual([view])
+			expect((wrapper.vm as unknown as { views: View[] }).views).toStrictEqual([view])
 		})
 
 		it('should be reactive on registering new views', () => {
@@ -89,11 +89,11 @@ describe('Composables: useNavigation', () => {
 			navigation.register(view)
 			// now mount and check that the view is listed
 			const wrapper = mount(TestComponent)
-			expect((wrapper.vm as unknown as { views: View[]}).views).toStrictEqual([view])
+			expect((wrapper.vm as unknown as { views: View[] }).views).toStrictEqual([view])
 
 			// now register view 2 and check it is reactivly added
 			navigation.register(view2)
-			expect((wrapper.vm as unknown as { views: View[]}).views).toStrictEqual([view, view2])
+			expect((wrapper.vm as unknown as { views: View[] }).views).toStrictEqual([view, view2])
 		})
 	})
 })

@@ -3,19 +3,18 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
+import type { IAppstoreExApp, IDeployDaemon, IDeployOptions, IExAppStatus } from '../app-types.ts'
+
 import axios from '@nextcloud/axios'
-import { confirmPassword } from '@nextcloud/password-confirmation'
 import { showError, showInfo } from '@nextcloud/dialogs'
 import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
+import { confirmPassword } from '@nextcloud/password-confirmation'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
-
-import api from './api'
-import logger from '../logger'
-
-import type { IAppstoreExApp, IDeployDaemon, IDeployOptions, IExAppStatus } from '../app-types.ts'
 import Vue from 'vue'
+import logger from '../logger.ts'
+import api from './api.js'
 
 interface AppApiState {
 	apps: IAppstoreExApp[]
@@ -25,6 +24,7 @@ interface AppApiState {
 	statusUpdater: number | null | undefined
 	daemonAccessible: boolean
 	defaultDaemon: IDeployDaemon | null
+	dockerDaemons: IDeployDaemon[]
 }
 
 export const useAppApiStore = defineStore('app-api-apps', {
@@ -36,6 +36,7 @@ export const useAppApiStore = defineStore('app-api-apps', {
 		statusUpdater: null,
 		daemonAccessible: loadState('settings', 'defaultDaemonConfigAccessible', false),
 		defaultDaemon: loadState('settings', 'defaultDaemonConfig', null),
+		dockerDaemons: [],
 	}),
 
 	getters: {
@@ -44,15 +45,11 @@ export const useAppApiStore = defineStore('app-api-apps', {
 		getUpdateCount: (state) => state.updateCount,
 		getDaemonAccessible: (state) => state.daemonAccessible,
 		getDefaultDaemon: (state) => state.defaultDaemon,
-		getAppStatus: (state) => (appId: string) =>
-			state.apps.find((app) => app.id === appId)?.status || null,
+		getAppStatus: (state) => (appId: string) => state.apps.find((app) => app.id === appId)?.status || null,
 		getStatusUpdater: (state) => state.statusUpdater,
-		getInitializingOrDeployingApps: (state) =>
-			state.apps.filter((app) =>
-				app?.status?.action
-				&& (app?.status?.action === 'deploy' || app.status.action === 'init' || app.status.action === 'healthcheck')
-				&& app.status.type !== '',
-			),
+		getInitializingOrDeployingApps: (state) => state.apps.filter((app) => app?.status?.action
+			&& (app?.status?.action === 'deploy' || app.status.action === 'init' || app.status.action === 'healthcheck')
+			&& app.status.type !== ''),
 	},
 
 	actions: {
@@ -76,12 +73,11 @@ export const useAppApiStore = defineStore('app-api-apps', {
 			})
 		},
 
-		enableApp(appId: string, deployOptions: IDeployOptions[] = []) {
+		enableApp(appId: string, daemon: IDeployDaemon, deployOptions: IDeployOptions) {
 			this.setLoading(appId, true)
 			this.setLoading('install', true)
 			return confirmPassword().then(() => {
-
-				return axios.post(generateUrl(`/apps/app_api/apps/enable/${appId}`), { deployOptions })
+				return axios.post(generateUrl(`/apps/app_api/apps/enable/${appId}/${daemon.name}`), { deployOptions })
 					.then((response) => {
 						this.setLoading(appId, false)
 						this.setLoading('install', false)
@@ -91,7 +87,7 @@ export const useAppApiStore = defineStore('app-api-apps', {
 							if (!app.installed) {
 								app.installed = true
 								app.needsDownload = false
-								app.daemon = this.defaultDaemon
+								app.daemon = daemon
 								app.status = {
 									type: 'install',
 									action: 'deploy',
@@ -142,7 +138,6 @@ export const useAppApiStore = defineStore('app-api-apps', {
 			this.setLoading(appId, true)
 			this.setLoading('install', true)
 			return confirmPassword().then(() => {
-
 				return api.post(generateUrl('/apps/app_api/apps/force'), { appId })
 					.then(() => {
 						location.reload()
@@ -162,7 +157,6 @@ export const useAppApiStore = defineStore('app-api-apps', {
 		disableApp(appId: string) {
 			this.setLoading(appId, true)
 			return confirmPassword().then(() => {
-
 				return api.get(generateUrl(`apps/app_api/apps/disable/${appId}`))
 					.then(() => {
 						this.setLoading(appId, false)
@@ -187,7 +181,6 @@ export const useAppApiStore = defineStore('app-api-apps', {
 		uninstallApp(appId: string, removeData: boolean) {
 			this.setLoading(appId, true)
 			return confirmPassword().then(() => {
-
 				return api.get(generateUrl(`/apps/app_api/apps/uninstall/${appId}?removeData=${removeData}`))
 					.then(() => {
 						this.setLoading(appId, false)
@@ -218,7 +211,6 @@ export const useAppApiStore = defineStore('app-api-apps', {
 			this.setLoading(appId, true)
 			this.setLoading('install', true)
 			return confirmPassword().then(() => {
-
 				return api.get(generateUrl(`/apps/app_api/apps/update/${appId}`))
 					.then(() => {
 						this.setLoading(appId, false)
@@ -273,9 +265,9 @@ export const useAppApiStore = defineStore('app-api-apps', {
 						app.status = response.data
 					}
 					const initializingOrDeployingApps = this.getInitializingOrDeployingApps
-					console.debug('initializingOrDeployingApps after setAppStatus', initializingOrDeployingApps)
+					logger.debug('initializingOrDeployingApps after setAppStatus', { initializingOrDeployingApps })
 					if (initializingOrDeployingApps.length === 0) {
-						console.debug('clearing interval')
+						logger.debug('clearing interval')
 						clearInterval(this.statusUpdater as number)
 						this.statusUpdater = null
 					}
@@ -293,6 +285,18 @@ export const useAppApiStore = defineStore('app-api-apps', {
 				})
 		},
 
+		async fetchDockerDaemons() {
+			try {
+				const { data } = await axios.get(generateUrl('/apps/app_api/daemons'))
+				this.defaultDaemon = data.daemons.find((daemon: IDeployDaemon) => daemon.name === data.default_daemon_config)
+				this.dockerDaemons = data.daemons.filter((daemon: IDeployDaemon) => daemon.accepts_deploy_id === 'docker-install')
+			} catch (error) {
+				logger.error('[app-api-store] Failed to fetch Docker daemons', { error })
+				return false
+			}
+			return true
+		},
+
 		updateAppsStatus() {
 			clearInterval(this.statusUpdater as number)
 			const initializingOrDeployingApps = this.getInitializingOrDeployingApps
@@ -301,8 +305,8 @@ export const useAppApiStore = defineStore('app-api-apps', {
 			}
 			this.statusUpdater = setInterval(() => {
 				const initializingOrDeployingApps = this.getInitializingOrDeployingApps
-				console.debug('initializingOrDeployingApps', initializingOrDeployingApps)
-				initializingOrDeployingApps.forEach(app => {
+				logger.debug('initializingOrDeployingApps', { initializingOrDeployingApps })
+				initializingOrDeployingApps.forEach((app) => {
 					this.fetchAppStatus(app.id)
 				})
 			}, 2000) as unknown as number

@@ -7,7 +7,6 @@
  */
 namespace OCA\Files_Trashbin;
 
-use Exception;
 use OC\Files\Cache\Cache;
 use OC\Files\Cache\CacheEntry;
 use OC\Files\Cache\CacheQueryBuilder;
@@ -17,7 +16,6 @@ use OC\Files\Node\NonExistingFolder;
 use OC\Files\View;
 use OC\User\NoUserException;
 use OC_User;
-use OCA\Files_Trashbin\AppInfo\Application;
 use OCA\Files_Trashbin\Command\Expire;
 use OCA\Files_Trashbin\Events\BeforeNodeRestoredEvent;
 use OCA\Files_Trashbin\Events\NodeRestoredEvent;
@@ -298,8 +296,9 @@ class Trashbin implements IEventListener {
 		try {
 			$moveSuccessful = true;
 
+			$inCache = $sourceStorage->getCache()->inCache($sourceInternalPath);
 			$trashStorage->moveFromStorage($sourceStorage, $sourceInternalPath, $trashInternalPath);
-			if ($sourceStorage->getCache()->inCache($sourceInternalPath)) {
+			if ($inCache) {
 				$trashStorage->getUpdater()->renameFromStorage($sourceStorage, $sourceInternalPath, $trashInternalPath);
 			}
 		} catch (CopyRecursiveException $e) {
@@ -459,6 +458,9 @@ class Trashbin implements IEventListener {
 	 */
 	public static function restore($file, $filename, $timestamp) {
 		$user = OC_User::getUser();
+		if (!$user) {
+			throw new \Exception('Tried to restore a file while not logged in');
+		}
 		$view = new View('/' . $user);
 
 		$location = '';
@@ -495,8 +497,8 @@ class Trashbin implements IEventListener {
 		$sourcePath = Filesystem::normalizePath($file);
 		$targetPath = Filesystem::normalizePath('/' . $location . '/' . $uniqueFilename);
 
-		$sourceNode = self::getNodeForPath($sourcePath);
-		$targetNode = self::getNodeForPath($targetPath);
+		$sourceNode = self::getNodeForPath($user, $sourcePath);
+		$targetNode = self::getNodeForPath($user, $targetPath, 'files');
 		$run = true;
 		$event = new BeforeNodeRestoredEvent($sourceNode, $targetNode, $run);
 		$dispatcher = Server::get(IEventDispatcher::class);
@@ -516,8 +518,8 @@ class Trashbin implements IEventListener {
 			$view->chroot($fakeRoot);
 			Util::emitHook('\OCA\Files_Trashbin\Trashbin', 'post_restore', ['filePath' => $targetPath, 'trashPath' => $sourcePath]);
 
-			$sourceNode = self::getNodeForPath($sourcePath);
-			$targetNode = self::getNodeForPath($targetPath);
+			$sourceNode = self::getNodeForPath($user, $sourcePath);
+			$targetNode = self::getNodeForPath($user, $targetPath, 'files');
 			$event = new NodeRestoredEvent($sourceNode, $targetNode);
 			$dispatcher = Server::get(IEventDispatcher::class);
 			$dispatcher->dispatchTyped($event);
@@ -854,9 +856,7 @@ class Trashbin implements IEventListener {
 	 */
 	private static function scheduleExpire($user) {
 		// let the admin disable auto expire
-		/** @var Application $application */
-		$application = Server::get(Application::class);
-		$expiration = $application->getContainer()->query('Expiration');
+		$expiration = Server::get(Expiration::class);
 		if ($expiration->isEnabled()) {
 			Server::get(IBus::class)->push(new Expire($user));
 		}
@@ -872,14 +872,12 @@ class Trashbin implements IEventListener {
 	 * @return int|float size of deleted files
 	 */
 	protected static function deleteFiles(array $files, string $user, int|float $availableSpace): int|float {
-		/** @var Application $application */
-		$application = Server::get(Application::class);
-		$expiration = $application->getContainer()->query('Expiration');
+		$expiration = Server::get(Expiration::class);
 		$size = 0;
 
-		if ($availableSpace < 0) {
+		if ($availableSpace <= 0) {
 			foreach ($files as $file) {
-				if ($availableSpace < 0 && $expiration->isExpired($file['mtime'], true)) {
+				if ($availableSpace <= 0 && $expiration->isExpired($file['mtime'], true)) {
 					$tmp = self::delete($file['name'], $user, $file['mtime']);
 					Server::get(LoggerInterface::class)->info(
 						'remove "' . $file['name'] . '" (' . $tmp . 'B) to meet the limit of trash bin size (50% of available quota) for user "{user}"',
@@ -906,7 +904,6 @@ class Trashbin implements IEventListener {
 	 * @return array{int|float, int} size of deleted files and number of deleted files
 	 */
 	public static function deleteExpiredFiles($files, $user) {
-		/** @var Expiration $expiration */
 		$expiration = Server::get(Expiration::class);
 		$size = 0;
 		$count = 0;
@@ -1163,27 +1160,20 @@ class Trashbin implements IEventListener {
 		return $trashFilename;
 	}
 
-	private static function getNodeForPath(string $path): Node {
-		$user = OC_User::getUser();
+	private static function getNodeForPath(string $user, string $path, string $baseDir = 'files_trashbin/files'): Node {
 		$rootFolder = Server::get(IRootFolder::class);
+		$path = ltrim($path, '/');
 
-		if ($user !== false) {
-			$userFolder = $rootFolder->getUserFolder($user);
-			/** @var Folder */
-			$trashFolder = $userFolder->getParent()->get('files_trashbin/files');
-			try {
-				return $trashFolder->get($path);
-			} catch (NotFoundException $ex) {
-			}
+		$userFolder = $rootFolder->getUserFolder($user);
+		/** @var Folder $trashFolder */
+		$trashFolder = $userFolder->getParent()->get($baseDir);
+		try {
+			return $trashFolder->get($path);
+		} catch (NotFoundException $ex) {
 		}
 
 		$view = Server::get(View::class);
-		$fsView = Filesystem::getView();
-		if ($fsView === null) {
-			throw new Exception('View should not be null');
-		}
-
-		$fullPath = $fsView->getAbsolutePath($path);
+		$fullPath = '/' . $user . '/' . $baseDir . '/' . $path;
 
 		if (Filesystem::is_dir($path)) {
 			return new NonExistingFolder($rootFolder, $view, $fullPath);

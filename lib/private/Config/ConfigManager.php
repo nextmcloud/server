@@ -9,12 +9,12 @@ declare(strict_types=1);
 namespace OC\Config;
 
 use JsonException;
-use NCU\Config\Exceptions\TypeConflictException;
-use NCU\Config\IUserConfig;
-use NCU\Config\Lexicon\ConfigLexiconEntry;
-use NCU\Config\ValueType;
 use OC\AppConfig;
 use OCP\App\IAppManager;
+use OCP\Config\Exceptions\TypeConflictException;
+use OCP\Config\IUserConfig;
+use OCP\Config\Lexicon\Entry;
+use OCP\Config\ValueType;
 use OCP\IAppConfig;
 use OCP\Server;
 use Psr\Log\LoggerInterface;
@@ -35,6 +35,13 @@ class ConfigManager {
 	) {
 	}
 
+	public function clearConfigCaches(): void {
+		$this->loadConfigServices();
+		$this->appConfig->clearCache();
+		$this->userConfig->clearCacheAll();
+	}
+
+
 	/**
 	 * Use the rename values from the list of ConfigLexiconEntry defined in each app ConfigLexicon
 	 * to migrate config value to a new config key.
@@ -44,10 +51,11 @@ class ConfigManager {
 	 *
 	 * This method should be mainly called during a new upgrade or when a new app is enabled.
 	 *
-	 * @see ConfigLexiconEntry
+	 * @param string|null $appId when set to NULL the method will be executed for all enabled apps of the instance
+	 *
 	 * @internal
 	 * @since 32.0.0
-	 * @param string|null $appId when set to NULL the method will be executed for all enabled apps of the instance
+	 * @see Entry
 	 */
 	public function migrateConfigLexiconKeys(?string $appId = null): void {
 		if ($appId === null) {
@@ -72,6 +80,45 @@ class ConfigManager {
 		// switch back to normal behavior
 		$this->appConfig->ignoreLexiconAliases(false);
 		$this->userConfig->ignoreLexiconAliases(false);
+	}
+
+	/**
+	 * Upgrade stored data in case of changes in the lexicon.
+	 * Heavy process to be executed on core and app upgrade.
+	 */
+	public function updateLexiconEntries(string $appId): void {
+		$this->loadConfigServices();
+		$this->updateLexiconAppConfigEntries($appId);
+		$this->updateLexiconUserConfigEntries($appId);
+	}
+
+	/**
+	 * Apply modification on the lexicon to the stored app config values:
+	 *
+	 * - Upgrade AppConfig entries if set as lazy/not-lazy
+	 */
+	private function updateLexiconAppConfigEntries(string $appId): void {
+		$lexicon = $this->appConfig->getConfigDetailsFromLexicon($appId);
+		foreach ($lexicon['entries'] as $entry) {
+			// update laziness
+			$this->appConfig->updateLazy($appId, $entry->getKey(), $entry->isLazy());
+		}
+	}
+
+	/**
+	 * Apply modification on the lexicon to the stored user preferences values:
+	 *
+	 * - Upgrade UserConfig entries if set as indexed/not-indexed
+	 * - Upgrade UserConfig entries if set as lazy/not-lazy
+	 */
+	private function updateLexiconUserConfigEntries(string $appId): void {
+		$lexicon = $this->userConfig->getConfigDetailsFromLexicon($appId);
+		foreach ($lexicon['entries'] as $entry) {
+			// upgrade based on index flag
+			$this->userConfig->updateGlobalIndexed($appId, $entry->getKey(), $entry->isFlagged(IUserConfig::FLAG_INDEXED));
+			// update laziness
+			$this->userConfig->updateGlobalLazy($appId, $entry->getKey(), $entry->isLazy());
+		}
 	}
 
 	/**
@@ -149,7 +196,7 @@ class ConfigManager {
 	 *
 	 * @throws TypeConflictException if previous value does not fit the expected type
 	 */
-	private function migrateAppConfigValue(string $appId, ConfigLexiconEntry $entry): void {
+	private function migrateAppConfigValue(string $appId, Entry $entry): void {
 		$value = $this->appConfig->getValueMixed($appId, $entry->getRename(), lazy: null);
 		switch ($entry->getValueType()) {
 			case ValueType::STRING:
@@ -179,7 +226,7 @@ class ConfigManager {
 	 *
 	 * @throws TypeConflictException if previous value does not fit the expected type
 	 */
-	private function migrateUserConfigValue(string $userId, string $appId, ConfigLexiconEntry $entry): void {
+	private function migrateUserConfigValue(string $userId, string $appId, Entry $entry): void {
 		$value = $this->userConfig->getValueMixed($userId, $appId, $entry->getRename(), lazy: null);
 		switch ($entry->getValueType()) {
 			case ValueType::STRING:
@@ -220,7 +267,7 @@ class ConfigManager {
 		return (float)$value;
 	}
 
-	public function convertToBool(string $value, ?ConfigLexiconEntry $entry = null): bool {
+	public function convertToBool(string $value, ?Entry $entry = null): bool {
 		if (in_array(strtolower($value), ['true', '1', 'on', 'yes'])) {
 			$valueBool = true;
 		} elseif (in_array(strtolower($value), ['false', '0', 'off', 'no'])) {
@@ -228,7 +275,7 @@ class ConfigManager {
 		} else {
 			throw new TypeConflictException('Value cannot be converted to boolean');
 		}
-		if ($entry?->hasOption(ConfigLexiconEntry::RENAME_INVERT_BOOLEAN) === true) {
+		if ($entry?->hasOption(Entry::RENAME_INVERT_BOOLEAN) === true) {
 			$valueBool = !$valueBool;
 		}
 

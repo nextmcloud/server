@@ -9,7 +9,6 @@ namespace OC\DB\QueryBuilder;
 
 use Doctrine\DBAL\Query\QueryException;
 use OC\DB\ConnectionAdapter;
-use OC\DB\Exceptions\DbalException;
 use OC\DB\QueryBuilder\ExpressionBuilder\MySqlExpressionBuilder;
 use OC\DB\QueryBuilder\ExpressionBuilder\OCIExpressionBuilder;
 use OC\DB\QueryBuilder\ExpressionBuilder\PgSqlExpressionBuilder;
@@ -96,6 +95,7 @@ class QueryBuilder implements IQueryBuilder {
 		return match($this->connection->getDatabaseProvider()) {
 			IDBConnection::PLATFORM_ORACLE => new OCIExpressionBuilder($this->connection, $this, $this->logger),
 			IDBConnection::PLATFORM_POSTGRES => new PgSqlExpressionBuilder($this->connection, $this, $this->logger),
+			IDBConnection::PLATFORM_MARIADB,
 			IDBConnection::PLATFORM_MYSQL => new MySqlExpressionBuilder($this->connection, $this, $this->logger),
 			IDBConnection::PLATFORM_SQLITE => new SqliteExpressionBuilder($this->connection, $this, $this->logger),
 		};
@@ -121,6 +121,7 @@ class QueryBuilder implements IQueryBuilder {
 		return match($this->connection->getDatabaseProvider()) {
 			IDBConnection::PLATFORM_ORACLE => new OCIFunctionBuilder($this->connection, $this, $this->helper),
 			IDBConnection::PLATFORM_POSTGRES => new PgSqlFunctionBuilder($this->connection, $this, $this->helper),
+			IDBConnection::PLATFORM_MARIADB,
 			IDBConnection::PLATFORM_MYSQL => new FunctionBuilder($this->connection, $this, $this->helper),
 			IDBConnection::PLATFORM_SQLITE => new SqliteFunctionBuilder($this->connection, $this, $this->helper),
 		};
@@ -161,7 +162,7 @@ class QueryBuilder implements IQueryBuilder {
 			try {
 				$params = [];
 				foreach ($this->getParameters() as $placeholder => $value) {
-					if ($value instanceof \DateTime) {
+					if ($value instanceof \DateTimeInterface) {
 						$params[] = $placeholder . ' => DateTime:\'' . $value->format('c') . '\'';
 					} elseif (is_array($value)) {
 						$params[] = $placeholder . ' => (\'' . implode('\', \'', $value) . '\')';
@@ -249,30 +250,6 @@ class QueryBuilder implements IQueryBuilder {
 				'app' => 'core',
 				'exception' => $exception,
 			]);
-		}
-	}
-
-	/**
-	 * Executes this query using the bound parameters and their types.
-	 *
-	 * Uses {@see Connection::executeQuery} for select statements and {@see Connection::executeUpdate}
-	 * for insert, update and delete statements.
-	 *
-	 * @return IResult|int
-	 */
-	public function execute(?IDBConnection $connection = null) {
-		try {
-			if ($this->getType() === \Doctrine\DBAL\Query\QueryBuilder::SELECT) {
-				return $this->executeQuery($connection);
-			} else {
-				return $this->executeStatement($connection);
-			}
-		} catch (DBALException $e) {
-			// `IQueryBuilder->execute` never wrapped the exception, but `executeQuery` and `executeStatement` do
-			/** @var \Doctrine\DBAL\Exception $previous */
-			$previous = $e->getPrevious();
-
-			throw $previous;
 		}
 	}
 

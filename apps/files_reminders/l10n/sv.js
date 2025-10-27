@@ -11,7 +11,7 @@ OC.L10N.register(
     "Set file reminders" : "Ställ in filpåminnelser",
     "**📣 File reminders**\n\nSet file reminders.\n\nNote: to use the `File reminders` app, ensure that the `Notifications` app is installed and enabled. The `Notifications` app provides the necessary APIs for the `File reminders` app to work correctly." : "**📣 Filpåminnelser**\n\nStäll in påminnelser för filer.\n\nObs: För att använda appen `Filpåminnelser` måste du se till att appen `Aviseringar` är installerad och aktiverad. Appen `Aviseringar` tillhandahåller de nödvändiga API:erna för att appen `File reminders` ska fungera korrekt.",
     "Set reminder for \"{fileName}\"" : "Ställ in påminnelse för \"{fileName}\"",
-    "Set reminder at custom date & time" : "Ställ in påminnelse vid anpassat datum och tid",
+    "Reminder at custom date & time" : "Påminnelse vid anpassat datum och tid",
     "Clear reminder" : "Rensa påminnelse",
     "Please choose a valid date & time" : "Välj ett giltigt datum och tid",
     "Reminder set for \"{fileName}\"" : "Påminnelse inställd för \"{fileName}\"",
@@ -22,7 +22,7 @@ OC.L10N.register(
     "Cancel" : "Avbryt",
     "Set reminder" : "Ställ in påminnelse",
     "Reminder set" : "Påminnelse inställd",
-    "Set custom reminder" : "Ställ in anpassad påminnelse",
+    "Custom reminder" : "Anpassad påminnelse",
     "Later today" : "Senare idag",
     "Set reminder for later today" : "Ställ in påminnelse för senare idag",
     "Tomorrow" : "I morgon",
@@ -32,6 +32,8 @@ OC.L10N.register(
     "Next week" : "Nästa vecka",
     "Set reminder for next week" : "Ställ in påminnelse för nästa vecka",
     "This files_reminder can work properly." : "Den här filpåminnelsen kan fungera korrekt.",
-    "The files_reminder app needs the notification app to work properly. You should either enable notifications or disable files_reminder." : "Appen files_reminder behöver notification appen för att fungera korrekt. Du bör antingen aktivera aviseringar eller inaktivera files_reminder."
+    "The files_reminder app needs the notification app to work properly. You should either enable notifications or disable files_reminder." : "Appen files_reminder behöver notification appen för att fungera korrekt. Du bör antingen aktivera aviseringar eller inaktivera files_reminder.",
+    "Set reminder at custom date & time" : "Ställ in påminnelse vid anpassat datum och tid",
+    "Set custom reminder" : "Ställ in anpassad påminnelse"
 },
 "nplurals=2; plural=(n != 1);");

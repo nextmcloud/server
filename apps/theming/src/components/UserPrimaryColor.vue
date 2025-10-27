@@ -4,10 +4,12 @@
 -->
 <template>
 	<div class="primary-color__wrapper">
-		<NcColorPicker v-model="primaryColor"
+		<NcColorPicker
+			v-model="primaryColor"
 			data-user-theming-primary-color
 			@update:value="debouncedOnUpdate">
-			<button ref="trigger"
+			<button
+				ref="trigger"
 				class="color-container primary-color__trigger"
 				:style="{ 'background-color': primaryColor }"
 				data-user-theming-primary-color-trigger>
@@ -16,7 +18,7 @@
 				<IconColorPalette v-else :size="20" />
 			</button>
 		</NcColorPicker>
-		<NcButton type="tertiary" :disabled="isdefaultPrimaryColor" @click="onReset">
+		<NcButton variant="tertiary" :disabled="isdefaultPrimaryColor" @click="onReset">
 			<template #icon>
 				<IconUndo :size="20" />
 			</template>
@@ -26,20 +28,20 @@
 </template>
 
 <script lang="ts">
+import axios from '@nextcloud/axios'
 import { showError } from '@nextcloud/dialogs'
 import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { generateOcsUrl } from '@nextcloud/router'
 import { colord } from 'colord'
-import { defineComponent } from 'vue'
-import axios from '@nextcloud/axios'
 import debounce from 'debounce'
-
+import { defineComponent } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcColorPicker from '@nextcloud/vue/components/NcColorPicker'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
-import IconColorPalette from 'vue-material-design-icons/Palette.vue'
+import IconColorPalette from 'vue-material-design-icons/PaletteOutline.vue'
 import IconUndo from 'vue-material-design-icons/UndoVariant.vue'
+import { logger } from '../logger.ts'
 
 const { primaryColor, defaultPrimaryColor } = loadState('theming', 'data', { primaryColor: '#0082c9', defaultPrimaryColor: '#0082c9' })
 
@@ -76,13 +78,23 @@ export default defineComponent({
 	methods: {
 		t,
 
+		numberToHex(numeric: string) {
+			const parsed = Number.parseInt(numeric)
+			return parsed.toString(16).padStart(2, '0')
+		},
+
 		/**
 		 * Global styles are reloaded so we might need to update the current value
 		 */
 		reload() {
 			const trigger = this.$refs.trigger as HTMLButtonElement
-			const newColor = window.getComputedStyle(trigger).backgroundColor
-			if (newColor.toLowerCase() !== this.primaryColor) {
+			let newColor = window.getComputedStyle(trigger).backgroundColor
+			// sometimes the browser returns the color in the "rgb(255, 132, 234)" format
+			const rgbMatch = newColor.replaceAll(/\s/g, '').match(/^rgba?\((\d+),(\d+),(\d+)/)
+			if (rgbMatch) {
+				newColor = `#${this.numberToHex(rgbMatch[1])}${this.numberToHex(rgbMatch[2])}${this.numberToHex(rgbMatch[3])}`
+			}
+			if (newColor.toLowerCase() !== this.primaryColor.toLowerCase()) {
 				this.primaryColor = newColor
 			}
 		},
@@ -107,8 +119,8 @@ export default defineComponent({
 					await axios.delete(url)
 				}
 				this.$emit('refresh-styles')
-			} catch (e) {
-				console.error('Could not update primary color', e)
+			} catch (error) {
+				logger.error('Could not update primary color', { error })
 				showError(t('theming', 'Could not set primary color'))
 			}
 			this.loading = false

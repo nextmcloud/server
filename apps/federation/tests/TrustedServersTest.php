@@ -120,15 +120,15 @@ class TrustedServersTest extends TestCase {
 
 	public function testRemoveServer(): void {
 		$id = 42;
-		$server = ['url_hash' => 'url_hash'];
+		$server = ['url' => 'url', 'url_hash' => 'url_hash'];
 		$this->dbHandler->expects($this->once())->method('removeServer')->with($id);
 		$this->dbHandler->expects($this->once())->method('getServerById')->with($id)
 			->willReturn($server);
 		$this->dispatcher->expects($this->once())->method('dispatchTyped')
 			->willReturnCallback(
 				function ($event): void {
-					$this->assertSame(get_class($event), TrustedServerRemovedEvent::class);
-					/** @var \OCP\Federated\Events\TrustedServerRemovedEvent $event */
+					$this->assertInstanceOf(TrustedServerRemovedEvent::class, $event);
+					$this->assertSame('url', $event->getUrl());
 					$this->assertSame('url_hash', $event->getUrlHash());
 				}
 			);
@@ -144,6 +144,64 @@ class TrustedServersTest extends TestCase {
 		);
 	}
 
+	public static function dataTestGetServer() {
+		return [
+			[
+				15,
+				[
+					'id' => 15,
+					'otherData' => 'first server',
+				]
+			],
+			[
+				16,
+				[
+					'id' => 16,
+					'otherData' => 'second server',
+				]
+			],
+			[
+				42,
+				[
+					'id' => 42,
+					'otherData' => 'last server',
+				]
+			],
+			[
+				108,
+				null
+			],
+		];
+	}
+
+	#[\PHPUnit\Framework\Attributes\DataProvider('dataTestGetServer')]
+	public function testGetServer(int $id, ?array $expectedServer): void {
+		$servers = [
+			[
+				'id' => 15,
+				'otherData' => 'first server',
+			],
+			[
+				'id' => 16,
+				'otherData' => 'second server',
+			],
+			[
+				'id' => 42,
+				'otherData' => 'last server',
+			],
+		];
+		$this->dbHandler->expects($this->once())->method('getAllServer')->willReturn($servers);
+
+		if ($expectedServer === null) {
+			$this->expectException(\Exception::class);
+			$this->expectExceptionMessage('No server found with ID: ' . $id);
+		}
+
+		$this->assertEquals(
+			$expectedServer,
+			$this->trustedServers->getServer($id)
+		);
+	}
 
 	public function testIsTrustedServer(): void {
 		$this->dbHandler->expects($this->once())

@@ -11,7 +11,7 @@ OC.L10N.register(
     "Set file reminders" : "Définir des rappels pour des fichiers",
     "**📣 File reminders**\n\nSet file reminders.\n\nNote: to use the `File reminders` app, ensure that the `Notifications` app is installed and enabled. The `Notifications` app provides the necessary APIs for the `File reminders` app to work correctly." : "**📣 Rappels de fichiers**\n\nDéfinit des rappels de fichiers.\n\nNote: pour utiliser l'application `Rappels de fichiers`, assurez-vous que l'application `Notifications` est installée et activée. L'application `Notifications` fournit les APIs nécessaires pour que l'application `Rappels de fichiers` fonctionne correctement.",
     "Set reminder for \"{fileName}\"" : "Définir un rappel pour « {fileName} »",
-    "Set reminder at custom date & time" : "Définition d'un rappel à une date et une heure personnalisées",
+    "Reminder at custom date & time" : "Rappel à une date et une heure personnalisées",
     "Clear reminder" : "Effacer le rappel",
     "Please choose a valid date & time" : "Veuillez choisir une date et une heure valables",
     "Reminder set for \"{fileName}\"" : "Définition d’un rappel pour « {fileName} »",
@@ -22,7 +22,7 @@ OC.L10N.register(
     "Cancel" : "Annuler",
     "Set reminder" : "Définir un rappel",
     "Reminder set" : "Rappel défini",
-    "Set custom reminder" : "Définir un rappel personnalisé",
+    "Custom reminder" : "Rappel personnalisé",
     "Later today" : "Plus tard aujourd'hui",
     "Set reminder for later today" : "Définir un rappel pour plus tard aujourd'hui",
     "Tomorrow" : "Demain",
@@ -32,6 +32,8 @@ OC.L10N.register(
     "Next week" : "Semaine suivante",
     "Set reminder for next week" : "Définir un rappel pour la semaine prochaine",
     "This files_reminder can work properly." : "Ce files_reminder peut fonctionner correctement.",
-    "The files_reminder app needs the notification app to work properly. You should either enable notifications or disable files_reminder." : "L'application files_reminder a besoin de l'application de notifications pour fonctionner correctement. Vous devez activer les notifications ou désactiver files_reminder."
+    "The files_reminder app needs the notification app to work properly. You should either enable notifications or disable files_reminder." : "L'application files_reminder a besoin de l'application de notifications pour fonctionner correctement. Vous devez activer les notifications ou désactiver files_reminder.",
+    "Set reminder at custom date & time" : "Définition d'un rappel à une date et une heure personnalisées",
+    "Set custom reminder" : "Définir un rappel personnalisé"
 },
 "nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;");

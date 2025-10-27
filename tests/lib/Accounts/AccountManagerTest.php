@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * SPDX-FileCopyrightText: 2016-2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-FileCopyrightText: 2016 ownCloud, Inc.
@@ -569,6 +571,13 @@ class AccountManagerTest extends TestCase {
 
 			[
 				'name' => IAccountManager::PROPERTY_TWITTER,
+				'value' => '',
+				'scope' => IAccountManager::SCOPE_LOCAL,
+				'verified' => IAccountManager::NOT_VERIFIED,
+			],
+
+			[
+				'name' => IAccountManager::PROPERTY_BLUESKY,
 				'value' => '',
 				'scope' => IAccountManager::SCOPE_LOCAL,
 				'verified' => IAccountManager::NOT_VERIFIED,

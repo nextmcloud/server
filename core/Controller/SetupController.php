@@ -12,6 +12,7 @@ use OC\Setup;
 use OCP\IInitialStateService;
 use OCP\IURLGenerator;
 use OCP\Server;
+use OCP\ServerVersion;
 use OCP\Template\ITemplateManager;
 use OCP\Util;
 use Psr\Log\LoggerInterface;
@@ -25,6 +26,7 @@ class SetupController {
 		protected ITemplateManager $templateManager,
 		protected IInitialStateService $initialStateService,
 		protected IURLGenerator $urlGenerator,
+		protected ServerVersion $serverVersion,
 	) {
 		$this->autoConfigFile = \OC::$configDir . 'autoconfig.php';
 	}
@@ -47,7 +49,7 @@ class SetupController {
 			return;
 		}
 
-		if (isset($post['install']) and $post['install'] == 'true') {
+		if (isset($post['install']) && $post['install'] == 'true') {
 			// We have to launch the installation process :
 			$e = $this->setupHelper->install($post);
 			$errors = ['errors' => $e];
@@ -80,6 +82,8 @@ class SetupController {
 			'dbtype' => '',
 			'hasAutoconfig' => false,
 			'serverRoot' => \OC::$SERVERROOT,
+			'version' => implode('.', $this->serverVersion->getVersion()),
+			'versionstring' => $this->serverVersion->getVersionString(),
 		];
 		$parameters = array_merge($defaults, $post);
 
@@ -132,7 +136,7 @@ class SetupController {
 		$directoryIsSet = isset($post['directory']);
 		$adminAccountIsSet = isset($post['adminlogin']);
 
-		if ($dbIsSet and $directoryIsSet and $adminAccountIsSet) {
+		if ($dbIsSet && $directoryIsSet && $adminAccountIsSet) {
 			$post['install'] = 'true';
 		}
 

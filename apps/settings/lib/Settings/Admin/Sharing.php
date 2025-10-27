@@ -6,10 +6,12 @@
  */
 namespace OCA\Settings\Settings\Admin;
 
+use OC\Core\AppInfo\ConfigLexicon;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\Constants;
+use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IURLGenerator;
@@ -20,6 +22,7 @@ use OCP\Util;
 class Sharing implements IDelegatedSettings {
 	public function __construct(
 		private IConfig $config,
+		private IAppConfig $appConfig,
 		private IL10N $l,
 		private IManager $shareManager,
 		private IAppManager $appManager,
@@ -47,24 +50,25 @@ class Sharing implements IDelegatedSettings {
 			'allowPublicUpload' => $this->getHumanBooleanConfig('core', 'shareapi_allow_public_upload', true),
 			'allowResharing' => $this->getHumanBooleanConfig('core', 'shareapi_allow_resharing', true),
 			'allowShareDialogUserEnumeration' => $this->getHumanBooleanConfig('core', 'shareapi_allow_share_dialog_user_enumeration', true),
+			'allowFederationOnPublicShares' => $this->appConfig->getValueBool('core', ConfigLexicon::SHAREAPI_ALLOW_FEDERATION_ON_PUBLIC_SHARES),
 			'restrictUserEnumerationToGroup' => $this->getHumanBooleanConfig('core', 'shareapi_restrict_user_enumeration_to_group'),
 			'restrictUserEnumerationToPhone' => $this->getHumanBooleanConfig('core', 'shareapi_restrict_user_enumeration_to_phone'),
-			'restrictUserEnumerationFullMatch' => $this->getHumanBooleanConfig('core', 'shareapi_restrict_user_enumeration_full_match', true),
-			'restrictUserEnumerationFullMatchUserId' => $this->getHumanBooleanConfig('core', 'shareapi_restrict_user_enumeration_full_match_userid', true),
-			'restrictUserEnumerationFullMatchEmail' => $this->getHumanBooleanConfig('core', 'shareapi_restrict_user_enumeration_full_match_email', true),
-			'restrictUserEnumerationFullMatchIgnoreSecondDN' => $this->getHumanBooleanConfig('core', 'shareapi_restrict_user_enumeration_full_match_ignore_second_dn'),
+			'restrictUserEnumerationFullMatch' => $this->shareManager->allowEnumerationFullMatch(),
+			'restrictUserEnumerationFullMatchUserId' => $this->shareManager->matchUserId(),
+			'restrictUserEnumerationFullMatchEmail' => $this->shareManager->matchEmail(),
+			'restrictUserEnumerationFullMatchIgnoreSecondDN' => $this->shareManager->ignoreSecondDisplayName(),
 			'enforceLinksPassword' => Util::isPublicLinkPasswordRequired(false),
 			'enforceLinksPasswordExcludedGroups' => json_decode($excludedPasswordGroups) ?? [],
 			'enforceLinksPasswordExcludedGroupsEnabled' => $this->config->getSystemValueBool('sharing.allow_disabled_password_enforcement_groups', false),
 			'onlyShareWithGroupMembers' => $this->shareManager->shareWithGroupMembersOnly(),
 			'onlyShareWithGroupMembersExcludeGroupList' => json_decode($onlyShareWithGroupMembersExcludeGroupList) ?? [],
-			'defaultExpireDate' => $this->getHumanBooleanConfig('core', 'shareapi_default_expire_date'),
+			'defaultExpireDate' => $this->appConfig->getValueBool('core', ConfigLexicon::SHARE_LINK_EXPIRE_DATE_DEFAULT),
 			'expireAfterNDays' => $this->config->getAppValue('core', 'shareapi_expire_after_n_days', '7'),
-			'enforceExpireDate' => $this->getHumanBooleanConfig('core', 'shareapi_enforce_expire_date'),
+			'enforceExpireDate' => $this->appConfig->getValueBool('core', ConfigLexicon::SHARE_LINK_EXPIRE_DATE_ENFORCED),
 			'excludeGroups' => $this->config->getAppValue('core', 'shareapi_exclude_groups', 'no'),
 			'excludeGroupsList' => json_decode($excludedGroups, true) ?? [],
 			'publicShareDisclaimerText' => $this->config->getAppValue('core', 'shareapi_public_link_disclaimertext'),
-			'enableLinkPasswordByDefault' => $this->getHumanBooleanConfig('core', 'shareapi_enable_link_password_by_default'),
+			'enableLinkPasswordByDefault' => $this->appConfig->getValueBool('core', ConfigLexicon::SHARE_LINK_PASSWORD_DEFAULT),
 			'defaultPermissions' => (int)$this->config->getAppValue('core', 'shareapi_default_permissions', (string)Constants::PERMISSION_ALL),
 			'defaultInternalExpireDate' => $this->getHumanBooleanConfig('core', 'shareapi_default_internal_expire_date'),
 			'internalExpireAfterNDays' => $this->config->getAppValue('core', 'shareapi_internal_expire_after_n_days', '7'),

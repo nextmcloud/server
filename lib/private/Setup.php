@@ -15,6 +15,7 @@ use InvalidArgumentException;
 use OC\Authentication\Token\PublicKeyTokenProvider;
 use OC\Authentication\Token\TokenCleanupJob;
 use OC\Core\BackgroundJobs\GenerateMetadataJob;
+use OC\Core\BackgroundJobs\MovePreviewJob;
 use OC\Log\Rotate;
 use OC\Preview\BackgroundCleanupJob;
 use OC\TextProcessing\RemoveOldTasksBackgroundJob;
@@ -443,7 +444,8 @@ class Setup {
 
 		// Install shipped apps and specified app bundles
 		$this->outputDebug($output, 'Install default apps');
-		Installer::installShippedApps(false, $output);
+		$installer = Server::get(Installer::class);
+		$installer->installShippedApps(false, $output);
 
 		// create empty file in data dir, so we can later find
 		// out that this is indeed a Nextcloud data directory
@@ -504,6 +506,7 @@ class Setup {
 		$jobList->add(RemoveOldTasksBackgroundJob::class);
 		$jobList->add(CleanupDeletedUsers::class);
 		$jobList->add(GenerateMetadataJob::class);
+		$jobList->add(MovePreviewJob::class);
 	}
 
 	/**

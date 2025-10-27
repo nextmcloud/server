@@ -3,10 +3,12 @@
   - SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <template>
-	<NcAppNavigation class="account-management__navigation"
+	<NcAppNavigation
+		class="account-management__navigation"
 		:aria-label="t('settings', 'Account management')">
-		<NcAppNavigationNew button-id="new-user-button"
-			:text="t('settings','New account')"
+		<NcAppNavigationNew
+			button-id="new-user-button"
+			:text="t('settings', 'New account')"
 			@click="showNewUserMenu"
 			@keyup.enter="showNewUserMenu"
 			@keyup.space="showNewUserMenu">
@@ -15,14 +17,16 @@
 			</template>
 		</NcAppNavigationNew>
 
-		<NcAppNavigationList class="account-management__system-list"
+		<NcAppNavigationList
+			class="account-management__system-list"
 			data-cy-users-settings-navigation-groups="system">
-			<NcAppNavigationItem id="everyone"
+			<NcAppNavigationItem
+				id="everyone"
 				:exact="true"
 				:name="t('settings', 'All accounts')"
 				:to="{ name: 'users' }">
 				<template #icon>
-					<NcIconSvgWrapper :path="mdiAccount" />
+					<NcIconSvgWrapper :path="mdiAccountOutline" />
 				</template>
 				<template #counter>
 					<NcCounterBubble v-if="userCount" :type="!selectedGroupDecoded ? 'highlighted' : undefined">
@@ -31,23 +35,26 @@
 				</template>
 			</NcAppNavigationItem>
 
-			<NcAppNavigationItem v-if="settings.isAdmin"
+			<NcAppNavigationItem
+				v-if="settings.isAdmin"
 				id="admin"
 				:exact="true"
 				:name="t('settings', 'Admins')"
 				:to="{ name: 'group', params: { selectedGroup: 'admin' } }">
 				<template #icon>
-					<NcIconSvgWrapper :path="mdiShieldAccount" />
+					<NcIconSvgWrapper :path="mdiShieldAccountOutline" />
 				</template>
 				<template #counter>
-					<NcCounterBubble v-if="adminGroup && adminGroup.count > 0"
+					<NcCounterBubble
+						v-if="adminGroup && adminGroup.count > 0"
 						:type="selectedGroupDecoded === 'admin' ? 'highlighted' : undefined">
 						{{ adminGroup.count }}
 					</NcCounterBubble>
 				</template>
 			</NcAppNavigationItem>
 
-			<NcAppNavigationItem v-if="isAdminOrDelegatedAdmin"
+			<NcAppNavigationItem
+				v-if="isAdminOrDelegatedAdmin"
 				id="recent"
 				:exact="true"
 				:name="t('settings', 'Recently active')"
@@ -56,7 +63,8 @@
 					<NcIconSvgWrapper :path="mdiHistory" />
 				</template>
 				<template #counter>
-					<NcCounterBubble v-if="recentGroup?.usercount"
+					<NcCounterBubble
+						v-if="recentGroup?.usercount"
 						:type="selectedGroupDecoded === '__nc_internal_recent' ? 'highlighted' : undefined">
 						{{ recentGroup.usercount }}
 					</NcCounterBubble>
@@ -64,13 +72,14 @@
 			</NcAppNavigationItem>
 
 			<!-- Hide the disabled if none, if we don't have the data (-1) show it -->
-			<NcAppNavigationItem v-if="disabledGroup && (disabledGroup.usercount > 0 || disabledGroup.usercount === -1)"
+			<NcAppNavigationItem
+				v-if="disabledGroup && (disabledGroup.usercount > 0 || disabledGroup.usercount === -1)"
 				id="disabled"
 				:exact="true"
 				:name="t('settings', 'Disabled accounts')"
 				:to="{ name: 'group', params: { selectedGroup: 'disabled' } }">
 				<template #icon>
-					<NcIconSvgWrapper :path="mdiAccountOff" />
+					<NcIconSvgWrapper :path="mdiAccountOffOutline" />
 				</template>
 				<template v-if="disabledGroup.usercount > 0" #counter>
 					<NcCounterBubble :type="selectedGroupDecoded === 'disabled' ? 'highlighted' : undefined">
@@ -83,11 +92,12 @@
 		<AppNavigationGroupList />
 
 		<template #footer>
-			<NcButton class="account-management__settings-toggle"
-				type="tertiary"
+			<NcButton
+				class="account-management__settings-toggle"
+				variant="tertiary"
 				@click="isDialogOpen = true">
 				<template #icon>
-					<NcIconSvgWrapper :path="mdiCog" />
+					<NcIconSvgWrapper :path="mdiCogOutline" />
 				</template>
 				{{ t('settings', 'Account management settings') }}
 			</NcButton>
@@ -97,10 +107,10 @@
 </template>
 
 <script setup lang="ts">
-import { mdiAccount, mdiAccountOff, mdiCog, mdiPlus, mdiShieldAccount, mdiHistory } from '@mdi/js'
+import { mdiAccountOffOutline, mdiAccountOutline, mdiCogOutline, mdiHistory, mdiPlus, mdiShieldAccountOutline } from '@mdi/js'
 import { translate as t } from '@nextcloud/l10n'
 import { computed, ref } from 'vue'
-
+import { useRoute } from 'vue-router/composables'
 import NcAppNavigation from '@nextcloud/vue/components/NcAppNavigation'
 import NcAppNavigationItem from '@nextcloud/vue/components/NcAppNavigationItem'
 import NcAppNavigationList from '@nextcloud/vue/components/NcAppNavigationList'
@@ -108,13 +118,10 @@ import NcAppNavigationNew from '@nextcloud/vue/components/NcAppNavigationNew'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcCounterBubble from '@nextcloud/vue/components/NcCounterBubble'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
-
-import UserSettingsDialog from '../components/Users/UserSettingsDialog.vue'
 import AppNavigationGroupList from '../components/AppNavigationGroupList.vue'
-
-import { useStore } from '../store'
-import { useRoute } from 'vue-router/composables'
-import { useFormatGroups } from '../composables/useGroupsNavigation'
+import UserSettingsDialog from '../components/Users/UserSettingsDialog.vue'
+import { useFormatGroups } from '../composables/useGroupsNavigation.js'
+import { useStore } from '../store/index.js'
 
 const route = useRoute()
 const store = useStore()

@@ -2,9 +2,11 @@
  * SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
-import { Node, FileType, Permission, View, FileAction } from '@nextcloud/files'
-import { translate as t } from '@nextcloud/l10n'
-import FolderMoveSvg from '@mdi/svg/svg/folder-move.svg?raw'
+import type { Node, View } from '@nextcloud/files'
+
+import FolderMoveSvg from '@mdi/svg/svg/folder-move-outline.svg?raw'
+import { FileAction, FileType, Permission } from '@nextcloud/files'
+import { t } from '@nextcloud/l10n'
 import { isPublicShare } from '@nextcloud/sharing/public'
 
 export const action = new FileAction({

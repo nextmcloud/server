@@ -176,7 +176,6 @@ OC.L10N.register(
     "Failed to load availability" : "Error al cargar la disponibilidad",
     "Saved availability" : "Disponibilidad guardada",
     "Failed to save availability" : "Error al guardar la disponibilidad",
-    "Time zone:" : "Zona horaria:",
     "to" : "para",
     "Delete slot" : "Eliminar ranura",
     "No working hours set" : "No se han establecido horas de trabajo",
@@ -186,7 +185,6 @@ OC.L10N.register(
     "Import" : "Importar",
     "Error while saving settings" : "Error al guardar la configuración.",
     "Reset to default" : "Restablecer al predeterminado",
-    "Availability" : "Disponibilidad",
     "Also install the {calendarappstoreopen}Calendar app{linkclose}, or {calendardocopen}connect your desktop & mobile for syncing ↗{linkclose}." : "También instala la {calendarappstoreopen}aplicación Calendario{linkclose}, o {calendardocopen}conecta tu escritorio y móvil para sincronizar ↗{linkclose}.",
     "Please make sure to properly set up {emailopen}the email server{linkclose}." : "Asegúrate de configurar correctamente {emailopen}el servidor de correo electrónico{linkclose}.",
     "Calendar server" : "Servidor de calendario",
@@ -199,10 +197,12 @@ OC.L10N.register(
     "Send reminder notifications to calendar sharees as well" : "Enviar recordatorios a los asistentes del calendario también",
     "Reminders are always sent to organizers and attendees." : "Los recordatorios siempre se envían a los organizadores y asistentes.",
     "Enable notifications for events via push" : "Habilitar notificaciones para eventos mediante push",
+    "Availability" : "Disponibilidad",
     "There was an error updating your attendance status." : "Hubo un error al actualizar tu estado de asistencia.",
     "Please contact the organizer directly." : "Por favor, contacta directamente al organizador.",
     "Are you accepting the invitation?" : "¿Aceptas la invitación?",
     "Tentative" : "Tentativo",
-    "Your attendance was updated successfully." : "Tu asistencia se actualizó correctamente."
+    "Your attendance was updated successfully." : "Tu asistencia se actualizó correctamente.",
+    "Time zone:" : "Zona horaria:"
 },
 "nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;");

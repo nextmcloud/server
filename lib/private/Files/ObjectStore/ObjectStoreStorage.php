@@ -15,6 +15,7 @@ use Icewind\Streams\IteratorDirectory;
 use OC\Files\Cache\Cache;
 use OC\Files\Cache\CacheEntry;
 use OC\Files\Storage\PolyFill\CopyDirectory;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\Files\Cache\ICache;
 use OCP\Files\Cache\ICacheEntry;
 use OCP\Files\Cache\IScanner;
@@ -26,6 +27,8 @@ use OCP\Files\ObjectStore\IObjectStoreMetaData;
 use OCP\Files\ObjectStore\IObjectStoreMultiPartUpload;
 use OCP\Files\Storage\IChunkedFileWrite;
 use OCP\Files\Storage\IStorage;
+use OCP\IDBConnection;
+use OCP\Server;
 use Psr\Log\LoggerInterface;
 
 class ObjectStoreStorage extends \OC\Files\Storage\Common implements IChunkedFileWrite {
@@ -40,6 +43,7 @@ class ObjectStoreStorage extends \OC\Files\Storage\Common implements IChunkedFil
 	private bool $handleCopiesAsOwned;
 	protected bool $validateWrites = true;
 	private bool $preserveCacheItemsOnDelete = false;
+	private ?int $totalSizeLimit = null;
 
 	/**
 	 * @param array $parameters
@@ -63,6 +67,9 @@ class ObjectStoreStorage extends \OC\Files\Storage\Common implements IChunkedFil
 			$this->validateWrites = (bool)$parameters['validateWrites'];
 		}
 		$this->handleCopiesAsOwned = (bool)($parameters['handleCopiesAsOwned'] ?? false);
+		if (isset($parameters['totalSizeLimit'])) {
+			$this->totalSizeLimit = $parameters['totalSizeLimit'];
+		}
 
 		$this->logger = \OCP\Server::get(LoggerInterface::class);
 	}
@@ -475,6 +482,9 @@ class ObjectStoreStorage extends \OC\Files\Storage\Common implements IChunkedFil
 			'original-storage' => $this->getId(),
 			'original-path' => $path,
 		];
+		if ($size) {
+			$metadata['size'] = $size;
+		}
 
 		$stat['mimetype'] = $mimetype;
 		$stat['etag'] = $this->getETag($path);
@@ -496,32 +506,27 @@ class ObjectStoreStorage extends \OC\Files\Storage\Common implements IChunkedFil
 		$urn = $this->getURN($fileId);
 		try {
 			//upload to object storage
-			if ($size === null) {
-				$countStream = CountWrapper::wrap($stream, function ($writtenSize) use ($fileId, &$size) {
+
+			$totalWritten = 0;
+			$countStream = CountWrapper::wrap($stream, function ($writtenSize) use ($fileId, $size, $exists, &$totalWritten) {
+				if (is_null($size) && !$exists) {
 					$this->getCache()->update($fileId, [
 						'size' => $writtenSize,
 					]);
-					$size = $writtenSize;
-				});
-				if ($this->objectStore instanceof IObjectStoreMetaData) {
-					$this->objectStore->writeObjectWithMetaData($urn, $countStream, $metadata);
-				} else {
-					$this->objectStore->writeObject($urn, $countStream, $metadata['mimetype']);
 				}
-				if (is_resource($countStream)) {
-					fclose($countStream);
-				}
-				$stat['size'] = $size;
+				$totalWritten = $writtenSize;
+			});
+
+			if ($this->objectStore instanceof IObjectStoreMetaData) {
+				$this->objectStore->writeObjectWithMetaData($urn, $countStream, $metadata);
 			} else {
-				if ($this->objectStore instanceof IObjectStoreMetaData) {
-					$this->objectStore->writeObjectWithMetaData($urn, $stream, $metadata);
-				} else {
-					$this->objectStore->writeObject($urn, $stream, $metadata['mimetype']);
-				}
-				if (is_resource($stream)) {
-					fclose($stream);
-				}
+				$this->objectStore->writeObject($urn, $countStream, $metadata['mimetype']);
 			}
+			if (is_resource($countStream)) {
+				fclose($countStream);
+			}
+
+			$stat['size'] = $totalWritten;
 		} catch (\Exception $ex) {
 			if (!$exists) {
 				/*
@@ -545,7 +550,7 @@ class ObjectStoreStorage extends \OC\Files\Storage\Common implements IChunkedFil
 					]
 				);
 			}
-			throw $ex; // make this bubble up
+			throw new GenericFileException('Error while writing stream to object store', 0, $ex);
 		}
 
 		if ($exists) {
@@ -561,7 +566,7 @@ class ObjectStoreStorage extends \OC\Files\Storage\Common implements IChunkedFil
 			}
 		}
 
-		return $size;
+		return $totalWritten;
 	}
 
 	public function getObjectStore(): IObjectStore {
@@ -757,6 +762,7 @@ class ObjectStoreStorage extends \OC\Files\Storage\Common implements IChunkedFil
 		if (!$this->objectStore instanceof IObjectStoreMultiPartUpload) {
 			throw new GenericFileException('Object store does not support multipart upload');
 		}
+
 		$cacheEntry = $this->getCache()->get($targetPath);
 		$urn = $this->getURN($cacheEntry->getId());
 
@@ -791,7 +797,7 @@ class ObjectStoreStorage extends \OC\Files\Storage\Common implements IChunkedFil
 		} catch (S3MultipartUploadException|S3Exception $e) {
 			$this->objectStore->abortMultipartUpload($urn, $writeToken);
 			$this->logger->error(
-				'Could not compete multipart upload ' . $urn . ' with uploadId ' . $writeToken,
+				'Could not complete multipart upload ' . $urn . ' with uploadId ' . $writeToken,
 				[
 					'app' => 'objectstore',
 					'exception' => $e,
@@ -813,5 +819,29 @@ class ObjectStoreStorage extends \OC\Files\Storage\Common implements IChunkedFil
 
 	public function setPreserveCacheOnDelete(bool $preserve) {
 		$this->preserveCacheItemsOnDelete = $preserve;
+	}
+
+	public function free_space(string $path): int|float|false {
+		if ($this->totalSizeLimit === null) {
+			return FileInfo::SPACE_UNLIMITED;
+		}
+
+		// To avoid iterating all objects in the object store, calculate the sum of the cached sizes of the root folders of all object storages.
+		$qb = Server::get(IDBConnection::class)->getQueryBuilder();
+		$result = $qb->select($qb->func()->sum('f.size'))
+			->from('storages', 's')
+			->leftJoin('s', 'filecache', 'f', $qb->expr()->eq('f.storage', 's.numeric_id'))
+			->where($qb->expr()->like('s.id', $qb->createNamedParameter('object::%'), IQueryBuilder::PARAM_STR))
+			->andWhere($qb->expr()->eq('f.path', $qb->createNamedParameter('')))
+			->executeQuery();
+		$used = $result->fetchOne();
+		$result->closeCursor();
+
+		$available = $this->totalSizeLimit - $used;
+		if ($available < 0) {
+			$available = 0;
+		}
+
+		return $available;
 	}
 }

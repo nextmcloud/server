@@ -3,44 +3,55 @@
   - SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <template>
-	<NcDialog data-cy-files-new-node-dialog
+	<NcDialog
+		data-cy-files-new-node-dialog
 		:name="name"
 		:open="open"
 		close-on-click-outside
 		out-transition
 		@update:open="emit('close', null)">
 		<template #actions>
-			<NcButton data-cy-files-new-node-dialog-submit
-				type="primary"
+			<NcButton
+				data-cy-files-new-node-dialog-submit
+				variant="primary"
 				:disabled="validity !== ''"
 				@click="submit">
 				{{ t('files', 'Create') }}
 			</NcButton>
 		</template>
-		<form ref="formElement"
+		<form
+			ref="formElement"
 			class="new-node-dialog__form"
 			@submit.prevent="emit('close', localDefaultName)">
-			<NcTextField ref="nameInput"
+			<NcTextField
+				ref="nameInput"
 				data-cy-files-new-node-dialog-input
 				:error="validity !== ''"
 				:helper-text="validity"
 				:label="label"
 				:value.sync="localDefaultName" />
+
+			<!-- Hidden file warning -->
+			<NcNoteCard
+				v-if="isHiddenFileName"
+				type="warning"
+				:text="t('files', 'Files starting with a dot are hidden by default')" />
 		</form>
 	</NcDialog>
 </template>
 
 <script setup lang="ts">
 import type { ComponentPublicInstance, PropType } from 'vue'
+
 import { getUniqueName } from '@nextcloud/files'
 import { t } from '@nextcloud/l10n'
 import { extname } from 'path'
-import { nextTick, onMounted, ref, watch, watchEffect } from 'vue'
-import { getFilenameValidity } from '../utils/filenameValidity.ts'
-
+import { computed, nextTick, onMounted, ref, watch, watchEffect } from 'vue'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcDialog from '@nextcloud/vue/components/NcDialog'
+import NcNoteCard from '@nextcloud/vue/components/NcNoteCard'
 import NcTextField from '@nextcloud/vue/components/NcTextField'
+import { getFilenameValidity } from '../utils/filenameValidity.ts'
 
 const props = defineProps({
 	/**
@@ -88,6 +99,11 @@ const localDefaultName = ref<string>(props.defaultName)
 const nameInput = ref<ComponentPublicInstance>()
 const formElement = ref<HTMLFormElement>()
 const validity = ref('')
+
+const isHiddenFileName = computed(() => {
+	// Check if the name starts with a dot, which indicates a hidden file
+	return localDefaultName.value.trim().startsWith('.')
+})
 
 /**
  * Focus the filename input field

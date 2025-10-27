@@ -229,7 +229,7 @@ class LegacyVersionsBackend implements IVersionBackend, IDeletableVersionBackend
 		$this->versionsMapper->delete($versionEntity);
 	}
 
-	public function createVersionEntity(File $file): void {
+	public function createVersionEntity(File $file): ?VersionEntity {
 		$versionEntity = new VersionEntity();
 		$versionEntity->setFileId($file->getId());
 		$versionEntity->setTimestamp($file->getMTime());
@@ -241,8 +241,7 @@ class LegacyVersionsBackend implements IVersionBackend, IDeletableVersionBackend
 		while ($tries < 5) {
 			try {
 				$this->versionsMapper->insert($versionEntity);
-				/* No errors, get out of the method */
-				return;
+				return $versionEntity;
 			} catch (\OCP\DB\Exception $e) {
 				if (!in_array($e->getReason(), [
 					\OCP\DB\Exception::REASON_CONSTRAINT_VIOLATION,
@@ -257,6 +256,8 @@ class LegacyVersionsBackend implements IVersionBackend, IDeletableVersionBackend
 				$this->logger->warning('Constraint violation while inserting version, retrying with increased timestamp', ['exception' => $e]);
 			}
 		}
+
+		return null;
 	}
 
 	public function updateVersionEntity(File $sourceFile, int $revision, array $properties): void {
@@ -379,10 +380,7 @@ class LegacyVersionsBackend implements IVersionBackend, IDeletableVersionBackend
 			throw new Exception('Relative path not found for node with path: ' . $source->getPath());
 		}
 
-		$versionFolder = $this->rootFolder->get($userId . '/files_versions');
-		if (!$versionFolder instanceof Folder) {
-			throw new Exception('User versions folder does not exist');
-		}
+		$versionFolder = $this->getVersionFolder($user);
 
 		$versions = Storage::getVersions($userId, $relativePath);
 		foreach ($versions as $version) {

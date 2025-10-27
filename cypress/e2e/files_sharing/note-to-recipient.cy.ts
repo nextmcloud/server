@@ -2,9 +2,10 @@
  * SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
-import type { User } from '@nextcloud/cypress'
-import { createShare, openSharingPanel } from './FilesSharingUtils.ts'
+import type { User } from '@nextcloud/e2e-test-server/cypress'
+
 import { navigateToFolder } from '../files/FilesUtils.ts'
+import { createShare, openSharingPanel } from './FilesSharingUtils.ts'
 
 describe('files_sharing: Note to recipient', { testIsolation: true }, () => {
 	let user: User
@@ -72,7 +73,7 @@ describe('files_sharing: Note to recipient', { testIsolation: true }, () => {
 		createShare('folder', sharee.userId, { read: true, download: true, note: 'Hello, this is the note.' })
 
 		// reload just to be sure
-		cy.reload()
+		cy.visit('/apps/files')
 
 		// open the sharing tab
 		openSharingPanel('folder')
@@ -88,5 +89,4 @@ describe('files_sharing: Note to recipient', { testIsolation: true }, () => {
 				.and('have.value', 'Hello, this is the note.')
 		})
 	})
-
 })

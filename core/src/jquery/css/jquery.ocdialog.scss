@@ -4,9 +4,9 @@
  */
 .oc-dialog {
 	background: var(--color-main-background);
-	color: var(--color-text-light);
 	border-radius: var(--border-radius-large);
 	box-shadow: 0 0 30px var(--color-box-shadow);
+	color: var(--color-main-text);
 	padding: 24px;
 	z-index: 100001;
 	font-size: 100%;
@@ -90,17 +90,4 @@ body.theme--dark .oc-dialog-dim {
 .oc-dialog-content {
 	width: 100%;
 	max-width: 550px;
-}
-
-.oc-dialog.password-confirmation {
-	.oc-dialog-content {
-		width: auto;
-
-		input[type=password] {
-			width: 100%;
-		}
-		label {
-			display: none;
-		}
-	}
 }

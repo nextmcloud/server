@@ -7,8 +7,8 @@
 import { mdiMagnify, mdiSearchWeb } from '@mdi/js'
 import { t } from '@nextcloud/l10n'
 import { computed } from 'vue'
-import NcActions from '@nextcloud/vue/components/NcActions'
 import NcActionButton from '@nextcloud/vue/components/NcActionButton'
+import NcActions from '@nextcloud/vue/components/NcActions'
 import NcAppNavigationSearch from '@nextcloud/vue/components/NcAppNavigationSearch'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import { onBeforeNavigation } from '../composables/useBeforeNavigation.ts'
@@ -24,8 +24,9 @@ const searchStore = useSearchStore()
  * we need to clear the search box.
  */
 onBeforeNavigation((to, from, next) => {
-	if (to.params.view !== VIEW_ID && from.params.view === VIEW_ID) {
-		// we are leaving the search view so unset the query
+	if (to.params.view !== VIEW_ID
+		&& (from.params.view === VIEW_ID || from.query.dir !== to.query.dir)) {
+		// we are leaving the search view or navigate to another directory -> unset the query
 		searchStore.query = ''
 		searchStore.scope = 'filter'
 	} else if (to.params.view === VIEW_ID && from.params.view === VIEW_ID) {
@@ -55,9 +56,9 @@ const isSearchView = computed(() => currentView.value.id === VIEW_ID)
  */
 const searchLabel = computed(() => {
 	if (searchStore.scope === 'globally') {
-		return t('files', 'Search globally by filename …')
+		return t('files', 'Search everywhere …')
 	}
-	return t('files', 'Search here by filename …')
+	return t('files', 'Search here …')
 })
 </script>
 
@@ -72,13 +73,13 @@ const searchLabel = computed(() => {
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiMagnify" />
 					</template>
-					{{ t('files', 'Filter and search from this location') }}
+					{{ t('files', 'Search here') }}
 				</NcActionButton>
 				<NcActionButton close-after-click @click="searchStore.scope = 'globally'">
 					<template #icon>
 						<NcIconSvgWrapper :path="mdiSearchWeb" />
 					</template>
-					{{ t('files', 'Search globally') }}
+					{{ t('files', 'Search everywhere') }}
 				</NcActionButton>
 			</NcActions>
 		</template>

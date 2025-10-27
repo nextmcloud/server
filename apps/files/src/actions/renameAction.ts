@@ -2,13 +2,17 @@
  * SPDX-FileCopyrightText: 2023 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+
+import type { View } from '@nextcloud/files'
+import type { Node } from '@nextcloud/files'
+
+import PencilSvg from '@mdi/svg/svg/pencil-outline.svg?raw'
 import { emit } from '@nextcloud/event-bus'
-import { Permission, type Node, FileAction, View } from '@nextcloud/files'
+import { FileAction, Permission } from '@nextcloud/files'
 import { translate as t } from '@nextcloud/l10n'
-import PencilSvg from '@mdi/svg/svg/pencil.svg?raw'
-import { getPinia } from '../store'
-import { useFilesStore } from '../store/files'
 import { dirname } from 'path'
+import { useFilesStore } from '../store/files.ts'
+import { getPinia } from '../store/index.ts'
 
 export const ACTION_RENAME = 'rename'
 

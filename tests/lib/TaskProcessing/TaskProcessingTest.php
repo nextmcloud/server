@@ -24,6 +24,7 @@ use OCP\Files\Config\IUserMountCache;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
 use OCP\Http\Client\IClientService;
+use OCP\IAppConfig;
 use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IDBConnection;
@@ -31,6 +32,7 @@ use OCP\IServerContainer;
 use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
+use OCP\L10N\IFactory;
 use OCP\Server;
 use OCP\TaskProcessing\EShapeType;
 use OCP\TaskProcessing\Events\GetTaskProcessingProvidersEvent;
@@ -45,6 +47,7 @@ use OCP\TaskProcessing\IManager;
 use OCP\TaskProcessing\IProvider;
 use OCP\TaskProcessing\ISynchronousProvider;
 use OCP\TaskProcessing\ITaskType;
+use OCP\TaskProcessing\ITriggerableProvider;
 use OCP\TaskProcessing\ShapeDescriptor;
 use OCP\TaskProcessing\Task;
 use OCP\TaskProcessing\TaskTypes\TextToImage;
@@ -436,6 +439,53 @@ class ExternalProvider implements IProvider {
 	}
 }
 
+
+class ExternalTriggerableProvider implements ITriggerableProvider {
+	public const ID = 'event:external:provider:triggerable';
+	public const TASK_TYPE_ID = TextToText::ID;
+
+	public function getId(): string {
+		return self::ID;
+	}
+	public function getName(): string {
+		return 'External Triggerable Provider via Event';
+	}
+
+	public function getTaskTypeId(): string {
+		return self::TASK_TYPE_ID;
+	}
+
+	public function trigger(): void {
+	}
+	public function getExpectedRuntime(): int {
+		return 5;
+	}
+	public function getOptionalInputShape(): array {
+		return [];
+	}
+	public function getOptionalOutputShape(): array {
+		return [];
+	}
+	public function getInputShapeEnumValues(): array {
+		return [];
+	}
+	public function getInputShapeDefaults(): array {
+		return [];
+	}
+	public function getOptionalInputShapeEnumValues(): array {
+		return [];
+	}
+	public function getOptionalInputShapeDefaults(): array {
+		return [];
+	}
+	public function getOutputShapeEnumValues(): array {
+		return [];
+	}
+	public function getOptionalOutputShapeEnumValues(): array {
+		return [];
+	}
+}
+
 class ConflictingExternalProvider implements IProvider {
 	// Same ID as SuccessfulSyncProvider
 	public const ID = 'test:sync:success';
@@ -535,6 +585,7 @@ class TaskProcessingTest extends \Test\TestCase {
 	private IUserMountCache $userMountCache;
 	private IRootFolder $rootFolder;
 	private IConfig $config;
+	private IAppConfig $appConfig;
 
 	public const TEST_USER = 'testuser';
 
@@ -552,6 +603,7 @@ class TaskProcessingTest extends \Test\TestCase {
 			SuccessfulTextToImageProvider::class => new SuccessfulTextToImageProvider(),
 			FailingTextToImageProvider::class => new FailingTextToImageProvider(),
 			ExternalProvider::class => new ExternalProvider(),
+			ExternalTriggerableProvider::class => new ExternalTriggerableProvider(),
 			ConflictingExternalProvider::class => new ConflictingExternalProvider(),
 			ExternalTaskType::class => new ExternalTaskType(),
 			ConflictingExternalTaskType::class => new ConflictingExternalTaskType(),
@@ -600,8 +652,9 @@ class TaskProcessingTest extends \Test\TestCase {
 
 		$this->userMountCache = $this->createMock(IUserMountCache::class);
 		$this->config = Server::get(IConfig::class);
+		$this->appConfig = Server::get(IAppConfig::class);
 		$this->manager = new Manager(
-			$this->config,
+			$this->appConfig,
 			$this->coordinator,
 			$this->serverContainer,
 			Server::get(LoggerInterface::class),
@@ -617,6 +670,7 @@ class TaskProcessingTest extends \Test\TestCase {
 			$userManager,
 			Server::get(IUserSession::class),
 			Server::get(ICacheFactory::class),
+			Server::get(IFactory::class),
 		);
 	}
 
@@ -629,6 +683,7 @@ class TaskProcessingTest extends \Test\TestCase {
 	public function testShouldNotHaveAnyProviders(): void {
 		$this->registrationContext->expects($this->any())->method('getTaskProcessingProviders')->willReturn([]);
 		self::assertCount(0, $this->manager->getAvailableTaskTypes());
+		self::assertCount(0, $this->manager->getAvailableTaskTypeIds());
 		self::assertFalse($this->manager->hasProviders());
 		self::expectException(PreConditionNotMetException::class);
 		$this->manager->scheduleTask(new Task(TextToText::ID, ['input' => 'Hello'], 'test', null));
@@ -641,9 +696,11 @@ class TaskProcessingTest extends \Test\TestCase {
 		$taskProcessingTypeSettings = [
 			TextToText::ID => false,
 		];
-		$this->config->setAppValue('core', 'ai.taskprocessing_type_preferences', json_encode($taskProcessingTypeSettings));
+		$this->appConfig->setValueString('core', 'ai.taskprocessing_type_preferences', json_encode($taskProcessingTypeSettings), lazy: true);
 		self::assertCount(0, $this->manager->getAvailableTaskTypes());
 		self::assertCount(1, $this->manager->getAvailableTaskTypes(true));
+		self::assertCount(0, $this->manager->getAvailableTaskTypeIds());
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds(true));
 		self::assertTrue($this->manager->hasProviders());
 		self::expectException(PreConditionNotMetException::class);
 		$this->manager->scheduleTask(new Task(TextToText::ID, ['input' => 'Hello'], 'test', null));
@@ -651,11 +708,12 @@ class TaskProcessingTest extends \Test\TestCase {
 
 
 	public function testProviderShouldBeRegisteredAndTaskFailValidation(): void {
-		$this->config->setAppValue('core', 'ai.taskprocessing_type_preferences', '');
+		$this->appConfig->setValueString('core', 'ai.taskprocessing_type_preferences', '', lazy: true);
 		$this->registrationContext->expects($this->any())->method('getTaskProcessingProviders')->willReturn([
 			new ServiceRegistration('test', BrokenSyncProvider::class)
 		]);
 		self::assertCount(1, $this->manager->getAvailableTaskTypes());
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 		self::assertTrue($this->manager->hasProviders());
 		$task = new Task(TextToText::ID, ['wrongInputKey' => 'Hello'], 'test', null);
 		self::assertNull($task->getId());
@@ -677,6 +735,7 @@ class TaskProcessingTest extends \Test\TestCase {
 		$this->userMountCache->expects($this->any())->method('getMountsForFileId')->willReturn([$mount]);
 
 		self::assertCount(1, $this->manager->getAvailableTaskTypes());
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 		self::assertTrue($this->manager->hasProviders());
 
 		$audioId = $this->getFile('audioInput', 'Hello')->getId();
@@ -692,6 +751,7 @@ class TaskProcessingTest extends \Test\TestCase {
 			new ServiceRegistration('test', FailingSyncProvider::class)
 		]);
 		self::assertCount(1, $this->manager->getAvailableTaskTypes());
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 		self::assertTrue($this->manager->hasProviders());
 		$task = new Task(TextToText::ID, ['input' => 'Hello'], 'test', null);
 		self::assertNull($task->getId());
@@ -720,6 +780,7 @@ class TaskProcessingTest extends \Test\TestCase {
 			new ServiceRegistration('test', BrokenSyncProvider::class)
 		]);
 		self::assertCount(1, $this->manager->getAvailableTaskTypes());
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 		self::assertTrue($this->manager->hasProviders());
 		$task = new Task(TextToText::ID, ['input' => 'Hello'], 'test', null);
 		self::assertNull($task->getId());
@@ -748,6 +809,7 @@ class TaskProcessingTest extends \Test\TestCase {
 			new ServiceRegistration('test', SuccessfulSyncProvider::class)
 		]);
 		self::assertCount(1, $this->manager->getAvailableTaskTypes());
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 		$taskTypeStruct = $this->manager->getAvailableTaskTypes()[array_keys($this->manager->getAvailableTaskTypes())[0]];
 		self::assertTrue(isset($taskTypeStruct['inputShape']['input']));
 		self::assertEquals(EShapeType::Text, $taskTypeStruct['inputShape']['input']->getShapeType());
@@ -797,9 +859,10 @@ class TaskProcessingTest extends \Test\TestCase {
 		$taskProcessingTypeSettings = [
 			TextToText::ID => true,
 		];
-		$this->config->setAppValue('core', 'ai.taskprocessing_type_preferences', json_encode($taskProcessingTypeSettings));
+		$this->appConfig->setValueString('core', 'ai.taskprocessing_type_preferences', json_encode($taskProcessingTypeSettings), lazy: true);
 
 		self::assertCount(1, $this->manager->getAvailableTaskTypes());
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 
 		self::assertTrue($this->manager->hasProviders());
 		$task = new Task(TextToText::ID, ['input' => 'Hello'], 'test', null);
@@ -840,6 +903,7 @@ class TaskProcessingTest extends \Test\TestCase {
 		$this->userMountCache->expects($this->any())->method('getMountsForFileId')->willReturn([$mount]);
 
 		self::assertCount(1, $this->manager->getAvailableTaskTypes());
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 
 		self::assertTrue($this->manager->hasProviders());
 		$audioId = $this->getFile('audioInput', 'Hello')->getId();
@@ -890,6 +954,7 @@ class TaskProcessingTest extends \Test\TestCase {
 		$mount->expects($this->any())->method('getUser')->willReturn($user);
 		$this->userMountCache->expects($this->any())->method('getMountsForFileId')->willReturn([$mount]);
 		self::assertCount(1, $this->manager->getAvailableTaskTypes());
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 
 		self::assertTrue($this->manager->hasProviders());
 		$audioId = $this->getFile('audioInput', 'Hello')->getId();
@@ -949,6 +1014,7 @@ class TaskProcessingTest extends \Test\TestCase {
 			new ServiceRegistration('test', SuccessfulSyncProvider::class)
 		]);
 		self::assertCount(1, $this->manager->getAvailableTaskTypes());
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 		self::assertTrue($this->manager->hasProviders());
 		$task = new Task(TextToText::ID, ['input' => 'Hello'], 'test', null);
 		$this->manager->scheduleTask($task);
@@ -969,6 +1035,7 @@ class TaskProcessingTest extends \Test\TestCase {
 		// run background job
 		$bgJob = new RemoveOldTasksBackgroundJob(
 			$timeFactory,
+			$this->manager,
 			$this->taskMapper,
 			Server::get(LoggerInterface::class),
 			Server::get(IAppDataFactory::class),
@@ -988,6 +1055,7 @@ class TaskProcessingTest extends \Test\TestCase {
 		]);
 		$taskTypes = $this->manager->getAvailableTaskTypes();
 		self::assertCount(1, $taskTypes);
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 		self::assertTrue(isset($taskTypes[TextToTextSummary::ID]));
 		self::assertTrue($this->manager->hasProviders());
 		$task = new Task(TextToTextSummary::ID, ['input' => 'Hello'], 'test', null);
@@ -1019,6 +1087,7 @@ class TaskProcessingTest extends \Test\TestCase {
 		]);
 		$taskTypes = $this->manager->getAvailableTaskTypes();
 		self::assertCount(1, $taskTypes);
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 		self::assertTrue(isset($taskTypes[TextToTextSummary::ID]));
 		self::assertTrue($this->manager->hasProviders());
 		$task = new Task(TextToTextSummary::ID, ['input' => 'Hello'], 'test', null);
@@ -1049,6 +1118,7 @@ class TaskProcessingTest extends \Test\TestCase {
 		]);
 		$taskTypes = $this->manager->getAvailableTaskTypes();
 		self::assertCount(1, $taskTypes);
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 		self::assertTrue(isset($taskTypes[TextToImage::ID]));
 		self::assertTrue($this->manager->hasProviders());
 		$task = new Task(TextToImage::ID, ['input' => 'Hello', 'numberOfImages' => 3], 'test', null);
@@ -1085,6 +1155,7 @@ class TaskProcessingTest extends \Test\TestCase {
 		]);
 		$taskTypes = $this->manager->getAvailableTaskTypes();
 		self::assertCount(1, $taskTypes);
+		self::assertCount(1, $this->manager->getAvailableTaskTypeIds());
 		self::assertTrue(isset($taskTypes[TextToImage::ID]));
 		self::assertTrue($this->manager->hasProviders());
 		$task = new Task(TextToImage::ID, ['input' => 'Hello', 'numberOfImages' => 3], 'test', null);
@@ -1174,6 +1245,7 @@ class TaskProcessingTest extends \Test\TestCase {
 
 		// Assert
 		self::assertArrayHasKey(ExternalTaskType::ID, $availableTypes);
+		self::assertContains(ExternalTaskType::ID, $this->manager->getAvailableTaskTypeIds());
 		self::assertEquals(ExternalTaskType::ID, $externalProvider->getTaskTypeId(), 'Test Sanity: Provider must handle the Task Type');
 		self::assertEquals('External Task Type via Event', $availableTypes[ExternalTaskType::ID]['name']);
 		// Check if shapes match the external type/provider
@@ -1204,6 +1276,44 @@ class TaskProcessingTest extends \Test\TestCase {
 		self::assertCount(1, $providers); // Ensure no extra provider was added
 	}
 
+	public function testTriggerableProviderWithNoOtherRunningTasks() {
+		// Arrange: Local provider registered, conflicting external provider via event
+		$this->registrationContext->expects($this->any())->method('getTaskProcessingProviders')->willReturn([]);
+		$this->registrationContext->expects($this->any())->method('getTextProcessingProviders')->willReturn([]);
+		$this->registrationContext->expects($this->any())->method('getTextToImageProviders')->willReturn([]);
+		$this->registrationContext->expects($this->any())->method('getSpeechToTextProviders')->willReturn([]);
+
+		$externalProvider = $this->createPartialMock(ExternalTriggerableProvider::class, ['trigger']);
+		$externalProvider->expects($this->once())->method('trigger');
+		$this->configureEventDispatcherMock(providersToAdd: [$externalProvider]);
+		$this->manager = $this->createManagerInstance();
+
+		// Act
+		$task = new Task($externalProvider->getTaskTypeId(), ['input' => ''], 'tests', 'foobar');
+		$this->manager->scheduleTask($task);
+	}
+
+	public function testTriggerableProviderWithOtherRunningTasks() {
+		// Arrange: Local provider registered, conflicting external provider via event
+		$this->registrationContext->expects($this->any())->method('getTaskProcessingProviders')->willReturn([]);
+		$this->registrationContext->expects($this->any())->method('getTextProcessingProviders')->willReturn([]);
+		$this->registrationContext->expects($this->any())->method('getTextToImageProviders')->willReturn([]);
+		$this->registrationContext->expects($this->any())->method('getSpeechToTextProviders')->willReturn([]);
+
+		$externalProvider = $this->createPartialMock(ExternalTriggerableProvider::class, ['trigger']);
+		$externalProvider->expects($this->once())->method('trigger');
+		$this->configureEventDispatcherMock(providersToAdd: [$externalProvider]);
+		$this->manager = $this->createManagerInstance();
+
+		$task = new Task($externalProvider->getTaskTypeId(), ['input' => ''], 'tests', 'foobar');
+		$this->manager->scheduleTask($task);
+		$this->manager->lockTask($task);
+
+		// Act
+		$task = new Task($externalProvider->getTaskTypeId(), ['input' => ''], 'tests', 'foobar');
+		$this->manager->scheduleTask($task);
+	}
+
 	public function testMergeTaskTypesLocalAndEvent() {
 		// Arrange: Local type registered, DIFFERENT external type via event
 		$this->registrationContext->expects($this->any())->method('getTaskProcessingProviders')->willReturn([
@@ -1226,11 +1336,14 @@ class TaskProcessingTest extends \Test\TestCase {
 
 		// Act
 		$availableTypes = $this->manager->getAvailableTaskTypes();
+		$availableTypeIds = $this->manager->getAvailableTaskTypeIds();
 
 		// Assert: Both task types should be available
+		self::assertContains(AudioToImage::ID, $availableTypeIds);
 		self::assertArrayHasKey(AudioToImage::ID, $availableTypes);
 		self::assertEquals(AudioToImage::class, $availableTypes[AudioToImage::ID]['name']);
 
+		self::assertContains(ExternalTaskType::ID, $availableTypeIds);
 		self::assertArrayHasKey(ExternalTaskType::ID, $availableTypes);
 		self::assertEquals('External Task Type via Event', $availableTypes[ExternalTaskType::ID]['name']);
 
@@ -1239,7 +1352,7 @@ class TaskProcessingTest extends \Test\TestCase {
 
 	private function createManagerInstance(): Manager {
 		// Clear potentially cached config values if needed
-		$this->config->deleteAppValue('core', 'ai.taskprocessing_type_preferences');
+		$this->appConfig->deleteKey('core', 'ai.taskprocessing_type_preferences');
 
 		// Re-create Text2ImageManager if its state matters or mocks change
 		$text2imageManager = new \OC\TextToImage\Manager(
@@ -1253,7 +1366,7 @@ class TaskProcessingTest extends \Test\TestCase {
 		);
 
 		return new Manager(
-			$this->config,
+			$this->appConfig,
 			$this->coordinator,
 			$this->serverContainer,
 			Server::get(LoggerInterface::class),
@@ -1269,6 +1382,7 @@ class TaskProcessingTest extends \Test\TestCase {
 			Server::get(IUserManager::class),
 			Server::get(IUserSession::class),
 			Server::get(ICacheFactory::class),
+			Server::get(IFactory::class),
 		);
 	}
 

@@ -12,7 +12,7 @@
 	errorBaseline="build/psalm-baseline.xml"
 	findUnusedBaselineEntry="true"
 	findUnusedCode="false"
-	phpVersion="8.1"
+	phpVersion="8.2"
 >
 	<plugins>
 		<plugin filename="build/psalm/AppFrameworkTainter.php" />
@@ -63,7 +63,6 @@
 		<ignoreFiles>
 			<directory name="apps/**/composer"/>
 			<directory name="apps/**/tests"/>
-			<directory name="apps/files_external/3rdparty"/>
 			<directory name="lib/composer"/>
 			<directory name="lib/l10n"/>
 			<directory name="3rdparty"/>
@@ -71,7 +70,6 @@
 	</projectFiles>
 	<extraFiles>
 		<directory name="3rdparty"/>
-		<directory name="apps/files_external/3rdparty"/>
 	</extraFiles>
 	<stubs>
 		<file name="build/stubs/apcu.php"/>
@@ -94,6 +92,7 @@
 		<file name="build/stubs/psr_container.php"/>
 		<file name="3rdparty/sabre/uri/lib/functions.php" />
 		<file name="build/stubs/app_api.php" />
+		<file name="build/stubs/php-polyfill.php" />
 	</stubs>
 	<issueHandlers>
 		<LessSpecificReturnStatement errorLevel="error"/>
@@ -106,6 +105,7 @@
 				<referencedClass name="OCA\Circles\Exceptions\CircleNotFoundException"/>
 				<referencedClass name="OCA\Circles\Model\Circle"/>
 				<referencedClass name="OCA\Circles\Model\Member"/>
+				<referencedClass name="OCA\ContextChat\Public\ContentManager"/>
 				<referencedClass name="OCA\GroupFolders\Mount\GroupFolderStorage"/>
 				<referencedClass name="OCA\TwoFactorNextcloudNotification\Controller\APIController"/>
 				<referencedClass name="OCA\GlobalSiteSelector\Service\SlaveService"/>

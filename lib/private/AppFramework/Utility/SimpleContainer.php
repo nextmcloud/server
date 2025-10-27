@@ -61,7 +61,7 @@ class SimpleContainer implements ArrayAccess, ContainerInterface, IContainer {
 			/* No constructor, return a instance directly */
 			return $class->newInstance();
 		}
-		if (PHP_VERSION_ID >= 80400 && self::$useLazyObjects) {
+		if (PHP_VERSION_ID >= 80400 && self::$useLazyObjects && !$class->isInternal()) {
 			/* For PHP>=8.4, use a lazy ghost to delay constructor and dependency resolving */
 			/** @psalm-suppress UndefinedMethod */
 			return $class->newLazyGhost(function (object $object) use ($constructor): void {
@@ -196,7 +196,9 @@ class SimpleContainer implements ArrayAccess, ContainerInterface, IContainer {
 		$this->registerService($alias, function (ContainerInterface $container) use ($target, $alias): mixed {
 			try {
 				$logger = $container->get(LoggerInterface::class);
-				$logger->debug('The requested alias "' . $alias . '" is deprecated. Please request "' . $target . '" directly. This alias will be removed in a future Nextcloud version.', ['app' => 'serverDI']);
+				$logger->debug('The requested alias "' . $alias . '" is deprecated. Please request "' . $target . '" directly. This alias will be removed in a future Nextcloud version.', [
+					'app' => $this->appName ?? 'serverDI',
+				]);
 			} catch (ContainerExceptionInterface $e) {
 				// Could not get logger. Continue
 			}

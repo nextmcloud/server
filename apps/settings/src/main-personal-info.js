@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-import Vue from 'vue'
 import { getCSPNonce } from '@nextcloud/auth'
 import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
-
+import Vue from 'vue'
 import AvatarSection from './components/PersonalInfo/AvatarSection.vue'
 import BiographySection from './components/PersonalInfo/BiographySection.vue'
 import BirthdaySection from './components/PersonalInfo/BirthdaySection.vue'
+import BlueskySection from './components/PersonalInfo/BlueskySection.vue'
 import DetailsSection from './components/PersonalInfo/DetailsSection.vue'
 import DisplayNameSection from './components/PersonalInfo/DisplayNameSection.vue'
 import EmailSection from './components/PersonalInfo/EmailSection/EmailSection.vue'
@@ -26,6 +26,7 @@ import ProfileSection from './components/PersonalInfo/ProfileSection/ProfileSect
 import ProfileVisibilitySection from './components/PersonalInfo/ProfileVisibilitySection/ProfileVisibilitySection.vue'
 import PronounsSection from './components/PersonalInfo/PronounsSection.vue'
 import RoleSection from './components/PersonalInfo/RoleSection.vue'
+import TimezoneSection from './components/PersonalInfo/TimezoneSection.vue'
 import TwitterSection from './components/PersonalInfo/TwitterSection.vue'
 import WebsiteSection from './components/PersonalInfo/WebsiteSection.vue'
 
@@ -46,12 +47,14 @@ const DisplayNameView = Vue.extend(DisplayNameSection)
 const EmailView = Vue.extend(EmailSection)
 const FediverseView = Vue.extend(FediverseSection)
 const FirstDayOfWeekView = Vue.extend(FirstDayOfWeekSection)
+const TimezoneView = Vue.extend(TimezoneSection)
 const LanguageView = Vue.extend(LanguageSection)
 const LocaleView = Vue.extend(LocaleSection)
 const LocationView = Vue.extend(LocationSection)
 const PhoneView = Vue.extend(PhoneSection)
 const PronounsView = Vue.extend(PronounsSection)
 const TwitterView = Vue.extend(TwitterSection)
+const BlueskyView = Vue.extend(BlueskySection)
 const WebsiteView = Vue.extend(WebsiteSection)
 
 new AvatarView().$mount('#vue-avatar-section')
@@ -62,10 +65,12 @@ new PhoneView().$mount('#vue-phone-section')
 new LocationView().$mount('#vue-location-section')
 new WebsiteView().$mount('#vue-website-section')
 new TwitterView().$mount('#vue-twitter-section')
+new BlueskyView().$mount('#vue-bluesky-section')
 new FediverseView().$mount('#vue-fediverse-section')
 new LanguageView().$mount('#vue-language-section')
 new LocaleView().$mount('#vue-locale-section')
 new FirstDayOfWeekView().$mount('#vue-fdow-section')
+new TimezoneView().$mount('#vue-timezone-section')
 new BirthdayView().$mount('#vue-birthday-section')
 new PronounsView().$mount('#vue-pronouns-section')
 

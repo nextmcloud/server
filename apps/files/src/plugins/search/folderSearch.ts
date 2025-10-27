@@ -4,11 +4,12 @@
  */
 
 import type { Node } from '@nextcloud/files'
-import { emit } from '@nextcloud/event-bus'
+
 import { getFilePickerBuilder } from '@nextcloud/dialogs'
-import { imagePath } from '@nextcloud/router'
+import { emit } from '@nextcloud/event-bus'
 import { translate as t } from '@nextcloud/l10n'
-import logger from '../../logger'
+import { imagePath } from '@nextcloud/router'
+import logger from '../../logger.ts'
 
 /**
  * Initialize the unified search plugin.
@@ -36,12 +37,15 @@ function init() {
 						callback: (nodes: Node[]) => {
 							logger.info('Folder picked', { folder: nodes[0] })
 							const folder = nodes[0]
+							const filterUpdateText = (folder.root === '/files/' + folder.basename)
+								? t('files', 'Search in all files')
+								: t('files', 'Search in folder: {folder}', { folder: folder.basename })
 							emit('nextcloud:unified-search:add-filter', {
 								id: 'in-folder',
 								appId: 'files',
 								searchFrom: 'files',
 								payload: folder,
-								filterUpdateText: t('files', 'Search in folder: {folder}', { folder: folder.basename }),
+								filterUpdateText,
 								filterParams: { path: folder.path },
 							})
 						},

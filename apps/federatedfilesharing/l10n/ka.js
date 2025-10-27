@@ -25,11 +25,9 @@ OC.L10N.register(
     "Share with me through my #Nextcloud Federated Cloud ID, see {url}" : "Share with me through my #Nextcloud Federated Cloud ID, see {url}",
     "Share with me through my #Nextcloud Federated Cloud ID" : "Share with me through my #Nextcloud Federated Cloud ID",
     "Share with me via Nextcloud" : "Share with me via Nextcloud",
-    "Cloud ID copied to the clipboard" : "Cloud ID copied to the clipboard",
-    "Copy to clipboard" : "Copy to clipboard",
+    "Copy" : "Copy",
     "Copied!" : "Copied!",
     "Federated Cloud" : "Federated Cloud",
-    "You can share with anyone who uses a Nextcloud server or other Open Cloud Mesh (OCM) compatible servers and services! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com" : "You can share with anyone who uses a Nextcloud server or other Open Cloud Mesh (OCM) compatible servers and services! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com",
     "Share it so your friends can share files with you:" : "Share it so your friends can share files with you:",
     "Facebook" : "Facebook",
     "X (formerly Twitter)" : "X (formerly Twitter)",
@@ -39,6 +37,9 @@ OC.L10N.register(
     "Add remote share" : "Add remote share",
     "Remote share" : "Remote share",
     "Do you want to add the remote share {name} from {owner}@{remote}?" : "Do you want to add the remote share {name} from {owner}@{remote}?",
-    "Remote share password" : "Remote share password"
+    "Remote share password" : "Remote share password",
+    "Cloud ID copied to the clipboard" : "Cloud ID copied to the clipboard",
+    "Copy to clipboard" : "Copy to clipboard",
+    "You can share with anyone who uses a Nextcloud server or other Open Cloud Mesh (OCM) compatible servers and services! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com" : "You can share with anyone who uses a Nextcloud server or other Open Cloud Mesh (OCM) compatible servers and services! Just put their Federated Cloud ID in the share dialog. It looks like person@cloud.example.com"
 },
 "nplurals=2; plural=(n!=1);");

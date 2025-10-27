@@ -4,30 +4,46 @@
 -->
 
 <template>
-	<NcHeaderMenu id="contactsmenu"
+	<NcHeaderMenu
+		id="contactsmenu"
 		class="contactsmenu"
 		:aria-label="t('core', 'Search contacts')"
 		@open="handleOpen">
 		<template #trigger>
-			<Contacts class="contactsmenu__trigger-icon" :size="20" />
+			<NcIconSvgWrapper class="contactsmenu__trigger-icon" :path="mdiContacts" />
 		</template>
 		<div class="contactsmenu__menu">
-			<div class="contactsmenu__menu__input-wrapper">
-				<NcTextField id="contactsmenu__menu__search"
-					ref="contactsMenuInput"
-					:value.sync="searchTerm"
-					trailing-button-icon="close"
-					:label="t('core', 'Search contacts')"
-					:trailing-button-label="t('core','Reset search')"
-					:show-trailing-button="searchTerm !== ''"
-					:placeholder="t('core', 'Search contacts …')"
-					class="contactsmenu__menu__search"
-					@input="onInputDebounced"
-					@trailing-button-click="onReset" />
+			<div class="contactsmenu__menu__search-container">
+				<div class="contactsmenu__menu__input-wrapper">
+					<NcTextField
+						id="contactsmenu__menu__search"
+						ref="contactsMenuInput"
+						v-model="searchTerm"
+						trailing-button-icon="close"
+						:label="t('core', 'Search contacts')"
+						:trailing-button-label="t('core', 'Reset search')"
+						:show-trailing-button="searchTerm !== ''"
+						:placeholder="t('core', 'Search contacts …')"
+						class="contactsmenu__menu__search"
+						@input="onInputDebounced"
+						@trailing-button-click="onReset" />
+				</div>
+				<NcButton
+					v-for="action in actions"
+					:key="action.id"
+					:aria-label="action.label"
+					:title="action.label"
+					class="contactsmenu__menu__action"
+					variant="tertiary-no-background"
+					@click="action.onClick">
+					<template #icon>
+						<NcIconSvgWrapper :svg="action.icon" />
+					</template>
+				</NcButton>
 			</div>
 			<NcEmptyContent v-if="error" :name="t('core', 'Could not load your contacts')">
 				<template #icon>
-					<Magnify />
+					<NcIconSvgWrapper :path="mdiMagnify" />
 				</template>
 			</NcEmptyContent>
 			<NcEmptyContent v-else-if="loadingText" :name="loadingText">
@@ -37,22 +53,22 @@
 			</NcEmptyContent>
 			<NcEmptyContent v-else-if="contacts.length === 0" :name="t('core', 'No contacts found')">
 				<template #icon>
-					<Magnify />
+					<NcIconSvgWrapper :path="mdiMagnify" />
 				</template>
 			</NcEmptyContent>
 			<div v-else class="contactsmenu__menu__content">
 				<div id="contactsmenu-contacts">
 					<ul>
-						<Contact v-for="contact in contacts" :key="contact.id" :contact="contact" />
+						<ContactMenuEntry v-for="contact in contacts" :key="contact.id" :contact="contact" />
 					</ul>
 				</div>
 				<div v-if="contactsAppEnabled" class="contactsmenu__menu__content__footer">
-					<NcButton type="tertiary" :href="contactsAppURL">
+					<NcButton variant="tertiary" :href="contactsAppURL">
 						{{ t('core', 'Show all contacts') }}
 					</NcButton>
 				</div>
 				<div v-else-if="canInstallApp" class="contactsmenu__menu__content__footer">
-					<NcButton type="tertiary" :href="contactsAppMgmtURL">
+					<NcButton variant="tertiary" :href="contactsAppMgmtURL">
 						{{ t('core', 'Install the Contacts app') }}
 					</NcButton>
 				</div>
@@ -62,42 +78,48 @@
 </template>
 
 <script>
-import axios from '@nextcloud/axios'
-import Contacts from 'vue-material-design-icons/Contacts.vue'
-import debounce from 'debounce'
+import { mdiContacts, mdiMagnify } from '@mdi/js'
 import { getCurrentUser } from '@nextcloud/auth'
+import axios from '@nextcloud/axios'
+import { t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import Magnify from 'vue-material-design-icons/Magnify.vue'
+import debounce from 'debounce'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcEmptyContent from '@nextcloud/vue/components/NcEmptyContent'
 import NcHeaderMenu from '@nextcloud/vue/components/NcHeaderMenu'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
-import { translate as t } from '@nextcloud/l10n'
-
-import Contact from '../components/ContactsMenu/Contact.vue'
+import NcTextField from '@nextcloud/vue/components/NcTextField'
+import ContactMenuEntry from '../components/ContactsMenu/ContactMenuEntry.vue'
 import logger from '../logger.js'
 import Nextcloud from '../mixins/Nextcloud.js'
-import NcTextField from '@nextcloud/vue/components/NcTextField'
 
 export default {
 	name: 'ContactsMenu',
 
 	components: {
-		Contact,
-		Contacts,
-		Magnify,
+		ContactMenuEntry,
 		NcButton,
 		NcEmptyContent,
 		NcHeaderMenu,
+		NcIconSvgWrapper,
 		NcLoadingIcon,
 		NcTextField,
 	},
 
 	mixins: [Nextcloud],
 
+	setup() {
+		return {
+			mdiContacts,
+			mdiMagnify,
+		}
+	},
+
 	data() {
 		const user = getCurrentUser()
 		return {
+			actions: window.OC?.ContactsMenu?.actions || [],
 			contactsAppEnabled: false,
 			contactsAppURL: generateUrl('/apps/contacts'),
 			contactsAppMgmtURL: generateUrl('/settings/apps/social/contacts'),
@@ -113,11 +135,12 @@ export default {
 		async handleOpen() {
 			await this.getContacts('')
 		},
+
 		async getContacts(searchTerm) {
 			if (searchTerm === '') {
-				this.loadingText = t('core', 'Loading your contacts …')
+				this.loadingText = t('core', 'Loading your contacts …')
 			} else {
-				this.loadingText = t('core', 'Looking for {term} …', {
+				this.loadingText = t('core', 'Looking for {term} …', {
 					term: searchTerm,
 				})
 			}
@@ -140,6 +163,7 @@ export default {
 				this.error = true
 			}
 		},
+
 		onInputDebounced: debounce(function() {
 			this.getContacts(this.searchTerm)
 		}, 500),
@@ -188,10 +212,17 @@ export default {
 			margin-inline-start: 13px;
 		}
 
-		&__input-wrapper {
+		&__search-container {
 			padding: 10px;
+			display: flex;
+			flex: row nowrap;
+			column-gap: 10px;
+		}
+
+		&__input-wrapper {
 			z-index: 2;
 			top: 0;
+			flex-grow: 1;
 		}
 
 		&__search {

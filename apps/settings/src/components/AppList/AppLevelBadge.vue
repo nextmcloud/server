@@ -3,7 +3,8 @@
   - SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 <template>
-	<span v-if="isSupported || isFeatured"
+	<span
+		v-if="isSupported || isFeatured"
 		class="app-level-badge"
 		:class="{ 'app-level-badge--supported': isSupported }"
 		:title="badgeTitle">
@@ -13,11 +14,10 @@
 </template>
 
 <script setup lang="ts">
-import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
-
-import { mdiCheck, mdiStarShooting } from '@mdi/js'
+import { mdiCheck, mdiStarShootingOutline } from '@mdi/js'
 import { translate as t } from '@nextcloud/l10n'
 import { computed } from 'vue'
+import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 
 const props = defineProps<{
 	/**
@@ -28,7 +28,7 @@ const props = defineProps<{
 
 const isSupported = computed(() => props.level === 300)
 const isFeatured = computed(() => props.level === 200)
-const badgeIcon = computed(() => isSupported.value ? mdiStarShooting : mdiCheck)
+const badgeIcon = computed(() => isSupported.value ? mdiStarShootingOutline : mdiCheck)
 const badgeText = computed(() => isSupported.value ? t('settings', 'Supported') : t('settings', 'Featured'))
 const badgeTitle = computed(() => isSupported.value
 	? t('settings', 'This app is supported via your current Nextcloud subscription.')
@@ -49,8 +49,9 @@ const badgeTitle = computed(() => isSupported.value
 	width: fit-content;
 
 	&--supported {
-		border-color: var(--color-success);
-		color: var(--color-success);
+		background-color: var(--color-success);
+		border-color: var(--color-border-success);
+		color: var(--color-success-text);
 	}
 }
 </style>

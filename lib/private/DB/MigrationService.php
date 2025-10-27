@@ -12,9 +12,10 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SchemaException;
 use Doctrine\DBAL\Schema\Sequence;
 use Doctrine\DBAL\Schema\Table;
+use Doctrine\DBAL\Types\Type;
 use OC\App\InfoParser;
-use OC\IntegrityCheck\Helpers\AppLocator;
 use OC\Migration\SimpleOutput;
+use OCP\App\IAppManager;
 use OCP\AppFramework\App;
 use OCP\AppFramework\QueryException;
 use OCP\DB\ISchemaWrapper;
@@ -39,7 +40,12 @@ class MigrationService {
 	/**
 	 * @throws \Exception
 	 */
-	public function __construct(string $appName, Connection $connection, ?IOutput $output = null, ?AppLocator $appLocator = null, ?LoggerInterface $logger = null) {
+	public function __construct(
+		string $appName,
+		Connection $connection,
+		?IOutput $output = null,
+		?LoggerInterface $logger = null,
+	) {
 		$this->appName = $appName;
 		$this->connection = $connection;
 		if ($logger === null) {
@@ -58,10 +64,8 @@ class MigrationService {
 			$this->migrationsNamespace = 'OC\\Core\\Migrations';
 			$this->checkOracle = true;
 		} else {
-			if ($appLocator === null) {
-				$appLocator = new AppLocator();
-			}
-			$appPath = $appLocator->getAppPath($appName);
+			$appManager = Server::get(IAppManager::class);
+			$appPath = $appManager->getAppPath($appName);
 			$namespace = App::buildAppNamespace($appName);
 			$this->migrationsPath = "$appPath/lib/Migration";
 			$this->migrationsNamespace = $namespace . '\\Migration';
@@ -573,8 +577,11 @@ class MigrationService {
 						throw new \InvalidArgumentException('Column "' . $table->getName() . '"."' . $thing->getName() . '" is NotNull, but has empty string or null as default.');
 					}
 
-					if ($thing->getNotnull() && $thing->getType()->getName() === Types::BOOLEAN) {
-						throw new \InvalidArgumentException('Column "' . $table->getName() . '"."' . $thing->getName() . '" is type Bool and also NotNull, so it can not store "false".');
+					if ($this->connection->getDatabaseProvider() === IDBConnection::PLATFORM_ORACLE) {
+						// Oracle doesn't support boolean column with non-null value
+						if ($thing->getNotnull() && Type::lookupName($thing->getType()) === Types::BOOLEAN) {
+							$thing->setNotnull(false);
+						}
 					}
 
 					$sourceColumn = null;
@@ -584,8 +591,8 @@ class MigrationService {
 
 				// If the column was just created OR the length changed OR the type changed
 				// we will NOT detect invalid length if the column is not modified
-				if (($sourceColumn === null || $sourceColumn->getLength() !== $thing->getLength() || $sourceColumn->getType()->getName() !== Types::STRING)
-					&& $thing->getLength() > 4000 && $thing->getType()->getName() === Types::STRING) {
+				if (($sourceColumn === null || $sourceColumn->getLength() !== $thing->getLength() || Type::lookupName($sourceColumn->getType()) !== Types::STRING)
+					&& $thing->getLength() > 4000 && Type::lookupName($thing->getType()) === Types::STRING) {
 					throw new \InvalidArgumentException('Column "' . $table->getName() . '"."' . $thing->getName() . '" is type String, but exceeding the 4.000 length limit.');
 				}
 			}
@@ -603,7 +610,7 @@ class MigrationService {
 			}
 
 			$primaryKey = $table->getPrimaryKey();
-			if ($primaryKey instanceof Index && (!$sourceTable instanceof Table || !$sourceTable->hasPrimaryKey())) {
+			if ($primaryKey instanceof Index && (!$sourceTable instanceof Table || $sourceTable->getPrimaryKey() === null)) {
 				$indexName = strtolower($primaryKey->getName());
 				$isUsingDefaultName = $indexName === 'primary';
 
@@ -728,7 +735,7 @@ class MigrationService {
 		}
 	}
 
-	private function ensureMigrationsAreLoaded() {
+	private function ensureMigrationsAreLoaded(): void {
 		if (empty($this->migrations)) {
 			$this->migrations = $this->findMigrations();
 		}

@@ -66,13 +66,13 @@ class SyncServiceTest extends TestCase {
 			->willReturn($this->client);
 
 		$this->service = new SyncService(
+			$clientService,
+			$this->config,
 			$this->backend,
 			$this->userManager,
 			$this->dbConnection,
 			$this->logger,
 			$this->converter,
-			$clientService,
-			$this->config
 		);
 	}
 
@@ -108,7 +108,7 @@ class SyncServiceTest extends TestCase {
 			'1',
 			'principals/system/system',
 			[]
-		);
+		)[0];
 
 		$this->assertEquals('http://sabre.io/ns/sync/1', $token);
 	}
@@ -179,7 +179,7 @@ END:VCARD';
 			'1',
 			'principals/system/system',
 			[]
-		);
+		)[0];
 
 		$this->assertEquals('http://sabre.io/ns/sync/2', $token);
 	}
@@ -250,7 +250,7 @@ END:VCARD';
 			'1',
 			'principals/system/system',
 			[]
-		);
+		)[0];
 
 		$this->assertEquals('http://sabre.io/ns/sync/3', $token);
 	}
@@ -291,7 +291,7 @@ END:VCARD';
 			'1',
 			'principals/system/system',
 			[]
-		);
+		)[0];
 
 		$this->assertEquals('http://sabre.io/ns/sync/4', $token);
 	}
@@ -314,7 +314,7 @@ END:VCARD';
 		$clientService = $this->createMock(IClientService::class);
 		$config = $this->createMock(IConfig::class);
 
-		$ss = new SyncService($backend, $userManager, $dbConnection, $logger, $converter, $clientService, $config);
+		$ss = new SyncService($clientService, $config, $backend, $userManager, $dbConnection, $logger, $converter);
 		$ss->ensureSystemAddressBookExists('principals/users/adam', 'contacts', []);
 	}
 
@@ -359,7 +359,7 @@ END:VCARD';
 		$clientService = $this->createMock(IClientService::class);
 		$config = $this->createMock(IConfig::class);
 
-		$ss = new SyncService($backend, $userManager, $dbConnection, $logger, $converter, $clientService, $config);
+		$ss = new SyncService($clientService, $config, $backend, $userManager, $dbConnection, $logger, $converter);
 		$ss->updateUser($user);
 
 		$ss->updateUser($user);

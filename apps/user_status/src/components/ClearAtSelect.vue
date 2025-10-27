@@ -8,37 +8,42 @@
 		<label class="clear-at-select__label" for="clearStatus">
 			{{ $t('user_status', 'Clear status after') }}
 		</label>
-		<NcSelect input-id="clearStatus"
+		<NcSelect
+			input-id="clearStatus"
 			class="clear-at-select__select"
 			:options="options"
 			:value="option"
 			:clearable="false"
 			placement="top"
+			label-outside
 			@option:selected="select" />
 	</div>
 </template>
 
 <script>
 import NcSelect from '@nextcloud/vue/components/NcSelect'
-import { getAllClearAtOptions } from '../services/clearAtOptionsService.js'
 import { clearAtFilter } from '../filters/clearAtFilter.js'
+import { getAllClearAtOptions } from '../services/clearAtOptionsService.js'
 
 export default {
 	name: 'ClearAtSelect',
 	components: {
 		NcSelect,
 	},
+
 	props: {
 		clearAt: {
 			type: Object,
 			default: null,
 		},
 	},
+
 	data() {
 		return {
 			options: getAllClearAtOptions(),
 		}
 	},
+
 	computed: {
 		/**
 		 * Returns an object of the currently selected option
@@ -52,6 +57,7 @@ export default {
 			}
 		},
 	},
+
 	methods: {
 		/**
 		 * Triggered when the user selects a new option.
@@ -72,12 +78,9 @@ export default {
 <style lang="scss" scoped>
 .clear-at-select {
 	display: flex;
-	margin-bottom: 10px;
+	gap: calc(2 * var(--default-grid-baseline));
 	align-items: center;
-
-	&__label {
-		margin-inline-end: 12px;
-	}
+	margin-block: 0 calc(2 * var(--default-grid-baseline));
 
 	&__select {
 		flex-grow: 1;

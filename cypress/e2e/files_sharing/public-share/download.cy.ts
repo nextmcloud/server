@@ -2,15 +2,16 @@
  * SPDX-FileCopyrightText: 2024 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
-// @ts-expect-error The package is currently broken - but works...
-import { deleteDownloadsFolderBeforeEach } from 'cypress-delete-downloads-folder'
-import { createLinkShare, getShareUrl, openLinkShareDetails, setupPublicShare, type ShareContext } from './PublicShareUtils.ts'
-import { getRowForFile, getRowForFileId, triggerActionForFile, triggerActionForFileId } from '../../files/FilesUtils.ts'
+
+import type { User } from '@nextcloud/e2e-test-server/cypress'
+import type { ShareContext } from './PublicShareUtils.ts'
+
 import { zipFileContains } from '../../../support/utils/assertions.ts'
-import type { User } from '@nextcloud/cypress'
+import { deleteDownloadsFolderBeforeEach } from '../../../support/utils/deleteDownloadsFolder.ts'
+import { getRowForFile, getRowForFileId, triggerActionForFile, triggerActionForFileId } from '../../files/FilesUtils.ts'
+import { createLinkShare, getShareUrl, openLinkShareDetails, setupPublicShare } from './PublicShareUtils.ts'
 
 describe('files_sharing: Public share - downloading files', { testIsolation: true }, () => {
-
 	// in general there is no difference except downloading
 	// as file shares have the source of the share token but a different displayname
 	describe('file share', () => {
@@ -45,7 +46,9 @@ describe('files_sharing: Public share - downloading files', { testIsolation: tru
 	})
 
 	describe('folder share', () => {
-		before(() => setupPublicShare())
+		const shareName = 'a-folder-share'
+
+		before(() => setupPublicShare(shareName))
 
 		deleteDownloadsFolderBeforeEach()
 
@@ -72,7 +75,7 @@ describe('files_sharing: Public share - downloading files', { testIsolation: tru
 
 				// check a file is downloaded
 				const downloadsFolder = Cypress.config('downloadsFolder')
-				cy.readFile(`${downloadsFolder}/download.zip`, null, { timeout: 15000 })
+				cy.readFile(`${downloadsFolder}/${shareName}.zip`, null, { timeout: 15000 })
 					.should('exist')
 					.and('have.length.gt', 30)
 					// Check all files are included
@@ -212,8 +215,6 @@ describe('files_sharing: Public share - downloading files', { testIsolation: tru
 
 			cy.reload()
 
-			getRowForFile('test').should('be.visible')
-			triggerActionForFile('test', 'details')
 			openLinkShareDetails(0)
 			cy.findByRole('checkbox', { name: /hide download/i })
 				.should('be.checked')
@@ -257,7 +258,7 @@ describe('files_sharing: Public share - downloading files', { testIsolation: tru
 
 			cy.wait('@update')
 
-			openLinkShareDetails(1)
+			openLinkShareDetails(0)
 			cy.findByRole('button', { name: /advanced settings/i })
 				.click()
 			cy.findByRole('checkbox', { name: /hide download/i })

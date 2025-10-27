@@ -13,6 +13,7 @@ use OCA\Files\AdvancedCapabilities;
 use OCA\Files\Capabilities;
 use OCA\Files\Collaboration\Resources\Listener;
 use OCA\Files\Collaboration\Resources\ResourceProvider;
+use OCA\Files\ConfigLexicon;
 use OCA\Files\Controller\ApiController;
 use OCA\Files\Dashboard\FavoriteWidget;
 use OCA\Files\DirectEditingCapabilities;
@@ -29,7 +30,6 @@ use OCA\Files\Search\FilesSearchProvider;
 use OCA\Files\Service\TagService;
 use OCA\Files\Service\UserConfig;
 use OCA\Files\Service\ViewConfig;
-use OCA\Files\Settings\DeclarativeAdminSettings;
 use OCP\Activity\IManager as IActivityManager;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -111,13 +111,11 @@ class Application extends App implements IBootstrap {
 		$context->registerCapability(AdvancedCapabilities::class);
 		$context->registerCapability(DirectEditingCapabilities::class);
 
-		$context->registerDeclarativeSettings(DeclarativeAdminSettings::class);
-
 		$context->registerEventListener(LoadSidebar::class, LoadSidebarListener::class);
 		$context->registerEventListener(RenderReferenceEvent::class, RenderReferenceEventListener::class);
 		$context->registerEventListener(BeforeNodeRenamedEvent::class, SyncLivePhotosListener::class);
 		$context->registerEventListener(BeforeNodeDeletedEvent::class, SyncLivePhotosListener::class);
-		$context->registerEventListener(CacheEntryRemovedEvent::class, SyncLivePhotosListener::class);
+		$context->registerEventListener(CacheEntryRemovedEvent::class, SyncLivePhotosListener::class, 1); // Ensure this happen before the metadata are deleted.
 		$context->registerEventListener(BeforeNodeCopiedEvent::class, SyncLivePhotosListener::class);
 		$context->registerEventListener(NodeCopiedEvent::class, SyncLivePhotosListener::class);
 		$context->registerEventListener(LoadSearchPlugins::class, LoadSearchPluginsListener::class);
@@ -127,6 +125,9 @@ class Application extends App implements IBootstrap {
 
 		$context->registerNotifierService(Notifier::class);
 		$context->registerDashboardWidget(FavoriteWidget::class);
+
+		$context->registerConfigLexicon(ConfigLexicon::class);
+
 	}
 
 	public function boot(IBootContext $context): void {

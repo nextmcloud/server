@@ -2,12 +2,14 @@
  * SPDX-FileCopyrightText: 2025 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
-import type { User } from '@nextcloud/cypress'
-import { createShare } from './FilesSharingUtils.ts'
+import type { User } from '@nextcloud/e2e-test-server/cypress'
+
 import {
+	getActionButtonForFile,
 	getActionEntryForFile,
 	getRowForFile,
 } from '../files/FilesUtils.ts'
+import { createShare } from './FilesSharingUtils.ts'
 
 describe('files_sharing: Download forbidden', { testIsolation: true }, () => {
 	let user: User
@@ -41,8 +43,13 @@ describe('files_sharing: Download forbidden', { testIsolation: true }, () => {
 		// visit shared files view
 		cy.visit('/apps/files')
 		// see the shared folder
-		getRowForFile('folder').should('be.visible')
-		getActionEntryForFile('folder', 'download').should('not.exist')
+		getActionButtonForFile('folder')
+			.should('be.visible')
+			// open the action menu
+			.click({ force: true })
+		// see no download action
+		getActionEntryForFile('folder', 'download')
+			.should('not.exist')
 
 		// Disable view without download option
 		cy.runOccCommand('config:app:set --value no core shareapi_allow_view_without_download')
@@ -51,6 +58,10 @@ describe('files_sharing: Download forbidden', { testIsolation: true }, () => {
 		cy.visit('/apps/files')
 		// see the shared folder
 		getRowForFile('folder').should('be.visible')
+		getActionButtonForFile('folder')
+			.should('be.visible')
+			// open the action menu
+			.click({ force: true })
 		getActionEntryForFile('folder', 'download').should('not.exist')
 	})
 
@@ -68,8 +79,13 @@ describe('files_sharing: Download forbidden', { testIsolation: true }, () => {
 		// visit shared files view
 		cy.visit('/apps/files')
 		// see the shared folder
-		getRowForFile('file.txt').should('be.visible')
-		getActionEntryForFile('file.txt', 'download').should('not.exist')
+		getActionButtonForFile('file.txt')
+			.should('be.visible')
+			// open the action menu
+			.click({ force: true })
+		// see no download action
+		getActionEntryForFile('file.txt', 'download')
+			.should('not.exist')
 
 		// Disable view without download option
 		cy.runOccCommand('config:app:set --value no core shareapi_allow_view_without_download')
@@ -78,6 +94,10 @@ describe('files_sharing: Download forbidden', { testIsolation: true }, () => {
 		cy.visit('/apps/files')
 		// see the shared folder
 		getRowForFile('file.txt').should('be.visible')
+		getActionButtonForFile('file.txt')
+			.should('be.visible')
+			// open the action menu
+			.click({ force: true })
 		getActionEntryForFile('file.txt', 'download').should('not.exist')
 	})
 })

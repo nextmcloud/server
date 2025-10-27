@@ -4,19 +4,17 @@
  */
 import type { Node, View } from '@nextcloud/files'
 
-import { Permission, FileAction } from '@nextcloud/files'
+import InformationSvg from '@mdi/svg/svg/information-outline.svg?raw'
+import { FileAction, Permission } from '@nextcloud/files'
 import { translate as t } from '@nextcloud/l10n'
 import { isPublicShare } from '@nextcloud/sharing/public'
-
-import InformationSvg from '@mdi/svg/svg/information-variant.svg?raw'
-
 import logger from '../logger.ts'
 
 export const ACTION_DETAILS = 'details'
 
 export const action = new FileAction({
 	id: ACTION_DETAILS,
-	displayName: () => t('files', 'Open details'),
+	displayName: () => t('files', 'Details'),
 	iconSvgInline: () => InformationSvg,
 
 	// Sidebar currently supports user folder only, /files/USER

@@ -2,11 +2,10 @@
  * SPDX-FileCopyrightText: 2025 Nextcloud GmbH and Nextcloud contributors
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
-/// <reference types="cypress-if" />
-import { User } from '@nextcloud/cypress'
-import { getUserListRow, handlePasswordConfirmation } from './usersUtils'
-// eslint-disable-next-line n/no-extraneous-import
-import randomString from 'crypto-random-string'
+
+import { User } from '@nextcloud/e2e-test-server/cypress'
+import { randomString } from '../../support/utils/randomString.ts'
+import { getUserListRow, handlePasswordConfirmation } from './usersUtils.ts'
 
 const admin = new User('admin', 'admin')
 const john = new User('john', '123456')
@@ -35,7 +34,6 @@ function makeSubAdmin(user: User, group: string): void {
 }
 
 describe('Settings: Create accounts as a group admin', function() {
-
 	let subadmin: User
 	let group: string
 

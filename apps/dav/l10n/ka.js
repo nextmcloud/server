@@ -184,7 +184,6 @@ OC.L10N.register(
     "Failed to load availability" : "Failed to load availability",
     "Saved availability" : "Saved availability",
     "Failed to save availability" : "Failed to save availability",
-    "Time zone:" : "Time zone:",
     "to" : "to",
     "Delete slot" : "Delete slot",
     "No working hours set" : "No working hours set",
@@ -196,9 +195,6 @@ OC.L10N.register(
     "Import" : "Import",
     "Error while saving settings" : "Error while saving settings",
     "Reset to default" : "Reset to default",
-    "Availability" : "Availability",
-    "Absence" : "Absence",
-    "Configure your next absence period." : "Configure your next absence period.",
     "Also install the {calendarappstoreopen}Calendar app{linkclose}, or {calendardocopen}connect your desktop & mobile for syncing ↗{linkclose}." : "Also install the {calendarappstoreopen}Calendar app{linkclose}, or {calendardocopen}connect your desktop & mobile for syncing ↗{linkclose}.",
     "Please make sure to properly set up {emailopen}the email server{linkclose}." : "Please make sure to properly set up {emailopen}the email server{linkclose}.",
     "Calendar server" : "Calendar server",
@@ -211,10 +207,14 @@ OC.L10N.register(
     "Send reminder notifications to calendar sharees as well" : "Send reminder notifications to calendar sharees as well",
     "Reminders are always sent to organizers and attendees." : "Reminders are always sent to organizers and attendees.",
     "Enable notifications for events via push" : "Enable notifications for events via push",
+    "Availability" : "Availability",
+    "Absence" : "Absence",
+    "Configure your next absence period." : "Configure your next absence period.",
     "There was an error updating your attendance status." : "There was an error updating your attendance status.",
     "Please contact the organizer directly." : "Please contact the organizer directly.",
     "Are you accepting the invitation?" : "Are you accepting the invitation?",
     "Tentative" : "Tentative",
-    "Your attendance was updated successfully." : "Your attendance was updated successfully."
+    "Your attendance was updated successfully." : "Your attendance was updated successfully.",
+    "Time zone:" : "Time zone:"
 },
 "nplurals=2; plural=(n!=1);");

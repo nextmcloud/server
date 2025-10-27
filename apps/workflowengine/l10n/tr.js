@@ -49,10 +49,12 @@ OC.L10N.register(
     "Select a filter" : "Bir süzgeç seçin",
     "Select a comparator" : "Bir karşılaştırıcı seçin",
     "Remove filter" : "Süzgeci kaldır",
+    "Audio" : "Ses",
     "Folder" : "Klasör",
     "Images" : "Görseller",
     "Office documents" : "Office belgeleri",
     "PDF documents" : "PDF belgeleri",
+    "Video" : "Video",
     "Custom MIME type" : "Özel MIME türü",
     "Custom mimetype" : "Özel MIME türü",
     "Select a file type" : "Bir dosya türü seçin",
@@ -69,7 +71,7 @@ OC.L10N.register(
     "Select a user agent" : "Bir kullanıcı uygulaması seçin",
     "Select groups" : "Grupları seçin",
     "Groups" : "Gruplar",
-    "Type to search for group …" : "Grup aramak için yazmaya başlayın…",
+    "Type to search for group …" : "Grup aramak için yazmaya başlayın…",
     "Select a trigger" : "Bir tetikleyici seçin",
     "At least one event must be selected" : "En az bir etkinlik seçilmelidir",
     "Add new flow" : "Akış ekle",
@@ -118,6 +120,7 @@ OC.L10N.register(
     "Request user agent" : "Kullanıcı uygulaması istensin",
     "Group membership" : "Grup üyeliği",
     "is member of" : "şunun üyesi olan",
-    "is not member of" : "şunun üyesi olmayan"
+    "is not member of" : "şunun üyesi olmayan",
+    "Type to search for group …" : "Grup aramak için yazmaya başlayın…"
 },
 "nplurals=2; plural=(n > 1);");

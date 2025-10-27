@@ -8,10 +8,6 @@ declare(strict_types=1);
  */
 namespace OCA\Settings\SetupChecks;
 
-use Doctrine\DBAL\Platforms\MySQLPlatform;
-use Doctrine\DBAL\Platforms\OraclePlatform;
-use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
-use Doctrine\DBAL\Platforms\SqlitePlatform;
 use OCP\IDBConnection;
 use OCP\IL10N;
 use OCP\IURLGenerator;
@@ -21,7 +17,7 @@ use OCP\SetupCheck\SetupResult;
 class SupportedDatabase implements ISetupCheck {
 
 	private const MIN_MARIADB = '10.6';
-	private const MAX_MARIADB = '11.4';
+	private const MAX_MARIADB = '11.8';
 	private const MIN_MYSQL = '8.0';
 	private const MAX_MYSQL = '8.4';
 	private const MIN_POSTGRES = '13';
@@ -43,9 +39,8 @@ class SupportedDatabase implements ISetupCheck {
 	}
 
 	public function run(): SetupResult {
-		$version = null;
-		$databasePlatform = $this->connection->getDatabasePlatform();
-		if ($databasePlatform instanceof MySQLPlatform) {
+		$databasePlatform = $this->connection->getDatabaseProvider();
+		if ($databasePlatform === IDBConnection::PLATFORM_MYSQL || $databasePlatform === IDBConnection::PLATFORM_MARIADB) {
 			$statement = $this->connection->prepare("SHOW VARIABLES LIKE 'version';");
 			$result = $statement->execute();
 			$row = $result->fetch();
@@ -91,7 +86,7 @@ class SupportedDatabase implements ISetupCheck {
 					);
 				}
 			}
-		} elseif ($databasePlatform instanceof PostgreSQLPlatform) {
+		} elseif ($databasePlatform === IDBConnection::PLATFORM_POSTGRES) {
 			$statement = $this->connection->prepare('SHOW server_version;');
 			$result = $statement->execute();
 			$row = $result->fetch();
@@ -111,9 +106,9 @@ class SupportedDatabase implements ISetupCheck {
 						])
 				);
 			}
-		} elseif ($databasePlatform instanceof OraclePlatform) {
+		} elseif ($databasePlatform === IDBConnection::PLATFORM_ORACLE) {
 			$version = 'Oracle';
-		} elseif ($databasePlatform instanceof SqlitePlatform) {
+		} elseif ($databasePlatform === IDBConnection::PLATFORM_SQLITE) {
 			return SetupResult::warning(
 				$this->l10n->t('SQLite is currently being used as the backend database. For larger installations we recommend that you switch to a different database backend. This is particularly recommended when using the desktop client for file synchronisation. To migrate to another database use the command line tool: "occ db:convert-type".'),
 				$this->urlGenerator->linkToDocs('admin-db-conversion')
