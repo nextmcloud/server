@@ -172,7 +172,7 @@ class ReferenceManager implements IReferenceManager {
 			return;
 		}
 
-		$this->cache->remove(md5($cachePrefix) . '-' . md5($cacheKey));
+		$this->cache->remove(md5($cachePrefix) . '-' . md5($cacheKey ?? ''));
 	}
 
 	/**
