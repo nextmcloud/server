@@ -221,6 +221,11 @@ async function openFilePickerForAction(
 			// We don't want to show the current nodes in the file picker
 			return !fileIDs.includes(n.fileid)
 		})
+		.setFilter((n: Node) => {
+			// We only want to show folders in the file picker
+			// We don't want to show encrypted folders in the file picker
+			return !(n.attributes?.['type'] !== "directory" || n.attributes?.['is-encrypted'] === 1)
+		})
 		.setCanPick((n) => {
 			const hasCreatePermissions = (n.permissions & Permission.CREATE) === Permission.CREATE
 			return hasCreatePermissions
