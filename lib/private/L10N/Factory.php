@@ -555,7 +555,7 @@ class Factory implements IFactory {
 	 *
 	 * @return string[]
 	 */
-	private function getL10nFilesForApp(string $app, string $lang): array {
+	public function getL10nFilesForApp(string $app, string $lang): array {
 		$languageFiles = [];
 
 		$i18nDir = $this->findL10nDir($app);
