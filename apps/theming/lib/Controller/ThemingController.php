@@ -429,11 +429,15 @@ class ThemingController extends Controller {
 			// from the rest of the CSS.
 			$customCssWithoutComments = preg_replace('!/\*.*?\*/!s', '', $customCss);
 			$customCssWithoutComments = preg_replace('!//.*!', '', $customCssWithoutComments);
-			preg_match_all('/(@[^{]+{(?:[^{}]*|(?R))*})/', $customCssWithoutComments, $atRules);
-			$atRulesCss = implode('', $atRules[0]);
-			$scopedCss = preg_replace('/(@[^{]+{(?:[^{}]*|(?R))*})/', '', $customCssWithoutComments);
+			preg_match_all('/(@import[^;]+;)/', $customCssWithoutComments, $imports);
+			$importsCss = implode('', $imports[0]);
+			$customCssWithoutImports = preg_replace('/(@import[^;]+;)/', '', $customCssWithoutComments);
 
-			$css = "$atRulesCss [data-theme-$themeId] { $variables $scopedCss }";
+			preg_match_all('/(@[^{]+{(?:[^{}]*|(?R))*})/', $customCssWithoutImports, $atRules);
+			$atRulesCss = implode('', $atRules[0]);
+			$scopedCss = preg_replace('/(@[^{]+{(?:[^{}]*|(?R))*})/', '', $customCssWithoutImports);
+ 
+            $css = "$importsCss $atRulesCss [data-theme-$themeId] { $variables $scopedCss }";
 		}
 
 		try {
