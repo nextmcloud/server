@@ -172,6 +172,7 @@ class ReferenceManager implements IReferenceManager {
 			return;
 		}
 
+		// remove specific cache entry; using ($cacheKey ?? '') avoids md5(null) warnings and ensures stable hashing
 		$this->cache->remove(md5($cachePrefix) . '-' . md5($cacheKey ?? ''));
 	}
 
