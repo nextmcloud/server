@@ -119,7 +119,8 @@ class Updater implements IUpdater {
 		if (isset($data['encrypted']) && (bool)$data['encrypted']) {
 			$sizeDifference = null;
 		}
-
+		
+		// skip E2E encryption metadata files to avoid interfering with internal encryption handling
 		$appDataPath = 'appdata_' . \OC_Util::getInstanceId() . '/end_to_end_encryption/meta-data';
 		if (str_starts_with($path, $appDataPath)) {
 			return;
@@ -152,6 +153,7 @@ class Updater implements IUpdater {
 
 		$this->cache->remove($path);
 
+		// skip E2E encryption metadata files to avoid interfering with internal encryption handling
 		$appDataPath = 'appdata_' . \OC_Util::getInstanceId() . '/end_to_end_encryption/meta-data';
 		if (str_starts_with($path, $appDataPath)) {
 			return;
