@@ -411,6 +411,7 @@ class Session implements IUserSession, Emitter {
 			}
 
 			$users = $this->manager->getByEmail($user);
+			
 			$isValidEmailLogin = (\count($users) === 1 && $this->login($users[0]->getUID(), $password));
 
 			if (!$isValidEmailLogin) {
