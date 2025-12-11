@@ -429,10 +429,14 @@ class ThemingController extends Controller {
 			// from the rest of the CSS.
 			$customCssWithoutComments = preg_replace('!/\*.*?\*/!s', '', $customCss);
 			$customCssWithoutComments = preg_replace('!//.*!', '', $customCssWithoutComments);
+
+			// Extract @import rules, because they MUST appear at the very top of the final CSS
+			// If they remain inside the theme scope or behind normal rules, browsers will ignore them
 			preg_match_all('/(@import[^;]+;)/', $customCssWithoutComments, $imports);
 			$importsCss = implode('', $imports[0]);
 			$customCssWithoutImports = preg_replace('/(@import[^;]+;)/', '', $customCssWithoutComments);
 
+			// Extract all remaining @-rules (e.g. @media), because they cannot be nested inside the theme scope
 			preg_match_all('/(@[^{]+{(?:[^{}]*|(?R))*})/', $customCssWithoutImports, $atRules);
 			$atRulesCss = implode('', $atRules[0]);
 			$scopedCss = preg_replace('/(@[^{]+{(?:[^{}]*|(?R))*})/', '', $customCssWithoutImports);
