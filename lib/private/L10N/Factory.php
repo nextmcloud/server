@@ -551,6 +551,7 @@ class Factory implements IFactory {
 
 	/**
 	 * Get a list of language files that should be loaded
+	 * Note: This method is public because it is used by the nmctheme app.
 	 *
 	 * @return string[]
 	 */
