@@ -15,6 +15,7 @@ use OC\App\AppStore\Bundles\BundleFetcher;
 use OC\AppFramework\Bootstrap\Coordinator;
 use OC\AppFramework\Http\Request;
 use OC\AppFramework\Http\RequestId;
+use OC\AppFramework\Services\AppConfig;
 use OC\AppFramework\Utility\TimeFactory;
 use OC\Authentication\Events\LoginFailed;
 use OC\Authentication\Listeners\LoginFailedListener;
@@ -24,9 +25,10 @@ use OC\Authentication\Token\IProvider;
 use OC\Avatar\AvatarManager;
 use OC\Blurhash\Listener\GenerateBlurhashMetadata;
 use OC\Collaboration\Collaborators\GroupPlugin;
-use OC\Collaboration\Collaborators\MailPlugin;
+use OC\Collaboration\Collaborators\MailByMailPlugin;
 use OC\Collaboration\Collaborators\RemoteGroupPlugin;
 use OC\Collaboration\Collaborators\RemotePlugin;
+use OC\Collaboration\Collaborators\UserByMailPlugin;
 use OC\Collaboration\Collaborators\UserPlugin;
 use OC\Collaboration\Reference\ReferenceManager;
 use OC\Command\CronBus;
@@ -149,6 +151,7 @@ use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Federation\ICloudFederationFactory;
 use OCP\Federation\ICloudFederationProviderManager;
 use OCP\Federation\ICloudIdManager;
+use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\Cache\IFileAccess;
 use OCP\Files\Config\IMountProviderCollection;
 use OCP\Files\Config\IUserMountCache;
@@ -1013,14 +1016,14 @@ class Server extends ServerContainer implements IServerContainer {
 			if ($classExists && $c->get(\OCP\IConfig::class)->getSystemValueBool('installed', false) && $c->get(IAppManager::class)->isEnabledForAnyone('theming') && $c->get(TrustedDomainHelper::class)->isTrustedDomain($c->getRequest()->getInsecureServerHost())) {
 				$backgroundService = new BackgroundService(
 					$c->get(IRootFolder::class),
-					$c->getAppDataDir('theming'),
+					$c->get(IAppDataFactory::class)->get('theming'),
 					$c->get(IAppConfig::class),
 					$c->get(\OCP\IConfig::class),
 					$c->get(ISession::class)->get('user_id'),
 				);
 				$imageManager = new ImageManager(
 					$c->get(\OCP\IConfig::class),
-					$c->getAppDataDir('theming'),
+					$c->get(IAppDataFactory::class)->get('theming'),
 					$c->get(IURLGenerator::class),
 					$c->get(ICacheFactory::class),
 					$c->get(LoggerInterface::class),
@@ -1029,12 +1032,22 @@ class Server extends ServerContainer implements IServerContainer {
 				);
 				return new ThemingDefaults(
 					$c->get(\OCP\IConfig::class),
-					$c->get(\OCP\IAppConfig::class),
-					$c->getL10N('theming'),
+					new AppConfig(
+						$c->get(\OCP\IConfig::class),
+						$c->get(\OCP\IAppConfig::class),
+						'theming',
+					),
+					$c->get(IFactory::class)->get('theming'),
 					$c->get(IUserSession::class),
 					$c->get(IURLGenerator::class),
 					$c->get(ICacheFactory::class),
-					new Util($c->get(ServerVersion::class), $c->get(\OCP\IConfig::class), $this->get(IAppManager::class), $c->getAppDataDir('theming'), $imageManager),
+					new Util(
+						$c->get(ServerVersion::class),
+						$c->get(\OCP\IConfig::class),
+						$this->get(IAppManager::class),
+						$c->get(IAppDataFactory::class)->get('theming'),
+						$imageManager,
+					),
 					$imageManager,
 					$c->get(IAppManager::class),
 					$c->get(INavigationManager::class),
@@ -1097,8 +1110,9 @@ class Server extends ServerContainer implements IServerContainer {
 
 			// register default plugins
 			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_USER', 'class' => UserPlugin::class]);
+			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_USER', 'class' => UserByMailPlugin::class]);
 			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_GROUP', 'class' => GroupPlugin::class]);
-			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_EMAIL', 'class' => MailPlugin::class]);
+			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_EMAIL', 'class' => MailByMailPlugin::class]);
 			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_REMOTE', 'class' => RemotePlugin::class]);
 			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_REMOTE_GROUP', 'class' => RemoteGroupPlugin::class]);
 

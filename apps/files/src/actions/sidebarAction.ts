@@ -45,7 +45,7 @@ export const action = new FileAction({
 	async exec(node: Node, view: View, dir: string) {
 		try {
 			// If the sidebar is already open for the current file, do nothing
-			if (window.OCA.Files.Sidebar.file === node.path) {
+			if (window.OCA.Files?.Sidebar?.file === node.path) {
 				logger.debug('Sidebar already open for this file', { node })
 				return null
 			}
@@ -53,7 +53,7 @@ export const action = new FileAction({
 			window.OCA.Files.Sidebar.setActiveTab('sharing-manage');
 
 			// TODO: migrate Sidebar to use a Node instead
-			await window.OCA.Files.Sidebar.open(node.path)
+			await window.OCA.Files?.Sidebar?.open(node.path)
 
 			// Silently update current fileid
 			window.OCP?.Files?.Router?.goToRoute(
