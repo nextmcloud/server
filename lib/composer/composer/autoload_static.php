@@ -11,32 +11,32 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
     );
 
     public static $prefixLengthsPsr4 = array (
-        'O' => 
+        'O' =>
         array (
             'OC\\Core\\' => 8,
             'OC\\' => 3,
             'OCP\\' => 4,
         ),
-        'N' => 
+        'N' =>
         array (
             'NCU\\' => 4,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'OC\\Core\\' => 
+        'OC\\Core\\' =>
         array (
             0 => __DIR__ . '/../../..' . '/core',
         ),
-        'OC\\' => 
+        'OC\\' =>
         array (
             0 => __DIR__ . '/../../..' . '/lib/private',
         ),
-        'OCP\\' => 
+        'OCP\\' =>
         array (
             0 => __DIR__ . '/../../..' . '/lib/public',
         ),
-        'NCU\\' => 
+        'NCU\\' =>
         array (
             0 => __DIR__ . '/../../..' . '/lib/unstable',
         ),
@@ -531,6 +531,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OCP\\Files\\Notify\\IChange' => __DIR__ . '/../../..' . '/lib/public/Files/Notify/IChange.php',
         'OCP\\Files\\Notify\\INotifyHandler' => __DIR__ . '/../../..' . '/lib/public/Files/Notify/INotifyHandler.php',
         'OCP\\Files\\Notify\\IRenameChange' => __DIR__ . '/../../..' . '/lib/public/Files/Notify/IRenameChange.php',
+        'OCP\\Files\\ObjectStore\\Events\\BucketCreatedEvent' => __DIR__ . '/../../..' . '/lib/public/Files/ObjectStore/Events/BucketCreatedEvent.php',
         'OCP\\Files\\ObjectStore\\IObjectStore' => __DIR__ . '/../../..' . '/lib/public/Files/ObjectStore/IObjectStore.php',
         'OCP\\Files\\ObjectStore\\IObjectStoreMetaData' => __DIR__ . '/../../..' . '/lib/public/Files/ObjectStore/IObjectStoreMetaData.php',
         'OCP\\Files\\ObjectStore\\IObjectStoreMultiPartUpload' => __DIR__ . '/../../..' . '/lib/public/Files/ObjectStore/IObjectStoreMultiPartUpload.php',
@@ -1569,6 +1570,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Core\\Migrations\\Version32000Date20250620081925' => __DIR__ . '/../../..' . '/core/Migrations/Version32000Date20250620081925.php',
         'OC\\Core\\Migrations\\Version32000Date20250731062008' => __DIR__ . '/../../..' . '/core/Migrations/Version32000Date20250731062008.php',
         'OC\\Core\\Migrations\\Version32000Date20250806110519' => __DIR__ . '/../../..' . '/core/Migrations/Version32000Date20250806110519.php',
+        'OC\\Core\\Migrations\\Version33000Date20251209123503' => __DIR__ . '/../../..' . '/core/Migrations/Version33000Date20251209123503.php',
         'OC\\Core\\Notification\\CoreNotifier' => __DIR__ . '/../../..' . '/core/Notification/CoreNotifier.php',
         'OC\\Core\\ResponseDefinitions' => __DIR__ . '/../../..' . '/core/ResponseDefinitions.php',
         'OC\\Core\\Service\\LoginFlowV2Service' => __DIR__ . '/../../..' . '/core/Service/LoginFlowV2Service.php',
@@ -1643,6 +1645,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Diagnostics\\EventLogger' => __DIR__ . '/../../..' . '/lib/private/Diagnostics/EventLogger.php',
         'OC\\Diagnostics\\Query' => __DIR__ . '/../../..' . '/lib/private/Diagnostics/Query.php',
         'OC\\Diagnostics\\QueryLogger' => __DIR__ . '/../../..' . '/lib/private/Diagnostics/QueryLogger.php',
+        'OC\\Diagnostics\\TLogSlowOperation' => __DIR__ . '/../../..' . '/lib/private/Diagnostics/TLogSlowOperation.php',
         'OC\\DirectEditing\\Manager' => __DIR__ . '/../../..' . '/lib/private/DirectEditing/Manager.php',
         'OC\\DirectEditing\\Token' => __DIR__ . '/../../..' . '/lib/private/DirectEditing/Token.php',
         'OC\\EmojiHelper' => __DIR__ . '/../../..' . '/lib/private/EmojiHelper.php',

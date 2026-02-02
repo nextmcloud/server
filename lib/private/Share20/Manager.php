@@ -1265,16 +1265,16 @@ class Manager implements IManager {
 		while (true) {
 			$added = 0;
 			foreach ($shares as $share) {
+				$added++;
 				if ($onlyValid) {
 					try {
-						$this->checkShare($share);
+						$this->checkShare($share, $added);
 					} catch (ShareNotFound $e) {
 						// Ignore since this basically means the share is deleted
 						continue;
 					}
 				}
 
-				$added++;
 				$shares2[] = $share;
 
 				if (count($shares2) === $limit) {
@@ -1413,7 +1413,7 @@ class Manager implements IManager {
 		}
 		$share = null;
 		try {
-			if ($this->shareApiAllowLinks()) {
+			if ($this->config->getAppValue('core', 'shareapi_allow_links', 'yes') === 'yes') {
 				$provider = $this->factory->getProviderForType(IShare::TYPE_LINK);
 				$share = $provider->getShareByToken($token);
 			}
@@ -1480,11 +1480,14 @@ class Manager implements IManager {
 	/**
 	 * Check expire date and disabled owner
 	 *
+	 * @param int &$added If given, will be decremented if the share is deleted
 	 * @throws ShareNotFound
 	 */
-	protected function checkShare(IShare $share): void {
+	private function checkShare(IShare $share, int &$added = 1): void {
 		if ($share->isExpired()) {
 			$this->deleteShare($share);
+			// Remove 1 to added, because this share was deleted
+			$added--;
 			throw new ShareNotFound($this->l->t('The requested share does not exist anymore'));
 		}
 		if ($this->config->getAppValue('files_sharing', 'hide_disabled_user_shares', 'no') === 'yes') {
@@ -1494,6 +1497,17 @@ class Manager implements IManager {
 				if ($user?->isEnabled() === false) {
 					throw new ShareNotFound($this->l->t('The requested share comes from a disabled user'));
 				}
+			}
+		}
+
+		// For link and email shares, verify the share owner can still create such shares
+		if ($share->getShareType() === IShare::TYPE_LINK || $share->getShareType() === IShare::TYPE_EMAIL) {
+			$shareOwner = $this->userManager->get($share->getShareOwner());
+			if ($shareOwner === null) {
+				throw new ShareNotFound($this->l->t('The requested share does not exist anymore'));
+			}
+			if (!$this->userCanCreateLinkShares($shareOwner)) {
+				throw new ShareNotFound($this->l->t('The requested share does not exist anymore'));
 			}
 		}
 	}
@@ -1742,14 +1756,15 @@ class Manager implements IManager {
 	/**
 	 * Is public link sharing enabled
 	 *
+	 * @param ?IUser $user User to check against group exclusions, defaults to current session user
 	 * @return bool
 	 */
-	public function shareApiAllowLinks() {
+	public function shareApiAllowLinks(?IUser $user = null) {
 		if ($this->config->getAppValue('core', 'shareapi_allow_links', 'yes') !== 'yes') {
 			return false;
 		}
 
-		$user = $this->userSession->getUser();
+		$user = $user ?? $this->userSession->getUser();
 		if ($user) {
 			$excludedGroups = json_decode($this->config->getAppValue('core', 'shareapi_allow_links_exclude_groups', '[]'));
 			if ($excludedGroups) {
@@ -1759,6 +1774,16 @@ class Manager implements IManager {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Check if a specific user can create link shares
+	 *
+	 * @param IUser $user The user to check
+	 * @return bool
+	 */
+	protected function userCanCreateLinkShares(IUser $user): bool {
+		return $this->shareApiAllowLinks($user);
 	}
 
 	/**
