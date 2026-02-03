@@ -24,7 +24,7 @@
 		<?php emit_script_loading_tags($_); ?>
 		<?php print_unescaped($_['headers']); ?>
 	</head>
-	<body id="body-public" class="layout-base">
+	<body id="body-public" class="layout-base" data-scheme="macaw">
 		<?php include 'layout.noscript.warning.php'; ?>
 		<?php include 'layout.initial-state.php'; ?>
 		<div id="content" class="app-public" role="main">

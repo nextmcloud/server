@@ -53,7 +53,7 @@ p($theme->getTitle());
 	</head>
 	<body dir="<?php p($_['direction']); ?>" id="<?php p($_['bodyid']);?>" <?php foreach ($_['enabledThemes'] as $themeId) {
 		p("data-theme-$themeId ");
-	}?> data-themes=<?php p(join(',', $_['enabledThemes'])) ?>>
+	}?> data-themes=<?php p(join(',', $_['enabledThemes'])) ?> data-scheme="macaw">
 		<?php include 'layout.noscript.warning.php'; ?>
 		<?php include 'layout.initial-state.php'; ?>
 
