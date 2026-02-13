@@ -9,6 +9,7 @@
 		<NcCheckboxRadioSwitch v-else
 			:aria-label="ariaLabel"
 			:checked="isSelected"
+			:disabled="isEncrypted" 
 			data-cy-files-list-row-checkbox
 			@update:checked="onSelectionChange" />
 	</td>
@@ -88,6 +89,9 @@ export default defineComponent({
 		},
 		isFile() {
 			return this.source.type === FileType.File
+		},
+		isEncrypted(): boolean {
+		return this.source?.attributes?.['is-encrypted'] === 1
 		},
 		ariaLabel() {
 			return this.isFile
