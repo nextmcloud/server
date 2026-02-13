@@ -1483,15 +1483,20 @@ class DefaultShareProvider implements IShareProviderWithNotification, IShareProv
 			'initiator' => $initiatorDisplayName,
 			'expiration' => $expiration,
 			'shareWith' => $shareWith,
+			'note' => $note,
 		]);
 
 		$emailTemplate->setSubject($l->t('%1$s shared %2$s with you', [$initiatorDisplayName, $filename]));
 		$emailTemplate->addHeader();
 		$emailTemplate->addHeading($l->t('%1$s shared %2$s with you', [$initiatorDisplayName, $filename]), false);
 
+		$text = '';
+
 		if ($note !== '') {
 			$emailTemplate->addBodyText(htmlspecialchars($note), $note);
 		}
+
+		$emailTemplate->addBodyText(htmlspecialchars($text), $text);
 
 		$emailTemplate->addBodyButton(
 			$l->t('Open %s', [$filename]),
