@@ -242,7 +242,7 @@ async function openFilePickerForAction(
 			if (action === MoveCopyAction.COPY || action === MoveCopyAction.MOVE_OR_COPY) {
 				buttons.push({
 					label: target ? t('files', 'Copy to {target}', { target }, undefined, { escape: false, sanitize: false }) : t('files', 'Copy'),
-					type: 'primary',
+					variant: 'primary',
 					icon: CopyIconSvg,
 					async callback(destination: Node[]) {
 						resolve({
@@ -272,7 +272,7 @@ async function openFilePickerForAction(
 			if (action === MoveCopyAction.MOVE || action === MoveCopyAction.MOVE_OR_COPY) {
 				buttons.push({
 					label: target ? t('files', 'Move to {target}', { target }, undefined, { escape: false, sanitize: false }) : t('files', 'Move'),
-					type: action === MoveCopyAction.MOVE ? 'primary' : 'secondary',
+					variant: action === MoveCopyAction.MOVE ? 'primary' : 'secondary',
 					icon: FolderMoveSvg,
 					async callback(destination: Node[]) {
 						resolve({
