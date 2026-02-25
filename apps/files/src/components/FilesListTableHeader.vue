@@ -150,12 +150,20 @@ export default defineComponent({
 			}
 		},
 
+		selectableNodes(): Node[] {
+			return this.nodes.filter((node: Node) => {
+				const enc = node?.attributes?.['is-encrypted']
+				return enc != 1
+			})
+		},
+
 		selectedNodes() {
 			return this.selectionStore.selected
 		},
 
 		isAllSelected() {
-			return this.selectedNodes.length === this.nodes.length
+			const total = this.selectableNodes.length
+			return total > 0 && this.selectedNodes.length === total
 		},
 
 		isNoneSelected() {
@@ -163,7 +171,8 @@ export default defineComponent({
 		},
 
 		isSomeSelected() {
-			return !this.isAllSelected && !this.isNoneSelected
+			const total = this.selectableNodes.length
+			return this.selectedNodes.length > 0 && this.selectedNodes.length < total
 		},
 	},
 
@@ -201,8 +210,8 @@ export default defineComponent({
 
 		onToggleAll(selected = true) {
 			if (selected) {
-				const selection = this.nodes.map(node => node.source).filter(Boolean) as FileSource[]
-				logger.debug('Added all nodes to selection', { selection })
+				const selection = this.selectableNodes.map(node => node.source).filter(Boolean) as FileSource[]
+				logger.debug('Added all selectable nodes to selection', { selection })
 				this.selectionStore.setLastIndex(null)
 				this.selectionStore.set(selection)
 			} else {
