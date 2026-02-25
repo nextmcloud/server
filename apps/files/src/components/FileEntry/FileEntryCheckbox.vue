@@ -6,10 +6,9 @@
 	<td class="files-list__row-checkbox"
 		@keyup.esc.exact="resetSelection">
 		<NcLoadingIcon v-if="isLoading" :name="loadingLabel" />
-		<NcCheckboxRadioSwitch v-else
+		<NcCheckboxRadioSwitch v-else-if="!isEncrypted"
 			:aria-label="ariaLabel"
 			:checked="isSelected"
-			:disabled="isEncrypted" 
 			data-cy-files-list-row-checkbox
 			@update:checked="onSelectionChange" />
 	</td>
