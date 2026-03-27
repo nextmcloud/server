@@ -25,24 +25,17 @@ declare(strict_types=1);
 
 namespace OC\Core\Command\Background;
 
-use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\IJobList;
-use OCP\ILogger;
-use Symfony\Component\Console\Command\Command;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Job extends Command {
-	protected IJobList $jobList;
-	protected ILogger $logger;
-
+class Job extends JobBase {
 	public function __construct(IJobList $jobList,
-								ILogger $logger) {
-		parent::__construct();
-		$this->jobList = $jobList;
-		$this->logger = $logger;
+								LoggerInterface $logger) {
+		parent::__construct($jobList, $logger);
 	}
 
 	protected function configure(): void {
@@ -89,7 +82,7 @@ class Job extends Command {
 			$output->writeln('<error>Something went wrong when trying to retrieve Job with ID ' . $jobId . ' from database</error>');
 			return 1;
 		}
-		$job->execute($this->jobList, $this->logger);
+		$job->execute($this->jobList, \OC::$server->getLogger());
 		$job = $this->jobList->getById($jobId);
 
 		if (($job === null) || ($lastRun !== $job->getLastRun())) {
@@ -105,54 +98,5 @@ class Job extends Command {
 		}
 
 		return 0;
-	}
-
-	protected function printJobInfo(int $jobId, IJob $job, OutputInterface$output): void {
-		$row = $this->jobList->getDetailsById($jobId);
-
-		$lastRun = new \DateTime();
-		$lastRun->setTimestamp((int) $row['last_run']);
-		$lastChecked = new \DateTime();
-		$lastChecked->setTimestamp((int) $row['last_checked']);
-		$reservedAt = new \DateTime();
-		$reservedAt->setTimestamp((int) $row['reserved_at']);
-
-		$output->writeln('Job class:            ' . get_class($job));
-		$output->writeln('Arguments:            ' . json_encode($job->getArgument()));
-
-		$isTimedJob = $job instanceof \OC\BackgroundJob\TimedJob || $job instanceof \OCP\BackgroundJob\TimedJob;
-		if ($isTimedJob) {
-			$output->writeln('Type:                 timed');
-		} elseif ($job instanceof \OC\BackgroundJob\QueuedJob || $job instanceof \OCP\BackgroundJob\QueuedJob) {
-			$output->writeln('Type:                 queued');
-		} else {
-			$output->writeln('Type:                 job');
-		}
-
-		$output->writeln('');
-		$output->writeln('Last checked:         ' . $lastChecked->format(\DateTimeInterface::ATOM));
-		if ((int) $row['reserved_at'] === 0) {
-			$output->writeln('Reserved at:          -');
-		} else {
-			$output->writeln('Reserved at:          <comment>' . $reservedAt->format(\DateTimeInterface::ATOM) . '</comment>');
-		}
-		$output->writeln('Last executed:        ' . $lastRun->format(\DateTimeInterface::ATOM));
-		$output->writeln('Last duration:        ' . $row['execution_duration']);
-
-		if ($isTimedJob) {
-			$reflection = new \ReflectionClass($job);
-			$intervalProperty = $reflection->getProperty('interval');
-			$intervalProperty->setAccessible(true);
-			$interval = $intervalProperty->getValue($job);
-
-			$nextRun = new \DateTime();
-			$nextRun->setTimestamp($row['last_run'] + $interval);
-
-			if ($nextRun > new \DateTime()) {
-				$output->writeln('Next execution:       <comment>' . $nextRun->format(\DateTimeInterface::ATOM) . '</comment>');
-			} else {
-				$output->writeln('Next execution:       <info>' . $nextRun->format(\DateTimeInterface::ATOM) . '</info>');
-			}
-		}
 	}
 }
