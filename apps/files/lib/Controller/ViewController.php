@@ -158,6 +158,7 @@ class ViewController extends Controller {
 	/**
 	 * @NoCSRFRequired
 	 * @NoAdminRequired
+     * @UseSession
 	 *
 	 * @param string $fileid
 	 * @return TemplateResponse|RedirectResponse
