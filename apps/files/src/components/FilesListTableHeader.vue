@@ -223,7 +223,7 @@ export default defineComponent({
 		onToggleAll(selected = true) {
 			if (selected) {
 				const selection = this.selectableNodes.map(node => node.source).filter(Boolean) as FileSource[]
-				logger.debug('Added all nodes to selection', { selection })
+				logger.debug('Added all selectable nodes to selection', { selection })
 				this.selectionStore.setLastIndex(null)
 				this.selectionStore.set(selection)
 			} else {
