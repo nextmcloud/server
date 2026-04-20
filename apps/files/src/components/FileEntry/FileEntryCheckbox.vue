@@ -6,7 +6,7 @@
 	<td class="files-list__row-checkbox"
 		@keyup.esc.exact="resetSelection">
 		<NcLoadingIcon v-if="isLoading" :name="loadingLabel" />
-		<NcCheckboxRadioSwitch v-else
+		<NcCheckboxRadioSwitch v-else-if="!isEncrypted"
 			:aria-label="ariaLabel"
 			:checked="isSelected"
 			data-cy-files-list-row-checkbox
@@ -88,6 +88,9 @@ export default defineComponent({
 		},
 		isFile() {
 			return this.source.type === FileType.File
+		},
+		isEncrypted(): boolean {
+			return this.source?.attributes?.['is-encrypted'] === 1
 		},
 		ariaLabel() {
 			return this.isFile
