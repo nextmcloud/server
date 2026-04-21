@@ -472,8 +472,12 @@ export default defineComponent({
 
 			if (selection.length === 0 && items.some((item) => item.kind === 'file')) {
 				const uploader = getUploader()
+				let targetPath = this.source.path.replace(this.currentDir || '', '')
+				if (!targetPath.startsWith('/')) {
+					targetPath = '/' + targetPath
+				}
 				await uploader.batchUpload(
-					this.source.path,
+					targetPath,
 					items.filter((item) => item.kind === 'file')
 						.map((item) => item.getAsFile()).filter((file): file is File => !!file)
 						.filter(Boolean) as (FileSystemEntry | File)[],
