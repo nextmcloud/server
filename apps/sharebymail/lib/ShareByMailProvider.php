@@ -334,7 +334,18 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 		$emailTemplate->setSubject($this->l->t('%1$s shared %2$s with you', [$initiatorDisplayName, $filename]));
 		$emailTemplate->addHeader();
 		$emailTemplate->addHeading($this->l->t('%1$s shared %2$s with you', [$initiatorDisplayName, $filename]), false);
+		$text = $this->l->t('%1$s shared »%2$s« with you.', [$initiatorDisplayName, $filename]);
 
+		if ($note !== '') {
+			$emailTemplate->addBodyText(htmlspecialchars($note), $note);
+		}
+
+		$emailTemplate->addBodyText(
+			htmlspecialchars($text . ' ' . $this->l->t('Click the button below to open it.')),
+			$text
+		);
+
+		/*
 		if ($note !== '') {
 			$emailTemplate->addBodyListItem(
 				htmlspecialchars($note),
@@ -352,6 +363,7 @@ class ShareByMailProvider extends DefaultShareProvider implements IShareProvider
 				$this->getAbsoluteImagePath('caldav/time.png'),
 			);
 		}
+		*/
 
 		$emailTemplate->addBodyButton(
 			$this->l->t('Open %s', [$filename]),
