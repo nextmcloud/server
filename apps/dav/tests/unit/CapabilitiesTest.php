@@ -40,7 +40,7 @@ class CapabilitiesTest extends TestCase {
 		$capabilities = new Capabilities($config);
 		$expected = [
 			'dav' => [
-				'chunking' => '1.0',
+				'chunking' => '2.0',
 			],
 		];
 		$this->assertSame($expected, $capabilities->getCapabilities());
