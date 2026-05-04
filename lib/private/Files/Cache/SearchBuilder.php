@@ -64,6 +64,8 @@ class SearchBuilder {
 		'share_with' => 'string',
 		'share_type' => 'integer',
 		'owner' => 'string',
+		'creation_time' => 'integer',
+		'upload_time' => 'integer',
 	];
 
 	/** @var array<string, int|string> */
@@ -257,6 +259,8 @@ class SearchBuilder {
 			'share_with' => ['eq'],
 			'share_type' => ['eq'],
 			'owner' => ['eq'],
+			'creation_time' => ['eq', 'gt', 'lt', 'gte', 'lte'],
+			'upload_time' => ['eq', 'gt', 'lt', 'gte', 'lte'],
 		];
 
 		if (!isset(self::$fieldTypes[$operator->getField()])) {
@@ -347,6 +351,10 @@ class SearchBuilder {
 					// use the index, so it instead picks an index for the filtering
 					if ($field === 'mtime') {
 						$field = $query->func()->add($field, $query->createNamedParameter(0));
+					}
+
+					if ($field === 'last_activity') {
+						$field = $query->func()->greatest('file.mtime', $query->createFunction('COALESCE(fe.upload_time, 0)'));
 					}
 			}
 			$query->addOrderBy($field, $order->getDirection());

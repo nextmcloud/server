@@ -532,11 +532,6 @@
       <code><![CDATA[!isset($newProps['filters']['props']) || !is_array($newProps['filters']['props'])]]></code>
     </TypeDoesNotContainType>
   </file>
-  <file src="apps/dav/lib/CalDAV/WebcalCaching/RefreshWebcalService.php">
-    <InvalidArgument>
-      <code><![CDATA[$webcalData]]></code>
-    </InvalidArgument>
-  </file>
   <file src="apps/dav/lib/CardDAV/AddressBookImpl.php">
     <InvalidArgument>
       <code><![CDATA[$this->getKey()]]></code>
@@ -761,7 +756,6 @@
   </file>
   <file src="apps/dav/lib/Connector/Sabre/ServerFactory.php">
     <DeprecatedMethod>
-      <code><![CDATA[getL10NFactory]]></code>
       <code><![CDATA[getUserFolder]]></code>
     </DeprecatedMethod>
   </file>
@@ -1512,7 +1506,6 @@
       <code><![CDATA[encrypt]]></code>
       <code><![CDATA[setIV]]></code>
       <code><![CDATA[setIV]]></code>
-      <code><![CDATA[setKey]]></code>
     </InternalMethod>
   </file>
   <file src="apps/files_external/lib/Service/BackendService.php">
@@ -1613,6 +1606,7 @@
       <code><![CDATA[emitAccessShareHook]]></code>
       <code><![CDATA[emitAccessShareHook]]></code>
       <code><![CDATA[emitAccessShareHook]]></code>
+      <code><![CDATA[emitAccessShareHook]]></code>
     </DeprecatedMethod>
   </file>
   <file src="apps/files_sharing/lib/External/Manager.php">
@@ -1662,9 +1656,6 @@
     </DeprecatedMethod>
   </file>
   <file src="apps/files_sharing/lib/Middleware/SharingCheckMiddleware.php">
-    <DeprecatedInterface>
-      <code><![CDATA[protected]]></code>
-    </DeprecatedInterface>
     <DeprecatedMethod>
       <code><![CDATA[getAppValue]]></code>
       <code><![CDATA[getAppValue]]></code>
@@ -1781,6 +1772,9 @@
       <code><![CDATA[\OC_Util::tearDownFS()]]></code>
       <code><![CDATA[\OC_Util::tearDownFS()]]></code>
     </DeprecatedClass>
+    <DeprecatedInterface>
+      <code><![CDATA[Expire]]></code>
+    </DeprecatedInterface>
     <DeprecatedMethod>
       <code><![CDATA[\OC_Util::tearDownFS()]]></code>
       <code><![CDATA[\OC_Util::tearDownFS()]]></code>
@@ -1805,6 +1799,9 @@
     </DeprecatedMethod>
   </file>
   <file src="apps/files_trashbin/lib/Command/Size.php">
+    <DeprecatedInterface>
+      <code><![CDATA[private]]></code>
+    </DeprecatedInterface>
     <DeprecatedMethod>
       <code><![CDATA[getAppValue]]></code>
       <code><![CDATA[setAppValue]]></code>
@@ -1900,6 +1897,11 @@
       <code><![CDATA[\OC_Util::tearDownFS()]]></code>
     </DeprecatedMethod>
   </file>
+  <file src="apps/files_versions/lib/Command/Expire.php">
+    <DeprecatedInterface>
+      <code><![CDATA[Expire]]></code>
+    </DeprecatedInterface>
+  </file>
   <file src="apps/files_versions/lib/Command/ExpireVersions.php">
     <DeprecatedClass>
       <code><![CDATA[\OC_Util::setupFS($user)]]></code>
@@ -1933,6 +1935,9 @@
       <code><![CDATA[Files::streamCopy($source, $target, true)]]></code>
       <code><![CDATA[\OC_Util::setupFS($uid)]]></code>
     </DeprecatedClass>
+    <DeprecatedInterface>
+      <code><![CDATA[$bus]]></code>
+    </DeprecatedInterface>
     <DeprecatedMethod>
       <code><![CDATA[Files::streamCopy($source, $target, true)]]></code>
       <code><![CDATA[dispatch]]></code>
@@ -2001,9 +2006,6 @@
     </DeprecatedMethod>
   </file>
   <file src="apps/provisioning_api/lib/Middleware/ProvisioningApiMiddleware.php">
-    <DeprecatedInterface>
-      <code><![CDATA[IControllerMethodReflector]]></code>
-    </DeprecatedInterface>
     <DeprecatedMethod>
       <code><![CDATA[hasAnnotation]]></code>
       <code><![CDATA[hasAnnotation]]></code>
@@ -2366,40 +2368,6 @@
       <code><![CDATA[getAppValue]]></code>
     </DeprecatedMethod>
   </file>
-  <file src="apps/theming/lib/ThemingDefaults.php">
-    <DeprecatedMethod>
-      <code><![CDATA[deleteAppValue]]></code>
-      <code><![CDATA[deleteAppValue]]></code>
-      <code><![CDATA[deleteAppValues]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[getAppValue]]></code>
-      <code><![CDATA[setAppValue]]></code>
-      <code><![CDATA[setAppValue]]></code>
-    </DeprecatedMethod>
-  </file>
   <file src="apps/theming/lib/Util.php">
     <DeprecatedMethod>
       <code><![CDATA[getAppValue]]></code>
@@ -2675,16 +2643,10 @@
     <DeprecatedInterface>
       <code><![CDATA[User_LDAP]]></code>
     </DeprecatedInterface>
-    <ImplementedReturnTypeMismatch>
-      <code><![CDATA[string|false]]></code>
-    </ImplementedReturnTypeMismatch>
     <MoreSpecificImplementedParamType>
       <code><![CDATA[$limit]]></code>
       <code><![CDATA[$offset]]></code>
     </MoreSpecificImplementedParamType>
-    <NullableReturnStatement>
-      <code><![CDATA[null]]></code>
-    </NullableReturnStatement>
     <RedundantCondition>
       <code><![CDATA[$displayName && (count($displayName) > 0)]]></code>
       <code><![CDATA[is_string($dn)]]></code>
@@ -3244,9 +3206,6 @@
     </DeprecatedMethod>
   </file>
   <file src="core/Middleware/TwoFactorMiddleware.php">
-    <DeprecatedInterface>
-      <code><![CDATA[private]]></code>
-    </DeprecatedInterface>
     <DeprecatedMethod>
       <code><![CDATA[hasAnnotation]]></code>
       <code><![CDATA[hasAnnotation]]></code>
@@ -3506,15 +3465,19 @@
 			}, $context->getCalendarProviders())]]></code>
     </NamedArgumentNotAllowed>
   </file>
-  <file src="lib/private/Command/CallableJob.php">
-    <ParamNameMismatch>
-      <code><![CDATA[$serializedCallable]]></code>
-    </ParamNameMismatch>
+  <file src="lib/private/Command/CommandJob.php">
+    <UndefinedClass>
+      <code><![CDATA[\Test\Command\FilesystemCommand]]></code>
+      <code><![CDATA[\Test\Command\SimpleCommand]]></code>
+      <code><![CDATA[\Test\Command\StateFullCommand]]></code>
+    </UndefinedClass>
   </file>
-  <file src="lib/private/Command/ClosureJob.php">
-    <InvalidArgument>
-      <code><![CDATA[[LaravelClosure::class]]]></code>
-    </InvalidArgument>
+  <file src="lib/private/Command/QueueBus.php">
+    <UndefinedClass>
+      <code><![CDATA[\Test\Command\FilesystemCommand]]></code>
+      <code><![CDATA[\Test\Command\SimpleCommand]]></code>
+      <code><![CDATA[\Test\Command\StateFullCommand]]></code>
+    </UndefinedClass>
   </file>
   <file src="lib/private/Comments/Manager.php">
     <RedundantCast>
@@ -3726,12 +3689,6 @@
     <RedundantCondition>
       <code><![CDATA[$this->cache instanceof Cache]]></code>
     </RedundantCondition>
-  </file>
-  <file src="lib/private/Files/Cache/Wrapper/CacheWrapper.php">
-    <LessSpecificImplementedReturnType>
-      <code><![CDATA[array]]></code>
-      <code><![CDATA[array]]></code>
-    </LessSpecificImplementedReturnType>
   </file>
   <file src="lib/private/Files/Config/MountProviderCollection.php">
     <InvalidOperand>
@@ -4072,11 +4029,6 @@
       <code><![CDATA[$limit === null]]></code>
     </TypeDoesNotContainNull>
   </file>
-  <file src="lib/private/Log/LogDetails.php">
-    <RedundantCondition>
-      <code><![CDATA[is_string($request->getMethod())]]></code>
-    </RedundantCondition>
-  </file>
   <file src="lib/private/Log/Systemdlog.php">
     <UndefinedFunction>
       <code><![CDATA[sd_journal_send('PRIORITY=' . $journal_level,
@@ -4330,6 +4282,11 @@
     <InvalidReturnStatement>
       <code><![CDATA[$path]]></code>
     </InvalidReturnStatement>
+  </file>
+  <file src="lib/private/Teams/TeamManager.php">
+    <UndefinedDocblockClass>
+      <code><![CDATA[Circle]]></code>
+    </UndefinedDocblockClass>
   </file>
   <file src="lib/private/User/Database.php">
     <FalsableReturnStatement>

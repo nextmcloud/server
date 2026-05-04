@@ -7,7 +7,7 @@
  */
 namespace OCA\Settings\Controller;
 
-use OCA\Settings\Settings\Admin\Overview;
+use OCA\Settings\Settings\Admin\Mail;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -19,6 +19,7 @@ use OCP\IRequest;
 use OCP\IURLGenerator;
 use OCP\IUserSession;
 use OCP\Mail\IMailer;
+use Psr\Log\LoggerInterface;
 
 class MailSettingsController extends Controller {
 
@@ -39,6 +40,7 @@ class MailSettingsController extends Controller {
 		private IUserSession $userSession,
 		private IURLGenerator $urlGenerator,
 		private IMailer $mailer,
+		private LoggerInterface $logger,
 	) {
 		parent::__construct($appName, $request);
 	}
@@ -46,7 +48,7 @@ class MailSettingsController extends Controller {
 	/**
 	 * Sets the email settings
 	 */
-	#[AuthorizedAdminSetting(settings: Overview::class)]
+	#[AuthorizedAdminSetting(settings: Mail::class)]
 	#[PasswordConfirmationRequired]
 	public function setMailSettings(
 		string $mail_domain,
@@ -94,7 +96,7 @@ class MailSettingsController extends Controller {
 	 * @param string $mail_smtppassword
 	 * @return DataResponse
 	 */
-	#[AuthorizedAdminSetting(settings: Overview::class)]
+	#[AuthorizedAdminSetting(settings: Mail::class)]
 	#[PasswordConfirmationRequired]
 	public function storeCredentials($mail_smtpname, $mail_smtppassword) {
 		if ($mail_smtppassword === '********') {
@@ -115,7 +117,7 @@ class MailSettingsController extends Controller {
 	 * Send a mail to test the settings
 	 * @return DataResponse
 	 */
-	#[AuthorizedAdminSetting(settings: Overview::class)]
+	#[AuthorizedAdminSetting(settings: Mail::class)]
 	public function sendTestMail() {
 		$email = $this->config->getUserValue($this->userSession->getUser()->getUID(), $this->appName, 'email', '');
 		if (!empty($email)) {
@@ -145,11 +147,13 @@ class MailSettingsController extends Controller {
 				return new DataResponse();
 			} catch (\Exception $e) {
 				$this->config->setAppValue('core', 'emailTestSuccessful', '0');
+				$this->logger->error('Failed sending test email: ' . $e->getMessage(), ['exception' => $e]);
 				return new DataResponse($this->l10n->t('A problem occurred while sending the email. Please revise your settings. (Error: %s)', [$e->getMessage()]), Http::STATUS_BAD_REQUEST);
 			}
 		}
 
 		$this->config->setAppValue('core', 'emailTestSuccessful', '0');
+		$this->logger->error('Failed sending test email: User ' . $this->userSession->getUser()->getUID() . ' has no email address configured in their account settings');
 		return new DataResponse($this->l10n->t('You need to set your account email before being able to send test emails. Go to %s for that.', [$this->urlGenerator->linkToRouteAbsolute('settings.PersonalSettings.index')]), Http::STATUS_BAD_REQUEST);
 	}
 }

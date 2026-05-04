@@ -467,17 +467,22 @@ class File extends Node implements IFile {
 
 			if ($res === false) {
 				if ($this->fileView->file_exists($path)) {
-					throw new ServiceUnavailable($this->l10n->t('Could not open file: %1$s, file does seem to exist', [$path]));
+					throw new ServiceUnavailable($this->l10n->t('Could not open file: %1$s (%2$d), file does seem to exist', [$path, $this->info->getId()]));
 				} else {
-					throw new ServiceUnavailable($this->l10n->t('Could not open file: %1$s, file doesn\'t seem to exist', [$path]));
+					throw new ServiceUnavailable($this->l10n->t('Could not open file: %1$s (%2$d), file doesn\'t seem to exist', [$path, $this->info->getId()]));
 				}
 			}
 
+			$logger = Server::get(LoggerInterface::class);
 			// comparing current file size with the one in DB
 			// if different, fix DB and refresh cache.
-			if ($this->getSize() !== $this->fileView->filesize($this->getPath())) {
-				$logger = Server::get(LoggerInterface::class);
-				$logger->warning('fixing cached size of file id=' . $this->getId());
+			//
+			$fsSize = $this->fileView->filesize($this->getPath());
+			if ($fsSize === false) {
+				$logger->warning('file not found on storage after successfully opening it');
+				throw new ServiceUnavailable($this->l10n->t('Failed to get size for : %1$s', [$this->getPath()]));
+			} elseif ($this->getSize() !== $fsSize) {
+				$logger->warning('fixing cached size of file id=' . $this->getId() . ', cached size was ' . $this->getSize() . ', but the filesystem reported a size of ' . $fsSize);
 
 				$this->getFileInfo()->getStorage()->getUpdater()->update($this->getFileInfo()->getInternalPath());
 				$this->refreshInfo();

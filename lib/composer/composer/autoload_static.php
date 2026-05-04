@@ -11,32 +11,32 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
     );
 
     public static $prefixLengthsPsr4 = array (
-        'O' => 
+        'O' =>
         array (
             'OC\\Core\\' => 8,
             'OC\\' => 3,
             'OCP\\' => 4,
         ),
-        'N' => 
+        'N' =>
         array (
             'NCU\\' => 4,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'OC\\Core\\' => 
+        'OC\\Core\\' =>
         array (
             0 => __DIR__ . '/../../..' . '/core',
         ),
-        'OC\\' => 
+        'OC\\' =>
         array (
             0 => __DIR__ . '/../../..' . '/lib/private',
         ),
-        'OCP\\' => 
+        'OCP\\' =>
         array (
             0 => __DIR__ . '/../../..' . '/lib/public',
         ),
-        'NCU\\' => 
+        'NCU\\' =>
         array (
             0 => __DIR__ . '/../../..' . '/lib/unstable',
         ),
@@ -259,6 +259,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OCP\\Calendar\\ICalendarEventBuilder' => __DIR__ . '/../../..' . '/lib/public/Calendar/ICalendarEventBuilder.php',
         'OCP\\Calendar\\ICalendarExport' => __DIR__ . '/../../..' . '/lib/public/Calendar/ICalendarExport.php',
         'OCP\\Calendar\\ICalendarIsEnabled' => __DIR__ . '/../../..' . '/lib/public/Calendar/ICalendarIsEnabled.php',
+        'OCP\\Calendar\\ICalendarIsPublic' => __DIR__ . '/../../..' . '/lib/public/Calendar/ICalendarIsPublic.php',
         'OCP\\Calendar\\ICalendarIsShared' => __DIR__ . '/../../..' . '/lib/public/Calendar/ICalendarIsShared.php',
         'OCP\\Calendar\\ICalendarIsWritable' => __DIR__ . '/../../..' . '/lib/public/Calendar/ICalendarIsWritable.php',
         'OCP\\Calendar\\ICalendarProvider' => __DIR__ . '/../../..' . '/lib/public/Calendar/ICalendarProvider.php',
@@ -352,6 +353,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OCP\\DB\\IPreparedStatement' => __DIR__ . '/../../..' . '/lib/public/DB/IPreparedStatement.php',
         'OCP\\DB\\IResult' => __DIR__ . '/../../..' . '/lib/public/DB/IResult.php',
         'OCP\\DB\\ISchemaWrapper' => __DIR__ . '/../../..' . '/lib/public/DB/ISchemaWrapper.php',
+        'OCP\\DB\\QueryBuilder\\ConflictResolutionMode' => __DIR__ . '/../../..' . '/lib/public/DB/QueryBuilder/ConflictResolutionMode.php',
         'OCP\\DB\\QueryBuilder\\ICompositeExpression' => __DIR__ . '/../../..' . '/lib/public/DB/QueryBuilder/ICompositeExpression.php',
         'OCP\\DB\\QueryBuilder\\IExpressionBuilder' => __DIR__ . '/../../..' . '/lib/public/DB/QueryBuilder/IExpressionBuilder.php',
         'OCP\\DB\\QueryBuilder\\IFunctionBuilder' => __DIR__ . '/../../..' . '/lib/public/DB/QueryBuilder/IFunctionBuilder.php',
@@ -471,6 +473,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OCP\\Files\\Events\\BeforeFileScannedEvent' => __DIR__ . '/../../..' . '/lib/public/Files/Events/BeforeFileScannedEvent.php',
         'OCP\\Files\\Events\\BeforeFileSystemSetupEvent' => __DIR__ . '/../../..' . '/lib/public/Files/Events/BeforeFileSystemSetupEvent.php',
         'OCP\\Files\\Events\\BeforeFolderScannedEvent' => __DIR__ . '/../../..' . '/lib/public/Files/Events/BeforeFolderScannedEvent.php',
+        'OCP\\Files\\Events\\BeforeRemotePropfindEvent' => __DIR__ . '/../../..' . '/lib/public/Files/Events/BeforeRemotePropfindEvent.php',
         'OCP\\Files\\Events\\BeforeZipCreatedEvent' => __DIR__ . '/../../..' . '/lib/public/Files/Events/BeforeZipCreatedEvent.php',
         'OCP\\Files\\Events\\FileCacheUpdated' => __DIR__ . '/../../..' . '/lib/public/Files/Events/FileCacheUpdated.php',
         'OCP\\Files\\Events\\FileScannedEvent' => __DIR__ . '/../../..' . '/lib/public/Files/Events/FileScannedEvent.php',
@@ -531,6 +534,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OCP\\Files\\Notify\\IChange' => __DIR__ . '/../../..' . '/lib/public/Files/Notify/IChange.php',
         'OCP\\Files\\Notify\\INotifyHandler' => __DIR__ . '/../../..' . '/lib/public/Files/Notify/INotifyHandler.php',
         'OCP\\Files\\Notify\\IRenameChange' => __DIR__ . '/../../..' . '/lib/public/Files/Notify/IRenameChange.php',
+        'OCP\\Files\\ObjectStore\\Events\\BucketCreatedEvent' => __DIR__ . '/../../..' . '/lib/public/Files/ObjectStore/Events/BucketCreatedEvent.php',
         'OCP\\Files\\ObjectStore\\IObjectStore' => __DIR__ . '/../../..' . '/lib/public/Files/ObjectStore/IObjectStore.php',
         'OCP\\Files\\ObjectStore\\IObjectStoreMetaData' => __DIR__ . '/../../..' . '/lib/public/Files/ObjectStore/IObjectStoreMetaData.php',
         'OCP\\Files\\ObjectStore\\IObjectStoreMultiPartUpload' => __DIR__ . '/../../..' . '/lib/public/Files/ObjectStore/IObjectStoreMultiPartUpload.php',
@@ -679,6 +683,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OCP\\IUserManager' => __DIR__ . '/../../..' . '/lib/public/IUserManager.php',
         'OCP\\IUserSession' => __DIR__ . '/../../..' . '/lib/public/IUserSession.php',
         'OCP\\Image' => __DIR__ . '/../../..' . '/lib/public/Image.php',
+        'OCP\\Install\\Events\\InstallationCompletedEvent' => __DIR__ . '/../../..' . '/lib/public/Install/Events/InstallationCompletedEvent.php',
         'OCP\\L10N\\IFactory' => __DIR__ . '/../../..' . '/lib/public/L10N/IFactory.php',
         'OCP\\L10N\\ILanguageIterator' => __DIR__ . '/../../..' . '/lib/public/L10N/ILanguageIterator.php',
         'OCP\\LDAP\\IDeletionFlagSupport' => __DIR__ . '/../../..' . '/lib/public/LDAP/IDeletionFlagSupport.php',
@@ -1242,11 +1247,13 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Collaboration\\AutoComplete\\Manager' => __DIR__ . '/../../..' . '/lib/private/Collaboration/AutoComplete/Manager.php',
         'OC\\Collaboration\\Collaborators\\GroupPlugin' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Collaborators/GroupPlugin.php',
         'OC\\Collaboration\\Collaborators\\LookupPlugin' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Collaborators/LookupPlugin.php',
+        'OC\\Collaboration\\Collaborators\\MailByMailPlugin' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Collaborators/MailByMailPlugin.php',
         'OC\\Collaboration\\Collaborators\\MailPlugin' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Collaborators/MailPlugin.php',
         'OC\\Collaboration\\Collaborators\\RemoteGroupPlugin' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Collaborators/RemoteGroupPlugin.php',
         'OC\\Collaboration\\Collaborators\\RemotePlugin' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Collaborators/RemotePlugin.php',
         'OC\\Collaboration\\Collaborators\\Search' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Collaborators/Search.php',
         'OC\\Collaboration\\Collaborators\\SearchResult' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Collaborators/SearchResult.php',
+        'OC\\Collaboration\\Collaborators\\UserByMailPlugin' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Collaborators/UserByMailPlugin.php',
         'OC\\Collaboration\\Collaborators\\UserPlugin' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Collaborators/UserPlugin.php',
         'OC\\Collaboration\\Reference\\File\\FileReferenceEventListener' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Reference/File/FileReferenceEventListener.php',
         'OC\\Collaboration\\Reference\\File\\FileReferenceProvider' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Reference/File/FileReferenceProvider.php',
@@ -1260,8 +1267,6 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Collaboration\\Resources\\Resource' => __DIR__ . '/../../..' . '/lib/private/Collaboration/Resources/Resource.php',
         'OC\\Color' => __DIR__ . '/../../..' . '/lib/private/Color.php',
         'OC\\Command\\AsyncBus' => __DIR__ . '/../../..' . '/lib/private/Command/AsyncBus.php',
-        'OC\\Command\\CallableJob' => __DIR__ . '/../../..' . '/lib/private/Command/CallableJob.php',
-        'OC\\Command\\ClosureJob' => __DIR__ . '/../../..' . '/lib/private/Command/ClosureJob.php',
         'OC\\Command\\CommandJob' => __DIR__ . '/../../..' . '/lib/private/Command/CommandJob.php',
         'OC\\Command\\CronBus' => __DIR__ . '/../../..' . '/lib/private/Command/CronBus.php',
         'OC\\Command\\FileAccess' => __DIR__ . '/../../..' . '/lib/private/Command/FileAccess.php',
@@ -1405,6 +1410,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Core\\Command\\TaskProcessing\\GetCommand' => __DIR__ . '/../../..' . '/core/Command/TaskProcessing/GetCommand.php',
         'OC\\Core\\Command\\TaskProcessing\\ListCommand' => __DIR__ . '/../../..' . '/core/Command/TaskProcessing/ListCommand.php',
         'OC\\Core\\Command\\TaskProcessing\\Statistics' => __DIR__ . '/../../..' . '/core/Command/TaskProcessing/Statistics.php',
+        'OC\\Core\\Command\\TaskProcessing\\WorkerCommand' => __DIR__ . '/../../..' . '/core/Command/TaskProcessing/WorkerCommand.php',
         'OC\\Core\\Command\\TwoFactorAuth\\Base' => __DIR__ . '/../../..' . '/core/Command/TwoFactorAuth/Base.php',
         'OC\\Core\\Command\\TwoFactorAuth\\Cleanup' => __DIR__ . '/../../..' . '/core/Command/TwoFactorAuth/Cleanup.php',
         'OC\\Core\\Command\\TwoFactorAuth\\Disable' => __DIR__ . '/../../..' . '/core/Command/TwoFactorAuth/Disable.php',
@@ -1569,6 +1575,8 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Core\\Migrations\\Version32000Date20250620081925' => __DIR__ . '/../../..' . '/core/Migrations/Version32000Date20250620081925.php',
         'OC\\Core\\Migrations\\Version32000Date20250731062008' => __DIR__ . '/../../..' . '/core/Migrations/Version32000Date20250731062008.php',
         'OC\\Core\\Migrations\\Version32000Date20250806110519' => __DIR__ . '/../../..' . '/core/Migrations/Version32000Date20250806110519.php',
+        'OC\\Core\\Migrations\\Version33000Date20251209123503' => __DIR__ . '/../../..' . '/core/Migrations/Version33000Date20251209123503.php',
+        'OC\\Core\\Migrations\\Version34000Date20260318095645' => __DIR__ . '/../../..' . '/core/Migrations/Version34000Date20260318095645.php',
         'OC\\Core\\Notification\\CoreNotifier' => __DIR__ . '/../../..' . '/core/Notification/CoreNotifier.php',
         'OC\\Core\\ResponseDefinitions' => __DIR__ . '/../../..' . '/core/ResponseDefinitions.php',
         'OC\\Core\\Service\\LoginFlowV2Service' => __DIR__ . '/../../..' . '/core/Service/LoginFlowV2Service.php',
@@ -1643,6 +1651,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Diagnostics\\EventLogger' => __DIR__ . '/../../..' . '/lib/private/Diagnostics/EventLogger.php',
         'OC\\Diagnostics\\Query' => __DIR__ . '/../../..' . '/lib/private/Diagnostics/Query.php',
         'OC\\Diagnostics\\QueryLogger' => __DIR__ . '/../../..' . '/lib/private/Diagnostics/QueryLogger.php',
+        'OC\\Diagnostics\\TLogSlowOperation' => __DIR__ . '/../../..' . '/lib/private/Diagnostics/TLogSlowOperation.php',
         'OC\\DirectEditing\\Manager' => __DIR__ . '/../../..' . '/lib/private/DirectEditing/Manager.php',
         'OC\\DirectEditing\\Token' => __DIR__ . '/../../..' . '/lib/private/DirectEditing/Token.php',
         'OC\\EmojiHelper' => __DIR__ . '/../../..' . '/lib/private/EmojiHelper.php',
@@ -1702,6 +1711,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Files\\Cache\\StorageGlobal' => __DIR__ . '/../../..' . '/lib/private/Files/Cache/StorageGlobal.php',
         'OC\\Files\\Cache\\Updater' => __DIR__ . '/../../..' . '/lib/private/Files/Cache/Updater.php',
         'OC\\Files\\Cache\\Watcher' => __DIR__ . '/../../..' . '/lib/private/Files/Cache/Watcher.php',
+        'OC\\Files\\Cache\\Wrapper\\CacheDirPermissionsMask' => __DIR__ . '/../../..' . '/lib/private/Files/Cache/Wrapper/CacheDirPermissionsMask.php',
         'OC\\Files\\Cache\\Wrapper\\CacheJail' => __DIR__ . '/../../..' . '/lib/private/Files/Cache/Wrapper/CacheJail.php',
         'OC\\Files\\Cache\\Wrapper\\CachePermissionsMask' => __DIR__ . '/../../..' . '/lib/private/Files/Cache/Wrapper/CachePermissionsMask.php',
         'OC\\Files\\Cache\\Wrapper\\CacheWrapper' => __DIR__ . '/../../..' . '/lib/private/Files/Cache/Wrapper/CacheWrapper.php',
@@ -1788,6 +1798,7 @@ class ComposerStaticInit749170dad3f5e7f9ca158f5a9f04f6a2
         'OC\\Files\\Storage\\StorageFactory' => __DIR__ . '/../../..' . '/lib/private/Files/Storage/StorageFactory.php',
         'OC\\Files\\Storage\\Temporary' => __DIR__ . '/../../..' . '/lib/private/Files/Storage/Temporary.php',
         'OC\\Files\\Storage\\Wrapper\\Availability' => __DIR__ . '/../../..' . '/lib/private/Files/Storage/Wrapper/Availability.php',
+        'OC\\Files\\Storage\\Wrapper\\DirPermissionsMask' => __DIR__ . '/../../..' . '/lib/private/Files/Storage/Wrapper/DirPermissionsMask.php',
         'OC\\Files\\Storage\\Wrapper\\Encoding' => __DIR__ . '/../../..' . '/lib/private/Files/Storage/Wrapper/Encoding.php',
         'OC\\Files\\Storage\\Wrapper\\EncodingDirectoryWrapper' => __DIR__ . '/../../..' . '/lib/private/Files/Storage/Wrapper/EncodingDirectoryWrapper.php',
         'OC\\Files\\Storage\\Wrapper\\Encryption' => __DIR__ . '/../../..' . '/lib/private/Files/Storage/Wrapper/Encryption.php',

@@ -464,6 +464,30 @@ $CONFIG = [
 'ratelimit.protection.enabled' => true,
 
 /**
+ * Overwrite the individual rate limit for a specific route
+ *
+ * From time to time it can be necessary to extend the rate limit of a specific route,
+ * depending on your usage pattern or when you script some actions.
+ * Instead of completely disabling the rate limit or excluding an IP address from the
+ * rate limit, the following config allows to overwrite the rate limit duration and period.
+ *
+ * The first level key is the name of the route. You can find the route name from a URL
+ * using the ``occ router:list`` command of your server.
+ *
+ * You can also specify different limits for logged-in users with the ``user`` key
+ * and not-logged-in users with the ``anon`` key. However, if there is no specific ``user`` limit,
+ * the ``anon`` limit is also applied for logged-in users.
+ *
+ * Defaults to empty array ``[]``
+ */
+'ratelimit_overwrite' => [
+	'profile.profilepage.index' => [
+		'user' => ['limit' => 300, 'period' => 3600],
+		'anon' => ['limit' => 1, 'period' => 300],
+	]
+],
+
+/**
  * Size of subnet used to normalize IPv6
  *
  * For Brute Force Protection and Rate Limiting, IPv6 addresses are truncated using subnet size.
@@ -1664,6 +1688,16 @@ $CONFIG = [
 'memcache.distributed' => '\\OC\\Memcache\\Memcached',
 
 /**
+ * Cache Key Prefix for Redis or Memcached
+ *
+ * * Used for avoiding collisions in the cache system
+ * * May be used for ACL restrictions in Redis
+ *
+ * Defaults to ``''`` (empty string)
+ */
+'memcache_customprefix' => 'mycustomprefix',
+
+/**
  * Connection details for Redis to use for memory caching in a single server configuration.
  *
  * For enhanced security, it is recommended to configure Redis
@@ -1875,6 +1909,31 @@ $CONFIG = [
 		'region' => 'regionOne',
 		'url' => 'http://yourswifthost:5000/v3',
 		'bucket' => 'nextcloud',
+	],
+],
+
+/**
+ * To use S3 object storage
+ */
+'objectstore' => [
+	'class' => 'OC\\Files\\ObjectStore\\S3',
+	'arguments' => [
+		'bucket' => 'nextcloud',
+		'key' => 'your-access-key',
+		'secret' => 'your-secret-key',
+		'hostname' => 's3.example.com',
+		'port' => 443,
+		'use_ssl' => true,
+		'region' => 'us-east-1',
+		// optional: Maximum number of retry attempts for failed S3 requests
+		// Default: 5
+		'retriesMaxAttempts' => 5,
+		// Data Integrity Protections for Amazon S3 (https://docs.aws.amazon.com/sdkref/latest/guide/feature-dataintegrity.html)
+		// Valid values are "when_required" (default) and "when_supported".
+		// To ensure compatibility with 3rd party S3 implementations, Nextcloud disables it by default. However, if you are
+		// using Amazon S3 (or any other implementation that supports it) we recommend enabling it by using "when_supported".
+		'request_checksum_calculation' => 'when_required',
+		'response_checksum_validation' => 'when_required',
 	],
 ],
 
@@ -2749,7 +2808,7 @@ $CONFIG = [
 /**
  * Maximum number of chunks uploaded in parallel during chunked uploads. Higher
  * counts increase throughput but consume more server resources, with diminishing
- * returns.
+ * returns. Value must be a positive integer.
  *
  * Defaults to ``5``
  */
@@ -2770,4 +2829,13 @@ $CONFIG = [
  * Defaults to ``true``
  */
 'enable_lazy_objects' => true,
+
+/**
+ * Change the default certificates bundle used for trusting certificates.
+ *
+ * Nextcloud ships its own up-to-date certificates bundle, but in certain cases admins may wish to specify a different bundle, for example the one shipped by their distro.
+ *
+ * Defaults to `\OC::$SERVERROOT . '/resources/config/ca-bundle.crt'`.
+ */
+'default_certificates_bundle_path' => \OC::$SERVERROOT . '/resources/config/ca-bundle.crt',
 ];

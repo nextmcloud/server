@@ -69,6 +69,7 @@ class AppSettingsController extends Controller {
 		private CategoryFetcher $categoryFetcher,
 		private AppFetcher $appFetcher,
 		private IFactory $l10nFactory,
+		private IGroupManager $groupManager,
 		private BundleFetcher $bundleFetcher,
 		private Installer $installer,
 		private IURLGenerator $urlGenerator,
@@ -92,8 +93,14 @@ class AppSettingsController extends Controller {
 
 		$this->initialState->provideInitialState('appstoreEnabled', $this->config->getSystemValueBool('appstoreenabled', true));
 		$this->initialState->provideInitialState('appstoreBundles', $this->getBundles());
-		$this->initialState->provideInitialState('appstoreDeveloperDocs', $this->urlGenerator->linkToDocs('developer-manual'));
 		$this->initialState->provideInitialState('appstoreUpdateCount', count($this->getAppsWithUpdates()));
+
+		$groups = array_map(static fn (IGroup $group): array => [
+			'id' => $group->getGID(),
+			'name' => $group->getDisplayName(),
+		], $this->groupManager->search('', 5));
+
+		$this->initialState->provideInitialState('usersSettings', [ 'systemGroups' => $groups]);
 
 		if ($this->appManager->isEnabledForAnyone('app_api')) {
 			try {
@@ -558,7 +565,7 @@ class AppSettingsController extends Controller {
 	 * @param array $groups
 	 * @return JSONResponse
 	 */
-	#[PasswordConfirmationRequired]
+	#[PasswordConfirmationRequired(strict: true)]
 	public function enableApps(array $appIds, array $groups = []): JSONResponse {
 		try {
 			$updateRequired = false;

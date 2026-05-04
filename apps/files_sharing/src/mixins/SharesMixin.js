@@ -173,17 +173,19 @@ export default {
 				if (this.passwordProtectedState !== undefined) {
 					return this.passwordProtectedState
 				}
-				return this.share.newPassword !== undefined
-					|| this.share.password !== undefined
-
+				return typeof this.share.newPassword === 'string'
+					|| typeof this.share.password === 'string'
 			},
 			async set(enabled) {
 				if (enabled) {
 					this.passwordProtectedState = true
-					this.$set(this.share, 'newPassword', await GeneratePassword(true))
+					const generatedPassword = await GeneratePassword(true)
+					if (!this.share.newPassword) {
+						this.$set(this.share, 'newPassword', generatedPassword)
+					}
 				} else {
 					this.passwordProtectedState = false
-					this.$delete(this.share, 'newPassword')
+					this.$set(this.share, 'newPassword', '')
 				}
 			},
 		},
@@ -320,7 +322,9 @@ export default {
 				// share api controller accepts
 				for (const name of propertyNames) {
 					if (name === 'password') {
-						properties[name] = this.share.newPassword ?? this.share.password
+						if (this.share.newPassword !== undefined) {
+							properties[name] = this.share.newPassword
+						}
 						continue
 					}
 
@@ -341,7 +345,7 @@ export default {
 
 						if (propertyNames.includes('password')) {
 							// reset password state after sync
-							this.share.password = this.share.newPassword ?? ''
+							this.share.password = this.share.newPassword || undefined
 							this.$delete(this.share, 'newPassword')
 
 							// updates password expiration time after sync

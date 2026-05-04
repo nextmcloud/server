@@ -123,7 +123,7 @@ class DispatcherTest extends \Test\TestCase {
 
 		$this->request = $this->createMock(Request::class);
 
-		$this->reflector = new ControllerMethodReflector();
+		$this->reflector = new ControllerMethodReflector(\OCP\Server::get(LoggerInterface::class));
 
 		$this->dispatcher = new Dispatcher(
 			$this->http,
@@ -541,6 +541,11 @@ class DispatcherTest extends \Test\TestCase {
 			[PHP_INT_MIN, PHP_INT_MAX, 42, false],
 			[0, 12, -5, true],
 			[-12, 0, 5, true],
+			[1, 200, 0, true],
+			[-15, -5, 0, true],
+			[-15, 15, 0, false],
+			[0, 200, 0, false],
+			[-200, 0, 0, false],
 			[7, 14, 5, true],
 			[7, 14, 10, false],
 			[-14, -7, -10, false],

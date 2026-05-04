@@ -14,6 +14,8 @@ use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IUserSession;
 use Sabre\DAV\Exception\Forbidden;
+use Sabre\DAV\Exception\MethodNotAllowed;
+use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\ICollection;
 
 class UploadHome implements ICollection {
@@ -61,18 +63,16 @@ class UploadHome implements ICollection {
 	}
 
 	public function getChildren(): array {
-		return array_map(function ($node) {
-			return new UploadFolder(
-				$node,
-				$this->cleanupService,
-				$this->getStorage(),
-				$this->uid,
-			);
-		}, $this->impl()->getChildren());
+		throw new MethodNotAllowed('Listing members of this collection is disabled');
 	}
 
 	public function childExists($name): bool {
-		return !is_null($this->getChild($name));
+		try {
+			$this->getChild($name);
+			return true;
+		} catch (NotFound $e) {
+			return false;
+		}
 	}
 
 	public function delete() {

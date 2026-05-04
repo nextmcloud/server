@@ -77,6 +77,7 @@ use Psr\Log\LoggerInterface;
 class ShareAPIController extends OCSController {
 
 	private ?Node $lockedNode = null;
+	/** @var array<bool> $trustedServerCache */
 	private array $trustedServerCache = [];
 
 	/**
@@ -237,6 +238,10 @@ class ShareAPIController extends OCSController {
 			$result['expiration'] = $expiration->format('Y-m-d 00:00:00');
 		}
 
+		$currentUserPermissions = $recipientNode?->getPermissions() ?? Constants::PERMISSION_ALL;
+		$userHasEnoughPermissions = ($currentUserPermissions & $share->getPermissions()) === $share->getPermissions();
+		$token = $userHasEnoughPermissions ? $share->getToken() : null;
+
 		if ($share->getShareType() === IShare::TYPE_USER) {
 			$sharedWith = $this->userManager->get($share->getSharedWith());
 			$result['share_with'] = $share->getSharedWith();
@@ -262,6 +267,7 @@ class ShareAPIController extends OCSController {
 			$result['share_with'] = $share->getSharedWith();
 			$result['share_with_displayname'] = $group !== null ? $group->getDisplayName() : $share->getSharedWith();
 		} elseif ($share->getShareType() === IShare::TYPE_LINK) {
+			$url = $token ? $this->urlGenerator->linkToRouteAbsolute('files_sharing.sharecontroller.showShare', ['token' => $token]) : null;
 
 			// "share_with" and "share_with_displayname" for passwords of link
 			// shares was deprecated in Nextcloud 15, use "password" instead.
@@ -272,23 +278,23 @@ class ShareAPIController extends OCSController {
 
 			$result['send_password_by_talk'] = $share->getSendPasswordByTalk();
 
-			$result['token'] = $share->getToken();
-			$result['url'] = $this->urlGenerator->linkToRouteAbsolute('files_sharing.sharecontroller.showShare', ['token' => $share->getToken()]);
+			$result['token'] = $token;
+			$result['url'] = $url;
 		} elseif ($share->getShareType() === IShare::TYPE_REMOTE) {
 			$result['share_with'] = $share->getSharedWith();
 			$result['share_with_displayname'] = $this->getCachedFederatedDisplayName($share->getSharedWith());
-			$result['token'] = $share->getToken();
+			$result['token'] = $token;
 		} elseif ($share->getShareType() === IShare::TYPE_REMOTE_GROUP) {
 			$result['share_with'] = $share->getSharedWith();
 			$result['share_with_displayname'] = $this->getDisplayNameFromAddressBook($share->getSharedWith(), 'CLOUD');
-			$result['token'] = $share->getToken();
+			$result['token'] = $token;
 		} elseif ($share->getShareType() === IShare::TYPE_EMAIL) {
 			$result['share_with'] = $share->getSharedWith();
 			$result['password'] = $share->getPassword();
 			$result['password_expiration_time'] = $share->getPasswordExpirationTime() !== null ? $share->getPasswordExpirationTime()->format(\DateTime::ATOM) : null;
 			$result['send_password_by_talk'] = $share->getSendPasswordByTalk();
 			$result['share_with_displayname'] = $this->getDisplayNameFromAddressBook($share->getSharedWith(), 'EMAIL');
-			$result['token'] = $share->getToken();
+			$result['token'] = $token;
 		} elseif ($share->getShareType() === IShare::TYPE_CIRCLE) {
 			// getSharedWith() returns either "name (type, owner)" or
 			// "name (type, owner) [id]", depending on the Teams app version.
@@ -543,6 +549,8 @@ class ShareAPIController extends OCSController {
 			$this->lock($share->getNode());
 		} catch (LockedException $e) {
 			throw new OCSNotFoundException($this->l->t('Could not delete share'));
+		} catch (NotFoundException $e) {
+			$this->logger->debug('File of to be deleted share was not found, skip locking', ['exception' => $e]);
 		}
 
 		if (!$this->canAccessShare($share)) {
@@ -1342,10 +1350,13 @@ class ShareAPIController extends OCSController {
 				$share->setPermissions($permissions);
 			}
 
-			if ($password === '') {
-				$share->setPassword(null);
-			} elseif ($password !== null) {
-				$share->setPassword($password);
+			$passwordParamSent = $password !== null;
+			if ($passwordParamSent) {
+				if ($password === '') {
+					$share->setPassword(null);
+				} else {
+					$share->setPassword($password);
+				}
 			}
 
 			if ($label !== null) {
@@ -2093,14 +2104,15 @@ class ShareAPIController extends OCSController {
 
 		$canDownload = false;
 		$hideDownload = true;
+		$userExplicitlySetHideDownload = $share->getHideDownload(); // Capture user's explicit choice
 
 		$userFolder = $this->rootFolder->getUserFolder($share->getSharedBy());
 		$nodes = $userFolder->getById($share->getNodeId());
 		foreach ($nodes as $node) {
-			// Owner always can download it - so allow it and break
+			// Owner always can download it - so allow it, but respect their explicit choice about hiding downloads
 			if ($node->getOwner()?->getUID() === $share->getSharedBy()) {
 				$canDownload = true;
-				$hideDownload = false;
+				$hideDownload = $userExplicitlySetHideDownload;
 				break;
 			}
 
@@ -2118,23 +2130,44 @@ class ShareAPIController extends OCSController {
 				/** @var SharedStorage $storage */
 				$originalShare = $storage->getShare();
 				$inheritedAttributes = $originalShare->getAttributes();
-				// hide if hidden and also the current share enforces hide (can only be false if one share is false or user is owner)
-				$hideDownload = $hideDownload && $originalShare->getHideDownload();
-				// allow download if already allowed by previous share or when the current share allows downloading
-				$canDownload = $canDownload || $inheritedAttributes === null || $inheritedAttributes->getAttribute('permissions', 'download') !== false;
+
+				// For federated shares: users can only be MORE restrictive, never LESS restrictive
+				// If parent has hideDownload=true, child MUST have hideDownload=true
+				$parentHidesDownload = $originalShare->getHideDownload();
+
+				// Check if download permission is available from parent
+				$parentAllowsDownload = $inheritedAttributes === null || $inheritedAttributes->getAttribute('permissions', 'download') !== false;
+
+				// Apply inheritance rules:
+				// 1. If parent hides download, child must hide download
+				// 2. If parent allows download, child can choose to hide or allow
+				// 3. If parent forbids download, child cannot allow download
+				$hideDownload = $parentHidesDownload || $userExplicitlySetHideDownload;
+
+				$canDownload = $canDownload || $parentAllowsDownload;
+
 			} elseif ($node->getStorage()->instanceOfStorage(Storage::class)) {
 				$canDownload = true; // in case of federation storage, we can expect the download to be activated by default
+				// For external federation storage, respect user's choice if downloads are available
+				$hideDownload = $userExplicitlySetHideDownload;
 			}
 		}
 
-		if ($hideDownload || !$canDownload) {
+		// Apply the final restrictions:
+		// 1. If parent doesn't allow downloads at all, force hide and disable download attribute
+		// 2. If parent allows downloads, respect user's hideDownload choice
+		if (!$canDownload) {
+			// Parent completely forbids downloads - must enforce this restriction
 			$share->setHideDownload(true);
-
-			if (!$canDownload) {
-				$attributes = $share->getAttributes() ?? $share->newAttributes();
-				$attributes->setAttribute('permissions', 'download', false);
-				$share->setAttributes($attributes);
-			}
+			$attributes = $share->getAttributes() ?? $share->newAttributes();
+			$attributes->setAttribute('permissions', 'download', false);
+			$share->setAttributes($attributes);
+		} elseif ($hideDownload) {
+			// Either parent forces hide, or user chooses to hide - respect this
+			$share->setHideDownload(true);
+		} else {
+			// User explicitly wants to allow downloads and parent permits it
+			$share->setHideDownload(false);
 		}
 	}
 

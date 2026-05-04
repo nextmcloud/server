@@ -936,19 +936,20 @@
             "CoreTeam": {
                 "type": "object",
                 "required": [
-                    "id",
-                    "name",
-                    "icon"
+                    "teamId",
+                    "displayName",
+                    "link"
                 ],
                 "properties": {
-                    "id": {
+                    "teamId": {
                         "type": "string"
                     },
-                    "name": {
+                    "displayName": {
                         "type": "string"
                     },
-                    "icon": {
-                        "type": "string"
+                    "link": {
+                        "type": "string",
+                        "nullable": true
                     }
                 }
             },
@@ -960,12 +961,12 @@
                     "url",
                     "iconSvg",
                     "iconURL",
-                    "iconEmoji"
+                    "iconEmoji",
+                    "provider"
                 ],
                 "properties": {
                     "id": {
-                        "type": "integer",
-                        "format": "int64"
+                        "type": "string"
                     },
                     "label": {
                         "type": "string"
@@ -984,8 +985,48 @@
                     "iconEmoji": {
                         "type": "string",
                         "nullable": true
+                    },
+                    "provider": {
+                        "type": "object",
+                        "required": [
+                            "id",
+                            "name",
+                            "icon"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "icon": {
+                                "type": "string"
+                            }
+                        }
                     }
                 }
+            },
+            "CoreTeamWithResources": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/CoreTeam"
+                    },
+                    {
+                        "type": "object",
+                        "required": [
+                            "resources"
+                        ],
+                        "properties": {
+                            "resources": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/CoreTeamResource"
+                                }
+                            }
+                        }
+                    }
+                ]
             },
             "CoreTextProcessingTask": {
                 "type": "object",
@@ -1443,13 +1484,25 @@
                         "type": "object",
                         "required": [
                             "chunking",
-                            "public_shares_chunking"
+                            "public_shares_chunking",
+                            "search_supports_creation_time",
+                            "search_supports_upload_time",
+                            "search_supports_last_activity"
                         ],
                         "properties": {
                             "chunking": {
                                 "type": "string"
                             },
                             "public_shares_chunking": {
+                                "type": "boolean"
+                            },
+                            "search_supports_creation_time": {
+                                "type": "boolean"
+                            },
+                            "search_supports_upload_time": {
+                                "type": "boolean"
+                            },
+                            "search_supports_last_activity": {
                                 "type": "boolean"
                             },
                             "bulkupload": {
@@ -2745,7 +2798,8 @@
                         "type": "string"
                     },
                     "url": {
-                        "type": "string"
+                        "type": "string",
+                        "nullable": true
                     }
                 }
             },
@@ -9815,7 +9869,7 @@
                                                         "teams": {
                                                             "type": "array",
                                                             "items": {
-                                                                "$ref": "#/components/schemas/CoreTeam"
+                                                                "$ref": "#/components/schemas/CoreTeamWithResources"
                                                             }
                                                         }
                                                     }
@@ -15108,7 +15162,7 @@
             "post": {
                 "operationId": "core-two_factor_api-enable",
                 "summary": "Enable two factor authentication providers for specific user",
-                "description": "This endpoint requires admin access",
+                "description": "This endpoint requires admin access\nThis endpoint requires password confirmation",
                 "tags": [
                     "core/two_factor_api"
                 ],
@@ -15286,7 +15340,7 @@
             "post": {
                 "operationId": "core-two_factor_api-disable",
                 "summary": "Disable two factor authentication providers for specific user",
-                "description": "This endpoint requires admin access",
+                "description": "This endpoint requires admin access\nThis endpoint requires password confirmation",
                 "tags": [
                     "core/two_factor_api"
                 ],
@@ -16663,8 +16717,7 @@
                             "schema": {
                                 "type": "object",
                                 "required": [
-                                    "fileId",
-                                    "expirationTime"
+                                    "fileId"
                                 ],
                                 "properties": {
                                     "fileId": {
@@ -33315,6 +33368,12 @@
                     "200": {
                         "description": "Favicon returned",
                         "content": {
+                            "image/png": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
                             "image/x-icon": {
                                 "schema": {
                                     "type": "string",
@@ -33384,7 +33443,7 @@
                                     "format": "binary"
                                 }
                             },
-                            "image/x-icon": {
+                            "*/*": {
                                 "schema": {
                                     "type": "string",
                                     "format": "binary"

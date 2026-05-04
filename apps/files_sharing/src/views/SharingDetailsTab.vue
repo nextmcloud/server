@@ -900,7 +900,11 @@ export default {
 
 			if (this.isNewShare) {
 				if ((this.config.enableLinkPasswordByDefault || this.isPasswordEnforced) && this.isPublicShare) {
-					this.$set(this.share, 'newPassword', await GeneratePassword(true))
+					this.passwordProtectedState = true
+					const generatedPassword = await GeneratePassword(true)
+					if (!this.share.newPassword) {
+						this.$set(this.share, 'newPassword', generatedPassword)
+					}
 					this.advancedSectionAccordionExpanded = true
 				}
 				/* Set default expiration dates if configured */
@@ -979,7 +983,11 @@ export default {
 		},
 		async saveShare() {
 			const permissionsAndAttributes = ['permissions', 'attributes', 'note', 'expireDate']
-			const publicShareAttributes = ['label', 'password', 'hideDownload']
+			const publicShareAttributes = ['label', 'hideDownload']
+			// Only include password if it's being actively changed
+			if (this.hasUnsavedPassword) {
+				publicShareAttributes.push('password')
+			}
 			if (this.config.allowCustomTokens) {
 				publicShareAttributes.push('token')
 			}
@@ -1001,8 +1009,9 @@ export default {
 				this.share.note = ''
 			}
 			if (this.isPasswordProtected) {
-				if (this.isPasswordEnforced && this.isNewShare && !this.isValidShareAttribute(this.share.newPassword)) {
+				if (this.isPublicShare && this.isNewShare && !this.isValidShareAttribute(this.share.newPassword)) {
 					this.passwordError = true
+					return
 				}
 			} else {
 				this.share.password = ''
@@ -1142,7 +1151,11 @@ export default {
 		 * "sendPasswordByTalk".
 		 */
 		onPasswordProtectedByTalkChange() {
-			this.queueUpdate('sendPasswordByTalk', 'password')
+			if (this.isEmailShareType || this.hasUnsavedPassword) {
+				this.queueUpdate('sendPasswordByTalk', 'password')
+			} else {
+				this.queueUpdate('sendPasswordByTalk')
+			}
 		},
 		isValidShareAttribute(value) {
 			if ([null, undefined].includes(value)) {

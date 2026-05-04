@@ -191,8 +191,14 @@ class LinkReferenceProvider implements IReferenceProvider, IPublicReferenceProvi
 				if (in_array($contentType, self::ALLOWED_CONTENT_TYPES, true) && $contentLength < self::MAX_CONTENT_LENGTH) {
 					$stream = Utils::streamFor($response->getBody());
 					$bodyStream = new LimitStream($stream, self::MAX_CONTENT_LENGTH, 0);
+					$content = $bodyStream->getContents();
+
+					if ($contentType === 'image/svg+xml' && $this->containsXslt($content)) {
+						return;
+					}
+
 					$reference->setImageContentType($contentType);
-					$folder->newFile(md5($reference->getId()), $bodyStream->getContents());
+					$folder->newFile(md5($reference->getId()), $content);
 					$reference->setImageUrl($this->urlGenerator->linkToRouteAbsolute('core.Reference.preview', ['referenceId' => md5($reference->getId())]));
 				}
 			} catch (\Exception $e) {
@@ -223,5 +229,31 @@ class LinkReferenceProvider implements IReferenceProvider, IPublicReferenceProvi
 	 */
 	public function getCacheKeyPublic(string $referenceId, string $sharingToken): ?string {
 		return null;
+	}
+
+	/**
+	 * Check if XML content contains XSLT transformations
+	 *
+	 * XSLT transformations in SVG files can cause memory exhaustion
+	 * in Chromium based browsers when rendered.
+	 */
+	private function containsXslt(string $xmlContent): bool {
+		set_error_handler(function (int $code, string $message): bool {
+			$this->logger->debug('Failed to parse XML content for XSLT check', ['error' => $message]);
+			return true;
+		});
+
+		$xml = simplexml_load_string($xmlContent);
+
+		restore_error_handler();
+
+		$namespaces = $xml ? $xml->getNamespaces(true) : [];
+		foreach ($namespaces as $namespace) {
+			if (stripos($namespace, 'XSL/Transform') !== false) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

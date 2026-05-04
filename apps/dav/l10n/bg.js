@@ -165,8 +165,8 @@ OC.L10N.register(
     "Due on %s" : "Краен срок на %s",
     "WebDAV endpoint" : "WebDAV крайна точка",
     "Your web server is not yet properly set up to allow file synchronization, because the WebDAV interface seems to be broken." : "Вашият уеб сървър все още не е удачно настроен да позволява синхронизация на файлове, защото WebDAV интерфейсът не работи.",
-    "Migrated calendar (%1$s)" : "Мигриран календар (%1$s)",
     "Calendars including events, details and attendees" : "Календари, включително събития, подробности и участници",
+    "Migrated calendar (%1$s)" : "Мигриран календар (%1$s)",
     "Contacts and groups" : "Контакти и групи",
     "WebDAV" : "WebDAV",
     "Absence saved" : "Отсъствието е запаметено",
@@ -186,6 +186,7 @@ OC.L10N.register(
     "Delete slot" : "Изтриване на слот",
     "No working hours set" : "Няма зададено работно време",
     "Add slot" : "Добавяне на слот",
+    "Weekdays" : "Делнични дни",
     "Automatically set user status to \"Do not disturb\" outside of availability to mute all notifications." : "Автоматично задаване на потребителският статус на „Не безпокойте“ извън достъпността, за заглушаване на всички известия.",
     "Cancel" : "Отказ",
     "Import" : "Импортиране /внасяне/",
@@ -210,7 +211,6 @@ OC.L10N.register(
     "Please contact the organizer directly." : "Моля, свържете се директно с организатора.",
     "Are you accepting the invitation?" : "Приемате ли поканата?",
     "Tentative" : "Несигурно",
-    "Your attendance was updated successfully." : "Вашето присъствие е актуализирано успешно.",
-    "Time zone:" : "Часова зона"
+    "Your attendance was updated successfully." : "Вашето присъствие е актуализирано успешно."
 },
 "nplurals=2; plural=(n != 1);");
