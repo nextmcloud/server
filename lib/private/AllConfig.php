@@ -490,12 +490,15 @@ class AllConfig implements IConfig {
 		$this->fixDIInit();
 
 		$qb = $this->connection->getQueryBuilder();
+		$configValueColumn = $this->getSystemValue('dbtype', 'sqlite') === 'oci'
+			? $qb->expr()->castColumn('configvalue', IQueryBuilder::PARAM_STR)
+			: 'configvalue';
 		$result = $qb->select('userid')
 			->from('preferences')
 			->where($qb->expr()->eq('appid', $qb->createNamedParameter($appName, IQueryBuilder::PARAM_STR)))
 			->andWhere($qb->expr()->eq('configkey', $qb->createNamedParameter($key, IQueryBuilder::PARAM_STR)))
 			->andWhere($qb->expr()->eq(
-				$qb->expr()->castColumn('configvalue', IQueryBuilder::PARAM_STR),
+				$configValueColumn,
 				$qb->createNamedParameter($value, IQueryBuilder::PARAM_STR))
 			)->orderBy('userid')
 			->executeQuery();
@@ -524,13 +527,18 @@ class AllConfig implements IConfig {
 			// Email address is always stored lowercase in the database
 			return $this->getUsersForUserValue($appName, $key, strtolower($value));
 		}
+
 		$qb = $this->connection->getQueryBuilder();
+		$configValueColumn = $this->getSystemValue('dbtype', 'sqlite') === 'oci'
+			? $qb->expr()->castColumn('configvalue', IQueryBuilder::PARAM_STR)
+			: 'configvalue';
+
 		$result = $qb->select('userid')
 			->from('preferences')
 			->where($qb->expr()->eq('appid', $qb->createNamedParameter($appName, IQueryBuilder::PARAM_STR)))
 			->andWhere($qb->expr()->eq('configkey', $qb->createNamedParameter($key, IQueryBuilder::PARAM_STR)))
 			->andWhere($qb->expr()->eq(
-				$qb->func()->lower($qb->expr()->castColumn('configvalue', IQueryBuilder::PARAM_STR)),
+				$qb->func()->lower($configValueColumn),
 				$qb->createNamedParameter(strtolower($value), IQueryBuilder::PARAM_STR))
 			)->orderBy('userid')
 			->executeQuery();
