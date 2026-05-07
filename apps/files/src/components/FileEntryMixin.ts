@@ -14,6 +14,7 @@ import { isPublicShare } from '@nextcloud/sharing/public'
 import { generateUrl } from '@nextcloud/router'
 import { getConflicts, getUploader } from '@nextcloud/upload'
 import { vOnClickOutside } from '@vueuse/components'
+import { relative } from 'path'
 import Vue, { computed, defineComponent } from 'vue'
 
 import { action as sidebarAction } from '../actions/sidebarAction.ts'
@@ -471,6 +472,9 @@ export default defineComponent({
 			const items = Array.from(event.dataTransfer?.items || [])
 
 			if (selection.length === 0 && items.some((item) => item.kind === 'file')) {
+				const files = items.filter((item) => item.kind === 'file')
+						.map((item) => item.getAsFile()).filter((file): file is File => !!file)
+						.filter(Boolean) as (FileSystemEntry | File)[],
 				const uploader = getUploader()
 				let targetPath = this.source.path.replace(this.currentDir || '', '')
 				if (!targetPath.startsWith('/')) {
@@ -478,9 +482,7 @@ export default defineComponent({
 				}
 				await uploader.batchUpload(
 					targetPath,
-					items.filter((item) => item.kind === 'file')
-						.map((item) => item.getAsFile()).filter((file): file is File => !!file)
-						.filter(Boolean) as (FileSystemEntry | File)[],
+					files,
 					async (nodes, path) => {
 						try {
 							const { contents, folder } = await this.currentView!.getContents(path)

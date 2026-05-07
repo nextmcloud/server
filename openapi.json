@@ -2798,7 +2798,8 @@
                         "type": "string"
                     },
                     "url": {
-                        "type": "string"
+                        "type": "string",
+                        "nullable": true
                     }
                 }
             },
@@ -15161,7 +15162,7 @@
             "post": {
                 "operationId": "core-two_factor_api-enable",
                 "summary": "Enable two factor authentication providers for specific user",
-                "description": "This endpoint requires admin access",
+                "description": "This endpoint requires admin access\nThis endpoint requires password confirmation",
                 "tags": [
                     "core/two_factor_api"
                 ],
@@ -15339,7 +15340,7 @@
             "post": {
                 "operationId": "core-two_factor_api-disable",
                 "summary": "Disable two factor authentication providers for specific user",
-                "description": "This endpoint requires admin access",
+                "description": "This endpoint requires admin access\nThis endpoint requires password confirmation",
                 "tags": [
                     "core/two_factor_api"
                 ],
@@ -33367,6 +33368,12 @@
                     "200": {
                         "description": "Favicon returned",
                         "content": {
+                            "image/png": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
                             "image/x-icon": {
                                 "schema": {
                                     "type": "string",
@@ -33436,7 +33443,7 @@
                                     "format": "binary"
                                 }
                             },
-                            "image/x-icon": {
+                            "*/*": {
                                 "schema": {
                                     "type": "string",
                                     "format": "binary"

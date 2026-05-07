@@ -1688,6 +1688,16 @@ $CONFIG = [
 'memcache.distributed' => '\\OC\\Memcache\\Memcached',
 
 /**
+ * Cache Key Prefix for Redis or Memcached
+ *
+ * * Used for avoiding collisions in the cache system
+ * * May be used for ACL restrictions in Redis
+ *
+ * Defaults to ``''`` (empty string)
+ */
+'memcache_customprefix' => 'mycustomprefix',
+
+/**
  * Connection details for Redis to use for memory caching in a single server configuration.
  *
  * For enhanced security, it is recommended to configure Redis
@@ -2798,7 +2808,7 @@ $CONFIG = [
 /**
  * Maximum number of chunks uploaded in parallel during chunked uploads. Higher
  * counts increase throughput but consume more server resources, with diminishing
- * returns.
+ * returns. Value must be a positive integer.
  *
  * Defaults to ``5``
  */
