@@ -473,15 +473,15 @@ export default defineComponent({
 
 			if (selection.length === 0 && items.some((item) => item.kind === 'file')) {
 				const files = items.filter((item) => item.kind === 'file')
-					.map((item) => 'webkitGetAsEntry' in item ? item.webkitGetAsEntry() : item.getAsFile())
-					.filter(Boolean) as (FileSystemEntry | File)[]
+						.map((item) => item.getAsFile()).filter((file): file is File => !!file)
+						.filter(Boolean) as (FileSystemEntry | File)[],
 				const uploader = getUploader()
-				const root = uploader.destination.path
-				const relativePath = relative(root, this.source.path)
-				logger.debug('Start uploading dropped files', { target: this.source.path, root, relativePath, files: files.map((file) => file.name) })
-
+				let targetPath = this.source.path.replace(this.currentDir || '', '')
+				if (!targetPath.startsWith('/')) {
+					targetPath = '/' + targetPath
+				}
 				await uploader.batchUpload(
-					relativePath,
+					targetPath,
 					files,
 					async (nodes, path) => {
 						try {
@@ -525,9 +525,9 @@ export default defineComponent({
 			const isCopy = event.ctrlKey
 			this.dragover = false
 
-			logger.debug('Dropped', { event, folder: this.source, selection })
+			logger.debug('Dropped', { event, folder: this.source, selection, contents })
 
-			const nodes = selection.map((source) => this.filesStore.getNode(source)) as Node[]
+			const nodes = selection.map((source) => this.filesStore.getNode(source)).filter((node): node is Node => !!node)
 			await onDropInternalFiles(nodes, this.source, contents, isCopy)
 
 			// Reset selection after we dropped the files
