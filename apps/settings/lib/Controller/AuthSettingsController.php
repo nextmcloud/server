@@ -105,9 +105,11 @@ class AuthSettingsController extends Controller {
 			$name = mb_substr($name, 0, 120) . '…';
 		}
 
+		$displayLoginName = $this->userSession->getUser()?->getEMailAddress() ?: $loginName;
 		$token = $this->generateRandomDeviceToken();
-		$deviceToken = $this->tokenProvider->generateToken($token, $this->userId, $loginName, $password, $name, IToken::PERMANENT_TOKEN);
+		$deviceToken = $this->tokenProvider->generateToken($token, $this->userId, $displayLoginName, $password, $name, IToken::PERMANENT_TOKEN);
 		$tokenData = $deviceToken->jsonSerialize();
+		$tokenData['loginName'] = $displayLoginName;
 		$tokenData['canDelete'] = true;
 		$tokenData['canRename'] = true;
 
@@ -115,7 +117,7 @@ class AuthSettingsController extends Controller {
 
 		return new JSONResponse([
 			'token' => $token,
-			'loginName' => $loginName,
+			'loginName' => $displayLoginName,
 			'deviceToken' => $tokenData,
 		]);
 	}
