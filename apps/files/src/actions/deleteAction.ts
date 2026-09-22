@@ -23,6 +23,19 @@ const queue = new PQueue({ concurrency: 5 })
 
 export const ACTION_DELETE = 'delete'
 
+/**
+ * Delete a node, retrying once since concurrent batch deletes can trigger transient server-side locks/timeouts.
+ *
+ * @param node - the node to delete
+ */
+async function deleteNodeWithRetry(node: Parameters<typeof deleteNode>[0]) {
+	try {
+		await deleteNode(node)
+	} catch {
+		await deleteNode(node)
+	}
+}
+
 export const action: IFileAction = {
 	id: ACTION_DELETE,
 	displayName,
@@ -93,22 +106,16 @@ export const action: IFileAction = {
 			return Promise.all(nodes.map(() => null))
 		}
 
-		// Map each node to a promise that resolves with the result of exec(node)
-		const promises = nodes.map((node) => {
-			// Create a promise that resolves with the result of exec(node)
-			const promise = new Promise<boolean>((resolve) => {
-				queue.add(async () => {
-					try {
-						await deleteNode(node)
-						resolve(true)
-					} catch (error) {
-						logger.error('Error while deleting a file', { error, source: node.source, node })
-						resolve(false)
-					}
-				})
-			})
-			return promise
-		})
+		// queue.add already returns a promise resolving with the task's result
+		const promises = nodes.map((node) => queue.add(async (): Promise<boolean> => {
+			try {
+				await deleteNodeWithRetry(node)
+				return true
+			} catch (error) {
+				logger.error('Error while deleting a file', { error, source: node.source, node })
+				return false
+			}
+		}))
 
 		return Promise.all(promises)
 	},
