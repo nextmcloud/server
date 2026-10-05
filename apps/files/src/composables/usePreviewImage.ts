@@ -71,8 +71,10 @@ export function usePreviewImage(
 			url.searchParams.set('y', (sizeY ?? sizeX).toString())
 			url.searchParams.set('mimeFallback', fallback.toString())
 
-			// Etag to force refresh preview on change
-			const etag = source.attributes.etag || source.mtime?.getTime() || ''
+			// Etag to force refresh preview on change.
+			// Trashbin and shares nodes carry no etag, so this falls back to the
+			// numeric mtime - stringify before slicing or the whole URL is lost.
+			const etag = String(source.attributes.etag || source.mtime?.getTime() || '')
 			url.searchParams.set('v', etag.slice(0, 6))
 
 			// Handle cropping
