@@ -209,6 +209,50 @@ export default defineComponent({
 				return t('files', 'Unknown file type')
 			}
 
+			// OpenDocument
+			if (this.source.mime.includes('opendocument')) {
+				const subtype = this.source.mime.split('.').pop()
+
+				const map = {
+					text: 'Text',
+					spreadsheet: 'Spreadsheet',
+					presentation: 'Presentation',
+					graphics: 'Drawing',
+					chart: 'Diagram',
+					formula: 'Formula',
+					image: 'Image'
+				}
+
+				const type = map[subtype] || subtype
+				const label = t('files', '{type}', { type })
+				return `OpenDocument ${label}`
+			}
+
+			// Microsoft Office
+			if (this.source.mime.includes('openxmlformats-officedocument')) {
+				const parts = this.source.mime.split('.')
+				const mainType = parts[parts.length - 2] // z.B. presentationml
+				const subType = parts[parts.length - 1]  // z.B. slideshow
+
+				const mainMap = {
+					wordprocessingml: 'Word',
+					spreadsheetml: 'Excel',
+					presentationml: 'PowerPoint'
+				}
+
+				const subMap = {
+					document: 'Document',
+					sheet: 'Spreadsheet',
+					presentation: 'Presentation',
+					slideshow: 'Slideshow',
+					template: 'Template'
+				}
+
+				const mainLabel = mainMap[mainType] || mainType
+				const subLabel = subMap[subType] || subType
+				return `${mainLabel} ${t('files', subLabel)}`
+			}
+
 			if (window.OC?.MimeTypeList?.names?.[this.source.mime]) {
 				return window.OC.MimeTypeList.names[this.source.mime]
 			}
@@ -226,6 +270,9 @@ export default defineComponent({
 			}
 			if (baseType === 'text') {
 				return t('files', '{ext} text', { ext })
+			}
+			if (baseType === 'application') {
+				return t('files', '{ext} file', { ext })
 			}
 
 			return this.source.mime
