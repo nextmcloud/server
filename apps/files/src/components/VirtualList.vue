@@ -157,7 +157,7 @@ export default defineComponent({
 		itemHeight() {
 			// Align with css in FilesListVirtual
 			// 166px + 32px (name) + 16px (mtime) + 16px (padding top and bottom)
-			return this.gridMode ? (166 + 32 + 16 + 16 + 16) : 44
+			return this.gridMode ? (166 + 32 + 16 + 16 + 16) : 68
 		},
 
 		// Grid mode only
@@ -320,6 +320,8 @@ export default defineComponent({
 
 	methods: {
 		scrollTo(index: number) {
+			return
+			
 			if (!this.$el || this.index === index) {
 				return
 			}
