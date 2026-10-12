@@ -122,7 +122,7 @@
 				<NcEmptyContent v-else
 					:name="currentView?.emptyTitle || t('files', 'No files in here')"
 					:description="currentView?.emptyCaption || t('files', 'Upload some content or sync with your devices!')"
-					data-cy-files-content-empty>
+					:data-cy-files-content-empty="currentView?.id">
 					<template v-if="directory !== '/'" #action>
 						<!-- Uploader -->
 						<UploadPicker v-if="canUpload && !isQuotaExceeded"
