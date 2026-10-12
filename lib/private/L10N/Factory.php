@@ -552,10 +552,11 @@ class Factory implements IFactory {
 
 	/**
 	 * Get a list of language files that should be loaded
+	 * Note: This method is public because it is used by the nmctheme app.
 	 *
 	 * @return string[]
 	 */
-	private function getL10nFilesForApp(string $app, string $lang): array {
+	public function getL10nFilesForApp(string $app, string $lang): array {
 		$languageFiles = [];
 
 		$i18nDir = $this->findL10nDir($app);
