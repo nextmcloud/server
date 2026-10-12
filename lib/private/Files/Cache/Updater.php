@@ -119,6 +119,12 @@ class Updater implements IUpdater {
 		if (isset($data['encrypted']) && (bool)$data['encrypted']) {
 			$sizeDifference = null;
 		}
+		
+		// skip E2E encryption metadata files to avoid interfering with internal encryption handling
+		$appDataPath = 'appdata_' . \OC_Util::getInstanceId() . '/end_to_end_encryption/meta-data';
+		if (str_starts_with($path, $appDataPath)) {
+			return;
+		}
 
 		// scanner didn't provide size info, fallback to full size calculation
 		if ($this->cache instanceof Cache && $sizeDifference === null) {
@@ -146,6 +152,12 @@ class Updater implements IUpdater {
 		$entry = $this->cache->get($path);
 
 		$this->cache->remove($path);
+
+		// skip E2E encryption metadata files to avoid interfering with internal encryption handling
+		$appDataPath = 'appdata_' . \OC_Util::getInstanceId() . '/end_to_end_encryption/meta-data';
+		if (str_starts_with($path, $appDataPath)) {
+			return;
+		}
 
 		$this->correctParentStorageMtime($path);
 		if ($entry instanceof ICacheEntry) {
