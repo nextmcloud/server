@@ -1,15 +1,16 @@
 {
-	"name": "Nextcloud",
+	"name": "MagentaCLOUD",
+	"short_name": "MagentaCLOUD",
 	"start_url": "../../",
 	"icons": [{
-		"src": "favicon-touch.png",
+		"src": "../../customapps/nmctheme/img/favicon-touch.png",
 		"type": "image/png",
 		"sizes": "180x180"
 	}, {
-		"src": "favicon-mask.svg",
+		"src": "../../customapps/nmctheme/img/favicon-mask.svg",
 		"type": "image/svg+xml",
 		"sizes": "16x16"
 	}],
 	"display_override": ["minimal-ui"],
-    "display": "standalone"
+	"display": "standalone"
 }
