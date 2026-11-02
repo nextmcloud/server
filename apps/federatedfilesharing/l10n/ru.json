@@ -13,8 +13,8 @@
     "Sharing %1$s failed, could not find %2$s, maybe the server is currently unreachable or uses a self-signed certificate." : "Не удалось предоставить доступ к «%1$s»: %2$s не найден. Возможно, сервер недоступен или использует самоподписанный сертификат.",
     "Could not find share" : "Не удалось найти общий ресурс",
     "Federated sharing" : "Межсерверный общий доступ",
-    "You received {share} as a remote share from {user} (on behalf of {behalf})" : "Вы получили от {user} удалённый общий ресурс {share} (от имени {behalf})",
-    "You received {share} as a remote share from {user}" : "Вы получили от {user} удалённый общий ресурс {share}",
+    "You received {share} as a remote share from {user} (on behalf of {behalf})" : "Вы получили удалённый общий ресурс {share}. Отправитель: {user} (от имени: {behalf})",
+    "You received {share} as a remote share from {user}" : "Вы получили удалённый общий ресурс {share}. Отправитель: {user}",
     "Accept" : "Принять",
     "Decline" : "Отклонить",
     "Federated Cloud Sharing" : "Межсерверный общий доступ",
@@ -64,8 +64,6 @@
     "Remote share" : "Общий ресурс другого сервера",
     "Do you want to add the remote share {name} from {owner}@{remote}?" : "Добавить общий ресурс {name} пользователя {owner}@{remote}?",
     "Remote share password" : "Пароль общего ресурса другого сервера",
-    "Incoming share could not be processed" : "Не удалось обработать входящий общий ресурс",
-    "X (formerly Twitter)" : "X (ранее Твиттер)",
-    "formerly Twitter" : "ранее Твиттер"
+    "Incoming share could not be processed" : "Не удалось обработать входящий общий ресурс"
 },"pluralForm" :"nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n%100>=11 && n%100<=14)? 2 : 3);"
 }
