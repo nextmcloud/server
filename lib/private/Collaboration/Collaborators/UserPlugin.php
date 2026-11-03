@@ -33,6 +33,16 @@ readonly class UserPlugin implements ISearchPlugin {
 	}
 
 	public function search($search, $limit, $offset, ISearchResult $searchResult): bool {
+		$result = ['wide' => [], 'exact' => []];
+		$users = [];
+		$hasMoreResults = false;
+
+		// Hotfix: with sharee enumeration disabled users shall be only searched by email anyways in this environment,
+		// so for now return just empty results as those are also handled by the MailPlugin
+		$type = new SearchResultType('users');
+		$searchResult->addResultSet($type, $result['wide'], $result['exact']);
+		return false;
+
 		/** @var IUser $currentUser */
 		$currentUser = $this->userSession->getUser();
 
